@@ -22,9 +22,11 @@ function App() {
     // 1. Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      // Initialize base history state
+      // Initialize base history state with whatever was persisted
       if (typeof window !== 'undefined' && session?.user) {
-        window.history.replaceState({ view: 'SELECT_APIARY' }, '');
+        const persistedView = useAppStore.getState().currentView;
+        const targetView = (persistedView === 'AUTH' || !persistedView) ? 'SELECT_APIARY' : persistedView;
+        window.history.replaceState({ view: targetView }, '');
       }
     });
 

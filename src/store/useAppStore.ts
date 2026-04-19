@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { User } from '@supabase/supabase-js';
 
 // The core views of our Single Page Application
@@ -41,64 +42,84 @@ interface AppState {
   setHiveFormOpen: (isOpen: boolean, hiveToEdit?: any) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  currentView: 'AUTH',
-  selectedApiaryId: null,
-  selectedHiveId: null,
-  selectedInspection: null,
-  user: null,
-  isAuthLoading: true,
-  isFeedbackModalOpen: false,
-  isApiaryFormOpen: false,
-  editingApiary: null,
-  isHiveFormOpen: false,
-  editingHive: null,
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      currentView: 'AUTH',
+      selectedApiaryId: null,
+      selectedHiveId: null,
+      selectedInspection: null,
+      user: null,
+      isAuthLoading: true,
+      isFeedbackModalOpen: false,
+      isApiaryFormOpen: false,
+      editingApiary: null,
+      isHiveFormOpen: false,
+      editingHive: null,
 
-  setCurrentView: (view) => set({ currentView: view }),
-  selectInspection: (inspection) => set({ selectedInspection: inspection }),
-  setFeedbackModalOpen: (isOpen) => set({ isFeedbackModalOpen: isOpen }),
-  setApiaryFormOpen: (isOpen, apiaryToEdit = null) => set({ isApiaryFormOpen: isOpen, editingApiary: apiaryToEdit }),
-  setHiveFormOpen: (isOpen, hiveToEdit = null) => set({ isHiveFormOpen: isOpen, editingHive: hiveToEdit }),
+      setCurrentView: (view) => set({ currentView: view }),
+      selectInspection: (inspection) => set({ selectedInspection: inspection }),
+      setFeedbackModalOpen: (isOpen) => set({ isFeedbackModalOpen: isOpen }),
+      setApiaryFormOpen: (isOpen, apiaryToEdit = null) => set({ isApiaryFormOpen: isOpen, editingApiary: apiaryToEdit }),
+      setHiveFormOpen: (isOpen, hiveToEdit = null) => set({ isHiveFormOpen: isOpen, editingHive: hiveToEdit }),
 
-  selectApiary: (id) => {
-    if (typeof window !== 'undefined') {
-      window.history.pushState({ view: 'SELECT_HIVE' }, '');
-    }
-    set({ selectedApiaryId: id, currentView: 'SELECT_HIVE' });
-  },
-
-  selectHive: (id) => {
-    if (typeof window !== 'undefined') {
-      window.history.pushState({ view: 'HIVE_DETAIL' }, '');
-    }
-    set({ selectedHiveId: id, currentView: 'HIVE_DETAIL' });
-  },
-
-  setUser: (user) => set({ 
-    user, 
-    currentView: user ? 'SELECT_APIARY' : 'AUTH',
-    isAuthLoading: false
-  }),
-  
-  setAuthLoading: (isLoading) => set({ isAuthLoading: isLoading }),
-
-  goBack: () => {
-    if (typeof window !== 'undefined') {
-      window.history.back(); // Let the browser handle the back action, which fires popstate
-    } else {
-      // Fallback
-      set((state) => {
-        if (state.currentView === 'INSPECTION_FORM' || 
-            state.currentView === 'INTERVENTION_FORM' ||
-            state.currentView === 'TASK_FORM' ||
-            state.currentView === 'STATUS_UPDATE_FORM' ||
-            state.currentView === 'ROADMAP') {
-          return { currentView: state.selectedHiveId ? 'HIVE_DETAIL' : 'SELECT_APIARY' };
+      selectApiary: (id) => {
+        if (typeof window !== 'undefined') {
+          window.history.pushState({ view: 'SELECT_HIVE' }, '');
         }
-        if (state.currentView === 'HIVE_DETAIL') return { currentView: 'SELECT_HIVE' };
-        if (state.currentView === 'SELECT_HIVE') return { currentView: 'SELECT_APIARY' };
-        return state;
-      });
+        set({ selectedApiaryId: id, currentView: 'SELECT_HIVE' });
+      },
+
+      selectHive: (id) => {
+        if (typeof window !== 'undefined') {
+          window.history.pushState({ view: 'HIVE_DETAIL' }, '');
+        }
+        set({ selectedHiveId: id, currentView: 'HIVE_DETAIL' });
+      },
+
+      setUser: (user) => set((state) => {
+        if (!user) return { user: null, currentView: 'AUTH', isAuthLoading: false };
+        
+        // If they already have a persisted state (like HIVE_DETAIL), keep them there.
+        // Otherwise send them to SELECT_APIARY
+        const nextView = (state.currentView === 'AUTH' || !state.currentView) ? 'SELECT_APIARY' : state.currentView;
+        
+        return { 
+          user, 
+          currentView: nextView,
+          isAuthLoading: false
+        };
+      }),
+      
+      setAuthLoading: (isLoading) => set({ isAuthLoading: isLoading }),
+
+      goBack: () => {
+        if (typeof window !== 'undefined') {
+          window.history.back(); // Let the browser handle the back action, which fires popstate
+        } else {
+          // Fallback
+          set((state) => {
+            if (state.currentView === 'INSPECTION_FORM' || 
+                state.currentView === 'INTERVENTION_FORM' ||
+                state.currentView === 'TASK_FORM' ||
+                state.currentView === 'STATUS_UPDATE_FORM' ||
+                state.currentView === 'ROADMAP') {
+              return { currentView: state.selectedHiveId ? 'HIVE_DETAIL' : 'SELECT_APIARY' };
+            }
+            if (state.currentView === 'HIVE_DETAIL') return { currentView: 'SELECT_HIVE' };
+            if (state.currentView === 'SELECT_HIVE') return { currentView: 'SELECT_APIARY' };
+            return state;
+          });
+        }
+      }
+    }),
+    {
+      name: 'beekeeper-app-storage',
+      partialize: (state) => ({
+        currentView: state.currentView,
+        selectedApiaryId: state.selectedApiaryId,
+        selectedHiveId: state.selectedHiveId,
+      }),
     }
-  }
-}));
+  )
+);
