@@ -144,17 +144,17 @@ export const ForecastView: React.FC = () => {
               </div>
 
               {/* The Grid */}
-              <div className="w-full overflow-x-auto rounded-xl shadow-lg border border-gray-200 bg-white custom-scrollbar">
-                  <table className="w-full text-center border-collapse min-w-[500px]">
+              <div className="w-full overflow-x-auto rounded shadow border border-gray-300 bg-white custom-scrollbar">
+                  <table className="w-full text-center border-collapse bg-white text-[11px]">
                       <thead>
-                          <tr className="bg-gray-50 border-b-2 border-gray-200">
-                              <th className="py-2 px-2 border-r border-gray-200 text-xs font-black text-gray-800 bg-white sticky left-0 z-10 w-16">
+                          <tr className="bg-gray-100">
+                              <th className="border border-gray-300 px-2 py-1 font-bold text-gray-800 bg-gray-100 sticky left-0 z-10 text-[10px] w-12">
                                   Time
                               </th>
                               {uniqueDays.map(day => (
-                                  <th key={day.id} className="py-2 px-1 border-r border-gray-200 last:border-r-0">
-                                      <div className="text-xs font-black text-gray-800">{day.dayName}</div>
-                                      <div className="text-[10px] font-bold text-gray-500">{day.dateStr}</div>
+                                  <th key={day.id} className="border border-gray-300 px-1 py-1 min-w-[48px]">
+                                      <div className="font-bold text-[11px] text-gray-800">{day.dayName}</div>
+                                      <div className="text-[9px] text-gray-500">{day.dateStr}</div>
                                   </th>
                               ))}
                           </tr>
@@ -164,8 +164,8 @@ export const ForecastView: React.FC = () => {
                               const hourStr = hour === 0 ? '12am' : hour < 12 ? `${hour}am` : hour === 12 ? '12pm' : `${hour - 12}pm`;
                               
                               return (
-                                  <tr key={hour} className="border-b border-gray-200 last:border-b-0">
-                                      <td className="py-2 px-1 border-r border-gray-200 text-xs font-black text-gray-800 bg-white sticky left-0 z-10">
+                                  <tr key={hour}>
+                                      <td className="border border-gray-300 px-1.5 py-0 font-bold text-gray-800 bg-white sticky left-0 z-10 text-[10px] whitespace-nowrap">
                                           {hourStr}
                                       </td>
                                       {uniqueDays.map(day => {
@@ -175,7 +175,7 @@ export const ForecastView: React.FC = () => {
                                               return d.getHours() === hour && d.toLocaleDateString() === day.id;
                                           });
 
-                                          if (!window) return <td key={day.id} className="bg-gray-100 border-r border-gray-200 last:border-r-0"></td>;
+                                          if (!window) return <td key={day.id} className="border border-gray-300 bg-gray-100 h-7 w-12"></td>;
 
                                           const isDarkText = window.isHardLimit;
                                           
@@ -183,11 +183,11 @@ export const ForecastView: React.FC = () => {
                                               <td 
                                                 key={day.id} 
                                                 onClick={() => setSelectedCell(window)}
-                                                className={`py-3 px-1 border-r border-white/20 last:border-r-0 cursor-pointer hover:opacity-80 transition-opacity ${getCellColor(window.rating)}`}
+                                                className={`border border-gray-300 h-7 w-12 cursor-pointer hover:opacity-80 transition-opacity ${getCellColor(window.rating)}`}
                                               >
-                                                  <span className={`text-base font-black ${isDarkText ? 'text-black' : 'text-white drop-shadow-sm'}`}>
+                                                  <div className={`flex items-center justify-center h-full font-bold text-sm ${isDarkText ? 'text-black' : 'text-white'}`}>
                                                       {window.score}
-                                                  </span>
+                                                  </div>
                                               </td>
                                           );
                                       })}
