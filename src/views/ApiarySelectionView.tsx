@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { SelectionList } from '../components/SelectionList';
 import type { SelectionItem } from '../components/SelectionCard';
-import { MapPin, Plus, Edit2, Trash2 } from 'lucide-react';
+import { MapPin, Plus } from 'lucide-react';
 import { ApiaryFormModal } from '../components/ApiaryFormModal';
 
 export const ApiarySelectionView: React.FC = () => {
@@ -15,7 +15,7 @@ export const ApiarySelectionView: React.FC = () => {
     const fetchApiaries = async () => {
       if (!user) return;
       
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('apiaries')
         .select('*')
         .eq('user_id', user.id)

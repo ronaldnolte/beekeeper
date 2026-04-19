@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
-import { SelectionList, type SelectionItem } from '../components/SelectionList';
-import { Hexagon, Plus, Edit2, Trash2 } from 'lucide-react';
+import { SelectionList } from '../components/SelectionList';
+import type { SelectionItem } from '../components/SelectionCard';
+import { Hexagon, Plus } from 'lucide-react';
 import { HiveFormModal } from '../components/HiveFormModal';
 
 export const HiveSelectionView: React.FC = () => {
@@ -14,7 +15,7 @@ export const HiveSelectionView: React.FC = () => {
     const fetchHives = async () => {
       if (!selectedApiaryId) return;
       
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('hives')
         .select('*')
         .eq('apiary_id', selectedApiaryId)

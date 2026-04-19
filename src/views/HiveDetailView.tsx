@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
-import { ClipboardList, PlusCircle, AlertTriangle, Settings, Activity } from 'lucide-react';
+import { ClipboardList, PlusCircle, AlertTriangle } from 'lucide-react';
 import { HistoryFeed } from '../components/HistoryFeed';
 import { HiveConfigWrapper } from '../components/HiveConfigWrapper';
 

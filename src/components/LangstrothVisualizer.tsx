@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Camera, ChevronUp, ChevronDown, Trash2, Plus } from 'lucide-react';
-import type { HiveBox, BoxType } from '@tbh-beekeeper/shared';
+import type { HiveBox, BoxType } from '../types';
 
 const BOX_STYLES: Record<BoxType, { label: string, bg: string, height: string, border: string }> = {
   deep: { label: 'Deep', bg: '#D35400', height: 'h-24', border: '#A04000' },

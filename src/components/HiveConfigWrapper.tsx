@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { TopBarVisualizer } from './TopBarVisualizer';
 import { LangstrothVisualizer } from './LangstrothVisualizer';
-import type { HiveBox } from '@tbh-beekeeper/shared';
+import type { HiveBox } from '../types';
 
 interface HiveConfigWrapperProps {
   hive: any;

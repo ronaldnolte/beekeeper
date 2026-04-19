@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import { useAppStore } from './store/useAppStore';
 import { Auth } from './components/Auth';
@@ -16,7 +16,7 @@ import { AskAIView } from './views/AskAIView';
 import { FeedbackModal } from './components/FeedbackModal';
 
 function App() {
-  const { currentView, setUser, setAuthLoading, isAuthLoading } = useAppStore();
+  const { currentView, setUser, isAuthLoading } = useAppStore();
 
   useEffect(() => {
     // 1. Check initial session

@@ -15,7 +15,7 @@ interface FeatureRequest {
 }
 
 export const RoadmapView: React.FC = () => {
-  const { user, setCurrentView, goBack } = useAppStore();
+  const { user } = useAppStore();
   const [features, setFeatures] = useState<FeatureRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitModalOpen, setSubmitModalOpen] = useState(false);

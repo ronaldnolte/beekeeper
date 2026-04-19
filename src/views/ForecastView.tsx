@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { supabase } from '../lib/supabase';
-import { WeatherService, InspectionWindow } from '../services/WeatherService';
+import { WeatherService } from '../services/WeatherService';
+import type { InspectionWindow } from '../services/WeatherService';
 import { ArrowLeft, CloudRain, Wind, Thermometer, Calendar } from 'lucide-react';
 
 export const ForecastView: React.FC = () => {

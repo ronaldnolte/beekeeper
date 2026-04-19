@@ -41,7 +41,7 @@ interface AppState {
   setHiveFormOpen: (isOpen: boolean, hiveToEdit?: any) => void;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>((set) => ({
   currentView: 'AUTH',
   selectedApiaryId: null,
   selectedHiveId: null,
