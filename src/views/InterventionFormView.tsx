@@ -172,7 +172,7 @@ export const InterventionFormView: React.FC = () => {
 
       </div>
 
-      <div className="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-t from-[var(--color-bg)] to-[var(--color-bg)]/80 backdrop-blur-sm z-50 flex justify-center gap-3">
+      <div className="fixed bottom-0 left-0 w-full p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-[var(--color-bg)] to-[var(--color-bg)]/80 backdrop-blur-sm z-50 flex justify-center gap-3">
         {isEditing && (
           <button
             onClick={handleDelete}
