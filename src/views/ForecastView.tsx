@@ -144,8 +144,8 @@ export const ForecastView: React.FC = () => {
               </div>
 
               {/* The Grid */}
-              <div className="w-full overflow-x-auto rounded shadow border border-gray-300 bg-white custom-scrollbar">
-                  <table className="w-full text-center border-collapse bg-white text-[11px]">
+              <div className="w-full flex justify-center overflow-x-auto rounded shadow border border-gray-300 bg-white custom-scrollbar">
+                  <table className="text-center border-collapse bg-white text-[11px]">
                       <thead>
                           <tr className="bg-gray-100">
                               <th className="border border-gray-300 px-2 py-1 font-bold text-gray-800 bg-gray-100 sticky left-0 z-10 text-[10px] w-12">
