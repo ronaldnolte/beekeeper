@@ -5,19 +5,25 @@ import { WeatherService } from '../services/WeatherService';
 import type { InspectionWindow } from '../services/WeatherService';
 import { ArrowLeft, CloudRain, Wind, Thermometer, Calendar } from 'lucide-react';
 
+import { ForecastScoreGuideModal } from '../components/ForecastScoreGuideModal';
+import { ForecastDetailModal } from '../components/ForecastDetailModal';
+
 export const ForecastView: React.FC = () => {
   const { selectedApiaryId, goBack } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [forecast, setForecast] = useState<InspectionWindow[]>([]);
   const [apiaryName, setApiaryName] = useState('');
+  
+  // Modal states
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [selectedCell, setSelectedCell] = useState<InspectionWindow | null>(null);
 
   useEffect(() => {
     const fetchForecast = async () => {
       if (!selectedApiaryId) return;
       setLoading(true);
       try {
-        // Get Apiary Location
         const { data: apiary, error: apiaryError } = await supabase
           .from('apiaries')
           .select('name, latitude, longitude, zip_code')
@@ -31,10 +37,7 @@ export const ForecastView: React.FC = () => {
         let lng = apiary.longitude;
 
         if (!lat || !lng) {
-            // Need geocoding, but since it's an SPA without a backend, we can try to use a free geocoder,
-            // but ideally the user should set lat/lng.
             if (apiary.zip_code) {
-               // Some zip codes might be stored with a country prefix like "us:87105"
                const cleanZip = apiary.zip_code.includes(':') ? apiary.zip_code.split(':')[1] : apiary.zip_code;
                const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${cleanZip}&count=1&language=en&format=json`;
                const geoRes = await fetch(geoUrl);
@@ -64,78 +67,147 @@ export const ForecastView: React.FC = () => {
     fetchForecast();
   }, [selectedApiaryId]);
 
-  // Group forecast by day
-  const days = forecast.reduce((acc, curr) => {
-      const date = new Date(curr.time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-      if (!acc[date]) acc[date] = [];
-      acc[date].push(curr);
-      return acc;
-  }, {} as Record<string, InspectionWindow[]>);
+  // Extract unique days
+  const uniqueDays = Array.from(new Set(forecast.map(w => {
+      const d = new Date(w.time);
+      return {
+          id: d.toLocaleDateString(),
+          dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
+          dateStr: `${d.getMonth() + 1}/${d.getDate()}`
+      };
+  }))).filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i); // Ensure uniqueness by id
+
+  // Extract unique hours (6am to 5pm)
+  const uniqueHours = Array.from(new Set(forecast.map(w => new Date(w.time).getHours()))).sort((a,b) => a-b);
+
+  const getCellColor = (rating: string) => {
+      switch (rating) {
+          case 'Excellent': return 'bg-[#1E824C]'; // Dark Green
+          case 'Good': return 'bg-[#2ECC71]'; // Light Green
+          case 'Fair': return 'bg-[#F1C40F]'; // Yellow
+          case 'Poor': return 'bg-[#E67E22]'; // Orange
+          case 'Not Rec': return 'bg-[#E74C3C]'; // Red
+          default: return 'bg-gray-200';
+      }
+  };
 
   return (
-    <div className="w-full flex flex-col items-center p-4 pb-24 space-y-6 animate-in slide-in-from-right-4 duration-300">
+    <div className="w-full flex flex-col items-center p-2 sm:p-4 pb-24 space-y-4 animate-in slide-in-from-right-4 duration-300 relative min-h-screen">
       
       {/* Header */}
-      <div className="w-full max-w-2xl flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <div className="w-full max-w-[800px] flex justify-center items-center py-2 relative">
         <button 
           onClick={goBack}
-          className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 active:scale-95"
+          className="absolute left-0 w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-500 active:scale-95 border border-gray-100 hover:bg-gray-50 transition-colors"
         >
           <ArrowLeft size={20} />
         </button>
-        <div className="text-right">
-          <h2 className="text-xl font-black text-gray-800">{apiaryName} Forecast</h2>
-          <p className="text-sm font-bold text-[#E67E22] uppercase tracking-wider">7-Day Inspection Window</p>
+        <div className="text-center">
+          <h2 className="text-2xl font-black text-[#8B4513]">Hive Forecast</h2>
+          <p className="text-sm font-bold text-gray-500">{apiaryName}</p>
         </div>
       </div>
 
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-[800px]">
         {loading ? (
-          <div className="card p-12 flex flex-col items-center justify-center gap-4">
-            <div className="w-8 h-8 border-4 border-[#E67E22] border-t-transparent rounded-full animate-spin"></div>
-            <p className="font-bold text-gray-400 animate-pulse">Analyzing meteorological data...</p>
+          <div className="bg-white rounded-3xl p-12 flex flex-col items-center justify-center gap-4 shadow-sm border border-gray-100">
+            <div className="w-8 h-8 border-4 border-[#8B4513] border-t-transparent rounded-full animate-spin"></div>
+            <p className="font-bold text-[#8B4513] animate-pulse">Analyzing meteorological data...</p>
           </div>
         ) : error ? (
-          <div className="card p-8 text-center border-red-200 bg-red-50">
+          <div className="bg-white rounded-3xl p-8 text-center border-red-200 shadow-sm border">
              <p className="text-red-600 font-bold mb-2">Error</p>
              <p className="text-sm text-red-500">{error}</p>
           </div>
         ) : (
-          <div className="space-y-6">
-             {Object.entries(days).map(([date, hours]) => (
-                 <div key={date} className="card overflow-hidden border-2 border-gray-100">
-                     <div className="bg-gray-50 p-3 border-b border-gray-100 flex items-center gap-2">
-                         <Calendar size={16} className="text-[#E67E22]" />
-                         <h3 className="font-bold text-sm text-gray-700">{date}</h3>
-                     </div>
-                     <div className="divide-y divide-gray-50">
-                         {hours.map((hour, idx) => (
-                             <div key={idx} className="flex items-center p-3 hover:bg-gray-50 transition-colors">
-                                 <div className="w-16 flex-shrink-0">
-                                     <span className="font-black text-sm text-gray-600">
-                                         {new Date(hour.time).toLocaleTimeString([], { hour: 'numeric' })}
-                                     </span>
-                                 </div>
-                                 
-                                 <div className="flex-1 flex gap-4 text-xs font-bold text-gray-500">
-                                     <div className="flex items-center gap-1 w-12"><Thermometer size={14}/>{Math.round(hour.temperature)}°</div>
-                                     <div className="flex items-center gap-1 w-12"><Wind size={14}/>{Math.round(hour.windSpeed)}</div>
-                                     <div className="flex items-center gap-1"><CloudRain size={14}/>{hour.precipitationProbability}%</div>
-                                 </div>
+          <div className="w-full flex flex-col items-center space-y-4">
+              
+              {/* Legend Row */}
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-[10px] sm:text-xs font-bold text-gray-600 px-2">
+                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#1E824C]"></div>Excellent 85+</div>
+                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#2ECC71]"></div>Good 70-84</div>
+                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#F1C40F]"></div>Fair 55-69</div>
+                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#E67E22]"></div>Poor 40-54</div>
+                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#E74C3C]"></div>Not Rec &lt;40</div>
+              </div>
 
-                                 <div className="flex-shrink-0 ml-2">
-                                     {hour.rating === 'Good' && <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-black uppercase shadow-sm border border-green-200">Good</span>}
-                                     {hour.rating === 'Marginal' && <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-black uppercase shadow-sm border border-amber-200">Marginal</span>}
-                                     {hour.rating === 'Bad' && <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-black uppercase shadow-sm border border-red-200">Bad</span>}
-                                 </div>
-                             </div>
-                         ))}
-                     </div>
-                 </div>
-             ))}
+              {/* Action Links */}
+              <div className="flex items-center justify-center gap-2 text-xs font-bold">
+                  <span className="text-gray-400 italic">Tap a score for details</span>
+                  <span className="text-gray-300 mx-1">|</span>
+                  <button 
+                    onClick={() => setIsGuideOpen(true)}
+                    className="text-[#E67E22] hover:text-[#D35400] underline underline-offset-2 decoration-dotted"
+                  >
+                    How are scores calculated?
+                  </button>
+              </div>
+
+              {/* The Grid */}
+              <div className="w-full overflow-x-auto rounded-xl shadow-lg border border-gray-200 bg-white custom-scrollbar">
+                  <table className="w-full text-center border-collapse min-w-[500px]">
+                      <thead>
+                          <tr className="bg-gray-50 border-b-2 border-gray-200">
+                              <th className="py-2 px-2 border-r border-gray-200 text-xs font-black text-gray-800 bg-white sticky left-0 z-10 w-16">
+                                  Time
+                              </th>
+                              {uniqueDays.map(day => (
+                                  <th key={day.id} className="py-2 px-1 border-r border-gray-200 last:border-r-0">
+                                      <div className="text-xs font-black text-gray-800">{day.dayName}</div>
+                                      <div className="text-[10px] font-bold text-gray-500">{day.dateStr}</div>
+                                  </th>
+                              ))}
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {uniqueHours.map(hour => {
+                              const hourStr = hour === 0 ? '12am' : hour < 12 ? `${hour}am` : hour === 12 ? '12pm' : `${hour - 12}pm`;
+                              
+                              return (
+                                  <tr key={hour} className="border-b border-gray-200 last:border-b-0">
+                                      <td className="py-2 px-1 border-r border-gray-200 text-xs font-black text-gray-800 bg-white sticky left-0 z-10">
+                                          {hourStr}
+                                      </td>
+                                      {uniqueDays.map(day => {
+                                          // Find the forecast window for this day and hour
+                                          const window = forecast.find(w => {
+                                              const d = new Date(w.time);
+                                              return d.getHours() === hour && d.toLocaleDateString() === day.id;
+                                          });
+
+                                          if (!window) return <td key={day.id} className="bg-gray-100 border-r border-gray-200 last:border-r-0"></td>;
+
+                                          const isDarkText = window.isHardLimit;
+                                          
+                                          return (
+                                              <td 
+                                                key={day.id} 
+                                                onClick={() => setSelectedCell(window)}
+                                                className={`py-3 px-1 border-r border-white/20 last:border-r-0 cursor-pointer hover:opacity-80 transition-opacity ${getCellColor(window.rating)}`}
+                                              >
+                                                  <span className={`text-base font-black ${isDarkText ? 'text-black' : 'text-white drop-shadow-sm'}`}>
+                                                      {window.score}
+                                                  </span>
+                                              </td>
+                                          );
+                                      })}
+                                  </tr>
+                              );
+                          })}
+                      </tbody>
+                  </table>
+              </div>
+              
+              <p className="text-[10px] font-bold text-gray-400 italic mt-2 w-full text-center">
+                  White numerals = OK to inspect • Black numerals = Not recommended
+              </p>
           </div>
         )}
       </div>
+
+      <ForecastScoreGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+      <ForecastDetailModal isOpen={!!selectedCell} onClose={() => setSelectedCell(null)} window={selectedCell} />
+
     </div>
   );
 };
