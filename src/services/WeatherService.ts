@@ -44,8 +44,8 @@ export class WeatherService {
         const windows: InspectionWindow[] = [];
 
         for (let i = 0; i < time.length; i++) {
-            const date = new Date(time[i]);
-            const hour = date.getHours();
+            // Parse hour directly from string "YYYY-MM-DDTHH:00" to avoid JS timezone shifts
+            const hour = parseInt(time[i].slice(11, 13));
             
             // We want 6am to 5pm to match the V1 Grid
             const isDaylight = hour >= 6 && hour <= 17;

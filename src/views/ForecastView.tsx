@@ -69,16 +69,18 @@ export const ForecastView: React.FC = () => {
 
   // Extract unique days
   const uniqueDays = Array.from(new Set(forecast.map(w => {
-      const d = new Date(w.time);
+      const dateStr = w.time.slice(0, 10); // "YYYY-MM-DD"
+      // Parse safely at noon to avoid timezone day-shifting
+      const d = new Date(dateStr + "T12:00:00");
       return {
-          id: d.toLocaleDateString(),
+          id: dateStr,
           dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
           dateStr: `${d.getMonth() + 1}/${d.getDate()}`
       };
-  }))).filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i); // Ensure uniqueness by id
+  }))).filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i);
 
   // Extract unique hours (6am to 5pm)
-  const uniqueHours = Array.from(new Set(forecast.map(w => new Date(w.time).getHours()))).sort((a,b) => a-b);
+  const uniqueHours = Array.from(new Set(forecast.map(w => parseInt(w.time.slice(11, 13))))).sort((a,b) => a-b);
 
   const getCellColor = (rating: string) => {
       switch (rating) {
@@ -171,8 +173,9 @@ export const ForecastView: React.FC = () => {
                                       {uniqueDays.map(day => {
                                           // Find the forecast window for this day and hour
                                           const window = forecast.find(w => {
-                                              const d = new Date(w.time);
-                                              return d.getHours() === hour && d.toLocaleDateString() === day.id;
+                                              const wDate = w.time.slice(0, 10);
+                                              const wHour = parseInt(w.time.slice(11, 13));
+                                              return wHour === hour && wDate === day.id;
                                           });
 
                                           if (!window) return <td key={day.id} className="border border-gray-300 bg-gray-100 h-7 w-12"></td>;
