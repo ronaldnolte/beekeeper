@@ -160,19 +160,6 @@ export const InspectionFormView: React.FC = () => {
   if (!isFormOpen) {
     return (
       <div className="w-full flex flex-col items-center p-4 pb-24 space-y-4 animate-in slide-in-from-bottom-4 duration-300">
-        <div className="w-full max-w-2xl flex justify-between items-center mb-2 px-1">
-          <div>
-            <h2 className="text-2xl font-black text-[var(--color-card-text)]">Inspections</h2>
-            <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Past Records</p>
-          </div>
-          <button 
-            onClick={goBack}
-            className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 active:scale-95"
-          >
-            ✕
-          </button>
-        </div>
-
         <div className="w-full max-w-2xl mb-4">
           <button
             onClick={() => setIsFormOpen(true)}
@@ -192,27 +179,6 @@ export const InspectionFormView: React.FC = () => {
 
   return (
     <div className="w-full flex flex-col items-center p-3 sm:p-4 pb-24 space-y-4 animate-in slide-in-from-bottom-4 duration-300">
-      
-      {/* Header */}
-      <div className="w-full max-w-2xl flex justify-between items-center mb-2 px-1">
-        <div>
-          <h2 className="text-2xl font-black text-[var(--color-card-text)]">{selectedInspection ? 'Edit Inspection' : 'New Inspection'}</h2>
-          <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Log your findings</p>
-        </div>
-        <button 
-          onClick={() => {
-            if (selectedInspection) {
-              goBack();
-            } else {
-              setIsFormOpen(false);
-            }
-          }}
-          className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 active:scale-95"
-        >
-          ✕
-        </button>
-      </div>
-
       <div className="w-full max-w-2xl card p-4 sm:p-5 space-y-5">
         <div>
           <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Date</h3>

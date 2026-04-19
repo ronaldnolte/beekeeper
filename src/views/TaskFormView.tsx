@@ -5,7 +5,7 @@ import { Save, Trash2, Calendar, AlertTriangle } from 'lucide-react';
 import { HistoryFeed } from '../components/HistoryFeed';
 
 export const TaskFormView: React.FC = () => {
-  const { selectedHiveId, selectedInspection, setCurrentView } = useAppStore();
+  const { selectedHiveId, selectedApiaryId, selectedInspection, setCurrentView, user } = useAppStore();
   const [loading, setLoading] = useState(false);
 
   // Initialize from selectedInspection (which acts as a generic "selected item" for the forms)
@@ -59,6 +59,8 @@ export const TaskFormView: React.FC = () => {
     try {
       const payload = {
         hive_id: selectedHiveId,
+        apiary_id: selectedApiaryId,
+        assigned_user_id: user?.id,
         title,
         description,
         priority,
@@ -111,24 +113,6 @@ export const TaskFormView: React.FC = () => {
   if (!isFormOpen) {
     return (
       <div className="w-full flex flex-col items-center p-4 pb-24 space-y-4 animate-in slide-in-from-bottom-4 duration-300">
-        <div className="w-full max-w-2xl flex justify-between items-center mb-2 px-1">
-          <div>
-            <h2 className="text-2xl font-black text-[var(--color-card-text)]">Tasks</h2>
-            <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">To-Do List</p>
-          </div>
-          <button 
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.history.pushState({ view: 'HIVE_DETAIL' }, '');
-              }
-              setCurrentView('HIVE_DETAIL');
-            }}
-            className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 active:scale-95"
-          >
-            ✕
-          </button>
-        </div>
-
         <div className="w-full max-w-2xl mb-4">
           <button
             onClick={() => setIsFormOpen(true)}
@@ -148,30 +132,6 @@ export const TaskFormView: React.FC = () => {
 
   return (
     <div className="w-full flex flex-col items-center p-3 sm:p-4 pb-24 space-y-4 animate-in slide-in-from-bottom-4">
-      
-      {/* Header */}
-      <div className="w-full max-w-2xl flex justify-between items-center mb-2 px-1">
-        <div>
-          <h2 className="text-2xl font-black text-[var(--color-card-text)]">{isEditing ? 'Edit Task' : 'New Task'}</h2>
-          <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Set a reminder</p>
-        </div>
-        <button 
-          onClick={() => {
-            if (isEditing) {
-              if (typeof window !== 'undefined') {
-                window.history.pushState({ view: 'HIVE_DETAIL' }, '');
-              }
-              setCurrentView('HIVE_DETAIL');
-            } else {
-              setIsFormOpen(false);
-            }
-          }}
-          className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 active:scale-95"
-        >
-          ✕
-        </button>
-      </div>
-
       <div className="w-full max-w-2xl card p-4 sm:p-5 space-y-5">
         
         {/* Title */}

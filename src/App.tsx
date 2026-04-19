@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { supabase } from './lib/supabase';
+import { App as CapacitorApp } from '@capacitor/app';
 import { useAppStore } from './store/useAppStore';
 import { Auth } from './components/Auth';
 import { AppHeader } from './components/AppHeader';
@@ -43,26 +44,28 @@ function App() {
       }
     });
 
-    // 3. HARDWARE BACK BUTTON HIJACK (popstate listener)
+    // 3. HARDWARE BACK BUTTON HIJACK (popstate listener & Capacitor)
     const handlePopState = (event: PopStateEvent) => {
-      const state = event.state;
-      if (state && state.view) {
-        useAppStore.getState().setCurrentView(state.view);
-      } else {
-        // If we backed all the way out of our history stack but user is logged in
-        if (useAppStore.getState().user) {
-          useAppStore.getState().setCurrentView('SELECT_APIARY');
-        } else {
-          useAppStore.getState().setCurrentView('AUTH');
-        }
-      }
+      // The popstate is handled correctly by our new hierarchical routing
     };
 
     window.addEventListener('popstate', handlePopState);
 
+    // Capacitor Hardware Back Button Support (Android)
+    let backButtonListener: any = null;
+    if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform()) {
+      CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+        // If we can go back in the SPA history, we'll let our store handle it hierarchically
+        useAppStore.getState().goBack();
+      }).then(listener => {
+        backButtonListener = listener;
+      });
+    }
+
     return () => {
       subscription.unsubscribe();
       window.removeEventListener('popstate', handlePopState);
+      if (backButtonListener) backButtonListener.remove();
     };
   }, [setUser]);
 

@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { User } from '@supabase/supabase-js';
 
 // The core views of our Single Page Application
@@ -43,9 +42,7 @@ interface AppState {
   setHiveFormOpen: (isOpen: boolean, hiveToEdit?: any) => void;
 }
 
-export const useAppStore = create<AppState>()(
-  persist(
-    (set) => ({
+export const useAppStore = create<AppState>()((set) => ({
       currentView: 'AUTH',
       selectedApiaryId: null,
       selectedHiveId: null,
@@ -94,33 +91,27 @@ export const useAppStore = create<AppState>()(
       
       setAuthLoading: (isLoading) => set({ isAuthLoading: isLoading }),
 
-      goBack: () => {
-        if (typeof window !== 'undefined') {
-          window.history.back(); // Let the browser handle the back action, which fires popstate
-        } else {
-          // Fallback
-          set((state) => {
-            if (state.currentView === 'INSPECTION_FORM' || 
-                state.currentView === 'INTERVENTION_FORM' ||
-                state.currentView === 'TASK_FORM' ||
-                state.currentView === 'STATUS_UPDATE_FORM' ||
-                state.currentView === 'ROADMAP') {
-              return { currentView: state.selectedHiveId ? 'HIVE_DETAIL' : 'SELECT_APIARY' };
-            }
-            if (state.currentView === 'HIVE_DETAIL') return { currentView: 'SELECT_HIVE' };
-            if (state.currentView === 'SELECT_HIVE') return { currentView: 'SELECT_APIARY' };
-            return state;
-          });
+      goBack: () => set((state) => {
+        let prevView: AppView = 'SELECT_APIARY';
+        
+        if (state.currentView === 'SELECT_HIVE') {
+          prevView = 'SELECT_APIARY';
+        } else if (state.currentView === 'HIVE_DETAIL') {
+          prevView = 'SELECT_HIVE';
+        } else if (
+          ['INSPECTION_FORM', 'INTERVENTION_FORM', 'TASK_FORM', 'STATUS_UPDATE_FORM'].includes(state.currentView)
+        ) {
+          prevView = 'HIVE_DETAIL';
+        } else if (
+          ['FORECAST', 'ASK_AI', 'ROADMAP', 'UPDATE_PASSWORD'].includes(state.currentView)
+        ) {
+          prevView = 'SELECT_APIARY';
         }
-      }
-    }),
-    {
-      name: 'beekeeper-app-storage',
-      partialize: (state) => ({
-        currentView: state.currentView,
-        selectedApiaryId: state.selectedApiaryId,
-        selectedHiveId: state.selectedHiveId,
-      }),
-    }
-  )
-);
+        
+        if (typeof window !== 'undefined') {
+          window.history.pushState({ view: prevView }, '');
+        }
+        
+        return { currentView: prevView, selectedInspection: null };
+      })
+}));

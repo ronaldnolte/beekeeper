@@ -108,8 +108,18 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
       {history.map((item) => (
         <div 
           key={`${item._model_type}-${item.id}`} 
-          onClick={() => {
-            if (item._model_type === 'snapshot') return; // Snapshots aren't editable here
+          onClick={async () => {
+            if (item._model_type === 'snapshot') {
+              if (window.confirm('Delete this configuration snapshot?')) {
+                const { error } = await supabase.from('hive_snapshots').delete().eq('id', item.id);
+                if (error) {
+                  alert('Failed to delete snapshot: ' + error.message);
+                } else {
+                  setHistory(prev => prev.filter(h => h.id !== item.id));
+                }
+              }
+              return;
+            }
             selectInspection(item);
             let targetView = 'INSPECTION_FORM';
             if (item._model_type === 'intervention') targetView = 'INTERVENTION_FORM';
@@ -154,8 +164,21 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
             )}
           </div>
           
-          {item._model_type === 'snapshot' && item.bars && renderMiniBars(item.bars)}
-          {item._model_type === 'snapshot' && item.boxes && renderMiniBoxes(item.boxes)}
+          {item._model_type === 'snapshot' && item.bars && (
+            (() => {
+              let parsed = [];
+              try { parsed = typeof item.bars === 'string' ? JSON.parse(item.bars) : item.bars; } catch(e) {}
+              if (!Array.isArray(parsed) || parsed.length === 0) return null;
+              
+              // Langstroth boxes use 'type' (deep, medium, shallow)
+              // TBH bars use 'status' (empty, brood, resource)
+              if (parsed[0].type !== undefined) {
+                return renderMiniBoxes(parsed);
+              } else {
+                return renderMiniBars(parsed);
+              }
+            })()
+          )}
 
           {(item.observations || item.description || (item._model_type === 'task' && item.description)) && (
             <p className="mt-2 text-sm text-gray-600 line-clamp-2">

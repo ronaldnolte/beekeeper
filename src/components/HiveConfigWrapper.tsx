@@ -33,16 +33,16 @@ export const HiveConfigWrapper: React.FC<HiveConfigWrapperProps> = ({ hive, onSn
 
   const parsedBoxes = useMemo(() => {
     if (!isLangstroth) return null;
-    if (!hive?.boxes) return null;
+    if (!hive?.bars) return null;
     try {
-      if (typeof hive.boxes === 'string') return JSON.parse(hive.boxes);
-      if (Array.isArray(hive.boxes)) return hive.boxes as HiveBox[];
+      if (typeof hive.bars === 'string') return JSON.parse(hive.bars);
+      if (Array.isArray(hive.bars)) return hive.bars as HiveBox[];
       return null;
     } catch (e) {
       console.error('Failed to parse Langstroth boxes:', e);
       return null;
     }
-  }, [hive?.boxes, isLangstroth]);
+  }, [hive?.bars, isLangstroth]);
 
   if (!hive || !hive.id) return null;
 

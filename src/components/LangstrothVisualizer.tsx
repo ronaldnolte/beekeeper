@@ -71,7 +71,7 @@ export const LangstrothVisualizer: React.FC<LangstrothVisualizerProps> = ({ hive
     try {
       const { error: hiveError } = await supabase
         .from('hives')
-        .update({ boxes: boxes })
+        .update({ bars: boxes })
         .eq('id', hiveId);
 
       if (hiveError) throw hiveError;
@@ -81,7 +81,7 @@ export const LangstrothVisualizer: React.FC<LangstrothVisualizerProps> = ({ hive
         .insert([{
           hive_id: hiveId,
           timestamp: new Date().toISOString(),
-          boxes: boxes
+          bars: boxes
         }]);
 
       if (snapError) throw snapError;
