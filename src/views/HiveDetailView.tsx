@@ -42,6 +42,58 @@ export const HiveDetailView: React.FC = () => {
   return (
     <div className="w-full flex flex-col items-center p-3 sm:p-4 pb-20 space-y-4">
       
+      {/* 1. Primary Action Grid (Compact 3-column row) */}
+      <div className="w-full max-w-2xl">
+        <div className="grid grid-cols-3 gap-2">
+          <button 
+            onClick={() => {
+              useAppStore.getState().selectInspection(null);
+              if (typeof window !== 'undefined') {
+                window.history.pushState({ view: 'INSPECTION_FORM' }, '');
+              }
+              setCurrentView('INSPECTION_FORM');
+            }}
+            className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
+          >
+            <div className="text-[#E67E22] group-hover:scale-110 transition-transform">
+              <ClipboardList size={24} />
+            </div>
+            <span className="font-bold text-[10px] sm:text-xs text-[var(--color-card-text)] whitespace-nowrap">Add Inspection</span>
+          </button>
+          
+          <button 
+            onClick={() => {
+              useAppStore.getState().selectInspection(null);
+              if (typeof window !== 'undefined') {
+                window.history.pushState({ view: 'INTERVENTION_FORM' }, '');
+              }
+              setCurrentView('INTERVENTION_FORM');
+            }}
+            className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
+          >
+            <div className="text-[#E67E22] group-hover:scale-110 transition-transform">
+              <PlusCircle size={24} />
+            </div>
+            <span className="font-bold text-[10px] sm:text-xs text-[var(--color-card-text)] whitespace-nowrap">Intervention</span>
+          </button>
+
+          <button 
+            onClick={() => {
+              useAppStore.getState().selectInspection(null);
+              if (typeof window !== 'undefined') {
+                window.history.pushState({ view: 'TASK_FORM' }, '');
+              }
+              setCurrentView('TASK_FORM');
+            }}
+            className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
+          >
+            <div className="text-[#E67E22] group-hover:scale-110 transition-transform">
+              <AlertTriangle size={24} />
+            </div>
+            <span className="font-bold text-[10px] sm:text-xs text-[var(--color-card-text)] whitespace-nowrap">Task</span>
+          </button>
+        </div>
+      </div>
       {/* 1. Hive Status Summary Card */}
       <div className="w-full max-w-2xl card p-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-2 h-full bg-[#E67E22]"></div>
@@ -68,58 +120,6 @@ export const HiveDetailView: React.FC = () => {
         />
       </div>
 
-      {/* 3. Primary Action Grid (Compact 3-column row) */}
-      <div className="w-full max-w-2xl">
-        <div className="grid grid-cols-3 gap-2">
-          <button 
-            onClick={() => {
-              useAppStore.getState().selectInspection(null);
-              if (typeof window !== 'undefined') {
-                window.history.pushState({ view: 'INSPECTION_FORM' }, '');
-              }
-              setCurrentView('INSPECTION_FORM');
-            }}
-            className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
-          >
-            <div className="text-[#E67E22] group-hover:scale-110 transition-transform">
-              <ClipboardList size={24} />
-            </div>
-            <span className="font-bold text-[10px] sm:text-xs text-[var(--color-card-text)] whitespace-nowrap">Inspect</span>
-          </button>
-          
-          <button 
-            onClick={() => {
-              useAppStore.getState().selectInspection(null);
-              if (typeof window !== 'undefined') {
-                window.history.pushState({ view: 'INTERVENTION_FORM' }, '');
-              }
-              setCurrentView('INTERVENTION_FORM');
-            }}
-            className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
-          >
-            <div className="text-[#E67E22] group-hover:scale-110 transition-transform">
-              <PlusCircle size={24} />
-            </div>
-            <span className="font-bold text-[10px] sm:text-xs text-[var(--color-card-text)] whitespace-nowrap">Intervene</span>
-          </button>
-
-          <button 
-            onClick={() => {
-              useAppStore.getState().selectInspection(null);
-              if (typeof window !== 'undefined') {
-                window.history.pushState({ view: 'TASK_FORM' }, '');
-              }
-              setCurrentView('TASK_FORM');
-            }}
-            className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
-          >
-            <div className="text-[#E67E22] group-hover:scale-110 transition-transform">
-              <AlertTriangle size={24} />
-            </div>
-            <span className="font-bold text-[10px] sm:text-xs text-[var(--color-card-text)] whitespace-nowrap">Task</span>
-          </button>
-        </div>
-      </div>
 
       {/* 4. Complete Hive History */}
       <div className="w-full max-w-2xl">
