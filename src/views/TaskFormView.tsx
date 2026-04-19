@@ -24,9 +24,11 @@ export const TaskFormView: React.FC = () => {
     return d.toISOString().split('T')[0];
   });
   const [status, setStatus] = useState<string>(isEditing ? selectedInspection.status : 'pending');
+  const [isFormOpen, setIsFormOpen] = useState(isEditing);
 
   React.useEffect(() => {
     if (selectedInspection && selectedInspection._model_type === 'task') {
+      setIsFormOpen(true);
       setTitle(selectedInspection.title || '');
       setDescription(selectedInspection.description || '');
       setPriority(selectedInspection.priority || 'medium');
@@ -105,8 +107,6 @@ export const TaskFormView: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const [isFormOpen, setIsFormOpen] = useState(isEditing);
 
   if (!isFormOpen) {
     return (

@@ -31,10 +31,12 @@ export const InterventionFormView: React.FC = () => {
   
   const [type, setType] = useState<string>(selectedInspection?.type || 'feeding');
   const [description, setDescription] = useState(selectedInspection?.description || '');
+  const [isFormOpen, setIsFormOpen] = useState(isEditing);
 
   // Keep form in sync if the user taps a different history item while the form is already open
   React.useEffect(() => {
     if (selectedInspection) {
+      setIsFormOpen(true);
       setDate(new Date(selectedInspection.timestamp).toISOString().split('T')[0]);
       setType(selectedInspection.type || 'feeding');
       setDescription(selectedInspection.description || '');
@@ -99,8 +101,6 @@ export const InterventionFormView: React.FC = () => {
       goBack();
     }
   };
-
-  const [isFormOpen, setIsFormOpen] = useState(isEditing);
 
   if (!isFormOpen) {
     return (

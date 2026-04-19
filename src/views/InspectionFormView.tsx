@@ -51,10 +51,12 @@ export const InspectionFormView: React.FC = () => {
   const [honeyStores, setHoneyStores] = useState<string>(selectedInspection?.honey_stores || 'adequate');
   const [pollenStores, setPollenStores] = useState<string>(selectedInspection?.pollen_stores || 'adequate');
   const [observations, setObservations] = useState(selectedInspection?.observations || '');
+  const [isFormOpen, setIsFormOpen] = useState(!!selectedInspection);
 
   // Keep form in sync if the user taps a different history item while the form is already open
   React.useEffect(() => {
     if (selectedInspection) {
+      setIsFormOpen(true);
       setDate(new Date(selectedInspection.timestamp).toISOString().split('T')[0]);
       setQueenStatus(selectedInspection.queen_status || 'seen');
       setBroodPattern(selectedInspection.brood_pattern || 'good');
@@ -154,8 +156,6 @@ export const InspectionFormView: React.FC = () => {
       </div>
     </div>
   );
-
-  const [isFormOpen, setIsFormOpen] = useState(!!selectedInspection);
 
   if (!isFormOpen) {
     return (
