@@ -3,7 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 import { supabase } from '../lib/supabase';
 import { WeatherService } from '../services/WeatherService';
 import type { InspectionWindow } from '../services/WeatherService';
-import { ArrowLeft, CloudRain, Wind, Thermometer, Calendar } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 import { ForecastScoreGuideModal } from '../components/ForecastScoreGuideModal';
 import { ForecastDetailModal } from '../components/ForecastDetailModal';

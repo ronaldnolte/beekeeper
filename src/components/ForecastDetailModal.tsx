@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { X, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import type { InspectionWindow } from '../services/WeatherService';
 
 interface Props {
