@@ -65,8 +65,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
       const hiveData = {
         name: name.trim(),
         apiary_id: selectedApiary,
-        type: hiveType,
-        installed_on: installedOn
+        type: hiveType
       };
 
       if (editingHive?.id) {
