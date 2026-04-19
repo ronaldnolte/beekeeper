@@ -22,7 +22,8 @@ export const AppHeader: React.FC = () => {
   if (!user) return null; // Don't show header on login screen
 
   return (
-    <header className="glass-header sticky top-0 z-50 px-4 py-3 flex items-center justify-between">
+    <header className="glass-header sticky top-0 z-50 flex justify-center w-full">
+      <div className="w-full max-w-4xl px-4 py-3 flex items-center justify-between">
       <div className="flex items-center gap-2">
         {showBackButton && (
           <button 
@@ -74,6 +75,7 @@ export const AppHeader: React.FC = () => {
         >
           <LogOut size={18} />
         </button>
+      </div>
       </div>
     </header>
   );
