@@ -25,7 +25,7 @@ export const ApiarySelectionView: React.FC = () => {
         const formatted: SelectionItem[] = data.map(a => ({
           id: a.id,
           title: a.name,
-          subtitle: a.zip_code !== '00000' ? `ZIP: ${a.zip_code}` : 'No Location',
+          subtitle: a.zip_code ? `ZIP: ${a.zip_code}` : (a.latitude ? 'Location: Coordinates' : 'No location set'),
           icon: <MapPin size={24} />,
           raw: a
         }));

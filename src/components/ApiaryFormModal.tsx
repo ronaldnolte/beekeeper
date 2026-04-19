@@ -6,7 +6,11 @@ import { Save, Trash2, X, MapPin } from 'lucide-react';
 export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
   const { user, isApiaryFormOpen, editingApiary, setApiaryFormOpen } = useAppStore();
   const [name, setName] = useState('');
+  const [locationMode, setLocationMode] = useState<'zip' | 'coords'>('zip');
   const [zipCode, setZipCode] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -14,13 +18,25 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
   useEffect(() => {
     if (isApiaryFormOpen) {
       if (editingApiary) {
+        const raw = editingApiary.raw || {};
         setName(editingApiary.title || '');
-        // Extract Zip if it exists in the format "ZIP: 12345"
-        const zipMatch = editingApiary.subtitle?.match(/ZIP:\s*(\d+)/);
-        setZipCode(zipMatch ? zipMatch[1] : '');
+        setZipCode(raw.zip_code || '');
+        setLatitude(raw.latitude ? String(raw.latitude) : '');
+        setLongitude(raw.longitude ? String(raw.longitude) : '');
+        setNotes(raw.notes || '');
+        
+        if (raw.latitude && raw.longitude && !raw.zip_code) {
+            setLocationMode('coords');
+        } else {
+            setLocationMode('zip');
+        }
       } else {
         setName('');
         setZipCode('');
+        setLatitude('');
+        setLongitude('');
+        setNotes('');
+        setLocationMode('zip');
       }
       setError(null);
     }
@@ -37,7 +53,10 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
     try {
       const apiaryData = {
         name: name.trim(),
-        zip_code: zipCode.trim() || '00000',
+        zip_code: locationMode === 'zip' ? zipCode.trim() : null,
+        latitude: locationMode === 'coords' && latitude ? parseFloat(latitude) : null,
+        longitude: locationMode === 'coords' && longitude ? parseFloat(longitude) : null,
+        notes: notes.trim(),
         user_id: user.id
       };
 
@@ -129,14 +148,75 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
             />
           </div>
 
+          {/* Location Section */}
+          <div className="space-y-3">
+            <label className="block text-sm font-black text-gray-400 uppercase tracking-wider">Location <span className="text-gray-300 normal-case font-medium">(for weather)</span></label>
+            
+            <div className="flex w-full bg-gray-50 border border-gray-200 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setLocationMode('zip')}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                  locationMode === 'zip' ? 'bg-white text-[#E67E22] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Postal Code
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocationMode('coords')}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                  locationMode === 'coords' ? 'bg-white text-[#E67E22] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Coordinates
+              </button>
+            </div>
+
+            {locationMode === 'zip' ? (
+              <input
+                type="text"
+                value={zipCode}
+                onChange={(e) => setZipCode(e.target.value)}
+                placeholder="e.g. 12345"
+                className="w-full p-4 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 placeholder-gray-300 focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-lg"
+              />
+            ) : (
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 px-1">Latitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    placeholder="35.0385"
+                    className="w-full p-3 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 placeholder-gray-300 focus:border-[#E67E22] outline-none"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 px-1">Longitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    placeholder="-106.7065"
+                    className="w-full p-3 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 placeholder-gray-300 focus:border-[#E67E22] outline-none"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div>
-            <label className="block text-sm font-black text-gray-400 uppercase tracking-wider mb-2">ZIP Code (For Weather)</label>
-            <input
-              type="text"
-              value={zipCode}
-              onChange={(e) => setZipCode(e.target.value)}
-              placeholder="e.g. 12345"
-              className="w-full p-4 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 placeholder-gray-300 focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-lg"
+            <label className="block text-sm font-black text-gray-400 uppercase tracking-wider mb-2">Notes <span className="text-gray-300 normal-case font-medium">(optional)</span></label>
+            <textarea
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g. South Valley, Albuquerque NM"
+              className="w-full p-4 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 placeholder-gray-300 focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-sm resize-none custom-scrollbar"
             />
           </div>
 
