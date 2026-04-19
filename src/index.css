@@ -8,14 +8,15 @@
 :root {
   --color-primary: #E67E22; /* Honey orange */
   --color-primary-dark: #D35400;
-  --color-bg: #2C241B; /* Deep rich brown/charcoal */
-  --color-text: #FDFBF7; /* Bright off-white */
+  --color-bg: #fdfaf2; /* Soft warm honey background */
+  --color-text: #2C241B; /* Dark text globally */
   --color-card-bg: #FFFFFF;
   --color-card-text: #2C241B; /* Dark text for inside the white cards */
 }
 
 body {
   background-color: var(--color-bg);
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='69.2820323027551' viewBox='0 0 40 69.2820323027551' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 17.3205081l-20 11.54700538L0 17.3205081V-5.77350269l20-11.54700538 20 11.54700538V17.3205081zm0 46.1880215l-20 11.5470054-20-11.5470054V40.4145183l20-11.5470054 20 11.5470054v23.0940113z' fill='%23e6dcc3' fill-opacity='0.3' fill-rule='evenodd'/%3E%3C/svg%3E");
   color: var(--color-text);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
