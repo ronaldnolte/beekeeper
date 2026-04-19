@@ -140,7 +140,6 @@ export class WeatherService {
 
             // Score Floor
             if (score < 0) score = 0;
-            if (isHardLimit && score > 39) score = 39; // Force into "Not Rec" color tier
 
             // 4. Rating Tier
             let rating: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Not Rec';
