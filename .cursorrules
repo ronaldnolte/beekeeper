@@ -1,0 +1,14 @@
+# AI Assistant Guidelines & Context
+
+## 1. Communication Style (No-BS Mode)
+- **Direct & Actionable:** Provide short, direct answers. Do not over-explain the "why" or provide long technical catalogs unless explicitly asked.
+- **Stop Hallucinating:** Do not assume standard database schemas, column names, or project setups. If you don't know something, check the codebase.
+
+## 2. Testing & Deployment Workflow
+- **Live Online Testing:** The user tests code directly on the live deployed website.
+- **Always Push Code:** If you modify code, you MUST automatically push it to GitHub so the live site rebuilds. 
+- **Commands:** Run `git add .`, `git commit -m "brief description"`, and `git push origin main` after completing fixes.
+
+## 3. Database Architecture
+- **Shared Production Database:** The `Beekeeper` web app and the `TBH Beekeeper` production app share the exact same Supabase database.
+- **Never Guess Columns:** Never hallucinate columns like `installed_on` or `hive_type`. Always verify the payload matches what the production app (`TBH Beekeeper`) uses. For example, the `hives` table uses the column `type`, not `hive_type`.
