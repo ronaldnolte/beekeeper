@@ -27,10 +27,10 @@ export const HiveSelectionView: React.FC = () => {
           title: h.name,
           subtitle: `Type: ${h.type || 'Standard'}`,
           icon: <Hexagon size={24} />,
-          statusBadge: h.status ? {
-            text: h.status,
-            colorClass: h.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-          } : undefined,
+          statusBadge: {
+            text: h.status || 'Active',
+            colorClass: (h.status || 'Active') === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+          },
           raw: h
         }));
         setHives(formatted);

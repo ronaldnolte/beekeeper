@@ -53,18 +53,20 @@ export const HiveDetailView: React.FC = () => {
             </p>
           </div>
           <span className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase ${
-            hive.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+            (hive.status || 'Active') === 'Active' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
           }`}>
-            {hive.status || 'Unknown'}
+            {hive.status || 'Active'}
           </span>
         </div>
       </div>
 
       {/* 2. Interactive Hive Config */}
-      <HiveConfigWrapper 
-        hive={hive} 
-        onSnapshotSaved={() => setRefreshKey(prev => prev + 1)} 
-      />
+      <div className="w-full max-w-2xl">
+        <HiveConfigWrapper 
+          hive={hive} 
+          onSnapshotSaved={() => setRefreshKey(prev => prev + 1)} 
+        />
+      </div>
 
       {/* 3. Primary Action Grid (Compact 3-column row) */}
       <div className="w-full max-w-2xl">
