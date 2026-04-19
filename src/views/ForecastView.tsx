@@ -34,7 +34,9 @@ export const ForecastView: React.FC = () => {
             // Need geocoding, but since it's an SPA without a backend, we can try to use a free geocoder,
             // but ideally the user should set lat/lng.
             if (apiary.zip_code) {
-               const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${apiary.zip_code}&count=1&language=en&format=json`;
+               // Some zip codes might be stored with a country prefix like "us:87105"
+               const cleanZip = apiary.zip_code.includes(':') ? apiary.zip_code.split(':')[1] : apiary.zip_code;
+               const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${cleanZip}&count=1&language=en&format=json`;
                const geoRes = await fetch(geoUrl);
                const geoData = await geoRes.json();
                if (geoData.results && geoData.results.length > 0) {
