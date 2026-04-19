@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { resetGuestAccount } from '../lib/guestReset';
 import { Mail, Lock, ArrowRight, UserCircle2 } from 'lucide-react';
 
 export const Auth: React.FC = () => {
@@ -40,7 +41,15 @@ export const Auth: React.FC = () => {
       email: 'guest@beektools.com', 
       password: 'Guest2026#'
     });
-    if (error) setError('Guest login failed. Please try again later.');
+
+    if (error) {
+      setError('Guest login failed. Please try again later.');
+    } else {
+      // Re-seed the guest database to ensure a clean demo environment
+      // (This will also fix the zipcode issue for weather forecasts!)
+      await resetGuestAccount();
+    }
+    
     setLoading(false);
   };
 
