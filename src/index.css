@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* 
+  Global styles for the SPA Beekeeper App 
+  Adhering to the warm honey-yellow, soft whites, and dark brown text theme.
+*/
+
+:root {
+  --color-primary: #E67E22; /* Honey orange */
+  --color-primary-dark: #D35400;
+  --color-bg: #2C241B; /* Deep rich brown/charcoal */
+  --color-text: #FDFBF7; /* Bright off-white */
+  --color-card-bg: #FFFFFF;
+  --color-card-text: #2C241B; /* Dark text for inside the white cards */
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Base utility classes for high contrast selection lists */
+@layer components {
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-[#E6DCC3] overflow-hidden;
+  }
+  
+  .glass-header {
+    @apply bg-white/95 backdrop-blur shadow-sm border-b border-[#E6DCC3];
+  }
+}
