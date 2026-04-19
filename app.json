@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "BeekTools",
+    "slug": "tbh-beekeeper",
+    "extra": {
+      "eas": {
+        "projectId": "9bc69734-9cc9-4c27-b004-120c62057993"
+      }
+    }
+  }
+}

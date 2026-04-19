@@ -7,13 +7,29 @@ export const Auth: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [isResetMode, setIsResetMode] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setError(error.message);
+    setMessage(null);
+
+    if (isResetMode) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { 
+        redirectTo: window.location.origin 
+      });
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Check your email for the password reset link.');
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) setError(error.message);
+    }
+    
     setLoading(false);
   };
 
@@ -22,7 +38,7 @@ export const Auth: React.FC = () => {
     setError(null);
     const { error } = await supabase.auth.signInWithPassword({ 
       email: 'guest@beektools.com', 
-      password: 'guestpassword123!' // Assuming standard guest password, adjust if needed
+      password: 'Guest2026#'
     });
     if (error) setError('Guest login failed. Please try again later.');
     setLoading(false);
@@ -48,6 +64,12 @@ export const Auth: React.FC = () => {
           </div>
         )}
 
+        {message && (
+          <div className="mb-6 p-4 bg-green-50 text-green-700 text-sm rounded-xl border border-green-100 font-bold">
+            {message}
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5 relative z-10">
           <div>
             <label className="block text-xs sm:text-sm font-black text-[var(--color-text)] mb-1 uppercase tracking-wide">Email</label>
@@ -66,29 +88,55 @@ export const Auth: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs sm:text-sm font-black text-[var(--color-text)] mb-1 uppercase tracking-wide">Password</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                <Lock size={18} />
+          {!isResetMode && (
+            <div>
+              <label className="block text-xs sm:text-sm font-black text-[var(--color-text)] mb-1 uppercase tracking-wide">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <Lock size={18} />
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 sm:py-3.5 border-2 border-[#E6DCC3] rounded-xl focus:ring-4 focus:ring-[#E67E22]/20 focus:border-[#E67E22] transition-all bg-white text-gray-900 font-bold"
+                  placeholder="••••••••"
+                  required={!isResetMode}
+                />
               </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 sm:py-3.5 border-2 border-[#E6DCC3] rounded-xl focus:ring-4 focus:ring-[#E67E22]/20 focus:border-[#E67E22] transition-all bg-white text-gray-900 font-bold"
-                placeholder="••••••••"
-                required
-              />
             </div>
-          </div>
+          )}
+
+          {!isResetMode && (
+            <div className="flex justify-end">
+              <button 
+                type="button" 
+                onClick={() => { setIsResetMode(true); setError(null); setMessage(null); }}
+                className="text-xs sm:text-sm font-bold text-[#E67E22] hover:text-[#D35400] transition-colors"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
+
+          {isResetMode && (
+            <div className="flex justify-end">
+              <button 
+                type="button" 
+                onClick={() => { setIsResetMode(false); setError(null); setMessage(null); }}
+                className="text-xs sm:text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Back to Login
+              </button>
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full py-3.5 bg-gradient-to-r from-[#E67E22] to-[#D35400] text-white rounded-xl font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70"
           >
-            {loading ? 'Logging in...' : 'Log In'}
+            {loading ? (isResetMode ? 'Sending...' : 'Logging in...') : (isResetMode ? 'Send Reset Link' : 'Log In')}
             {!loading && <ArrowRight size={18} />}
           </button>
         </form>

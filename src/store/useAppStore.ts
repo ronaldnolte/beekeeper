@@ -14,7 +14,8 @@ export type AppView =
   | 'STATUS_UPDATE_FORM'// Level 4: Status update overlay
   | 'FORECAST'          // Global: Apiary Forecast
   | 'ASK_AI'            // Global: Ask AI Gemini Assistant
-  | 'ROADMAP';          // Global: Feedback & Roadmap
+  | 'ROADMAP'           // Global: Feedback & Roadmap
+  | 'UPDATE_PASSWORD';  // Global: Reset password flow
 
 interface AppState {
   currentView: AppView;

@@ -13,6 +13,7 @@ import { StatusUpdateView } from './views/StatusUpdateView';
 import { RoadmapView } from './views/RoadmapView';
 import { ForecastView } from './views/ForecastView';
 import { AskAIView } from './views/AskAIView';
+import { UpdatePasswordView } from './views/UpdatePasswordView';
 import { FeedbackModal } from './components/FeedbackModal';
 
 function App() {
@@ -33,8 +34,13 @@ function App() {
     // 2. Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      
+      // If the user clicked a "Reset Password" link in their email, route them to the update screen
+      if (event === 'PASSWORD_RECOVERY') {
+        useAppStore.getState().setCurrentView('UPDATE_PASSWORD');
+      }
     });
 
     // 3. HARDWARE BACK BUTTON HIJACK (popstate listener)
@@ -98,6 +104,8 @@ function App() {
         {currentView === 'ASK_AI' && <AskAIView />}
 
         {currentView === 'ROADMAP' && <RoadmapView />}
+
+        {currentView === 'UPDATE_PASSWORD' && <UpdatePasswordView />}
       </main>
 
       {/* Global Modals */}
