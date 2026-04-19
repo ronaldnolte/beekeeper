@@ -58,7 +58,7 @@ export class WeatherService {
             const code = weathercode[i];
             const humidity = relative_humidity_2m[i];
 
-            // 1. Point Breakdown Calculation
+            // 1. Temperature (Max 40)
             let tempPts = 0;
             if (temp >= 75) tempPts = 40;
             else if (temp >= 70) tempPts = 37;
@@ -66,41 +66,42 @@ export class WeatherService {
             else if (temp >= 60) tempPts = 27;
             else if (temp >= 57) tempPts = 18;
             else if (temp >= 55) tempPts = 8;
-            else tempPts = 0;
+            
+            // TBH Heat Penalty
+            if (temp > 80) {
+                const degreesAbove80 = temp - 80;
+                const penalty = Math.floor(degreesAbove80 / 5) * 10;
+                tempPts = Math.max(0, tempPts - penalty);
+            }
 
+            // 2. Cloud Cover (Max 20)
             let cloudPts = 0;
-            if (cloud < 25) cloudPts = 20;        // Sunny
-            else if (cloud < 60) cloudPts = 17;   // Partly Cloudy
-            else if (cloud < 85) cloudPts = 12;   // Mostly Cloudy
-            else cloudPts = 6;                    // Overcast
+            if (cloud <= 20) cloudPts = 20;
+            else if (cloud <= 40) cloudPts = 17;
+            else if (cloud <= 60) cloudPts = 12;
+            else if (cloud <= 80) cloudPts = 6;
+            else cloudPts = 6;
 
+            // 3. Wind (Max 20)
             let windPts = 0;
-            if (wind < 5) windPts = 20;
-            else if (wind < 10) windPts = 18;
-            else if (wind < 15) windPts = 12;
-            else if (wind < 20) windPts = 6;
-            else if (wind < 24) windPts = 2;
-            else windPts = 0;
+            if (wind <= 5) windPts = 20;
+            else if (wind <= 10) windPts = 18;
+            else if (wind <= 15) windPts = 12;
+            else if (wind <= 20) windPts = 6;
+            else if (wind <= 24) windPts = 2;
 
+            // 4. Precipitation Probability (Max 15)
             let precipPts = 0;
             if (precipProb === 0) precipPts = 15;
             else if (precipProb <= 10) precipPts = 12;
             else if (precipProb <= 20) precipPts = 8;
             else if (precipProb <= 35) precipPts = 4;
             else if (precipProb <= 49) precipPts = 1;
-            else precipPts = 0;
 
-            let humidityPts = 0;
-            if (humidity >= 30 && humidity <= 70) humidityPts = 5;
+            // 5. Humidity (Max 5)
+            let humidityPts = (humidity >= 30 && humidity <= 70) ? 5 : 0;
 
             let score = tempPts + cloudPts + windPts + precipPts + humidityPts;
-
-            // 2. TBH Heat Penalty
-            if (temp > 80) {
-                const degreesOver = temp - 80;
-                const penaltyMultiplier = Math.floor(degreesOver / 5) + 1;
-                score -= (penaltyMultiplier * 10);
-            }
 
             // 3. Condition Strings
             const goodConditions: string[] = [];
