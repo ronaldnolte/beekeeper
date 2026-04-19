@@ -99,6 +99,31 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
     setError(null);
     
     try {
+      // 1. Get all hive IDs inside this apiary to cascade delete their dependencies
+      const { data: hives } = await supabase
+        .from('hives')
+        .select('id')
+        .eq('apiary_id', editingApiary.id);
+        
+      const hiveIds = hives?.map(h => h.id) || [];
+
+      // 2. If there are hives, delete their child records first (run in parallel for speed)
+      if (hiveIds.length > 0) {
+        await Promise.all([
+          supabase.from('tasks').delete().in('hive_id', hiveIds),
+          supabase.from('interventions').delete().in('hive_id', hiveIds),
+          supabase.from('hive_snapshots').delete().in('hive_id', hiveIds),
+          supabase.from('inspections').delete().in('hive_id', hiveIds)
+        ]);
+      }
+
+      // 3. Delete the hives themselves, plus any weather forecasts linked to the apiary
+      await Promise.all([
+        supabase.from('hives').delete().eq('apiary_id', editingApiary.id),
+        supabase.from('weather_forecasts').delete().eq('apiary_id', editingApiary.id)
+      ]);
+
+      // 4. Finally, delete the apiary itself now that constraints are cleared
       const { error: deleteError } = await supabase
         .from('apiaries')
         .delete()
