@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import { useAppStore } from './store/useAppStore';
 import { Auth } from './components/Auth';
 import { AppHeader } from './components/AppHeader';
@@ -45,7 +46,7 @@ function App() {
     });
 
     // 3. HARDWARE BACK BUTTON HIJACK (popstate listener & Capacitor)
-    const handlePopState = (event: PopStateEvent) => {
+    const handlePopState = () => {
       // The popstate is handled correctly by our new hierarchical routing
     };
 
@@ -53,11 +54,11 @@ function App() {
 
     // Capacitor Hardware Back Button Support (Android)
     let backButtonListener: any = null;
-    if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform()) {
-      CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+    if (Capacitor.isNativePlatform()) {
+      CapacitorApp.addListener('backButton', () => {
         // If we can go back in the SPA history, we'll let our store handle it hierarchically
         useAppStore.getState().goBack();
-      }).then(listener => {
+      }).then((listener: any) => {
         backButtonListener = listener;
       });
     }
