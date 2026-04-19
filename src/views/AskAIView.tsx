@@ -46,7 +46,7 @@ export const AskAIView: React.FC = () => {
       // 2. We use window.location.origin to hit the Vercel API route if deployed, 
       // or we can fallback to a local URL if running a local proxy.
       // For Vite development, we might need a proxy, but for Vercel deployment this works perfectly.
-      const apiUrl = import.meta.env.DEV ? '/api/chat' : '/api/chat';
+      const apiUrl = import.meta.env.DEV ? '/api/chat' : 'https://beekeeper.beektools.com/api/chat';
       
       const response = await fetch(apiUrl, {
         method: 'POST',
