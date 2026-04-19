@@ -118,18 +118,19 @@ export const InterventionFormView: React.FC = () => {
           </button>
         </div>
 
-        <div className="w-full max-w-2xl">
-          <HistoryFeed hiveId={selectedHiveId!} filter="interventions" />
-        </div>
-
-        <div className="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-t from-[var(--color-bg)] to-[var(--color-bg)]/80 backdrop-blur-sm z-50 flex justify-center">
+        <div className="w-full max-w-2xl mb-4">
           <button
             onClick={() => setIsFormOpen(true)}
-            className="w-full max-w-2xl bg-[#E67E22] text-white py-4 rounded-2xl font-black text-xl hover:bg-[#D35400] transition-colors shadow-lg flex items-center justify-center gap-2 active:scale-95"
+            className="w-full bg-[#E67E22] text-white py-4 rounded-2xl font-black text-xl hover:bg-[#D35400] transition-colors shadow-sm flex items-center justify-center gap-2 active:scale-95"
           >
             + Add Intervention
           </button>
         </div>
+
+        <div className="w-full max-w-2xl">
+          <HistoryFeed hiveId={selectedHiveId!} filter="interventions" />
+        </div>
+
       </div>
     );
   }
