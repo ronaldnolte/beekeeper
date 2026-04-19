@@ -43,6 +43,20 @@ export const AppHeader: React.FC = () => {
           {user.email}
         </div>
         
+        {/* Ask AI Button */}
+        <button 
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.history.pushState({ view: 'ASK_AI' }, '');
+            }
+            useAppStore.getState().setCurrentView('ASK_AI');
+          }}
+          className="w-9 h-9 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 flex items-center justify-center transition-transform active:scale-95 shadow-sm ml-1"
+          title="Ask AI Beekeeper"
+        >
+          <span className="text-sm">✨</span>
+        </button>
+        
         {/* Feedback Button */}
         <button 
           onClick={() => useAppStore.getState().setFeedbackModalOpen(true)}

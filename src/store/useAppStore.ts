@@ -12,6 +12,7 @@ export type AppView =
   | 'TASK_FORM'         // Level 4: Task overlay
   | 'STATUS_UPDATE_FORM'// Level 4: Status update overlay
   | 'FORECAST'          // Global: Apiary Forecast
+  | 'ASK_AI'            // Global: Ask AI Gemini Assistant
   | 'ROADMAP';          // Global: Feedback & Roadmap
 
 interface AppState {

@@ -12,6 +12,7 @@ import { TaskFormView } from './views/TaskFormView';
 import { StatusUpdateView } from './views/StatusUpdateView';
 import { RoadmapView } from './views/RoadmapView';
 import { ForecastView } from './views/ForecastView';
+import { AskAIView } from './views/AskAIView';
 import { FeedbackModal } from './components/FeedbackModal';
 
 function App() {
@@ -91,6 +92,8 @@ function App() {
         {currentView === 'STATUS_UPDATE_FORM' && <StatusUpdateView />}
 
         {currentView === 'FORECAST' && <ForecastView />}
+
+        {currentView === 'ASK_AI' && <AskAIView />}
 
         {currentView === 'ROADMAP' && <RoadmapView />}
       </main>
