@@ -53,15 +53,27 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     }
   }, [isOpen, initialData]);
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const handleSave = async () => {
+    setErrorMsg(null);
     if (!title.trim()) {
-      alert("Please enter a task title");
+      setErrorMsg("Please enter a task title");
       return;
     }
     
     setLoading(true);
 
     try {
+      let parsedDueDate = null;
+      try {
+        if (dueDate) {
+          parsedDueDate = new Date(dueDate).toISOString();
+        }
+      } catch (e: any) {
+        throw new Error("Invalid due date");
+      }
+
       const payload = {
         // If editing, preserve the existing hive/apiary. Otherwise use defaults (if provided), else null for General Tasks.
         hive_id: isEditing ? initialData.hive_id : (defaultHiveId || null),
@@ -71,7 +83,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         title,
         description,
         priority,
-        due_date: new Date(dueDate).toISOString(),
+        due_date: parsedDueDate,
         status
       };
 
@@ -90,7 +102,8 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
       onSuccess();
     } catch (error: any) {
-      alert('Error saving task: ' + error.message);
+      console.error("Task Save Error:", error);
+      setErrorMsg(error.message || 'An unexpected error occurred while saving.');
     } finally {
       setLoading(false);
     }
@@ -220,6 +233,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           </div>
 
         </div>
+
+        {errorMsg && (
+          <div className="px-4 pb-2 sm:px-6">
+            <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border-2 border-red-100 flex items-center gap-2">
+              <span className="text-xl">⚠️</span> {errorMsg}
+            </div>
+          </div>
+        )}
 
         {/* Footer Actions */}
         <div className="flex-shrink-0 p-4 border-t border-gray-100 bg-white flex justify-center gap-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">

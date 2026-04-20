@@ -57,6 +57,15 @@ export const TaskFormView: React.FC = () => {
     setLoading(true);
 
     try {
+      let parsedDueDate = null;
+      try {
+        if (dueDate) {
+          parsedDueDate = new Date(dueDate).toISOString();
+        }
+      } catch (e) {
+        throw new Error("Invalid due date");
+      }
+
       const payload = {
         hive_id: selectedHiveId,
         apiary_id: selectedApiaryId,
@@ -65,7 +74,7 @@ export const TaskFormView: React.FC = () => {
         title,
         description,
         priority,
-        due_date: new Date(dueDate).toISOString(),
+        due_date: parsedDueDate,
         status
       };
 
@@ -88,7 +97,8 @@ export const TaskFormView: React.FC = () => {
       setCurrentView('HIVE_DETAIL');
 
     } catch (error: any) {
-      alert('Error saving task: ' + error.message);
+      console.error("Task Save Error:", error);
+      alert(error.message || 'An unexpected error occurred while saving.');
     } finally {
       setLoading(false);
     }
