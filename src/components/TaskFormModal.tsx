@@ -86,10 +86,17 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       };
 
       if (isEditing) {
-        const { error } = await supabase
+        // Add timeout to prevent silent hangs
+        const updatePromise = supabase
           .from('tasks')
           .update(payload)
           .eq('id', initialData.id);
+          
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Database update request timed out after 8 seconds.")), 8000)
+        );
+
+        const { error } = await Promise.race([updatePromise, timeoutPromise]) as any;
         if (error) throw error;
       } else {
         const { error } = await supabase
@@ -252,6 +259,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             </button>
           )}
           <button
+            type="button"
             onClick={handleSave}
             disabled={loading}
             className="flex-1 flex items-center justify-center gap-2 p-4 bg-[#E67E22] text-white rounded-2xl font-black text-lg shadow-lg shadow-[#E67E22]/20 active:scale-95 transition-transform disabled:opacity-70"
