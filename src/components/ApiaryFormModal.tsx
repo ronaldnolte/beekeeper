@@ -109,19 +109,35 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
 
       // 2. If there are hives, delete their child records first (run in parallel for speed)
       if (hiveIds.length > 0) {
-        await Promise.all([
+        const results = await Promise.all([
           supabase.from('tasks').delete().in('hive_id', hiveIds),
           supabase.from('interventions').delete().in('hive_id', hiveIds),
           supabase.from('hive_snapshots').delete().in('hive_id', hiveIds),
           supabase.from('inspections').delete().in('hive_id', hiveIds)
         ]);
+        
+        const childError = results.find(r => r.error)?.error;
+        if (childError) throw childError;
       }
 
       // 3. Delete the hives themselves, plus any weather forecasts linked to the apiary
-      await Promise.all([
+      const hiveResults = await Promise.all([
         supabase.from('hives').delete().eq('apiary_id', editingApiary.id),
         supabase.from('weather_forecasts').delete().eq('apiary_id', editingApiary.id)
       ]);
+      
+      const hiveError = hiveResults.find(r => r.error)?.error;
+      if (hiveError) throw hiveError;
+
+      // 3.5 VERIFY the hives were actually deleted (RLS can silently block deletes)
+      const { count } = await supabase
+        .from('hives')
+        .select('*', { count: 'exact', head: true })
+        .eq('apiary_id', editingApiary.id);
+        
+      if (count && count > 0) {
+        throw new Error(`Failed to delete all hives. ${count} hive(s) could not be deleted. You may need to delete them manually first.`);
+      }
 
       // 4. Finally, delete the apiary itself now that constraints are cleared
       const { error: deleteError } = await supabase
