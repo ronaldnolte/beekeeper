@@ -70,7 +70,6 @@ export const TaskFormView: React.FC = () => {
         hive_id: selectedHiveId,
         apiary_id: selectedApiaryId,
         assigned_user_id: user?.id,
-        scope: 'hive',
         title,
         description,
         priority,

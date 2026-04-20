@@ -75,11 +75,9 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       }
 
       const payload = {
-        // If editing, preserve the existing hive/apiary. Otherwise use defaults (if provided), else null for General Tasks.
         hive_id: isEditing ? initialData.hive_id : (defaultHiveId || null),
         apiary_id: isEditing ? initialData.apiary_id : (defaultApiaryId || null),
         assigned_user_id: user?.id,
-        scope: (isEditing ? initialData.hive_id : defaultHiveId) ? 'hive' : 'user',
         title,
         description,
         priority,
