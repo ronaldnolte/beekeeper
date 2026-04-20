@@ -11,6 +11,7 @@ export interface SelectionItem {
   };
   icon?: React.ReactNode;
   raw?: any;
+  onDelete?: (id: string) => void;
 }
 
 interface SelectionCardProps {
@@ -54,18 +55,31 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
         </div>
       </button>
 
-      {/* Edit Button Overlay */}
-      {onEdit && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit(item.id);
-          }}
-          className="absolute right-12 top-1/2 -translate-y-1/2 px-3 py-1.5 text-sm font-bold text-[#E67E22] bg-[#FFFBF0] hover:bg-[#FDEBD0] rounded-lg transition-colors border border-[#E6DCC3] z-10"
-        >
-          Edit
-        </button>
-      )}
+      {/* Edit/Delete Button Overlay */}
+      <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity sm:opacity-100">
+        {onEdit && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(item.id);
+            }}
+            className="px-3 py-1.5 text-sm font-bold text-[#E67E22] bg-[#FFFBF0] hover:bg-[#FDEBD0] rounded-lg transition-colors border border-[#E6DCC3]"
+          >
+            Edit
+          </button>
+        )}
+        {item.onDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              item.onDelete!(item.id);
+            }}
+            className="px-3 py-1.5 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200"
+          >
+            Delete
+          </button>
+        )}
+      </div>
     </div>
   );
 };

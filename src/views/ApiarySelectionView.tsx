@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { SelectionList } from '../components/SelectionList';
 import type { SelectionItem } from '../components/SelectionCard';
-import { MapPin, Plus, Settings } from 'lucide-react';
+import { MapPin, Plus } from 'lucide-react';
 import { ApiaryFormModal } from '../components/ApiaryFormModal';
 import { TaskList } from '../components/TaskList';
 import { TaskFormModal } from '../components/TaskFormModal';
@@ -54,6 +54,25 @@ export const ApiarySelectionView: React.FC = () => {
     setIsTaskFormOpen(true);
   };
 
+  const handleDeleteApiary = async (id: string) => {
+    const apiary = apiaries.find(a => a.id === id);
+    if (!apiary || !user) return;
+    
+    if (!window.confirm(`Are you sure you want to delete "${apiary.title}"? This will delete all hives inside it!`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { deleteApiaryWithCascade } = await import('../lib/apiaryDelete');
+      await deleteApiaryWithCascade(id, user.id);
+      window.location.reload();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete apiary');
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full min-h-screen flex flex-col items-center pt-6 honeycomb-bg pb-24">
       
@@ -87,14 +106,14 @@ export const ApiarySelectionView: React.FC = () => {
         </div>
         <button
           onClick={() => setApiaryFormOpen(true, null)}
-          className="text-[#E67E22] font-bold text-sm px-3 py-1.5 bg-white rounded-lg border border-[#E67E22]/30 hover:bg-[#E67E22]/5 flex items-center gap-1.5 active:scale-95"
+          className="text-[#E67E22] font-bold text-sm px-3 py-1.5 bg-white rounded-lg border border-[#E67E22]/30 hover:bg-[#E67E22]/5 flex items-center gap-1.5 active:scale-95 shadow-sm"
         >
-          <Settings size={14} /> Manage
+          <Plus size={14} /> Create Apiary
         </button>
       </div>
 
       <SelectionList 
-        items={apiaries}
+        items={apiaries.map(a => ({ ...a, onDelete: handleDeleteApiary }))}
         isLoading={loading}
         onSelect={selectApiary}
         onEdit={(id) => {
