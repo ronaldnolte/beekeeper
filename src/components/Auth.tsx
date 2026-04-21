@@ -7,7 +7,15 @@ export const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const searchParams = new URLSearchParams(window.location.search);
+      const errorDesc = hashParams.get('error_description') || searchParams.get('error_description');
+      if (errorDesc) return "Link Error: " + decodeURIComponent(errorDesc).replace(/\+/g, ' ');
+    }
+    return null;
+  });
   const [message, setMessage] = useState<string | null>(null);
   const [isResetMode, setIsResetMode] = useState(false);
 
@@ -18,7 +26,9 @@ export const Auth: React.FC = () => {
     setMessage(null);
 
     if (isResetMode) {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://beekeeper.beektools.com/auth/update-password'
+      });
       if (error) {
         if (error.message === "{}" || error.status === 504) {
           setError("Connection timed out. Please try again.");
