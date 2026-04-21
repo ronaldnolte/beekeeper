@@ -39,14 +39,14 @@ export const UpdatePasswordView: React.FC = () => {
         }
       });
 
-      // 3. Set fallback timeout (10 seconds)
+      // 3. Set fallback timeout (3 seconds is enough for local storage)
       setTimeout(async () => {
         const { data: { session: finalSession } } = await supabase.auth.getSession();
+        setVerifying(false);
         if (!finalSession) {
-          setVerifying(false);
           setError('Unable to verify security token. The link may have expired.');
         }
-      }, 10000);
+      }, 3000);
 
       return () => subscription.unsubscribe();
     };
