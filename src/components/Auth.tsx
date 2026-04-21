@@ -18,11 +18,13 @@ export const Auth: React.FC = () => {
     setMessage(null);
 
     if (isResetMode) {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { 
-        redirectTo: window.location.origin 
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) {
-        setError(error.message);
+        if (error.message === "{}" || error.status === 504) {
+          setError("Connection timed out. Please try again.");
+        } else {
+          setError(error.message);
+        }
       } else {
         setMessage('Check your email for the password reset link.');
       }
