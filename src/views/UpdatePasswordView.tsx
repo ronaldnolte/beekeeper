@@ -32,23 +32,29 @@ export const UpdatePasswordView: React.FC = () => {
       // Since Supabase intercepts the token hash automatically in the root App component,
       // the session should be available here. If not, wait for auto-recovery events.
 
+      let timeoutId: any;
+
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, _session) => {
         if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+          if (timeoutId) clearTimeout(timeoutId);
           setVerifying(false);
           setError('');
         }
       });
 
-      // 3. Set fallback timeout (3 seconds is enough for local storage)
-      setTimeout(async () => {
+      // 3. Set fallback timeout (4 seconds)
+      timeoutId = setTimeout(async () => {
         const { data: { session: finalSession } } = await supabase.auth.getSession();
         setVerifying(false);
         if (!finalSession) {
           setError('Unable to verify security token. The link may have expired.');
         }
-      }, 3000);
+      }, 4000);
 
-      return () => subscription.unsubscribe();
+      return () => {
+        subscription.unsubscribe();
+        if (timeoutId) clearTimeout(timeoutId);
+      };
     };
 
     checkSession();
@@ -177,7 +183,7 @@ export const UpdatePasswordView: React.FC = () => {
 
           <button
             type="submit"
-            disabled={loading || !!error}
+            disabled={loading}
             className="w-full mt-4 py-3.5 bg-gradient-to-r from-[#E67E22] to-[#D35400] text-white rounded-xl font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70"
           >
             {loading ? 'Updating...' : 'Update Password'}
