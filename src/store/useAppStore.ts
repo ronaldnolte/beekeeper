@@ -76,7 +76,12 @@ export const useAppStore = create<AppState>()((set) => ({
       },
 
       setUser: (user) => set((state) => {
-        if (!user) return { user: null, currentView: 'AUTH', isAuthLoading: false };
+        if (!user) {
+          if (state.currentView === 'UPDATE_PASSWORD') {
+            return { user: null, isAuthLoading: false };
+          }
+          return { user: null, currentView: 'AUTH', isAuthLoading: false };
+        }
         
         // If they already have a persisted state (like HIVE_DETAIL), keep them there.
         // Otherwise send them to SELECT_APIARY
