@@ -45,6 +45,11 @@ function App() {
       }
     });
 
+    // FOOLPROOF ROUTING BYPASS: If the URL physically contains /auth/update-password, lock the screen!
+    if (typeof window !== 'undefined' && window.location.pathname === '/auth/update-password') {
+      useAppStore.getState().setCurrentView('UPDATE_PASSWORD');
+    }
+
     // 3. HARDWARE BACK BUTTON HIJACK (popstate listener & Capacitor)
     const handlePopState = () => {
       // The popstate is handled correctly by our new hierarchical routing
