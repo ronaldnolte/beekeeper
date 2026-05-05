@@ -22,7 +22,7 @@ interface SelectionCardProps {
 
 export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onEdit }) => {
   return (
-    <div className="relative group w-full">
+    <div className="relative group w-full flex flex-col mb-2">
       <button
         onClick={() => onClick(item.id)}
         className="w-full text-left card p-4 flex items-center justify-between hover:shadow-md transition-all active:scale-[0.98] bg-white border border-[#E6DCC3]"
@@ -35,7 +35,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
           )}
           
           <div>
-            <h3 className="font-bold text-lg text-[var(--color-card-text)] leading-tight pr-16">{item.title}</h3>
+            <h3 className="font-bold text-lg text-[var(--color-card-text)] leading-tight sm:pr-16">{item.title}</h3>
             
             <div className="flex items-center gap-2 mt-1">
               {item.statusBadge && (
@@ -55,8 +55,36 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
         </div>
       </button>
 
-      {/* Edit/Delete Button Overlay */}
-      <div className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity sm:opacity-100">
+      {/* Mobile Action Bar */}
+      {(onEdit || item.onDelete) && (
+        <div className="flex sm:hidden items-center justify-end gap-2 mt-2">
+          {onEdit && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(item.id);
+              }}
+              className="px-4 py-2 text-sm font-bold text-[#E67E22] bg-white hover:bg-[#FDEBD0] rounded-xl shadow-sm border border-[#E6DCC3] flex-1 text-center transition-colors active:scale-95"
+            >
+              Edit
+            </button>
+          )}
+          {item.onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                item.onDelete!(item.id);
+              }}
+              className="px-4 py-2 text-sm font-bold text-red-600 bg-white hover:bg-red-50 rounded-xl shadow-sm border border-red-200 flex-1 text-center transition-colors active:scale-95"
+            >
+              Delete
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Desktop Edit/Delete Button Overlay */}
+      <div className="hidden sm:flex absolute right-12 top-1/2 -translate-y-1/2 items-center gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
         {onEdit && (
           <button
             onClick={(e) => {
