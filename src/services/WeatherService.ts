@@ -28,7 +28,7 @@ export class WeatherService {
         // Use generic GFS model for global support
         const model = 'gfs_seamless';
         
-        const url = `${this.WEATHER_API_URL}?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weathercode,cloudcover,windspeed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7&models=${model}`;
+        const url = `${this.WEATHER_API_URL}?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weathercode,cloudcover,windspeed_10m,is_day&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7&models=${model}`;
 
         const response = await fetch(url);
         if (!response.ok) {
@@ -40,15 +40,15 @@ export class WeatherService {
     static calculateForecast(weatherData: any): InspectionWindow[] {
         if (!weatherData?.hourly) return [];
 
-        const { time, temperature_2m, windspeed_10m, cloudcover, precipitation_probability, relative_humidity_2m, weathercode } = weatherData.hourly;
+        const { time, temperature_2m, windspeed_10m, cloudcover, precipitation_probability, relative_humidity_2m, weathercode, is_day } = weatherData.hourly;
         const windows: InspectionWindow[] = [];
 
         for (let i = 0; i < time.length; i++) {
             // Parse hour directly from string "YYYY-MM-DDTHH:00" to avoid JS timezone shifts
             const hour = parseInt(time[i].slice(11, 13));
             
-            // We want 6am to 5pm to match the V1 Grid
-            const isDaylight = hour >= 6 && hour <= 17;
+            // Use API's daylight indicator to dynamically span from sunrise to sunset
+            const isDaylight = is_day ? is_day[i] === 1 : (hour >= 6 && hour <= 17);
             if (!isDaylight) continue;
 
             const temp = temperature_2m[i];

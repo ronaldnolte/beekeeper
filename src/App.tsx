@@ -14,6 +14,7 @@ import { TaskFormView } from './views/TaskFormView';
 import { StatusUpdateView } from './views/StatusUpdateView';
 import { RoadmapView } from './views/RoadmapView';
 import { ForecastView } from './views/ForecastView';
+import { SwarmPredictionView } from './views/SwarmPredictionView';
 import { AskAIView } from './views/AskAIView';
 import { UpdatePasswordView } from './views/UpdatePasswordView';
 import { FeedbackModal } from './components/FeedbackModal';
@@ -111,6 +112,8 @@ function App() {
         {currentView === 'FORECAST' && <ForecastView />}
 
         {currentView === 'ASK_AI' && <AskAIView />}
+
+        {currentView === 'SWARM_PREDICTION' && <SwarmPredictionView />}
 
         {currentView === 'ROADMAP' && <RoadmapView />}
 
