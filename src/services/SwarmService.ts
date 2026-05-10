@@ -216,7 +216,6 @@ export class SwarmService {
 
       const currentYear = new Date().getFullYear();
       const currentYearStr = String(currentYear);
-      const lastYearStr = String(currentYear - 1);
       
       const calculatedYears: { [year: string]: SwarmDataPoint[] } = {};
       let peakGDDThisYear = 0;
