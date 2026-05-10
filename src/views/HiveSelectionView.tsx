@@ -65,7 +65,7 @@ export const HiveSelectionView: React.FC = () => {
           }
 
           if (lat && lng) {
-            const analysis = await SwarmService.generateSwarmAnalysis(lat, lng);
+            const analysis = await SwarmService.generateSwarmAnalysis(lat, lng, true);
             if (analysis) {
               setSwarmScore(analysis.currentProbability);
               setSwarmColor(analysis.currentColor);

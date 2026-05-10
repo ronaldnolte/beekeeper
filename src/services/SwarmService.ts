@@ -176,10 +176,13 @@ export class SwarmService {
     }
   }
 
-  static async generateSwarmAnalysis(lat: number, lng: number): Promise<SwarmAnalysisResult | null> {
+  static async generateSwarmAnalysis(lat: number, lng: number, skipAgro: boolean = false): Promise<SwarmAnalysisResult | null> {
     try {
-      const polyId = await this.getPolygonId(lat, lng);
-      const ndviData = polyId ? await this.getNDVIData(polyId) : null;
+      let ndviData = null;
+      if (!skipAgro) {
+        const polyId = await this.getPolygonId(lat, lng);
+        ndviData = polyId ? await this.getNDVIData(polyId) : null;
+      }
       
       const weatherData = await this.getHistoricalWeather(lat, lng);
       if (!weatherData) return null;
