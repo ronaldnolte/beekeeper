@@ -54,7 +54,7 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
     try {
       const apiaryData = {
         name: name.trim(),
-        zip_code: locationMode === 'zip' ? zipCode.trim() : null,
+        zip_code: locationMode === 'zip' ? zipCode.trim() : '',
         latitude: locationMode === 'coords' && latitude ? parseFloat(latitude) : null,
         longitude: locationMode === 'coords' && longitude ? parseFloat(longitude) : null,
         notes: notes.trim(),
