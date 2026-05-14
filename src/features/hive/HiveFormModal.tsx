@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createHive, updateHive, deleteHive, fetchApiariesForDropdown } from '../../data/hiveRepository';
 import { useAppStore } from '../../store/useAppStore';
-import { Save, Trash2, X, Box } from 'lucide-react';
+import { Save, Trash2, X, Box, Minus, Plus } from 'lucide-react';
 
 export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
   const { user, isHiveFormOpen, editingHive, setHiveFormOpen, selectedApiaryId } = useAppStore();
@@ -9,6 +9,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
   // Form State
   const [name, setName] = useState('');
   const [hiveType, setHiveType] = useState('Top Bar');
+  const [barCount, setBarCount] = useState(30);
   const [installedOn, setInstalledOn] = useState(new Date().toISOString().split('T')[0]);
   
   // Apiary Select State
@@ -43,9 +44,13 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
         // For simplicity, default to current selected apiary and today if we don't have it.
         setSelectedApiary(editingHive.raw?.apiary_id || selectedApiaryId || '');
         setInstalledOn(editingHive.raw?.installed_on || new Date().toISOString().split('T')[0]);
+        // Load existing bar count if available
+        const existingBars = editingHive.raw?.bars;
+        setBarCount(Array.isArray(existingBars) ? existingBars.length : 30);
       } else {
         setName('');
         setHiveType('Top Bar');
+        setBarCount(30);
         setSelectedApiary(selectedApiaryId || '');
         setInstalledOn(new Date().toISOString().split('T')[0]);
       }
@@ -62,11 +67,19 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
     setError(null);
 
     try {
-      const hiveData = {
+      const hiveData: any = {
         name: name.trim(),
         apiary_id: selectedApiary,
         type: hiveType
       };
+
+      // For Top Bar hives, generate the initial bars array
+      if (hiveType === 'Top Bar' && !editingHive) {
+        hiveData.bars = Array.from({ length: barCount }, (_, i) => ({
+          position: i + 1,
+          status: 'inactive'
+        }));
+      }
 
       if (editingHive?.id) {
         await updateHive(editingHive.id, hiveData);
@@ -185,6 +198,38 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
               </button>
             </div>
           </div>
+
+          {/* Bar Count — only for Top Bar hives */}
+          {hiveType === 'Top Bar' && (
+            <div>
+              <label className="block text-sm font-black text-gray-400 uppercase tracking-wider mb-2">Number of Bars</label>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setBarCount(c => Math.max(1, c - 1))}
+                  className="w-12 h-12 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#E67E22] hover:text-[#E67E22] active:scale-90 transition-all"
+                >
+                  <Minus size={20} />
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={barCount}
+                  onChange={(e) => setBarCount(Math.max(1, Math.min(60, parseInt(e.target.value) || 1)))}
+                  className="w-20 text-center p-3 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-black text-gray-900 text-xl focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setBarCount(c => Math.min(60, c + 1))}
+                  className="w-12 h-12 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#E67E22] hover:text-[#E67E22] active:scale-90 transition-all"
+                >
+                  <Plus size={20} />
+                </button>
+                <span className="text-sm font-bold text-gray-400 ml-1">bars</span>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-black text-gray-400 uppercase tracking-wider mb-2">Installation Date</label>

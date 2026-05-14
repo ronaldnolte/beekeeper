@@ -24,6 +24,7 @@ export async function createHive(data: {
   name: string;
   apiary_id: string;
   type: string;
+  bars?: any;
 }) {
   const { error } = await supabase.from('hives').insert([data]);
   if (error) throw error;
