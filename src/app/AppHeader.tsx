@@ -51,15 +51,17 @@ export const AppHeader: React.FC = () => {
 
         {/* Right: Action Icons */}
         <div className="flex items-center gap-1">
-          {/* Ask AI */}
-          <button 
-            onClick={() => navigateTo('ASK_AI')}
-            className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-[var(--color-primary)] hover:bg-[var(--color-bg-raised)]"
-            title="Ask AI Beekeeper"
-          >
-            <Sparkles size={18} />
-            <span className="text-[9px] font-bold leading-none">Ask AI</span>
-          </button>
+          {/* Ask AI — only show after apiary is selected */}
+          {currentView !== 'SELECT_APIARY' && (
+            <button 
+              onClick={() => navigateTo('ASK_AI')}
+              className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-[var(--color-primary)] hover:bg-[var(--color-bg-raised)]"
+              title="Ask AI Beekeeper"
+            >
+              <Sparkles size={18} />
+              <span className="text-[9px] font-bold leading-none">Ask AI</span>
+            </button>
+          )}
           
           {/* Feedback */}
           <button 
