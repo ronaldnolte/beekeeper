@@ -137,10 +137,6 @@ export const useAppStore = create<AppState>()((set) => ({
           prevView = 'SELECT_APIARY';
         }
         
-        if (typeof window !== 'undefined') {
-          window.history.pushState({ view: prevView }, '');
-        }
-        
         return { currentView: prevView, selectedRecord: null };
       })
 }));

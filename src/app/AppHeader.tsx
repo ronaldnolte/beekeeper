@@ -4,7 +4,7 @@ import { useAppStore } from '../store/useAppStore';
 import { LogOut, ArrowLeft, Mail } from 'lucide-react';
 
 export const AppHeader: React.FC = () => {
-  const { currentView, goBack, user, navigateTo } = useAppStore();
+  const { currentView, user, navigateTo } = useAppStore();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -27,7 +27,7 @@ export const AppHeader: React.FC = () => {
       <div className="flex items-center gap-2">
         {showBackButton && (
           <button 
-            onClick={goBack}
+            onClick={() => window.history.back()}
             className="p-2 -ml-2 rounded-lg hover:bg-gray-100 text-[#E67E22] transition-colors"
           >
             <ArrowLeft size={20} />

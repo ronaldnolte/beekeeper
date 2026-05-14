@@ -51,9 +51,20 @@ function App() {
       useAppStore.getState().setCurrentView('UPDATE_PASSWORD');
     }
 
-    // 3. HARDWARE BACK BUTTON HIJACK (popstate listener & Capacitor)
-    const handlePopState = () => {
-      // The popstate is handled correctly by our new hierarchical routing
+    // 3. BROWSER BACK BUTTON — read the view from history state
+    const handlePopState = (event: PopStateEvent) => {
+      const view = event.state?.view;
+      if (view) {
+        // Sync the store to whatever history entry the browser navigated to
+        useAppStore.getState().setCurrentView(view);
+        useAppStore.getState().selectRecord(null);
+      } else {
+        // No state means we've gone back before any pushState — go to dashboard
+        const user = useAppStore.getState().user;
+        if (user) {
+          useAppStore.getState().setCurrentView('SELECT_APIARY');
+        }
+      }
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -62,8 +73,13 @@ function App() {
     let backButtonListener: any = null;
     if (Capacitor.isNativePlatform()) {
       CapacitorApp.addListener('backButton', () => {
-        // If we can go back in the SPA history, we'll let our store handle it hierarchically
-        useAppStore.getState().goBack();
+        // Use browser history.back() so it triggers the same popstate handler
+        if (useAppStore.getState().currentView === 'SELECT_APIARY') {
+          // At the top level — exit the app
+          CapacitorApp.exitApp();
+        } else {
+          window.history.back();
+        }
       }).then((listener: any) => {
         backButtonListener = listener;
       });
