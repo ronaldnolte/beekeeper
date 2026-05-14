@@ -18,6 +18,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
         setInstalledOn(new Date().toISOString().split('T')[0]);
       }
       setError(null);
+      setConfirmDelete(false);
     }
   }, [isHiveFormOpen, editingHive, selectedApiaryId]);
 
@@ -99,7 +101,8 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
   const handleDelete = async () => {
     if (!editingHive?.id) return;
     
-    if (!window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone and will delete all history!`)) {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
       return;
     }
 
@@ -262,7 +265,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
               )}
             </button>
             
-            {editingHive && (
+            {editingHive && !confirmDelete && (
               <button
                 type="button"
                 onClick={handleDelete}
@@ -275,6 +278,35 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
                   <><Trash2 size={20} /> Delete Hive</>
                 )}
               </button>
+            )}
+
+            {editingHive && confirmDelete && (
+              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 space-y-3">
+                <p className="text-red-700 font-bold text-sm text-center">
+                  ⚠️ Delete "{name}"? This will remove all inspections, tasks, and history. This cannot be undone.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    className="flex-1 py-3 rounded-xl font-black text-gray-600 bg-white border-2 border-gray-200 hover:bg-gray-50 transition-colors active:scale-[0.98]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="flex-1 py-3 rounded-xl font-black text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50 active:scale-[0.98] flex items-center justify-center gap-2"
+                  >
+                    {deleting ? (
+                      <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <><Trash2 size={16} /> Yes, Delete</>
+                    )}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </form>
