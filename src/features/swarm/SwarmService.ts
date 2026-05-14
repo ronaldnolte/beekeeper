@@ -18,93 +18,36 @@ export interface SwarmAnalysisResult {
 }
 
 export class SwarmService {
-  private static AGRO_API_KEY = import.meta.env.VITE_AGRO_API_KEY || 'mock_key';
-  
-  private static getPolygonGeoJSON(lat: number, lng: number) {
-    const offset = 0.0006; 
-    return {
-      type: "Feature",
-      properties: {},
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [lng - offset, lat - offset],
-            [lng - offset, lat + offset],
-            [lng + offset, lat + offset],
-            [lng + offset, lat - offset],
-            [lng - offset, lat - offset]
-          ]
-        ]
-      }
-    };
-  }
+  private static AGRO_PROXY = import.meta.env.DEV ? '/api/agro' : 'https://beekeeper.beektools.com/api/agro';
 
   private static async getPolygonId(lat: number, lng: number): Promise<string | null> {
-    if (this.AGRO_API_KEY === 'mock_key') return 'mock_poly_id';
     try {
-      const geojson = this.getPolygonGeoJSON(lat, lng);
-      const res = await fetch(`https://api.agromonitoring.com/agro/1.0/polygons?appid=${this.AGRO_API_KEY}&duplicated=true`, {
+      const res = await fetch(this.AGRO_PROXY, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: `Apiary_${Date.now()}`,
-          geo_json: geojson
-        })
+        body: JSON.stringify({ action: 'createPolygon', lat, lng })
       });
-      if (!res.ok) throw new Error("Failed to create polygon");
+      if (!res.ok) return null;
       const data = await res.json();
-      return data.id || null;
+      return data.polygonId || null;
     } catch (e) {
-      console.error("Agromonitoring polygon error:", e);
+      console.error('Agro proxy polygon error:', e);
       return null;
     }
   }
 
   private static async getNDVIData(polygonId: string): Promise<{ baseline: number, current: number, dearthDrop: boolean } | null> {
-    if (this.AGRO_API_KEY === 'mock_key' || !polygonId) {
-      return { baseline: 0.4, current: 0.65, dearthDrop: false };
-    }
+    if (!polygonId) return { baseline: 0.4, current: 0.65, dearthDrop: false };
     try {
-      // Baseline
-      const currentYear = new Date().getFullYear();
-      const jan1 = new Date(`${currentYear}-01-01T00:00:00Z`);
-      const jan31 = new Date(`${currentYear}-01-31T00:00:00Z`);
-      const startUnix = Math.floor(jan1.getTime() / 1000);
-      const endUnix = Math.floor(jan31.getTime() / 1000);
-
-      const janData = await fetch(`https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${startUnix}&end=${endUnix}&appid=${this.AGRO_API_KEY}`);
-      const janJson = await janData.json();
-      const baseline = (janJson && janJson.length > 0) ? janJson[0].data.mean : 0.4;
-
-      // Current & History (Last 30 days) to calculate 7-day drop
-      const currentEndUnix = Math.floor(Date.now() / 1000);
-      const currentStartUnix = currentEndUnix - (30 * 24 * 60 * 60);
-      
-      const currentData = await fetch(`https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${currentStartUnix}&end=${currentEndUnix}&appid=${this.AGRO_API_KEY}`);
-      const currentJson = await currentData.json();
-      
-      let current = 0.6;
-      let dearthDrop = false;
-
-      if (currentJson && currentJson.length > 0) {
-        current = currentJson[currentJson.length - 1].data.mean;
-        
-        // Find a reading roughly 7-14 days ago to compare
-        const oneWeekAgoUnix = currentEndUnix - (7 * 24 * 60 * 60);
-        const olderReading = currentJson.find((p: any) => p.dt <= oneWeekAgoUnix);
-        
-        if (olderReading) {
-           const oldMean = olderReading.data.mean;
-           if ((oldMean - current) > 0.05) {
-               dearthDrop = true; // Drop of more than 0.05
-           }
-        }
-      }
-
-      return { baseline, current, dearthDrop };
+      const res = await fetch(this.AGRO_PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'getNDVI', polygonId })
+      });
+      if (!res.ok) return null;
+      return await res.json();
     } catch (e) {
-      console.error("NDVI fetch error:", e);
+      console.error('Agro proxy NDVI error:', e);
       return null;
     }
   }
