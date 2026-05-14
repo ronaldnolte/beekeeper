@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronRight, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 
 export interface SelectionItem {
   id: string;
@@ -21,93 +21,85 @@ interface SelectionCardProps {
 }
 
 export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onEdit }) => {
+  const [showActions, setShowActions] = useState(false);
+
   return (
-    <div className="relative group w-full flex flex-col mb-2">
-      <button
-        onClick={() => onClick(item.id)}
-        className="w-full text-left card p-4 flex items-center justify-between hover:shadow-md transition-all active:scale-[0.98] bg-white border border-[#E6DCC3]"
-      >
-        <div className="flex items-center gap-4">
-          {item.icon && (
-            <div className="w-12 h-12 rounded-full bg-[#FFFBF0] flex items-center justify-center text-[#E67E22] border border-[#E6DCC3] group-hover:bg-[#E67E22] group-hover:text-white transition-colors">
-              {item.icon}
-            </div>
-          )}
-          
-          <div>
-            <h3 className="font-bold text-lg text-[var(--color-card-text)] leading-tight sm:pr-16">{item.title}</h3>
+    <div className="relative w-full flex flex-col mb-3">
+      <div className="flex items-center gap-2">
+        {/* Main card button */}
+        <button
+          onClick={() => onClick(item.id)}
+          className="flex-1 text-left card p-4 flex items-center justify-between hover:border-[var(--color-primary)]/30 transition-all active:scale-[0.98]"
+        >
+          <div className="flex items-center gap-3">
+            {item.icon && (
+              <div className="w-11 h-11 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
+                {item.icon}
+              </div>
+            )}
             
-            <div className="flex items-center gap-2 mt-1">
-              {item.statusBadge && (
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${item.statusBadge.colorClass}`}>
-                  {item.statusBadge.text}
-                </span>
-              )}
-              {item.subtitle && (
-                <p className="text-sm text-gray-500 font-medium">{item.subtitle}</p>
-              )}
+            <div>
+              <h3 className="font-bold text-base text-[var(--color-card-text)] leading-tight">{item.title}</h3>
+              
+              <div className="flex items-center gap-2 mt-0.5">
+                {item.statusBadge && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${item.statusBadge.colorClass}`}>
+                    {item.statusBadge.text}
+                  </span>
+                )}
+                {item.subtitle && (
+                  <p className="text-sm text-[var(--color-text-muted)] font-medium">{item.subtitle}</p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="text-gray-300 group-hover:text-[#E67E22] transition-colors flex items-center">
-          <ChevronRight size={24} />
-        </div>
-      </button>
+          <ChevronRight size={20} className="text-[var(--color-text-muted)] flex-shrink-0" />
+        </button>
 
-      {/* Mobile Action Bar */}
-      {(onEdit || item.onDelete) && (
-        <div className="flex sm:hidden items-center justify-end gap-2 mt-2">
+        {/* More button */}
+        {(onEdit || item.onDelete) && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowActions(!showActions);
+            }}
+            className="w-11 h-11 flex-shrink-0 rounded-xl border border-[var(--color-card-border)] bg-[var(--color-card-bg)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors active:scale-95"
+          >
+            <MoreVertical size={18} />
+          </button>
+        )}
+      </div>
+
+      {/* Expandable action row */}
+      {showActions && (onEdit || item.onDelete) && (
+        <div className="flex items-center gap-2 mt-2 animate-in slide-in-from-top-2 duration-200">
           {onEdit && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                setShowActions(false);
                 onEdit(item.id);
               }}
-              className="px-4 py-2 text-sm font-bold text-[#E67E22] bg-white hover:bg-[#FDEBD0] rounded-xl shadow-sm border border-[#E6DCC3] flex-1 text-center transition-colors active:scale-95"
+              className="flex-1 py-3 text-sm font-bold text-[var(--color-primary)] bg-[var(--color-primary)]/10 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95 border border-[var(--color-primary)]/20"
             >
-              Edit
+              <Pencil size={16} /> Edit
             </button>
           )}
           {item.onDelete && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                setShowActions(false);
                 item.onDelete!(item.id);
               }}
-              className="px-4 py-2 text-sm font-bold text-red-600 bg-white hover:bg-red-50 rounded-xl shadow-sm border border-red-200 flex-1 text-center transition-colors active:scale-95"
+              className="flex-1 py-3 text-sm font-bold text-red-400 bg-red-500/10 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95 border border-red-500/20"
             >
-              Delete
+              <Trash2 size={16} /> Delete
             </button>
           )}
         </div>
       )}
-
-      {/* Desktop Edit/Delete Button Overlay */}
-      <div className="hidden sm:flex absolute right-12 top-1/2 -translate-y-1/2 items-center gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-        {onEdit && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(item.id);
-            }}
-            className="px-3 py-1.5 text-sm font-bold text-[#E67E22] bg-[#FFFBF0] hover:bg-[#FDEBD0] rounded-lg transition-colors border border-[#E6DCC3]"
-          >
-            Edit
-          </button>
-        )}
-        {item.onDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              item.onDelete!(item.id);
-            }}
-            className="px-3 py-1.5 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200"
-          >
-            Delete
-          </button>
-        )}
-      </div>
     </div>
   );
 };

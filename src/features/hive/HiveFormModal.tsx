@@ -143,25 +143,25 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
         <form onSubmit={handleSave} className="p-6 space-y-5 overflow-y-auto">
           
           <div>
-            <label className="block text-sm font-black text-gray-400 uppercase tracking-wider mb-2">Hive Name</label>
+            <label className="block text-sm font-black text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Hive Name</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Hive 1, Queen Beatrice..."
-              className="w-full p-4 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 placeholder-gray-300 focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-lg"
+              className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-lg"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-black text-gray-400 uppercase tracking-wider mb-2">Location (Apiary)</label>
+            <label className="block text-sm font-black text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Location (Apiary)</label>
             <div className="relative">
               <select
                 required
                 value={selectedApiary}
                 onChange={(e) => setSelectedApiary(e.target.value)}
-                className="w-full p-4 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all appearance-none text-lg"
+                className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all appearance-none text-lg"
               >
                 <option value="" disabled>Select an Apiary...</option>
                 {apiaries.map(a => (
@@ -175,15 +175,15 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
           </div>
 
           <div>
-            <label className="block text-sm font-black text-gray-400 uppercase tracking-wider mb-2">Hive Type</label>
+            <label className="block text-sm font-black text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Hive Type</label>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setHiveType('Top Bar')}
                 className={`flex-1 py-3 px-4 rounded-xl border-2 font-black transition-all ${
                   hiveType === 'Top Bar' 
-                    ? 'border-[#E67E22] bg-[#FFFBF0] text-[#E67E22]' 
-                    : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/15 text-[var(--color-primary)]' 
+                    : 'border-[var(--color-card-border)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)]'
                 }`}
               >
                 Top Bar
@@ -193,8 +193,8 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
                 onClick={() => setHiveType('Langstroth')}
                 className={`flex-1 py-3 px-4 rounded-xl border-2 font-black transition-all ${
                   hiveType === 'Langstroth' 
-                    ? 'border-[#E67E22] bg-[#FFFBF0] text-[#E67E22]' 
-                    : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/15 text-[var(--color-primary)]' 
+                    : 'border-[var(--color-card-border)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)]'
                 }`}
               >
                 Langstroth
@@ -205,12 +205,12 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
           {/* Bar Count — only for Top Bar hives */}
           {hiveType === 'Top Bar' && (
             <div>
-              <label className="block text-sm font-black text-gray-400 uppercase tracking-wider mb-2">Number of Bars</label>
+              <label className="block text-sm font-black text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Number of Bars</label>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setBarCount(c => Math.max(1, c - 1))}
-                  className="w-12 h-12 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#E67E22] hover:text-[#E67E22] active:scale-90 transition-all"
+                  className="w-12 h-12 rounded-xl bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] active:scale-90 transition-all"
                 >
                   <Minus size={20} />
                 </button>
@@ -225,7 +225,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
                 <button
                   type="button"
                   onClick={() => setBarCount(c => Math.min(60, c + 1))}
-                  className="w-12 h-12 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center text-gray-500 hover:border-[#E67E22] hover:text-[#E67E22] active:scale-90 transition-all"
+                  className="w-12 h-12 rounded-xl bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] active:scale-90 transition-all"
                 >
                   <Plus size={20} />
                 </button>
@@ -235,18 +235,18 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
           )}
 
           <div>
-            <label className="block text-sm font-black text-gray-400 uppercase tracking-wider mb-2">Installation Date</label>
+            <label className="block text-sm font-black text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Installation Date</label>
             <input
               type="date"
               required
               value={installedOn}
               onChange={(e) => setInstalledOn(e.target.value)}
-              className="w-full p-4 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-lg"
+              className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-lg"
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border-2 border-red-100 flex items-center gap-2">
+            <div className="bg-red-500/10 text-red-400 p-4 rounded-xl text-sm font-bold border-2 border-red-500/20 flex items-center gap-2">
               <span className="text-xl">⚠️</span> {error}
             </div>
           )}
@@ -270,7 +270,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
                 type="button"
                 onClick={handleDelete}
                 disabled={saving || deleting}
-                className="w-full bg-red-50 text-red-600 py-4 rounded-xl font-black hover:bg-red-100 transition-colors disabled:opacity-50 active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-transparent hover:border-red-200"
+                className="w-full bg-red-500/10 text-red-400 py-4 rounded-xl font-black hover:bg-red-500/20 transition-colors disabled:opacity-50 active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-red-500/20 hover:border-red-500/30"
               >
                 {deleting ? (
                   <div className="w-6 h-6 border-4 border-red-600/30 border-t-red-600 rounded-full animate-spin"></div>
@@ -281,15 +281,15 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
             )}
 
             {editingHive && confirmDelete && (
-              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 space-y-3">
-                <p className="text-red-700 font-bold text-sm text-center">
+              <div className="bg-red-500/10 border-2 border-red-500/20 rounded-xl p-4 space-y-3">
+                <p className="text-red-400 font-bold text-sm text-center">
                   ⚠️ Delete "{name}"? This will remove all inspections, tasks, and history. This cannot be undone.
                 </p>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(false)}
-                    className="flex-1 py-3 rounded-xl font-black text-gray-600 bg-white border-2 border-gray-200 hover:bg-gray-50 transition-colors active:scale-[0.98]"
+                    className="flex-1 py-3 rounded-xl font-black text-[var(--color-text-muted)] bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] hover:bg-[var(--color-card-bg)] transition-colors active:scale-[0.98]"
                   >
                     Cancel
                   </button>

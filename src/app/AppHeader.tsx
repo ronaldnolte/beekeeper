@@ -1,7 +1,7 @@
 import React from 'react';
 import { supabase } from '../data/supabase';
 import { useAppStore } from '../store/useAppStore';
-import { LogOut, ArrowLeft, Mail } from 'lucide-react';
+import { LogOut, ArrowLeft, Mail, Sparkles } from 'lucide-react';
 
 export const AppHeader: React.FC = () => {
   const { currentView, user, navigateTo } = useAppStore();
@@ -13,64 +13,71 @@ export const AppHeader: React.FC = () => {
   // Determine if we should show a back button
   const showBackButton = currentView !== 'SELECT_APIARY' && currentView !== 'AUTH';
 
-  // Determine title based on view
-  let title = 'Beekeeper';
-  if (currentView === 'SELECT_APIARY') title = 'Select Apiary';
-  if (currentView === 'SELECT_HIVE') title = 'Select Hive';
-  if (currentView === 'HIVE_DETAIL') title = 'Hive Details';
+  // Expanded title map for all views
+  const titleMap: Record<string, string> = {
+    'SELECT_APIARY': 'Dashboard',
+    'SELECT_HIVE': 'Hives',
+    'HIVE_DETAIL': 'Hive Details',
+    'INSPECTION_FORM': 'Inspection',
+    'INTERVENTION_FORM': 'Intervention',
+    'TASK_FORM': 'Task',
+    'FORECAST': 'Forecast',
+    'SWARM_PREDICTION': 'Swarm Index',
+    'ASK_AI': 'Ask AI',
+    'ROADMAP': 'Roadmap',
+    'UPDATE_PASSWORD': 'Password',
+  };
+  const title = titleMap[currentView] || 'Beekeeper';
 
-  if (!user) return null; // Don't show header on login screen
+  if (!user) return null;
 
   return (
     <header className="glass-header sticky top-0 z-50 flex justify-center w-full" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="w-full max-w-4xl px-4 py-3 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        {showBackButton && (
-          <button 
-            onClick={() => window.history.back()}
-            className="p-2 -ml-2 rounded-lg hover:bg-gray-100 text-[#E67E22] transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </button>
-        )}
+        {/* Left: Back + Title */}
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="Beektools" className="w-8 h-8 object-contain" />
-          <h1 className="text-lg font-black text-[var(--color-card-text)]">{title}</h1>
+          {showBackButton ? (
+            <button 
+              onClick={() => window.history.back()}
+              className="p-2 -ml-2 rounded-xl text-[var(--color-primary)] hover:bg-[var(--color-bg-raised)] transition-colors active:scale-95"
+            >
+              <ArrowLeft size={22} />
+            </button>
+          ) : (
+            <img src="/logo.png" alt="Beektools" className="w-8 h-8 object-contain" />
+          )}
+          <h1 className="text-lg font-black text-[var(--color-text)]">{title}</h1>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2">
-        <div className="text-xs text-gray-500 font-medium hidden sm:block truncate max-w-[120px]">
-          {user.email}
+        {/* Right: Action Icons */}
+        <div className="flex items-center gap-1">
+          {/* Ask AI */}
+          <button 
+            onClick={() => navigateTo('ASK_AI')}
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors active:scale-95 text-[var(--color-primary)] hover:bg-[var(--color-bg-raised)]"
+            title="Ask AI Beekeeper"
+          >
+            <Sparkles size={20} />
+          </button>
+          
+          {/* Feedback */}
+          <button 
+            onClick={() => useAppStore.getState().setFeedbackModalOpen(true)}
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors active:scale-95 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-raised)]"
+            title="Send Feedback"
+          >
+            <Mail size={18} />
+          </button>
+
+          {/* Logout */}
+          <button 
+            onClick={handleLogout}
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors active:scale-95 text-red-400 hover:bg-red-500/10"
+            title="Log Out"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
-        
-        {/* Ask AI Button */}
-        <button 
-          onClick={() => navigateTo('ASK_AI')}
-          className="w-9 h-9 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 flex items-center justify-center transition-transform active:scale-95 shadow-sm ml-1"
-          title="Ask AI Beekeeper"
-        >
-          <span className="text-sm">✨</span>
-        </button>
-        
-        {/* Feedback Button */}
-        <button 
-          onClick={() => useAppStore.getState().setFeedbackModalOpen(true)}
-          className="w-9 h-9 rounded-full bg-[#F5A623] hover:bg-[#D97706] text-white flex items-center justify-center transition-transform active:scale-95 shadow-sm ml-1"
-          title="Send Feedback"
-        >
-          <Mail size={18} />
-        </button>
-
-        {/* Logout */}
-        <button 
-          onClick={handleLogout}
-          className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-colors flex items-center gap-1 ml-1"
-          title="Log Out"
-        >
-          <LogOut size={18} />
-        </button>
-      </div>
       </div>
     </header>
   );

@@ -27,72 +27,29 @@ export const HiveDetailView: React.FC = () => {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 opacity-50">
-        <div className="w-10 h-10 border-4 border-[#E67E22] border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="font-bold text-[var(--color-text)]">Loading hive data...</p>
+        <div className="w-10 h-10 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="font-bold text-[var(--color-text-muted)]">Loading hive data...</p>
       </div>
     );
   }
 
-  if (!hive) return <div className="p-4 text-center">Hive not found.</div>;
+  if (!hive) return <div className="p-4 text-center text-[var(--color-text-muted)]">Hive not found.</div>;
 
   return (
-    <div className="w-full flex flex-col items-center p-3 sm:p-4 pb-20 space-y-4">
+    <div className="w-full flex flex-col items-center p-3 sm:p-4 pb-28 space-y-4">
       
-      {/* 1. Primary Action Grid (Compact 3-column row) */}
-      <div className="w-full max-w-2xl">
-        <div className="grid grid-cols-3 gap-2">
-          <button 
-            onClick={() => {
-              useAppStore.getState().selectInspection(null);
-              navigateTo('INSPECTION_FORM');
-            }}
-            className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
-          >
-            <div className="text-[#E67E22] group-hover:scale-110 transition-transform">
-              <ClipboardList size={24} />
-            </div>
-            <span className="font-bold text-[10px] sm:text-xs text-[var(--color-card-text)] whitespace-nowrap">Add Inspection</span>
-          </button>
-          
-          <button 
-            onClick={() => {
-              useAppStore.getState().selectInspection(null);
-              navigateTo('INTERVENTION_FORM');
-            }}
-            className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
-          >
-            <div className="text-[#E67E22] group-hover:scale-110 transition-transform">
-              <PlusCircle size={24} />
-            </div>
-            <span className="font-bold text-[10px] sm:text-xs text-[var(--color-card-text)] whitespace-nowrap">Intervention</span>
-          </button>
-
-          <button 
-            onClick={() => {
-              useAppStore.getState().selectInspection(null);
-              navigateTo('TASK_FORM');
-            }}
-            className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
-          >
-            <div className="text-[#E67E22] group-hover:scale-110 transition-transform">
-              <AlertTriangle size={24} />
-            </div>
-            <span className="font-bold text-[10px] sm:text-xs text-[var(--color-card-text)] whitespace-nowrap">Task</span>
-          </button>
-        </div>
-      </div>
       {/* 1. Hive Status Summary Card */}
       <div className="w-full max-w-2xl card p-4 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-2 h-full bg-[#E67E22]"></div>
-        <div className="flex justify-between items-start pl-2">
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-primary)] rounded-l-2xl"></div>
+        <div className="flex justify-between items-start pl-3">
           <div>
-            <h2 className="text-xl sm:text-2xl font-black text-[var(--color-card-text)]">{hive.name}</h2>
-            <p className="text-xs sm:text-sm font-bold text-gray-500 uppercase tracking-wider mt-0.5">
+            <h2 className="text-xl sm:text-2xl font-black text-[var(--color-text)]">{hive.name}</h2>
+            <p className="text-xs sm:text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider mt-0.5">
               Type: {hive.type || 'Standard TBH'}
             </p>
           </div>
-          <span className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase ${
-            (hive.status || 'Active') === 'Active' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+          <span className={`px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase ${
+            (hive.status || 'Active') === 'Active' ? 'bg-green-900/30 text-green-400' : 'bg-amber-900/30 text-amber-400'
           }`}>
             {hive.status || 'Active'}
           </span>
@@ -107,11 +64,46 @@ export const HiveDetailView: React.FC = () => {
         />
       </div>
 
-
-      {/* 4. Complete Hive History */}
+      {/* 3. Complete Hive History */}
       <div className="w-full max-w-2xl">
-        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Hive Configuration History</h3>
+        <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3 px-1">Hive Configuration History</h3>
         <HistoryFeed hiveId={hive.id} filter="snapshots" refreshTrigger={refreshKey} />
+      </div>
+
+      {/* Fixed Bottom Action Bar — 3 primary actions */}
+      <div className="bottom-action-bar">
+        <button 
+          onClick={() => {
+            useAppStore.getState().selectInspection(null);
+            navigateTo('INSPECTION_FORM');
+          }}
+          className="flex-1 max-w-[140px] bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-lg shadow-[var(--color-primary)]/20"
+        >
+          <ClipboardList size={20} />
+          Inspection
+        </button>
+        
+        <button 
+          onClick={() => {
+            useAppStore.getState().selectInspection(null);
+            navigateTo('INTERVENTION_FORM');
+          }}
+          className="flex-1 max-w-[140px] bg-[var(--color-card-bg)] border border-[var(--color-card-border)] text-[var(--color-text)] py-3.5 rounded-2xl font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+        >
+          <PlusCircle size={20} />
+          Intervention
+        </button>
+
+        <button 
+          onClick={() => {
+            useAppStore.getState().selectInspection(null);
+            navigateTo('TASK_FORM');
+          }}
+          className="flex-1 max-w-[140px] bg-[var(--color-card-bg)] border border-[var(--color-card-border)] text-[var(--color-text)] py-3.5 rounded-2xl font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+        >
+          <AlertTriangle size={20} />
+          Task
+        </button>
       </div>
 
     </div>

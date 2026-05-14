@@ -1,22 +1,26 @@
 @import "tailwindcss";
 
 /* 
-  Global styles for the SPA Beekeeper App 
-  Adhering to the warm honey-yellow, soft whites, and dark brown text theme.
+  Global styles for TBH Beekeeper — Dark Warm Theme
+  Inspired by field-use beekeeping apps: dark chocolate bg, warm amber cards, orange accents.
 */
 
 :root {
-  --color-primary: #E67E22; /* Honey orange */
+  --color-primary: #E67E22;
   --color-primary-dark: #D35400;
-  --color-bg: #fdfaf2; /* Soft warm honey background */
-  --color-text: #2C241B; /* Dark text globally */
-  --color-card-bg: #FFFFFF;
-  --color-card-text: #2C241B; /* Dark text for inside the white cards */
+  --color-bg: #1A1410;
+  --color-bg-raised: #2A2218;
+  --color-text: #F5E6D3;
+  --color-text-muted: #A89880;
+  --color-card-bg: #2A2218;
+  --color-card-text: #F5E6D3;
+  --color-card-border: #3D3226;
+  --color-input-bg: #231D15;
+  --color-divider: #3D3226;
 }
 
 body {
   background-color: var(--color-bg);
-  background-image: url("data:image/svg+xml,%3Csvg width='40' height='69.2820323027551' viewBox='0 0 40 69.2820323027551' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 17.3205081l-20 11.54700538L0 17.3205081V-5.77350269l20-11.54700538 20 11.54700538V17.3205081zm0 46.1880215l-20 11.5470054-20-11.5470054V40.4145183l20-11.5470054 20 11.5470054v23.0940113z' fill='%23e6dcc3' fill-opacity='0.3' fill-rule='evenodd'/%3E%3C/svg%3E");
   color: var(--color-text);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
@@ -24,18 +28,22 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Base utility classes for high contrast selection lists */
+/* Base utility classes */
 @layer components {
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-[#E6DCC3] overflow-hidden;
+    @apply bg-[var(--color-card-bg)] rounded-2xl shadow-sm border border-[var(--color-card-border)] overflow-hidden;
   }
   
   .glass-header {
-    @apply bg-white/95 backdrop-blur shadow-sm border-b border-[#E6DCC3];
+    background-color: var(--color-bg);
+    border-bottom: 1px solid var(--color-card-border);
   }
 
-  .honeycomb-bg {
-    background-color: #FFF8F0;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='hexagons' fill='%23D4A574' fill-opacity='0.3' fill-rule='nonzero'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  /* Fixed bottom action bar — use on views with primary CTAs */
+  .bottom-action-bar {
+    @apply fixed bottom-0 left-0 w-full p-4 z-50 flex justify-center gap-3;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--color-bg) 70%, transparent);
+    backdrop-filter: blur(8px);
   }
 }

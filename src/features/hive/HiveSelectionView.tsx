@@ -25,10 +25,10 @@ export const HiveSelectionView: React.FC = () => {
         id: h.id,
         title: h.name,
         subtitle: `Type: ${h.type || 'Standard'}`,
-        icon: <Hexagon size={24} />,
+        icon: <Hexagon size={22} />,
         statusBadge: {
           text: h.status || 'Active',
-          colorClass: (h.status || 'Active') === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+          colorClass: (h.status || 'Active') === 'Active' ? 'bg-green-900/30 text-green-400' : 'bg-amber-900/30 text-amber-400'
         },
         raw: h
       }));
@@ -58,37 +58,30 @@ export const HiveSelectionView: React.FC = () => {
   }, [selectedApiaryId]);
 
   return (
-    <div className="w-full flex flex-col items-center pt-6">
-      <div className="w-full max-w-2xl px-4 mb-2 flex justify-between items-start">
-        <div>
-          <h2 className="text-2xl font-bold text-[var(--color-text)]">Select a Hive</h2>
-          <p className="text-gray-500 font-medium">Choose a hive to inspect or manage.</p>
-        </div>
-        <div className="flex gap-2 items-start">
-          <div className="flex flex-col items-center gap-1">
-            <button
-              onClick={() => {
-                useAppStore.getState().navigateTo('SWARM_PREDICTION');
-              }}
-              className="px-3 py-2 w-full rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm border border-gray-100 active:scale-95 transition-transform text-white"
-              style={{ backgroundColor: swarmScore !== null ? swarmColor : '#95a5a6' }}
-            >
-              <Activity size={16} />
-              {swarmScore !== null ? `SPI: ${swarmScore}%` : 'SPI'}
-            </button>
-            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider text-center whitespace-nowrap">Swarm Prediction Index</span>
-          </div>
-          
-          <button
-            onClick={() => {
-              useAppStore.getState().navigateTo('FORECAST');
-            }}
-            className="bg-blue-50 text-blue-600 px-3 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-sm border border-blue-100 active:scale-95 transition-transform h-[38px]"
-          >
-            <span>⛅</span> Forecast
-          </button>
-        </div>
+    <div className="w-full flex flex-col items-center pt-4 pb-28">
+      {/* Quick nav buttons */}
+      <div className="w-full max-w-2xl px-4 mb-2 flex gap-2">
+        <button
+          onClick={() => useAppStore.getState().navigateTo('SWARM_PREDICTION')}
+          className="flex-1 px-3 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform text-white border border-white/10"
+          style={{ backgroundColor: swarmScore !== null ? swarmColor : '#95a5a6' }}
+        >
+          <Activity size={16} />
+          {swarmScore !== null ? `SPI: ${swarmScore}%` : 'SPI'}
+        </button>
+        <button
+          onClick={() => useAppStore.getState().navigateTo('FORECAST')}
+          className="flex-1 px-3 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 justify-center active:scale-95 transition-transform bg-[var(--color-card-bg)] text-[var(--color-text)] border border-[var(--color-card-border)]"
+        >
+          <span>⛅</span> Forecast
+        </button>
       </div>
+
+      <div className="w-full max-w-2xl px-4 mb-1">
+        <h2 className="text-lg font-black text-[var(--color-text)]">Select a Hive</h2>
+        <p className="text-[var(--color-text-muted)] font-medium text-sm">Choose a hive to inspect or manage.</p>
+      </div>
+
       <SelectionList 
         items={hives}
         isLoading={loading}
@@ -100,19 +93,18 @@ export const HiveSelectionView: React.FC = () => {
         emptyMessage="No hives found in this apiary. Create your first hive!"
       />
 
-      {/* Create Button */}
-      <div className="w-full max-w-2xl px-4 mt-6 pb-20">
+      {/* Fixed Bottom Action Bar */}
+      <div className="bottom-action-bar">
         <button
           onClick={() => useAppStore.getState().setHiveFormOpen(true, null)}
-          className="w-full bg-[#E67E22] text-white py-4 rounded-xl font-black text-lg hover:bg-[#D35400] transition-colors active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-[#E67E22]/30"
+          className="flex-1 max-w-md bg-[var(--color-primary)] text-white py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 active:scale-[0.98] shadow-lg shadow-[var(--color-primary)]/30 transition-transform"
         >
-          <Plus size={24} /> Create New Hive
+          <Plus size={22} /> Create New Hive
         </button>
       </div>
 
       <HiveFormModal onSuccess={() => {
         setLoading(true);
-        // Reload page or re-fetch to see new/edited hives
         window.location.reload();
       }} />
     </div>

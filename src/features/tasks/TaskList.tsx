@@ -63,7 +63,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
     <div className="w-full space-y-3">
       <div className="flex justify-between items-center px-1 mb-2">
         <h3 className="text-lg font-bold text-[var(--color-text)]">My Upcoming Tasks</h3>
-        <label className="flex items-center gap-2 text-xs text-gray-500 font-medium cursor-pointer">
+        <label className="flex items-center gap-2 text-xs text-[var(--color-text-muted)] font-medium cursor-pointer">
           <input 
             type="checkbox" 
             checked={showCompleted}
@@ -75,7 +75,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
       </div>
 
       {visibleTasks.length === 0 ? (
-        <div className="text-center py-8 text-gray-400 bg-white/50 rounded-xl border border-dashed border-[#E6DCC3]">
+        <div className="text-center py-8 text-[var(--color-text-muted)] bg-[var(--color-card-bg)]/50 rounded-xl border border-dashed border-[var(--color-card-border)]">
           <p className="font-medium text-sm">No tasks found. You're all caught up!</p>
         </div>
       ) : (
@@ -99,7 +99,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
               <div 
                 key={task.id} 
                 onClick={() => onEditTask(task)}
-                className={`card p-3 flex gap-3 items-center cursor-pointer active:scale-[0.98] transition-transform ${isCompleted ? 'opacity-60 bg-gray-50' : 'bg-white'}`}
+                className={`card p-3 flex gap-3 items-center cursor-pointer active:scale-[0.98] transition-transform ${isCompleted ? 'opacity-60' : ''}`}
               >
                 {/* Checkbox */}
                 <button 
@@ -109,29 +109,29 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
                   {isCompleted ? (
                     <CheckCircle className="text-green-500" size={24} />
                   ) : (
-                    <Circle className="text-gray-300 hover:text-[#E67E22]" size={24} />
+                    <Circle className="text-[var(--color-text-muted)] hover:text-[var(--color-primary)]" size={24} />
                   )}
                 </button>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start mb-1">
-                    <h4 className={`font-bold text-sm truncate pr-2 ${isCompleted ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                    <h4 className={`font-bold text-sm truncate pr-2 ${isCompleted ? 'line-through text-[var(--color-text-muted)]' : 'text-[var(--color-text)]'}`}>
                       {task.title}
                     </h4>
                     {isHighPriority && !isCompleted && (
-                      <span className="flex-shrink-0 bg-red-100 text-red-700 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-0.5">
+                      <span className="flex-shrink-0 bg-red-900/30 text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider flex items-center gap-0.5">
                         <AlertTriangle size={10} /> High
                       </span>
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
-                    <span className="truncate max-w-[50%] font-medium text-gray-600">
+                    <div className="flex items-center gap-3 text-xs text-[var(--color-text-muted)]">
+                    <span className="truncate max-w-[50%] font-medium text-[var(--color-text-muted)]">
                       {locationStr}
                     </span>
                     {dueDate && (
-                      <span className={`flex items-center gap-1 flex-shrink-0 ${isOverdue ? 'text-red-600 font-bold' : ''}`}>
+                      <span className={`flex items-center gap-1 flex-shrink-0 ${isOverdue ? 'text-red-400 font-bold' : ''}`}>
                         <Calendar size={12} />
                         {dueDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </span>
@@ -140,7 +140,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
                 </div>
 
                 {/* Arrow */}
-                <ChevronRight size={18} className="text-gray-300 flex-shrink-0" />
+                <ChevronRight size={18} className="text-[var(--color-text-muted)] flex-shrink-0" />
               </div>
             );
           })}

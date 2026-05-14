@@ -3,7 +3,7 @@ import { fetchApiaries as loadApiaries, deleteApiaryWithCascade } from '../../da
 import { useAppStore } from '../../store/useAppStore';
 import { SelectionList } from '../../shared/components/SelectionList';
 import type { SelectionItem } from '../../shared/components/SelectionCard';
-import { MapPin, Plus } from 'lucide-react';
+import { MapPin, Plus, ClipboardList } from 'lucide-react';
 import { ApiaryFormModal } from './ApiaryFormModal';
 import { TaskList } from '../tasks/TaskList';
 import { TaskFormModal } from '../tasks/TaskFormModal';
@@ -28,7 +28,7 @@ export const ApiarySelectionView: React.FC = () => {
         id: a.id,
         title: a.name,
         subtitle: a.zip_code ? `ZIP: ${a.zip_code}` : (a.latitude ? 'Location: Coordinates' : 'No location set'),
-        icon: <MapPin size={24} />,
+        icon: <MapPin size={22} />,
         raw: a
       }));
       setApiaries(formatted);
@@ -67,42 +67,25 @@ export const ApiarySelectionView: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center pt-6 honeycomb-bg pb-24">
+    <div className="w-full min-h-screen flex flex-col items-center pt-4 pb-28">
       
-      {/* 1. Global Task Dashboard */}
-      <div className="w-full max-w-2xl px-4 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-[var(--color-text)]">Dashboard</h2>
-            <p className="text-gray-500 font-medium text-sm mt-0.5">Your beekeeping overview.</p>
-          </div>
-          <button
-            onClick={handleCreateTask}
-            className="bg-[#E67E22] text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-[#D35400] transition-colors active:scale-95 shadow-sm shadow-[#E67E22]/20 flex items-center gap-1.5"
-          >
-            <Plus size={16} /> New Task
-          </button>
+      {/* 1. Task Dashboard */}
+      <div className="w-full max-w-2xl px-4 mb-4">
+        <div className="mb-3">
+          <h2 className="text-xl font-black text-[var(--color-text)]">Dashboard</h2>
+          <p className="text-[var(--color-text-muted)] font-medium text-sm mt-0.5">Your beekeeping overview.</p>
         </div>
-
         <TaskList onEditTask={handleEditTask} refreshKey={taskRefreshKey} />
       </div>
 
-      <div className="w-full max-w-2xl px-4 my-4">
-        <hr className="border-gray-200" />
+      <div className="w-full max-w-2xl px-4 my-3">
+        <hr className="border-[var(--color-divider)]" />
       </div>
 
       {/* 2. Apiary Selection */}
-      <div className="w-full max-w-2xl px-4 mb-2 flex justify-between items-end">
-        <div>
-          <h3 className="text-xl font-bold text-[var(--color-text)]">My Apiaries</h3>
-          <p className="text-gray-500 font-medium text-xs mt-0.5">Select a location to view hives.</p>
-        </div>
-        <button
-          onClick={() => setApiaryFormOpen(true, null)}
-          className="text-[#E67E22] font-bold text-sm px-3 py-1.5 bg-white rounded-lg border border-[#E67E22]/30 hover:bg-[#E67E22]/5 flex items-center gap-1.5 active:scale-95 shadow-sm"
-        >
-          <Plus size={14} /> Create Apiary
-        </button>
+      <div className="w-full max-w-2xl px-4 mb-1">
+        <h3 className="text-lg font-black text-[var(--color-text)]">My Apiaries</h3>
+        <p className="text-[var(--color-text-muted)] font-medium text-xs mt-0.5">Select a location to view hives.</p>
       </div>
 
       <SelectionList 
@@ -115,6 +98,22 @@ export const ApiarySelectionView: React.FC = () => {
         }}
         emptyMessage="No apiaries found. Create your first apiary to get started."
       />
+
+      {/* Fixed Bottom Action Bar */}
+      <div className="bottom-action-bar">
+        <button
+          onClick={handleCreateTask}
+          className="flex-1 max-w-[200px] bg-[var(--color-card-bg)] border border-[var(--color-card-border)] text-[var(--color-text)] py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+        >
+          <ClipboardList size={18} /> New Task
+        </button>
+        <button
+          onClick={() => setApiaryFormOpen(true, null)}
+          className="flex-1 max-w-[200px] bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-[var(--color-primary)]/30"
+        >
+          <Plus size={18} /> Create Apiary
+        </button>
+      </div>
 
       <ApiaryFormModal onSuccess={() => {
         setLoading(true);
