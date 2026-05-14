@@ -30,7 +30,7 @@ const ViewLoader = () => (
 );
 
 function App() {
-  const { currentView, setUser, isAuthLoading, selectedHiveId, selectedApiaryId, selectedRecord } = useAppStore();
+  const { currentView, setUser, user, isAuthLoading, selectedHiveId, selectedApiaryId, selectedRecord } = useAppStore();
 
   useEffect(() => {
     // 1. Check initial session
@@ -111,6 +111,11 @@ function App() {
         </div>
       </div>
     );
+  }
+
+  // Auth guard — prevent protected views from rendering without a session
+  if (!user && currentView !== 'AUTH' && currentView !== 'UPDATE_PASSWORD') {
+    return <Auth />;
   }
 
   // --- THE SPA VIEW SWITCHER ---

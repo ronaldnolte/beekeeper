@@ -26,3 +26,8 @@ dist-ssr
 android/keystore.properties
 *.js
 *.code-workspace
+
+# Environment secrets
+.env
+.env.local
+.env.production

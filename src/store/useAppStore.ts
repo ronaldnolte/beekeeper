@@ -104,7 +104,15 @@ export const useAppStore = create<AppState>()((set) => ({
           if (state.currentView === 'UPDATE_PASSWORD') {
             return { user: null, isAuthLoading: false };
           }
-          return { user: null, currentView: 'AUTH', isAuthLoading: false };
+          // Clear all sensitive state on logout
+          return {
+            user: null,
+            currentView: 'AUTH',
+            isAuthLoading: false,
+            selectedApiaryId: null,
+            selectedHiveId: null,
+            selectedRecord: null,
+          };
         }
         
         // If they already have a persisted state (like HIVE_DETAIL), keep them there.
