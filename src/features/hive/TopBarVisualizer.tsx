@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../data/supabase';
-import { Camera } from 'lucide-react';
+import { Camera, Minus, Plus } from 'lucide-react';
 
 interface BarState {
   position: number;
@@ -60,6 +60,20 @@ export const TopBarVisualizer: React.FC<TopBarVisualizerProps> = ({ hiveId, init
     setHasUnsavedChanges(true);
   };
 
+  const handleAddBar = () => {
+    setBars(current => [
+      ...current,
+      { position: current.length + 1, status: 'inactive' as const }
+    ]);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleRemoveBar = () => {
+    if (bars.length <= 1) return;
+    setBars(current => current.slice(0, -1));
+    setHasUnsavedChanges(true);
+  };
+
   const handleSaveSnapshot = async () => {
     if (isSaving) return;
     setIsSaving(true);
@@ -114,6 +128,24 @@ export const TopBarVisualizer: React.FC<TopBarVisualizerProps> = ({ hiveId, init
     <div className="w-full card overflow-hidden flex flex-col relative border-2 border-transparent focus-within:border-[#E67E22] transition-colors">
       <div className="flex justify-between items-center p-3 bg-gray-50 border-b border-gray-100">
         <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Top Bar Config</h3>
+        <div className="flex items-center gap-2">
+          {/* Bar Count Controls */}
+          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-1 py-0.5">
+            <button
+              onClick={handleRemoveBar}
+              disabled={bars.length <= 1}
+              className="w-6 h-6 rounded flex items-center justify-center text-gray-500 hover:bg-gray-100 active:scale-90 transition-all disabled:opacity-30"
+            >
+              <Minus size={14} />
+            </button>
+            <span className="text-xs font-black text-gray-700 min-w-[28px] text-center">{bars.length}</span>
+            <button
+              onClick={handleAddBar}
+              className="w-6 h-6 rounded flex items-center justify-center text-gray-500 hover:bg-gray-100 active:scale-90 transition-all"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
         <button
           onClick={handleSaveSnapshot}
           disabled={!hasUnsavedChanges || isSaving}
@@ -129,7 +161,8 @@ export const TopBarVisualizer: React.FC<TopBarVisualizerProps> = ({ hiveId, init
             <Camera size={14} />
           )}
           {isSaving ? 'Saving...' : hasUnsavedChanges ? 'Save Snapshot' : 'Saved'}
-        </button>
+          </button>
+        </div>
       </div>
 
       {/* The Scrollable Bar Array */}
