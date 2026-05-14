@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../data/supabase';
+import { saveHiveBars, saveHiveSnapshot } from '../../data/hiveRepository';
 import { Camera, Minus, Plus } from 'lucide-react';
 
 interface BarState {
@@ -80,12 +80,7 @@ export const TopBarVisualizer: React.FC<TopBarVisualizerProps> = ({ hiveId, init
 
     try {
       // 1. Update the hive's current state
-      const { error: hiveError } = await supabase
-        .from('hives')
-        .update({ bars: bars })
-        .eq('id', hiveId);
-
-      if (hiveError) throw hiveError;
+      await saveHiveBars(hiveId, bars);
 
       // 2. Compute stats for the snapshot
       const inactiveCount = bars.filter(b => b.status === 'inactive').length;
@@ -96,21 +91,15 @@ export const TopBarVisualizer: React.FC<TopBarVisualizerProps> = ({ hiveId, init
       const followerBoardPosition = bars.find(b => b.status === 'follower_board')?.position || null;
 
       // 3. Create the historical snapshot
-      const { error: snapError } = await supabase
-        .from('hive_snapshots')
-        .insert([{
-          hive_id: hiveId,
-          timestamp: new Date().toISOString(),
-          bars: bars,
-          inactive_bar_count: inactiveCount,
-          active_bar_count: activeCount,
-          empty_bar_count: emptyCount,
-          brood_bar_count: broodCount,
-          resource_bar_count: resourceCount,
-          follower_board_position: followerBoardPosition
-        }]);
-
-      if (snapError) throw snapError;
+      await saveHiveSnapshot(hiveId, {
+        bars,
+        inactive_bar_count: inactiveCount,
+        active_bar_count: activeCount,
+        empty_bar_count: emptyCount,
+        brood_bar_count: broodCount,
+        resource_bar_count: resourceCount,
+        follower_board_position: followerBoardPosition
+      });
 
       setHasUnsavedChanges(false);
       if (onSnapshotSaved) onSnapshotSaved();

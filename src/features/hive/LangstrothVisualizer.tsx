@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../data/supabase';
+import { saveHiveBars, saveHiveSnapshot } from '../../data/hiveRepository';
 import { Camera, ChevronUp, ChevronDown, Trash2, Plus } from 'lucide-react';
 import type { HiveBox, BoxType } from '../../types';
 
@@ -69,22 +69,11 @@ export const LangstrothVisualizer: React.FC<LangstrothVisualizerProps> = ({ hive
     setIsSaving(true);
 
     try {
-      const { error: hiveError } = await supabase
-        .from('hives')
-        .update({ bars: boxes })
-        .eq('id', hiveId);
+      await saveHiveBars(hiveId, boxes);
 
-      if (hiveError) throw hiveError;
-
-      const { error: snapError } = await supabase
-        .from('hive_snapshots')
-        .insert([{
-          hive_id: hiveId,
-          timestamp: new Date().toISOString(),
-          bars: boxes
-        }]);
-
-      if (snapError) throw snapError;
+      await saveHiveSnapshot(hiveId, {
+        bars: boxes
+      });
 
       setHasUnsavedChanges(false);
       if (onSnapshotSaved) onSnapshotSaved();

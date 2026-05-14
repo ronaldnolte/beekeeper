@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../../data/supabase';
+import { createIntervention, updateIntervention, deleteIntervention } from '../../data/interventionRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, Droplet, Pill, Wrench, Scissors, Crown, Archive, Hash } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
@@ -59,17 +59,14 @@ export const InterventionFormView: React.FC = () => {
     };
 
     let error;
-    if (isEditing) {
-      const { error: updateError } = await supabase
-        .from('interventions')
-        .update(payload)
-        .eq('id', selectedRecord.id);
-      error = updateError;
-    } else {
-      const { error: insertError } = await supabase
-        .from('interventions')
-        .insert([payload]);
-      error = insertError;
+    try {
+      if (isEditing) {
+        await updateIntervention(selectedRecord.id, payload);
+      } else {
+        await createIntervention(payload);
+      }
+    } catch (e: any) {
+      error = e;
     }
 
     setLoading(false);
@@ -87,18 +84,14 @@ export const InterventionFormView: React.FC = () => {
     if (!confirm('Are you sure you want to delete this intervention?')) return;
     
     setLoading(true);
-    const { error } = await supabase
-      .from('interventions')
-      .delete()
-      .eq('id', selectedRecord.id);
-      
-    setLoading(false);
-    
-    if (error) {
-      alert('Failed to delete intervention: ' + error.message);
-    } else {
+    try {
+      await deleteIntervention(selectedRecord.id);
+      setLoading(false);
       selectInspection(null);
       goBack();
+    } catch (e: any) {
+      setLoading(false);
+      alert('Failed to delete intervention: ' + e.message);
     }
   };
 

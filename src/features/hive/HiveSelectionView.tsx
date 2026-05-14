@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../data/supabase';
+import { fetchHives as loadHives } from '../../data/hiveRepository';
 import { useAppStore } from '../../store/useAppStore';
-import { resolveApiaryCoords } from '../../data/geocoding';
+import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { SelectionList } from '../../shared/components/SelectionList';
 import type { SelectionItem } from '../../shared/components/SelectionCard';
 import { Hexagon, Plus, Activity } from 'lucide-react';
@@ -19,56 +19,33 @@ export const HiveSelectionView: React.FC = () => {
     const fetchHives = async () => {
       if (!selectedApiaryId) return;
       
-      const { data } = await supabase
-        .from('hives')
-        .select('*')
-        .eq('apiary_id', selectedApiaryId)
-        .order('name', { ascending: true });
+      const data = await loadHives(selectedApiaryId);
 
-      if (data) {
-        const formatted: SelectionItem[] = data.map(h => ({
-          id: h.id,
-          title: h.name,
-          subtitle: `Type: ${h.type || 'Standard'}`,
-          icon: <Hexagon size={24} />,
-          statusBadge: {
-            text: h.status || 'Active',
-            colorClass: (h.status || 'Active') === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-          },
-          raw: h
-        }));
-        setHives(formatted);
-      }
+      const formatted: SelectionItem[] = data.map((h: any) => ({
+        id: h.id,
+        title: h.name,
+        subtitle: `Type: ${h.type || 'Standard'}`,
+        icon: <Hexagon size={24} />,
+        statusBadge: {
+          text: h.status || 'Active',
+          colorClass: (h.status || 'Active') === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+        },
+        raw: h
+      }));
+      setHives(formatted);
       setLoading(false);
     };
 
     const fetchSwarmScore = async () => {
       if (!selectedApiaryId) return;
       try {
-        const { data: apiary } = await supabase
-          .from('apiaries')
-          .select('latitude, longitude, zip_code')
-          .eq('id', selectedApiaryId)
-          .single();
+        const apiary = await fetchApiaryWithCoords(selectedApiaryId);
 
-        if (apiary) {
-          let lat = apiary.latitude;
-          let lng = apiary.longitude;
-
-          if (!lat || !lng) {
-            try {
-              const coords = await resolveApiaryCoords(apiary);
-              lat = coords.lat;
-              lng = coords.lng;
-            } catch { /* no location available */ }
-          }
-
-          if (lat && lng) {
-            const analysis = await SwarmService.generateSwarmAnalysis(lat, lng, true);
-            if (analysis) {
-              setSwarmScore(analysis.currentProbability);
-              setSwarmColor(analysis.currentColor);
-            }
+        if (apiary.lat && apiary.lng) {
+          const analysis = await SwarmService.generateSwarmAnalysis(apiary.lat, apiary.lng, true);
+          if (analysis) {
+            setSwarmScore(analysis.currentProbability);
+            setSwarmColor(analysis.currentColor);
           }
         }
       } catch (e) {

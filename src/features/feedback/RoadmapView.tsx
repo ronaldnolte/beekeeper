@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../data/supabase';
+import { fetchFeatureRequests, submitFeatureRequest, voteOnFeature } from '../../data/feedbackRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { Lightbulb, Send, X, Triangle, CheckCircle, Clock } from 'lucide-react';
 
@@ -28,32 +28,7 @@ export const RoadmapView: React.FC = () => {
   const fetchFeatures = async () => {
     setLoading(true);
     try {
-      const { data: featureData, error } = await supabase
-        .from('feature_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Simplistic approach for small dataset: fetch all votes
-      const { data: allVotes } = await supabase.from('feature_votes').select('*');
-
-      const combined = (featureData || []).map((f: any) => {
-        const votesForThis = allVotes?.filter(v => v.feature_id === f.id) || [];
-        const isVoted = user ? votesForThis.some(v => v.user_id === user.id) : false;
-        return {
-          ...f,
-          votes: votesForThis.length,
-          is_voted_by_me: isVoted
-        };
-      });
-
-      // Sort by votes (desc), then date (desc)
-      combined.sort((a: any, b: any) => {
-        if (b.votes !== a.votes) return b.votes - a.votes;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-
+      const combined = await fetchFeatureRequests(user?.id);
       setFeatures(combined);
     } catch (err) {
       console.error('Error fetching features:', err);
@@ -87,15 +62,10 @@ export const RoadmapView: React.FC = () => {
     try {
       if (currentVoteStatus) {
         // Remove vote
-        await supabase
-          .from('feature_votes')
-          .delete()
-          .match({ feature_id: featureId, user_id: user.id });
+        await voteOnFeature(featureId, user.id, true);
       } else {
         // Add vote
-        await supabase
-          .from('feature_votes')
-          .insert({ feature_id: featureId, user_id: user.id });
+        await voteOnFeature(featureId, user.id, false);
       }
     } catch (error) {
       console.error('Vote failed:', error);
@@ -109,17 +79,11 @@ export const RoadmapView: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('feature_requests')
-        .insert([{
-          title,
-          description,
-          status: 'pending',
-          user_id: user.id,
-          created_at: new Date().toISOString()
-        }]);
-
-      if (error) throw error;
+      await submitFeatureRequest({
+        title,
+        description,
+        user_id: user.id
+      });
 
       setSubmitModalOpen(false);
       setTitle('');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../data/supabase';
+import { createHive, updateHive, deleteHive, fetchApiariesForDropdown } from '../../data/hiveRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, X, Box } from 'lucide-react';
 
@@ -23,8 +23,8 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
     // Fetch user's apiaries for the dropdown so they can move a hive
     const fetchApiaries = async () => {
       if (!user) return;
-      const { data } = await supabase.from('apiaries').select('id, name').eq('user_id', user.id);
-      if (data) setApiaries(data);
+      const data = await fetchApiariesForDropdown(user.id);
+      setApiaries(data);
     };
     fetchApiaries();
   }, [user]);
@@ -69,18 +69,9 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
       };
 
       if (editingHive?.id) {
-        const { error: updateError } = await supabase
-          .from('hives')
-          .update(hiveData)
-          .eq('id', editingHive.id);
-        
-        if (updateError) throw updateError;
+        await updateHive(editingHive.id, hiveData);
       } else {
-        const { error: insertError } = await supabase
-          .from('hives')
-          .insert([hiveData]);
-        
-        if (insertError) throw insertError;
+        await createHive(hiveData);
       }
 
       setHiveFormOpen(false);
@@ -103,12 +94,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
     setError(null);
     
     try {
-      const { error: deleteError } = await supabase
-        .from('hives')
-        .delete()
-        .eq('id', editingHive.id);
-
-      if (deleteError) throw deleteError;
+      await deleteHive(editingHive.id);
 
       setHiveFormOpen(false);
       onSuccess();

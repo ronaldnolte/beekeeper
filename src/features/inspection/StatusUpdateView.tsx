@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { supabase } from '../../data/supabase';
+import { updateHiveStatus } from '../../data/hiveRepository';
+import { createIntervention } from '../../data/interventionRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { CheckCircle, AlertTriangle, Skull, Wind, Archive } from 'lucide-react';
 
@@ -21,24 +22,15 @@ export const StatusUpdateView: React.FC = () => {
 
     try {
       // 1. Update the hive status
-      const { error: hiveError } = await supabase
-        .from('hives')
-        .update({ status: newStatus })
-        .eq('id', selectedHiveId);
-        
-      if (hiveError) throw hiveError;
+      await updateHiveStatus(selectedHiveId, newStatus);
 
       // 2. Automatically log an intervention note about the status change
-      const { error: interventionError } = await supabase
-        .from('interventions')
-        .insert([{
-          hive_id: selectedHiveId,
-          type: 'Status Change',
-          description: `Hive status updated to: ${newStatus}`,
-          timestamp: new Date().toISOString()
-        }]);
-
-      if (interventionError) throw interventionError;
+      await createIntervention({
+        hive_id: selectedHiveId,
+        type: 'Status Change',
+        description: `Hive status updated to: ${newStatus}`,
+        timestamp: new Date().toISOString()
+      });
 
       navigateTo('HIVE_DETAIL');
 

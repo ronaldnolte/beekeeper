@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../data/supabase';
+import { fetchHiveDetail } from '../../data/hiveRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { ClipboardList, PlusCircle, AlertTriangle } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
@@ -15,11 +15,7 @@ export const HiveDetailView: React.FC = () => {
     const fetchHiveDetails = async () => {
       if (!selectedHiveId) return;
       
-      const { data } = await supabase
-        .from('hives')
-        .select('*')
-        .eq('id', selectedHiveId)
-        .single();
+      const data = await fetchHiveDetail(selectedHiveId);
 
       if (data) setHive(data);
       setLoading(false);

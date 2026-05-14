@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../../data/supabase';
+import { submitFeedback } from '../../data/feedbackRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { Send, Lightbulb, MessageSquare, X } from 'lucide-react';
 
@@ -27,16 +27,7 @@ export const FeedbackModal: React.FC = () => {
     setStatus('sending');
 
     try {
-      // Direct insert into the app_feedback table
-      const { error } = await supabase
-        .from('app_feedback')
-        .insert([{
-          message: message,
-          email: email || null,
-          created_at: new Date().toISOString()
-        }]);
-
-      if (error) throw error;
+      await submitFeedback(message, email || undefined);
 
       setStatus('success');
       setTimeout(() => {

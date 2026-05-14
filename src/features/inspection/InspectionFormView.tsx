@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../../data/supabase';
+import { createInspection, updateInspection, deleteInspection } from '../../data/inspectionRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2 } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
@@ -91,19 +91,14 @@ export const InspectionFormView: React.FC = () => {
     };
 
     let error;
-    if (selectedRecord) {
-      // Update existing
-      const { error: updateError } = await supabase
-        .from('inspections')
-        .update(payload)
-        .eq('id', selectedRecord.id);
-      error = updateError;
-    } else {
-      // Insert new
-      const { error: insertError } = await supabase
-        .from('inspections')
-        .insert([payload]);
-      error = insertError;
+    try {
+      if (selectedRecord) {
+        await updateInspection(selectedRecord.id, payload);
+      } else {
+        await createInspection(payload);
+      }
+    } catch (e: any) {
+      error = e;
     }
 
     setLoading(false);
@@ -121,18 +116,14 @@ export const InspectionFormView: React.FC = () => {
     if (!confirm('Are you sure you want to delete this inspection?')) return;
     
     setLoading(true);
-    const { error } = await supabase
-      .from('inspections')
-      .delete()
-      .eq('id', selectedRecord.id);
-      
-    setLoading(false);
-    
-    if (error) {
-      alert('Failed to delete inspection: ' + error.message);
-    } else {
+    try {
+      await deleteInspection(selectedRecord.id);
+      setLoading(false);
       selectInspection(null);
       goBack();
+    } catch (e: any) {
+      setLoading(false);
+      alert('Failed to delete inspection: ' + e.message);
     }
   };
 

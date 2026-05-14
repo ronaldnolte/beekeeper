@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
-import { supabase } from '../../data/supabase';
-import { resolveApiaryCoords } from '../../data/geocoding';
+import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { WeatherService } from './WeatherService';
 import type { InspectionWindow } from './WeatherService';
 import { ArrowLeft } from 'lucide-react';
@@ -25,23 +24,11 @@ export const ForecastView: React.FC = () => {
       if (!selectedApiaryId) return;
       setLoading(true);
       try {
-        const { data: apiary, error: apiaryError } = await supabase
-          .from('apiaries')
-          .select('name, latitude, longitude, zip_code')
-          .eq('id', selectedApiaryId)
-          .single();
-
-        if (apiaryError) throw apiaryError;
+        const apiary = await fetchApiaryWithCoords(selectedApiaryId);
         setApiaryName(apiary.name);
 
-        let lat = apiary.latitude;
-        let lng = apiary.longitude;
-
-        if (!lat || !lng) {
-          const coords = await resolveApiaryCoords(apiary);
-          lat = coords.lat;
-          lng = coords.lng;
-        }
+        const lat = apiary.lat;
+        const lng = apiary.lng;
 
         const weatherData = await WeatherService.getWeatherForecast(lat, lng);
         const windows = WeatherService.calculateForecast(weatherData);

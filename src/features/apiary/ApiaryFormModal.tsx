@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../data/supabase';
 import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, X, MapPin } from 'lucide-react';
-import { deleteApiaryWithCascade } from '../../data/apiaryRepository';
+import { createApiary, updateApiary, deleteApiaryWithCascade } from '../../data/apiaryRepository';
 
 export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
   const { user, isApiaryFormOpen, editingApiary, setApiaryFormOpen } = useAppStore();
@@ -62,21 +61,9 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
       };
 
       if (editingApiary?.id) {
-        // Update
-        const { error: updateError } = await supabase
-          .from('apiaries')
-          .update(apiaryData)
-          .eq('id', editingApiary.id)
-          .eq('user_id', user.id);
-        
-        if (updateError) throw updateError;
+        await updateApiary(editingApiary.id, user.id, apiaryData);
       } else {
-        // Insert
-        const { error: insertError } = await supabase
-          .from('apiaries')
-          .insert([apiaryData]);
-        
-        if (insertError) throw insertError;
+        await createApiary(apiaryData);
       }
 
       setApiaryFormOpen(false);

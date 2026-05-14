@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../data/supabase';
+import { fetchApiaries as loadApiaries } from '../../data/apiaryRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { SelectionList } from '../../shared/components/SelectionList';
 import type { SelectionItem } from '../../shared/components/SelectionCard';
@@ -22,22 +22,16 @@ export const ApiarySelectionView: React.FC = () => {
     const fetchApiaries = async () => {
       if (!user) return;
       
-      const { data } = await supabase
-        .from('apiaries')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      const data = await loadApiaries(user.id);
 
-      if (data) {
-        const formatted: SelectionItem[] = data.map(a => ({
-          id: a.id,
-          title: a.name,
-          subtitle: a.zip_code ? `ZIP: ${a.zip_code}` : (a.latitude ? 'Location: Coordinates' : 'No location set'),
-          icon: <MapPin size={24} />,
-          raw: a
-        }));
-        setApiaries(formatted);
-      }
+      const formatted: SelectionItem[] = data.map((a: any) => ({
+        id: a.id,
+        title: a.name,
+        subtitle: a.zip_code ? `ZIP: ${a.zip_code}` : (a.latitude ? 'Location: Coordinates' : 'No location set'),
+        icon: <MapPin size={24} />,
+        raw: a
+      }));
+      setApiaries(formatted);
       setLoading(false);
     };
 

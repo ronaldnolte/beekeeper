@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../data/supabase';
+import { createTask, updateTask, deleteTask } from '../../data/taskRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, Calendar, AlertTriangle, X } from 'lucide-react';
 
@@ -88,23 +88,9 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       };
 
       if (isEditing) {
-        // Add timeout to prevent silent hangs
-        const updatePromise = supabase
-          .from('tasks')
-          .update(payload)
-          .eq('id', initialData.id);
-          
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Database update request timed out after 8 seconds.")), 8000)
-        );
-
-        const { error } = await Promise.race([updatePromise, timeoutPromise]) as any;
-        if (error) throw error;
+        await updateTask(initialData.id, payload);
       } else {
-        const { error } = await supabase
-          .from('tasks')
-          .insert([payload]);
-        if (error) throw error;
+        await createTask(payload);
       }
 
       onSuccess();
@@ -120,8 +106,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     if (!initialData || !confirm('Are you sure you want to delete this task?')) return;
     setLoading(true);
     try {
-      const { error } = await supabase.from('tasks').delete().eq('id', initialData.id);
-      if (error) throw error;
+      await deleteTask(initialData.id);
       onSuccess();
     } catch (error: any) {
       alert('Error deleting task: ' + error.message);

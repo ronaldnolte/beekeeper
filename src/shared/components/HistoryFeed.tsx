@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../data/supabase';
+import { fetchHistoryFeed, deleteSnapshot } from '../../data/feedbackRepository';
 import { useAppStore } from '../../store/useAppStore';
 
 interface HistoryFeedProps {
@@ -14,38 +14,13 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      const promises = [];
-      
-      if (filter === 'all' || filter === 'inspections') {
-        promises.push(supabase.from('inspections').select('*').eq('hive_id', hiveId).order('timestamp', { ascending: false }).limit(10).then(res => ({ type: 'inspection', data: res.data })));
-      }
-      if (filter === 'all' || filter === 'interventions') {
-        promises.push(supabase.from('interventions').select('*').eq('hive_id', hiveId).order('timestamp', { ascending: false }).limit(10).then(res => ({ type: 'intervention', data: res.data })));
-      }
-      if (filter === 'all' || filter === 'snapshots') {
-        promises.push(supabase.from('hive_snapshots').select('*').eq('hive_id', hiveId).order('timestamp', { ascending: false }).limit(10).then(res => ({ type: 'snapshot', data: res.data })));
-      }
-      if (filter === 'all' || filter === 'tasks') {
-        // use created_at for tasks, or due_date depending on schema. Let's use created_at.
-        promises.push(supabase.from('tasks').select('*').eq('hive_id', hiveId).order('created_at', { ascending: false }).limit(10).then(res => ({ type: 'task', data: res.data })));
-      }
-
-      const results = await Promise.all(promises);
-      
-      let merged: any[] = [];
-      results.forEach(res => {
-        const items = (res.data || []).map(i => ({ ...i, _model_type: res.type, timestamp: i.timestamp || i.created_at || new Date().toISOString() }));
-        merged = [...merged, ...items];
-      });
-      
-      merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      
-      setHistory(merged.slice(0, 10));
+    const load = async () => {
+      const merged = await fetchHistoryFeed(hiveId, filter);
+      setHistory(merged);
       setLoading(false);
     };
 
-    fetchHistory();
+    load();
   }, [hiveId, filter, refreshTrigger]);
 
   if (loading) {
@@ -111,11 +86,11 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
           onClick={async () => {
             if (item._model_type === 'snapshot') {
               if (window.confirm('Delete this configuration snapshot?')) {
-                const { error } = await supabase.from('hive_snapshots').delete().eq('id', item.id);
-                if (error) {
-                  alert('Failed to delete snapshot: ' + error.message);
-                } else {
+                try {
+                  await deleteSnapshot(item.id);
                   setHistory(prev => prev.filter(h => h.id !== item.id));
+                } catch (e: any) {
+                  alert('Failed to delete snapshot: ' + e.message);
                 }
               }
               return;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../data/supabase';
+import { fetchTasks as loadTasks, fetchTaskLocations, toggleTaskStatus as repoToggle } from '../../data/taskRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { CheckCircle, Circle, Calendar, AlertTriangle, ChevronRight } from 'lucide-react';
 
@@ -22,63 +22,12 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
       if (!user) return;
       setLoading(true);
 
-      const { data: tasksData, error: tasksError } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('assigned_user_id', user.id)
-        .order('due_date', { ascending: true, nullsFirst: false });
+      const tasksData = await loadTasks(user.id);
+      setTasks(tasksData);
 
-      if (tasksError) {
-        console.error("Error fetching tasks:", tasksError);
-        setLoading(false);
-        return;
-      }
-
-      if (tasksData) {
-        setTasks(tasksData);
-
-        // Fetch location names separately to match legacy app logic and prevent FK join errors
-        const locations: Record<string, { apiaryName?: string, hiveName?: string }> = {};
-        
-        const hiveIds = [...new Set(tasksData.map(t => t.hive_id).filter(Boolean))];
-        const hiveToApiaryMap = new Map<string, string>();
-        
-        if (hiveIds.length > 0) {
-          const { data: hives } = await supabase.from('hives').select('id, name, apiary_id').in('id', hiveIds);
-          const hiveMap = new Map(hives?.map(h => [h.id, h.name]) || []);
-          hives?.forEach(h => {
-            if (h.apiary_id) hiveToApiaryMap.set(h.id, h.apiary_id);
-          });
-          
-          tasksData.forEach(task => {
-            if (task.hive_id) {
-              if (!locations[task.id]) locations[task.id] = {};
-              locations[task.id].hiveName = hiveMap.get(task.hive_id);
-            }
-          });
-        }
-
-        const apiaryIdsFromTasks = tasksData.map(t => t.apiary_id).filter(Boolean);
-        const apiaryIdsFromHives = Array.from(hiveToApiaryMap.values());
-        const apiaryIds = [...new Set([...apiaryIdsFromTasks, ...apiaryIdsFromHives])];
-
-        if (apiaryIds.length > 0) {
-          const { data: apiaries } = await supabase.from('apiaries').select('id, name').in('id', apiaryIds);
-          const apiaryMap = new Map(apiaries?.map(a => [a.id, a.name]) || []);
-          
-          tasksData.forEach(task => {
-            let apiaryId = task.apiary_id;
-            if (!apiaryId && task.hive_id) apiaryId = hiveToApiaryMap.get(task.hive_id);
-            
-            if (apiaryId) {
-              if (!locations[task.id]) locations[task.id] = {};
-              locations[task.id].apiaryName = apiaryMap.get(apiaryId);
-            }
-          });
-        }
-        
-        setTaskLocations(locations);
-      }
+      // Fetch location names via repository
+      const locations = await fetchTaskLocations(tasksData);
+      setTaskLocations(locations);
       setLoading(false);
     };
 
@@ -89,12 +38,15 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';
     const completedAt = newStatus === 'completed' ? new Date().toISOString() : null;
 
+    // Optimistic UI update
     setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus, completed_at: completedAt } : t));
 
-    await supabase
-      .from('tasks')
-      .update({ status: newStatus, completed_at: completedAt })
-      .eq('id', task.id);
+    try {
+      await repoToggle(task.id, task.status);
+    } catch (e) {
+      // Revert on failure
+      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: task.status, completed_at: task.completed_at } : t));
+    }
   };
 
   const visibleTasks = tasks.filter(t => showCompleted || t.status !== 'completed');
