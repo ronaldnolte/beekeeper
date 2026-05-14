@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../data/supabase';
-import { resetGuestAccount } from './guestReset';
-import { Mail, Lock, ArrowRight, UserCircle2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 
 export const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -41,25 +40,6 @@ export const Auth: React.FC = () => {
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
-    }
-    
-    setLoading(false);
-  };
-
-  const handleGuestLogin = async () => {
-    setLoading(true);
-    setError(null);
-    const { error } = await supabase.auth.signInWithPassword({ 
-      email: 'guest@beektools.com', 
-      password: 'Guest2026#'
-    });
-
-    if (error) {
-      setError('Guest login failed. Please try again later.');
-    } else {
-      // Re-seed the guest database to ensure a clean demo environment
-      // (This will also fix the zipcode issue for weather forecasts!)
-      await resetGuestAccount();
     }
     
     setLoading(false);
@@ -161,23 +141,6 @@ export const Auth: React.FC = () => {
             {!loading && <ArrowRight size={18} />}
           </button>
         </form>
-
-        <div className="mt-8 relative z-10">
-          <div className="relative flex items-center py-5">
-            <div className="flex-grow border-t border-gray-200"></div>
-            <span className="flex-shrink-0 mx-4 text-gray-400 text-sm font-medium">OR</span>
-            <div className="flex-grow border-t border-gray-200"></div>
-          </div>
-
-          <button
-            onClick={handleGuestLogin}
-            disabled={loading}
-            className="w-full py-3.5 bg-white border-2 border-[#E6DCC3] text-[#4A3C28] rounded-xl font-bold text-base hover:bg-gray-50 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
-          >
-            <UserCircle2 size={18} className="text-[#E67E22]" />
-            Continue as Guest
-          </button>
-        </div>
       </div>
     </div>
   );
