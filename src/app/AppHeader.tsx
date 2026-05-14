@@ -54,28 +54,31 @@ export const AppHeader: React.FC = () => {
           {/* Ask AI */}
           <button 
             onClick={() => navigateTo('ASK_AI')}
-            className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors active:scale-95 text-[var(--color-primary)] hover:bg-[var(--color-bg-raised)]"
+            className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-[var(--color-primary)] hover:bg-[var(--color-bg-raised)]"
             title="Ask AI Beekeeper"
           >
-            <Sparkles size={20} />
+            <Sparkles size={18} />
+            <span className="text-[9px] font-bold leading-none">Ask AI</span>
           </button>
           
           {/* Feedback */}
           <button 
             onClick={() => useAppStore.getState().setFeedbackModalOpen(true)}
-            className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors active:scale-95 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-raised)]"
+            className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-raised)]"
             title="Send Feedback"
           >
-            <Mail size={18} />
+            <Mail size={16} />
+            <span className="text-[9px] font-bold leading-none">Feedback</span>
           </button>
 
           {/* Logout */}
           <button 
             onClick={handleLogout}
-            className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors active:scale-95 text-red-400 hover:bg-red-500/10"
+            className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-red-400 hover:bg-red-500/10"
             title="Log Out"
           >
-            <LogOut size={18} />
+            <LogOut size={16} />
+            <span className="text-[9px] font-bold leading-none">Log Out</span>
           </button>
         </div>
       </div>
