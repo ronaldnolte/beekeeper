@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, Suspense, lazy } from 'react';
 import { supabase } from '../data/supabase';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
@@ -11,13 +11,23 @@ import { HiveDetailView } from '../features/hive/HiveDetailView';
 import { InspectionFormView } from '../features/inspection/InspectionFormView';
 import { InterventionFormView } from '../features/inspection/InterventionFormView';
 import { StatusUpdateView } from '../features/inspection/StatusUpdateView';
-import { RoadmapView } from '../features/feedback/RoadmapView';
-import { ForecastView } from '../features/forecast/ForecastView';
-import { SwarmPredictionView } from '../features/swarm/SwarmPredictionView';
-import { AskAIView } from '../features/ai/AskAIView';
 import { UpdatePasswordView } from '../features/auth/UpdatePasswordView';
 import { FeedbackModal } from '../features/feedback/FeedbackModal';
 import { TaskFormModal } from '../features/tasks/TaskFormModal';
+
+// Lazy-loaded leaf features — only fetched when navigated to
+const ForecastView = lazy(() => import('../features/forecast/ForecastView').then(m => ({ default: m.ForecastView })));
+const SwarmPredictionView = lazy(() => import('../features/swarm/SwarmPredictionView').then(m => ({ default: m.SwarmPredictionView })));
+const AskAIView = lazy(() => import('../features/ai/AskAIView').then(m => ({ default: m.AskAIView })));
+const RoadmapView = lazy(() => import('../features/feedback/RoadmapView').then(m => ({ default: m.RoadmapView })));
+
+// Shared Suspense fallback for lazy-loaded views
+const ViewLoader = () => (
+  <div className="flex-1 flex flex-col items-center justify-center p-8 opacity-50">
+    <div className="w-10 h-10 border-4 border-[#E67E22] border-t-transparent rounded-full animate-spin mb-4"></div>
+    <p className="font-bold text-[var(--color-text)]">Loading...</p>
+  </div>
+);
 
 function App() {
   const { currentView, setUser, isAuthLoading, selectedHiveId, selectedApiaryId, selectedRecord } = useAppStore();
@@ -135,13 +145,29 @@ function App() {
 
         {currentView === 'STATUS_UPDATE_FORM' && <StatusUpdateView />}
 
-        {currentView === 'FORECAST' && <ForecastView />}
+        {currentView === 'FORECAST' && (
+          <Suspense fallback={<ViewLoader />}>
+            <ForecastView />
+          </Suspense>
+        )}
 
-        {currentView === 'ASK_AI' && <AskAIView />}
+        {currentView === 'ASK_AI' && (
+          <Suspense fallback={<ViewLoader />}>
+            <AskAIView />
+          </Suspense>
+        )}
 
-        {currentView === 'SWARM_PREDICTION' && <SwarmPredictionView />}
+        {currentView === 'SWARM_PREDICTION' && (
+          <Suspense fallback={<ViewLoader />}>
+            <SwarmPredictionView />
+          </Suspense>
+        )}
 
-        {currentView === 'ROADMAP' && <RoadmapView />}
+        {currentView === 'ROADMAP' && (
+          <Suspense fallback={<ViewLoader />}>
+            <RoadmapView />
+          </Suspense>
+        )}
 
         {currentView === 'UPDATE_PASSWORD' && <UpdatePasswordView />}
       </main>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchApiaries as loadApiaries } from '../../data/apiaryRepository';
+import { fetchApiaries as loadApiaries, deleteApiaryWithCascade } from '../../data/apiaryRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { SelectionList } from '../../shared/components/SelectionList';
 import type { SelectionItem } from '../../shared/components/SelectionCard';
@@ -58,7 +58,6 @@ export const ApiarySelectionView: React.FC = () => {
 
     setLoading(true);
     try {
-      const { deleteApiaryWithCascade } = await import('../../data/apiaryRepository');
       await deleteApiaryWithCascade(id, user.id);
       window.location.reload();
     } catch (err: any) {
