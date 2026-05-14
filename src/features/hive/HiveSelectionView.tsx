@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../data/supabase';
 import { useAppStore } from '../../store/useAppStore';
+import { resolveApiaryCoords } from '../../data/geocoding';
 import { SelectionList } from '../../shared/components/SelectionList';
 import type { SelectionItem } from '../../shared/components/SelectionCard';
 import { Hexagon, Plus, Activity } from 'lucide-react';
@@ -54,14 +55,12 @@ export const HiveSelectionView: React.FC = () => {
           let lat = apiary.latitude;
           let lng = apiary.longitude;
 
-          if (!lat || !lng && apiary.zip_code) {
-             const cleanZip = apiary.zip_code.includes(':') ? apiary.zip_code.split(':')[1] : apiary.zip_code;
-             const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${cleanZip}&count=1&language=en&format=json`);
-             const geoData = await geoRes.json();
-             if (geoData.results && geoData.results.length > 0) {
-                 lat = geoData.results[0].latitude;
-                 lng = geoData.results[0].longitude;
-             }
+          if (!lat || !lng) {
+            try {
+              const coords = await resolveApiaryCoords(apiary);
+              lat = coords.lat;
+              lng = coords.lng;
+            } catch { /* no location available */ }
           }
 
           if (lat && lng) {

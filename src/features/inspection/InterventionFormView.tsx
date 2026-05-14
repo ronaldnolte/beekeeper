@@ -18,7 +18,7 @@ export const InterventionFormView: React.FC = () => {
   const { selectedHiveId, selectedRecord, goBack, selectInspection } = useAppStore();
   const [loading, setLoading] = useState(false);
   
-  // Note: We're reusing selectedInspection state in the store to pass ANY action item
+  // Note: selectedRecord carries the record to edit via the typed discriminated union
   // for editing. It's technically an intervention if we're here.
   const isEditing = !!selectedRecord;
   

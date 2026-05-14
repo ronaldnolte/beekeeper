@@ -9,7 +9,7 @@ interface HistoryFeedProps {
 }
 
 export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all', refreshTrigger = 0 }) => {
-  const { setCurrentView, selectInspection } = useAppStore();
+  const { navigateTo, selectInspection } = useAppStore();
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -125,11 +125,8 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
             if (item._model_type === 'intervention') targetView = 'INTERVENTION_FORM';
             if (item._model_type === 'task') targetView = 'TASK_FORM';
             
-            if (typeof window !== 'undefined') {
-              window.history.pushState({ view: targetView }, '');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-            setCurrentView(targetView as any);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            navigateTo(targetView as any);
           }}
           className={`card p-2.5 sm:p-3 border-l-4 transition-colors ${
             item._model_type === 'snapshot' ? 'border-blue-400 bg-blue-50/10 cursor-default' : 

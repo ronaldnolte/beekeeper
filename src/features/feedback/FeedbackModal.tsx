@@ -4,7 +4,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { Send, Lightbulb, MessageSquare, X } from 'lucide-react';
 
 export const FeedbackModal: React.FC = () => {
-  const { isFeedbackModalOpen, setFeedbackModalOpen, setCurrentView } = useAppStore();
+  const { isFeedbackModalOpen, setFeedbackModalOpen, navigateTo } = useAppStore();
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -54,10 +54,7 @@ export const FeedbackModal: React.FC = () => {
 
   const handleGoToRoadmap = () => {
     setFeedbackModalOpen(false);
-    if (typeof window !== 'undefined') {
-      window.history.pushState({ view: 'ROADMAP' }, '');
-    }
-    setCurrentView('ROADMAP' as any);
+    navigateTo('ROADMAP');
   };
 
   return (

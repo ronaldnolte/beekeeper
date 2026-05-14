@@ -11,7 +11,7 @@ interface ChatMessage {
 }
 
 export const AskAIView: React.FC = () => {
-  const { goBack, selectedApiaryId } = useAppStore();
+  const { selectedApiaryId } = useAppStore();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -92,7 +92,7 @@ export const AskAIView: React.FC = () => {
       {/* Header */}
       <div className="w-full flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-100 shadow-sm bg-white z-10">
         <button 
-          onClick={goBack}
+          onClick={() => window.history.back()}
           className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 active:scale-95 transition-transform"
         >
           <ArrowLeft size={20} />

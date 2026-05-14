@@ -38,7 +38,7 @@ export const InspectionFormView: React.FC = () => {
   const { selectedHiveId, selectedRecord, goBack, selectInspection } = useAppStore();
   const [loading, setLoading] = useState(false);
   
-  // Form State initialized from selectedInspection if it exists
+  // Form State initialized from selectedRecord if editing an existing inspection
   const [date, setDate] = useState(() => {
     if (selectedRecord?.timestamp) {
       return new Date(selectedRecord.timestamp).toISOString().split('T')[0];

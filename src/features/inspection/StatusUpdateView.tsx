@@ -12,7 +12,7 @@ const STATUS_OPTIONS = [
 ];
 
 export const StatusUpdateView: React.FC = () => {
-  const { selectedHiveId, setCurrentView } = useAppStore();
+  const { selectedHiveId, navigateTo } = useAppStore();
   const [loading, setLoading] = useState(false);
 
   const handleUpdateStatus = async (newStatus: string) => {
@@ -40,10 +40,7 @@ export const StatusUpdateView: React.FC = () => {
 
       if (interventionError) throw interventionError;
 
-      if (typeof window !== 'undefined') {
-        window.history.pushState({ view: 'HIVE_DETAIL' }, '');
-      }
-      setCurrentView('HIVE_DETAIL');
+      navigateTo('HIVE_DETAIL');
 
     } catch (error: any) {
       alert('Error updating status: ' + error.message);
@@ -63,10 +60,7 @@ export const StatusUpdateView: React.FC = () => {
         </div>
         <button 
           onClick={() => {
-            if (typeof window !== 'undefined') {
-              window.history.pushState({ view: 'HIVE_DETAIL' }, '');
-            }
-            setCurrentView('HIVE_DETAIL');
+            navigateTo('HIVE_DETAIL');
           }}
           className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500 active:scale-95"
         >

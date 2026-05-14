@@ -6,7 +6,7 @@ import { HistoryFeed } from '../../shared/components/HistoryFeed';
 import { HiveConfigWrapper } from './HiveConfigWrapper';
 
 export const HiveDetailView: React.FC = () => {
-  const { selectedHiveId, setCurrentView } = useAppStore();
+  const { selectedHiveId, navigateTo } = useAppStore();
   const [hive, setHive] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -48,10 +48,7 @@ export const HiveDetailView: React.FC = () => {
           <button 
             onClick={() => {
               useAppStore.getState().selectInspection(null);
-              if (typeof window !== 'undefined') {
-                window.history.pushState({ view: 'INSPECTION_FORM' }, '');
-              }
-              setCurrentView('INSPECTION_FORM');
+              navigateTo('INSPECTION_FORM');
             }}
             className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
           >
@@ -64,10 +61,7 @@ export const HiveDetailView: React.FC = () => {
           <button 
             onClick={() => {
               useAppStore.getState().selectInspection(null);
-              if (typeof window !== 'undefined') {
-                window.history.pushState({ view: 'INTERVENTION_FORM' }, '');
-              }
-              setCurrentView('INTERVENTION_FORM');
+              navigateTo('INTERVENTION_FORM');
             }}
             className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
           >
@@ -80,10 +74,7 @@ export const HiveDetailView: React.FC = () => {
           <button 
             onClick={() => {
               useAppStore.getState().selectInspection(null);
-              if (typeof window !== 'undefined') {
-                window.history.pushState({ view: 'TASK_FORM' }, '');
-              }
-              setCurrentView('TASK_FORM');
+              navigateTo('TASK_FORM');
             }}
             className="card p-2 sm:p-3 flex flex-col items-center justify-center gap-1.5 hover:bg-[#FFFBF0] transition-colors border-2 border-transparent hover:border-[#E67E22] group"
           >

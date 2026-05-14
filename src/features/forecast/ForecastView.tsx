@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../data/supabase';
+import { resolveApiaryCoords } from '../../data/geocoding';
 import { WeatherService } from './WeatherService';
 import type { InspectionWindow } from './WeatherService';
 import { ArrowLeft } from 'lucide-react';
@@ -9,7 +10,7 @@ import { ForecastScoreGuideModal } from './ForecastScoreGuideModal';
 import { ForecastDetailModal } from './ForecastDetailModal';
 
 export const ForecastView: React.FC = () => {
-  const { selectedApiaryId, goBack } = useAppStore();
+  const { selectedApiaryId } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [forecast, setForecast] = useState<InspectionWindow[]>([]);
@@ -37,20 +38,9 @@ export const ForecastView: React.FC = () => {
         let lng = apiary.longitude;
 
         if (!lat || !lng) {
-            if (apiary.zip_code) {
-               const cleanZip = apiary.zip_code.includes(':') ? apiary.zip_code.split(':')[1] : apiary.zip_code;
-               const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${cleanZip}&count=1&language=en&format=json`;
-               const geoRes = await fetch(geoUrl);
-               const geoData = await geoRes.json();
-               if (geoData.results && geoData.results.length > 0) {
-                   lat = geoData.results[0].latitude;
-                   lng = geoData.results[0].longitude;
-               } else {
-                   throw new Error("Could not find coordinates for Zip Code: " + apiary.zip_code);
-               }
-            } else {
-                throw new Error("Apiary has no location data (no lat/lng or zip code).");
-            }
+          const coords = await resolveApiaryCoords(apiary);
+          lat = coords.lat;
+          lng = coords.lng;
         }
 
         const weatherData = await WeatherService.getWeatherForecast(lat, lng);
@@ -99,7 +89,7 @@ export const ForecastView: React.FC = () => {
       {/* Header */}
       <div className="w-full max-w-[800px] flex justify-center items-center py-2 relative">
         <button 
-          onClick={goBack}
+          onClick={() => window.history.back()}
           className="absolute left-0 w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-500 active:scale-95 border border-gray-100 hover:bg-gray-50 transition-colors"
         >
           <ArrowLeft size={20} />
