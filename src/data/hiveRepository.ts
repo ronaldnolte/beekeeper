@@ -39,6 +39,18 @@ export async function updateHive(
 }
 
 export async function deleteHive(id: string) {
+  // Delete child records first to avoid FK constraint violations
+  const results = await Promise.all([
+    supabase.from('tasks').delete().eq('hive_id', id),
+    supabase.from('interventions').delete().eq('hive_id', id),
+    supabase.from('hive_snapshots').delete().eq('hive_id', id),
+    supabase.from('inspections').delete().eq('hive_id', id),
+  ]);
+
+  const childError = results.find((r) => r.error)?.error;
+  if (childError) throw childError;
+
+  // Now delete the hive itself
   const { error } = await supabase.from('hives').delete().eq('id', id);
   if (error) throw error;
 }
