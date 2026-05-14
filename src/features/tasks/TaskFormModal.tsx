@@ -74,15 +74,17 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         throw new Error("Invalid due date");
       }
 
+      const hiveId = isEditing ? initialData.hive_id : (defaultHiveId || null);
       const payload = {
-        hive_id: isEditing ? initialData.hive_id : (defaultHiveId || null),
+        hive_id: hiveId,
         apiary_id: isEditing ? initialData.apiary_id : (defaultApiaryId || null),
         assigned_user_id: user?.id,
         title,
         description,
         priority,
         due_date: parsedDueDate,
-        status
+        status,
+        scope: hiveId ? 'hive' : 'general'
       };
 
       if (isEditing) {

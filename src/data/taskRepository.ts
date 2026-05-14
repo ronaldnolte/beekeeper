@@ -19,6 +19,7 @@ export async function createTask(payload: {
   priority: string;
   due_date: string | null;
   status: string;
+  scope: string;
 }) {
   const { error } = await supabase.from('tasks').insert([payload]);
   if (error) throw error;
@@ -33,6 +34,7 @@ export async function updateTask(id: string, payload: {
   priority: string;
   due_date: string | null;
   status: string;
+  scope: string;
 }) {
   // Add timeout to prevent silent hangs
   const updatePromise = supabase.from('tasks').update(payload).eq('id', id);
