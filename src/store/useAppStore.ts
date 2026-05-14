@@ -17,11 +17,18 @@ export type AppView =
   | 'UPDATE_PASSWORD'   // Global: Reset password flow
   | 'SWARM_PREDICTION'; // Global: Swarm risk analysis
 
+// Discriminated union for selected records (replaces `selectedInspection: any`)
+export type SelectedRecord =
+  | { _model_type: 'inspection'; id: string; [key: string]: any }
+  | { _model_type: 'intervention'; id: string; [key: string]: any }
+  | { _model_type: 'task'; id: string; [key: string]: any }
+  | null;
+
 interface AppState {
   currentView: AppView;
   selectedApiaryId: string | null;
   selectedHiveId: string | null;
-  selectedInspection: any | null;
+  selectedRecord: SelectedRecord;
   user: User | null;
   isAuthLoading: boolean;
   isFeedbackModalOpen: boolean;
@@ -31,10 +38,13 @@ interface AppState {
   editingHive: any | null;
   
   // Actions
+  navigateTo: (view: AppView) => void;
   setCurrentView: (view: AppView) => void;
   selectApiary: (id: string) => void;
   selectHive: (id: string) => void;
-  selectInspection: (inspection: any | null) => void;
+  selectRecord: (record: SelectedRecord) => void;
+  // Legacy alias — kept so existing HistoryFeed code doesn't break during migration
+  selectInspection: (record: any | null) => void;
   goBack: () => void;
   setUser: (user: User | null) => void;
   setAuthLoading: (loading: boolean) => void;
@@ -47,7 +57,7 @@ export const useAppStore = create<AppState>()((set) => ({
       currentView: 'AUTH',
       selectedApiaryId: null,
       selectedHiveId: null,
-      selectedInspection: null,
+      selectedRecord: null,
       user: null,
       isAuthLoading: true,
       isFeedbackModalOpen: false,
@@ -56,8 +66,21 @@ export const useAppStore = create<AppState>()((set) => ({
       isHiveFormOpen: false,
       editingHive: null,
 
+      // Centralized navigation — always pushes history state
+      navigateTo: (view) => {
+        if (typeof window !== 'undefined') {
+          window.history.pushState({ view }, '');
+        }
+        set({ currentView: view });
+      },
+
+      // Simple setter (used internally by goBack, setUser — no pushState needed)
       setCurrentView: (view) => set({ currentView: view }),
-      selectInspection: (inspection) => set({ selectedInspection: inspection }),
+
+      selectRecord: (record) => set({ selectedRecord: record }),
+      // Legacy alias — maps to selectRecord
+      selectInspection: (record) => set({ selectedRecord: record }),
+
       setFeedbackModalOpen: (isOpen) => set({ isFeedbackModalOpen: isOpen }),
       setApiaryFormOpen: (isOpen, apiaryToEdit = null) => set({ isApiaryFormOpen: isOpen, editingApiary: apiaryToEdit }),
       setHiveFormOpen: (isOpen, hiveToEdit = null) => set({ isHiveFormOpen: isOpen, editingHive: hiveToEdit }),
@@ -118,6 +141,6 @@ export const useAppStore = create<AppState>()((set) => ({
           window.history.pushState({ view: prevView }, '');
         }
         
-        return { currentView: prevView, selectedInspection: null };
+        return { currentView: prevView, selectedRecord: null };
       })
 }));
