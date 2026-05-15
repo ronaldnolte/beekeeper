@@ -77,7 +77,7 @@ export const HiveDetailView: React.FC = () => {
             useAppStore.getState().selectInspection(null);
             navigateTo('INSPECTION_FORM');
           }}
-          className="flex-1 max-w-[140px] bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-lg shadow-[var(--color-primary)]/20"
+          className="flex-1 max-w-[140px] btn-honey py-3.5 text-xs flex-col gap-1"
         >
           <ClipboardList size={20} />
           Inspection
@@ -88,7 +88,7 @@ export const HiveDetailView: React.FC = () => {
             useAppStore.getState().selectInspection(null);
             navigateTo('INTERVENTION_FORM');
           }}
-          className="flex-1 max-w-[140px] bg-[var(--color-card-bg)] border border-[var(--color-card-border)] text-[var(--color-text)] py-3.5 rounded-2xl font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+          className="flex-1 max-w-[140px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm"
         >
           <PlusCircle size={20} />
           Intervention
@@ -99,7 +99,7 @@ export const HiveDetailView: React.FC = () => {
             useAppStore.getState().selectInspection(null);
             navigateTo('TASK_FORM');
           }}
-          className="flex-1 max-w-[140px] bg-[var(--color-card-bg)] border border-[var(--color-card-border)] text-[var(--color-text)] py-3.5 rounded-2xl font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
+          className="flex-1 max-w-[140px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm"
         >
           <AlertTriangle size={20} />
           Task

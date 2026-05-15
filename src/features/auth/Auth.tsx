@@ -135,7 +135,7 @@ export const Auth: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-[var(--color-primary)] text-white rounded-xl font-bold text-lg shadow-lg shadow-[var(--color-primary)]/30 hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-70 active:scale-[0.98]"
+            className="w-full py-4 btn-honey text-lg"
           >
             {loading ? (isResetMode ? 'Sending...' : 'Logging in...') : (isResetMode ? 'Send Reset Link' : 'Log In')}
             {!loading && <ArrowRight size={18} />}

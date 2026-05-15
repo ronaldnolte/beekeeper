@@ -97,7 +97,7 @@ export const HiveSelectionView: React.FC = () => {
       <div className="bottom-action-bar">
         <button
           onClick={() => useAppStore.getState().setHiveFormOpen(true, null)}
-          className="flex-1 max-w-md bg-[var(--color-primary)] text-white py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2 active:scale-[0.98] shadow-lg shadow-[var(--color-primary)]/30 transition-transform"
+          className="flex-1 max-w-md btn-honey py-4 text-base"
         >
           <Plus size={22} /> Create New Hive
         </button>

@@ -78,7 +78,7 @@ export const ApiarySelectionView: React.FC = () => {
           </div>
           <button
             onClick={handleCreateTask}
-            className="bg-[var(--color-card-bg)] border border-[var(--color-card-border)] text-[var(--color-text)] px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform"
+            className="bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform shadow-sm"
           >
             <ClipboardList size={16} /> New Task
           </button>
@@ -110,7 +110,7 @@ export const ApiarySelectionView: React.FC = () => {
       <div className="bottom-action-bar">
         <button
           onClick={() => setApiaryFormOpen(true, null)}
-          className="flex-1 max-w-[300px] bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-[var(--color-primary)]/30"
+          className="flex-1 max-w-[300px] btn-honey py-4 text-base"
         >
           <Plus size={18} /> Create Apiary
         </button>
