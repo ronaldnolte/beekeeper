@@ -49,7 +49,7 @@ export const HiveDetailView: React.FC = () => {
             </p>
           </div>
           <span className={`px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase ${
-            (hive.status || 'Active') === 'Active' ? 'bg-green-900/30 text-green-400' : 'bg-amber-900/30 text-amber-400'
+            (hive.status || 'Active') === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
           }`}>
             {hive.status || 'Active'}
           </span>

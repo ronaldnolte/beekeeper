@@ -39,14 +39,14 @@ export const AppHeader: React.FC = () => {
           {showBackButton ? (
             <button 
               onClick={() => window.history.back()}
-              className="p-2 -ml-2 rounded-xl text-[var(--color-primary)] hover:bg-[var(--color-bg-raised)] transition-colors active:scale-95"
+              className="p-2 -ml-2 rounded-xl text-white/90 hover:bg-white/10 transition-colors active:scale-95"
             >
               <ArrowLeft size={22} />
             </button>
           ) : (
             <img src="/logo.png" alt="Beektools" className="w-8 h-8 object-contain" />
           )}
-          <h1 className="text-lg font-black text-[var(--color-text)]">{title}</h1>
+          <h1 className="text-lg font-black text-white">{title}</h1>
         </div>
 
         {/* Right: Action Icons */}
@@ -55,7 +55,7 @@ export const AppHeader: React.FC = () => {
           {currentView !== 'SELECT_APIARY' && (
             <button 
               onClick={() => navigateTo('ASK_AI')}
-              className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-[var(--color-primary)] hover:bg-[var(--color-bg-raised)]"
+              className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-amber-300 hover:bg-white/10"
               title="Ask AI Beekeeper"
             >
               <Sparkles size={18} />
@@ -66,7 +66,7 @@ export const AppHeader: React.FC = () => {
           {/* Feedback */}
           <button 
             onClick={() => useAppStore.getState().setFeedbackModalOpen(true)}
-            className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-raised)]"
+            className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-white/70 hover:bg-white/10"
             title="Send Feedback"
           >
             <Mail size={16} />
@@ -76,7 +76,7 @@ export const AppHeader: React.FC = () => {
           {/* Logout */}
           <button 
             onClick={handleLogout}
-            className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-red-400 hover:bg-red-500/10"
+            className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-red-300 hover:bg-white/10"
             title="Log Out"
           >
             <LogOut size={16} />

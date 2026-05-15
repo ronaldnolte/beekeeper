@@ -1,22 +1,24 @@
 @import "tailwindcss";
 
 /* 
-  Global styles for Beekeeper — Dark Slate + Amber Theme
-  Modern dark base with warm honey accents for visual energy.
+  Global styles for Beekeeper — Bright Nature Theme
+  Light, cheerful palette inspired by outdoor beekeeping.
 */
 
 :root {
-  --color-primary: #F59E0B;
-  --color-primary-dark: #D97706;
-  --color-bg: #0F1419;
-  --color-bg-raised: #1A2332;
-  --color-text: #F1F5F9;
-  --color-text-muted: #94A3B8;
-  --color-card-bg: #1E293B;
-  --color-card-text: #F1F5F9;
-  --color-card-border: #334155;
-  --color-input-bg: #0F172A;
-  --color-divider: #334155;
+  --color-primary: #E99B1A;
+  --color-primary-dark: #C47F0A;
+  --color-bg: #F5F0E8;
+  --color-bg-raised: #FFFFFF;
+  --color-text: #2D2A26;
+  --color-text-muted: #7A7468;
+  --color-card-bg: #FFFFFF;
+  --color-card-text: #2D2A26;
+  --color-card-border: #E8E0D0;
+  --color-input-bg: #F9F6F0;
+  --color-divider: #E8E0D0;
+  --color-accent-green: #4CAF50;
+  --color-accent-sky: #5BB5D5;
 }
 
 body {
@@ -32,12 +34,13 @@ body {
 @layer components {
   .card {
     @apply bg-[var(--color-card-bg)] rounded-2xl border border-[var(--color-card-border)] overflow-hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
   }
   
   .glass-header {
-    background: linear-gradient(180deg, #1A2332 0%, var(--color-bg) 100%);
-    border-bottom: 1px solid var(--color-card-border);
+    background: linear-gradient(135deg, #4A8B3F 0%, #3D7A35 50%, #2E6628 100%);
+    border-bottom: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
   }
 
   /* Fixed bottom action bar — use on views with primary CTAs */
@@ -45,6 +48,5 @@ body {
     @apply fixed bottom-0 left-0 w-full p-4 z-50 flex justify-center gap-3;
     padding-bottom: calc(1rem + env(safe-area-inset-bottom));
     background: linear-gradient(to top, var(--color-bg) 70%, transparent);
-    backdrop-filter: blur(8px);
   }
 }
