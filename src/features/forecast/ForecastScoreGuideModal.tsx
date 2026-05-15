@@ -16,14 +16,14 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-5 bg-white border-b border-amber-100">
+                <div className="flex items-center justify-between px-6 py-5 bg-[var(--color-input-bg)] border-b border-amber-100">
                     <div>
                         <h3 className="text-xl font-black text-[#8B4513]">How Scores are Calculated</h3>
                         <p className="text-xs text-[#8B4513]/70 font-bold uppercase tracking-wider mt-0.5">Optimal conditions for hive inspections</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors active:scale-95"
+                        className="p-2 rounded-full text-[var(--color-text-muted)] hover:text-[var(--color-text-muted)] hover:bg-[var(--color-bg-raised)] transition-colors active:scale-95"
                     >
                         <X size={24} />
                     </button>
@@ -32,7 +32,7 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
                 {/* Body */}
                 <div className="p-6 overflow-y-auto space-y-6 text-sm custom-scrollbar">
                     {/* Intro */}
-                    <p className="text-gray-600 font-medium leading-relaxed">
+                    <p className="text-[var(--color-text-muted)] font-medium leading-relaxed">
                         The inspection suitability score (0-100) is a weighted calculation based on 5 key weather factors. High scores indicate ideal conditions for opening the hive with minimal stress to the colony.
                     </p>
 
@@ -111,7 +111,7 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 bg-white border-t border-amber-100 flex justify-end">
+                <div className="p-4 bg-[var(--color-input-bg)] border-t border-amber-100 flex justify-end">
                     <button
                         onClick={onClose}
                         className="px-8 py-3 bg-[#8B4513] text-white rounded-xl font-black hover:bg-[#6D360F] transition-colors active:scale-95 shadow-md shadow-[#8B4513]/20"
@@ -126,13 +126,13 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
 
 function ScoreRule({ label, max, description, detail }: { label: string, max: string, description: string, detail: string }) {
     return (
-        <div className="group border-2 border-white bg-white rounded-xl p-4 shadow-sm hover:border-amber-200 hover:shadow-md transition-all">
+        <div className="group border-2 border-white bg-[var(--color-input-bg)] rounded-xl p-4 shadow-sm hover:border-amber-200 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
                 <span className="font-black text-[#4A3C28] text-base">{label}</span>
                 <span className="text-xs font-black bg-amber-100 text-[#8B4513] px-3 py-1 rounded-full">{max} pts</span>
             </div>
-            <p className="text-xs font-medium text-gray-500 mb-3">{description}</p>
-            <p className="text-[10px] text-gray-400 font-mono bg-gray-50 p-2 rounded-lg leading-relaxed">{detail}</p>
+            <p className="text-xs font-medium text-[var(--color-text-muted)] mb-3">{description}</p>
+            <p className="text-[10px] text-[var(--color-text-muted)] font-mono bg-[var(--color-bg-raised)] p-2 rounded-lg leading-relaxed">{detail}</p>
         </div>
     );
 }

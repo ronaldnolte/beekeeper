@@ -64,7 +64,7 @@ export const ForecastView: React.FC = () => {
           case 'Excellent': return 'bg-[#1E824C]'; // Dark Green
           case 'Good': return 'bg-[#2ECC71]'; // Light Green
           case 'Fair': return 'bg-[#F1C40F]'; // Yellow
-          case 'Poor': return 'bg-[#E67E22]'; // Orange
+          case 'Poor': return 'bg-[var(--color-primary)]'; // Orange
           case 'Not Rec': return 'bg-[#E74C3C]'; // Red
           default: return 'bg-gray-200';
       }
@@ -77,24 +77,24 @@ export const ForecastView: React.FC = () => {
       <div className="w-full max-w-[800px] flex justify-center items-center py-2 relative">
         <button 
           onClick={() => window.history.back()}
-          className="absolute left-0 w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-500 active:scale-95 border border-gray-100 hover:bg-gray-50 transition-colors"
+          className="absolute left-0 w-10 h-10 rounded-full bg-[var(--color-input-bg)] shadow-sm flex items-center justify-center text-[var(--color-text-muted)] active:scale-95 border border-[var(--color-card-border)] hover:bg-[var(--color-bg-raised)] transition-colors"
         >
           <ArrowLeft size={20} />
         </button>
         <div className="text-center">
           <h2 className="text-2xl font-black text-[#8B4513]">Hive Forecast</h2>
-          <p className="text-sm font-bold text-gray-500">{apiaryName}</p>
+          <p className="text-sm font-bold text-[var(--color-text-muted)]">{apiaryName}</p>
         </div>
       </div>
 
       <div className="w-full max-w-[800px]">
         {loading ? (
-          <div className="bg-white rounded-3xl p-12 flex flex-col items-center justify-center gap-4 shadow-sm border border-gray-100">
+          <div className="bg-[var(--color-input-bg)] rounded-3xl p-12 flex flex-col items-center justify-center gap-4 shadow-sm border border-[var(--color-card-border)]">
             <div className="w-8 h-8 border-4 border-[#8B4513] border-t-transparent rounded-full animate-spin"></div>
             <p className="font-bold text-[#8B4513] animate-pulse">Analyzing meteorological data...</p>
           </div>
         ) : error ? (
-          <div className="bg-white rounded-3xl p-8 text-center border-red-200 shadow-sm border">
+          <div className="bg-[var(--color-input-bg)] rounded-3xl p-8 text-center border-red-200 shadow-sm border">
              <p className="text-red-600 font-bold mb-2">Error</p>
              <p className="text-sm text-red-500">{error}</p>
           </div>
@@ -102,21 +102,21 @@ export const ForecastView: React.FC = () => {
           <div className="w-full flex flex-col items-center space-y-4">
               
               {/* Legend Row */}
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-[10px] sm:text-xs font-bold text-gray-600 px-2">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-[10px] sm:text-xs font-bold text-[var(--color-text-muted)] px-2">
                   <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#1E824C]"></div>Excellent 85+</div>
                   <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#2ECC71]"></div>Good 70-84</div>
                   <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#F1C40F]"></div>Fair 55-69</div>
-                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#E67E22]"></div>Poor 40-54</div>
+                  <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[var(--color-primary)]"></div>Poor 40-54</div>
                   <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[#E74C3C]"></div>Not Rec &lt;40</div>
               </div>
 
               {/* Action Links */}
               <div className="flex items-center justify-center gap-2 text-xs font-bold">
-                  <span className="text-gray-400 italic">Tap a score for details</span>
-                  <span className="text-gray-300 mx-1">|</span>
+                  <span className="text-[var(--color-text-muted)] italic">Tap a score for details</span>
+                  <span className="text-[var(--color-text-muted)] mx-1">|</span>
                   <button 
                     onClick={() => setIsGuideOpen(true)}
-                    className="text-[#E67E22] hover:text-[#D35400] underline underline-offset-2 decoration-dotted"
+                    className="text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] underline underline-offset-2 decoration-dotted"
                   >
                     How are scores calculated?
                   </button>
@@ -124,16 +124,16 @@ export const ForecastView: React.FC = () => {
 
               {/* The Grid */}
               <div className="flex justify-center overflow-x-auto custom-scrollbar">
-                  <table className="text-center border-collapse border border-gray-300 bg-white text-[11px]">
+                  <table className="text-center border-collapse border border-gray-300 bg-[var(--color-input-bg)] text-[11px]">
                       <thead>
-                          <tr className="bg-gray-100">
-                              <th className="border border-gray-300 px-2 py-1 font-bold text-gray-800 bg-gray-100 sticky left-0 z-10 text-[10px] w-12">
+                          <tr className="bg-[var(--color-bg-raised)]">
+                              <th className="border border-gray-300 px-2 py-1 font-bold text-[var(--color-text)] bg-[var(--color-bg-raised)] sticky left-0 z-10 text-[10px] w-12">
                                   Time
                               </th>
                               {uniqueDays.map(day => (
                                   <th key={day.id} className="border border-gray-300 px-1 py-1 min-w-[48px]">
-                                      <div className="font-bold text-[11px] text-gray-800">{day.dayName}</div>
-                                      <div className="text-[9px] text-gray-500">{day.dateStr}</div>
+                                      <div className="font-bold text-[11px] text-[var(--color-text)]">{day.dayName}</div>
+                                      <div className="text-[9px] text-[var(--color-text-muted)]">{day.dateStr}</div>
                                   </th>
                               ))}
                           </tr>
@@ -144,7 +144,7 @@ export const ForecastView: React.FC = () => {
                               
                               return (
                                   <tr key={hour}>
-                                      <td className="border border-gray-300 px-1.5 py-0 font-bold text-gray-800 bg-white sticky left-0 z-10 text-[10px] whitespace-nowrap">
+                                      <td className="border border-gray-300 px-1.5 py-0 font-bold text-[var(--color-text)] bg-[var(--color-input-bg)] sticky left-0 z-10 text-[10px] whitespace-nowrap">
                                           {hourStr}
                                       </td>
                                       {uniqueDays.map(day => {
@@ -155,7 +155,7 @@ export const ForecastView: React.FC = () => {
                                               return wHour === hour && wDate === day.id;
                                           });
 
-                                          if (!window) return <td key={day.id} className="border border-gray-300 bg-gray-100 h-7 w-12"></td>;
+                                          if (!window) return <td key={day.id} className="border border-gray-300 bg-[var(--color-bg-raised)] h-7 w-12"></td>;
 
                                           const isDarkText = window.isHardLimit;
                                           
@@ -178,7 +178,7 @@ export const ForecastView: React.FC = () => {
                   </table>
               </div>
               
-              <p className="text-[10px] font-bold text-gray-400 italic mt-2 w-full text-center">
+              <p className="text-[10px] font-bold text-[var(--color-text-muted)] italic mt-2 w-full text-center">
                   White numerals = OK to inspect • Black numerals = Not recommended
               </p>
           </div>

@@ -87,43 +87,43 @@ export const AskAIView: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-white animate-in slide-in-from-bottom-8">
+    <div className="w-full h-full flex flex-col bg-[var(--color-input-bg)] animate-in slide-in-from-bottom-8">
       
       {/* Header */}
-      <div className="w-full flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-100 shadow-sm bg-white z-10">
+      <div className="w-full flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--color-card-border)] shadow-sm bg-[var(--color-input-bg)] z-10">
         <button 
           onClick={() => window.history.back()}
-          className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 active:scale-95 transition-transform"
+          className="w-10 h-10 rounded-full bg-[var(--color-bg-raised)] flex items-center justify-center text-[var(--color-text-muted)] active:scale-95 transition-transform"
         >
           <ArrowLeft size={20} />
         </button>
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-[#E67E22]" />
-            <h2 className="text-xl font-black text-gray-800">Ask AI</h2>
+            <Sparkles size={16} className="text-[var(--color-primary)]" />
+            <h2 className="text-xl font-black text-[var(--color-text)]">Ask AI</h2>
           </div>
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Powered by Gemini</span>
+          <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Powered by Gemini</span>
         </div>
         <div className="w-10 h-10" /> {/* Spacer for centering */}
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-gray-50/50">
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-[var(--color-bg-raised)]/50">
         
         {/* Intro Message */}
         {messages.length === 0 && (
           <div className="w-full max-w-md mx-auto mt-8 flex flex-col items-center text-center space-y-4">
-            <div className="w-16 h-16 bg-[#E67E22]/10 rounded-full flex items-center justify-center text-[#E67E22]">
+            <div className="w-16 h-16 bg-[var(--color-primary)]/10 rounded-full flex items-center justify-center text-[var(--color-primary)]">
               <Sparkles size={32} />
             </div>
-            <h3 className="font-black text-xl text-gray-800">Your AI Beekeeper</h3>
-            <p className="text-gray-500 font-medium">
+            <h3 className="font-black text-xl text-[var(--color-text)]">Your AI Beekeeper</h3>
+            <p className="text-[var(--color-text-muted)] font-medium">
               Ask me anything about your hives! I automatically know your location, current weather, and hive types to give you the best advice.
             </p>
             <div className="flex flex-wrap justify-center gap-2 mt-4">
-              <span className="bg-white border border-gray-200 px-3 py-1.5 rounded-full text-xs font-bold text-gray-600 shadow-sm">"Do I need to feed them today?"</span>
-              <span className="bg-white border border-gray-200 px-3 py-1.5 rounded-full text-xs font-bold text-gray-600 shadow-sm">"When should I add a super?"</span>
-              <span className="bg-white border border-gray-200 px-3 py-1.5 rounded-full text-xs font-bold text-gray-600 shadow-sm">"How do I treat for mites?"</span>
+              <span className="bg-[var(--color-input-bg)] border border-[var(--color-card-border)] px-3 py-1.5 rounded-full text-xs font-bold text-[var(--color-text-muted)] shadow-sm">"Do I need to feed them today?"</span>
+              <span className="bg-[var(--color-input-bg)] border border-[var(--color-card-border)] px-3 py-1.5 rounded-full text-xs font-bold text-[var(--color-text-muted)] shadow-sm">"When should I add a super?"</span>
+              <span className="bg-[var(--color-input-bg)] border border-[var(--color-card-border)] px-3 py-1.5 rounded-full text-xs font-bold text-[var(--color-text-muted)] shadow-sm">"How do I treat for mites?"</span>
             </div>
           </div>
         )}
@@ -138,8 +138,8 @@ export const AskAIView: React.FC = () => {
               <div 
                 className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${
                   msg.role === 'user' 
-                    ? 'bg-[#E67E22] text-white rounded-tr-sm' 
-                    : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm prose prose-sm prose-p:leading-snug prose-headings:font-bold prose-a:text-[#E67E22]'
+                    ? 'bg-[var(--color-primary)] text-white rounded-tr-sm' 
+                    : 'bg-[var(--color-input-bg)] border border-[var(--color-card-border)] text-[var(--color-text)] rounded-tl-sm prose prose-sm prose-p:leading-snug prose-headings:font-bold prose-a:text-[var(--color-primary)]'
                 }`}
               >
                 {msg.role === 'user' ? (
@@ -153,7 +153,7 @@ export const AskAIView: React.FC = () => {
 
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-2">
+              <div className="bg-[var(--color-input-bg)] border border-[var(--color-card-border)] rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-2">
                 <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce"></div>
                 <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
@@ -165,7 +165,7 @@ export const AskAIView: React.FC = () => {
       </div>
 
       {/* Input Area */}
-      <div className="w-full flex-shrink-0 bg-white border-t border-gray-100 p-4 pb-8">
+      <div className="w-full flex-shrink-0 bg-[var(--color-input-bg)] border-t border-[var(--color-card-border)] p-4 pb-8">
         <div className="w-full max-w-2xl mx-auto relative flex items-center gap-2">
           {!selectedApiaryId && (
             <div className="absolute -top-10 left-0 right-0 flex justify-center">
@@ -183,12 +183,12 @@ export const AskAIView: React.FC = () => {
             }}
             disabled={loading || !selectedApiaryId}
             placeholder="Ask about your bees..."
-            className="flex-1 bg-gray-50 border border-gray-200 rounded-full py-4 pl-6 pr-12 font-medium text-gray-800 placeholder-gray-400 focus:border-[#E67E22] focus:ring-1 focus:ring-[#E67E22] outline-none transition-all disabled:opacity-50"
+            className="flex-1 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-full py-4 pl-6 pr-12 font-medium text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] outline-none transition-all disabled:opacity-50"
           />
           <button 
             onClick={handleSend}
             disabled={!input.trim() || loading || !selectedApiaryId}
-            className="absolute right-2 w-10 h-10 bg-[#E67E22] text-white rounded-full flex items-center justify-center hover:bg-[#D35400] transition-colors disabled:opacity-50 disabled:hover:bg-[#E67E22] active:scale-95"
+            className="absolute right-2 w-10 h-10 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50 disabled:hover:bg-[var(--color-primary)] active:scale-95"
           >
             <Send size={18} className="ml-1" />
           </button>

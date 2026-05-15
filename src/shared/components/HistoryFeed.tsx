@@ -48,7 +48,7 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
     } catch(e) {}
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
     
-    const colors: any = { inactive: '#3D3226', active: '#93C5FD', empty: '#231D15', brood: '#8B4513', resource: '#F59E0B', follower_board: '#1F2937' };
+    const colors: any = { inactive: '#334155', active: '#93C5FD', empty: '#1E293B', brood: '#92400E', resource: '#F59E0B', follower_board: '#1E293B' };
     
     return (
       <div className="flex gap-[1px] mt-1.5 bg-[var(--color-input-bg)] p-1.5 rounded-lg border border-[var(--color-card-border)] overflow-x-hidden w-full max-w-full">
@@ -67,7 +67,7 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
     } catch(e) {}
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
     
-    const colors: any = { deep: '#D35400', medium: '#E67E22', shallow: '#F39C12', feeder: '#DBEAFE', inner_cover: '#FEF3C7', slatted_rack: '#F5E1DA', excluder: '#3D3226' };
+    const colors: any = { deep: '#D97706', medium: '#F59E0B', shallow: '#FBBF24', feeder: '#DBEAFE', inner_cover: '#FEF3C7', slatted_rack: '#F5E1DA', excluder: '#334155' };
     const heights: any = { deep: 'h-4', medium: 'h-3', shallow: 'h-2', feeder: 'h-2', inner_cover: 'h-1', slatted_rack: 'h-1.5', excluder: 'h-0.5' };
     
     return (

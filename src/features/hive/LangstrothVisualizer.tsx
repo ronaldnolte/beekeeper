@@ -4,8 +4,8 @@ import { Camera, ChevronUp, ChevronDown, Trash2, Plus } from 'lucide-react';
 import type { HiveBox, BoxType } from '../../types';
 
 const BOX_STYLES: Record<BoxType, { label: string, bg: string, height: string, border: string }> = {
-  deep: { label: 'Deep', bg: '#D35400', height: 'h-24', border: '#A04000' },
-  medium: { label: 'Medium', bg: '#E67E22', height: 'h-16', border: '#BA4A00' },
+  deep: { label: 'Deep', bg: 'var(--color-primary-dark)', height: 'h-24', border: '#A04000' },
+  medium: { label: 'Medium', bg: 'var(--color-primary)', height: 'h-16', border: '#BA4A00' },
   shallow: { label: 'Shallow', bg: '#F39C12', height: 'h-12', border: '#D68910' },
   feeder: { label: 'Top Feeder', bg: '#DBEAFE', height: 'h-14', border: '#93C5FD' },
   inner_cover: { label: 'Inner Cover', bg: '#FEF3C7', height: 'h-6', border: '#FDE68A' },
@@ -89,15 +89,15 @@ export const LangstrothVisualizer: React.FC<LangstrothVisualizerProps> = ({ hive
       
       {/* Visualizer Card */}
       <div className="w-full card overflow-hidden flex flex-col relative border-2 border-transparent">
-        <div className="flex justify-between items-center p-3 bg-gray-50 border-b border-gray-100">
-          <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Vertical Stack</h3>
+        <div className="flex justify-between items-center p-3 bg-[var(--color-bg-raised)] border-b border-[var(--color-card-border)]">
+          <h3 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Vertical Stack</h3>
           <button
             onClick={handleSaveSnapshot}
             disabled={!hasUnsavedChanges || isSaving}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
               hasUnsavedChanges
-                ? 'bg-[#E67E22] text-white shadow-md active:scale-95'
-                : 'bg-gray-200 text-gray-400'
+                ? 'bg-[var(--color-primary)] text-white shadow-md active:scale-95'
+                : 'bg-gray-200 text-[var(--color-text-muted)]'
             }`}
           >
             {isSaving ? (
@@ -128,7 +128,7 @@ export const LangstrothVisualizer: React.FC<LangstrothVisualizerProps> = ({ hive
                     className={`w-64 ${style.height} border-y-4 border-x-2 relative shadow-md active:scale-95 transition-transform flex items-center justify-center group`}
                     style={{ backgroundColor: style.bg, borderColor: style.border }}
                   >
-                    <span className={`font-black tracking-wider ${box.type === 'deep' || box.type === 'medium' || box.type === 'shallow' ? 'text-white' : 'text-gray-800'}`}>
+                    <span className={`font-black tracking-wider ${box.type === 'deep' || box.type === 'medium' || box.type === 'shallow' ? 'text-white' : 'text-[var(--color-text)]'}`}>
                       {style.label}
                     </span>
                     {(box.type === 'deep' || box.type === 'medium') && (
@@ -138,23 +138,23 @@ export const LangstrothVisualizer: React.FC<LangstrothVisualizerProps> = ({ hive
 
                   {/* Expansion Actions Panel */}
                   {isExpanded && (
-                    <div className="w-64 flex bg-white border-2 border-gray-200 rounded-xl overflow-hidden shadow-sm animate-in slide-in-from-top-2">
+                    <div className="w-64 flex bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl overflow-hidden shadow-sm animate-in slide-in-from-top-2">
                       <button 
                         onClick={() => moveBox(idx, 'up')}
                         disabled={idx === 0}
-                        className="flex-1 p-2 flex justify-center hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-white text-gray-500"
+                        className="flex-1 p-2 flex justify-center hover:bg-[var(--color-bg-raised)] disabled:opacity-30 disabled:hover:bg-[var(--color-input-bg)] text-[var(--color-text-muted)]"
                       >
                         <ChevronUp size={20} />
                       </button>
-                      <div className="w-[2px] bg-gray-100" />
+                      <div className="w-[2px] bg-[var(--color-bg-raised)]" />
                       <button 
                         onClick={() => moveBox(idx, 'down')}
                         disabled={idx === boxes.length - 1}
-                        className="flex-1 p-2 flex justify-center hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-white text-gray-500"
+                        className="flex-1 p-2 flex justify-center hover:bg-[var(--color-bg-raised)] disabled:opacity-30 disabled:hover:bg-[var(--color-input-bg)] text-[var(--color-text-muted)]"
                       >
                         <ChevronDown size={20} />
                       </button>
-                      <div className="w-[2px] bg-gray-100" />
+                      <div className="w-[2px] bg-[var(--color-bg-raised)]" />
                       <button 
                         onClick={() => removeBox(box.id)}
                         className="flex-1 p-2 flex justify-center hover:bg-red-50 text-red-500"
@@ -169,7 +169,7 @@ export const LangstrothVisualizer: React.FC<LangstrothVisualizerProps> = ({ hive
             
             {boxes.length === 0 && (
               <div className="w-64 h-32 border-4 border-dashed border-gray-300 rounded flex items-center justify-center">
-                <span className="text-gray-400 font-bold text-sm">Empty Stack</span>
+                <span className="text-[var(--color-text-muted)] font-bold text-sm">Empty Stack</span>
               </div>
             )}
           </div>
@@ -184,13 +184,13 @@ export const LangstrothVisualizer: React.FC<LangstrothVisualizerProps> = ({ hive
 
       {/* Parts Palette */}
       <div className="w-full card p-4">
-         <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Parts Palette (Tap to Add)</h3>
+         <h3 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3 px-1">Parts Palette (Tap to Add)</h3>
          <div className="grid grid-cols-4 gap-2">
-           <button onClick={() => addBox('deep')} className="col-span-4 bg-[#D35400] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform"><Plus size={18}/> Deep Box (9⅝")</button>
-           <button onClick={() => addBox('medium')} className="col-span-4 bg-[#E67E22] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform"><Plus size={18}/> Medium Box (6⅝")</button>
+           <button onClick={() => addBox('deep')} className="col-span-4 bg-[var(--color-primary-dark)] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform"><Plus size={18}/> Deep Box (9⅝")</button>
+           <button onClick={() => addBox('medium')} className="col-span-4 bg-[var(--color-primary)] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform"><Plus size={18}/> Medium Box (6⅝")</button>
            <button onClick={() => addBox('shallow')} className="col-span-4 bg-[#F39C12] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform"><Plus size={18}/> Shallow Box (5¾")</button>
            
-           <button onClick={() => addBox('excluder')} className="bg-gray-100 text-gray-700 py-2 rounded font-bold text-[10px] shadow-sm active:scale-95 transition-transform truncate px-1 border border-gray-200">Excluder</button>
+           <button onClick={() => addBox('excluder')} className="bg-[var(--color-bg-raised)] text-gray-700 py-2 rounded font-bold text-[10px] shadow-sm active:scale-95 transition-transform truncate px-1 border border-[var(--color-card-border)]">Excluder</button>
            <button onClick={() => addBox('slatted_rack')} className="bg-[#F5E1DA] text-[#A04000] py-2 rounded font-bold text-[10px] shadow-sm active:scale-95 transition-transform truncate px-1 border border-[#E6B8A2]">Slatted Rack</button>
            <button onClick={() => addBox('feeder')} className="bg-blue-50 text-blue-800 py-2 rounded font-bold text-[10px] shadow-sm active:scale-95 transition-transform truncate px-1 border border-blue-200">Feeder</button>
            <button onClick={() => addBox('inner_cover')} className="bg-[#FEF3C7] text-[#92400E] py-2 rounded font-bold text-[10px] shadow-sm active:scale-95 transition-transform truncate px-1 border border-[#FDE68A]">Inner Cover</button>

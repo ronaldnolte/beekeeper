@@ -24,7 +24,7 @@ const RoadmapView = lazy(() => import('../features/feedback/RoadmapView').then(m
 // Shared Suspense fallback for lazy-loaded views
 const ViewLoader = () => (
   <div className="flex-1 flex flex-col items-center justify-center p-8 opacity-50">
-    <div className="w-10 h-10 border-4 border-[#E67E22] border-t-transparent rounded-full animate-spin mb-4"></div>
+    <div className="w-10 h-10 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin mb-4"></div>
     <p className="font-bold text-[var(--color-text)]">Loading...</p>
   </div>
 );
@@ -106,7 +106,7 @@ function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)]">
         <div className="animate-pulse flex flex-col items-center">
-          <div className="w-16 h-16 border-4 border-[#E67E22] border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-16 h-16 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-[var(--color-text)] font-bold">Waking up the bees...</p>
         </div>
       </div>

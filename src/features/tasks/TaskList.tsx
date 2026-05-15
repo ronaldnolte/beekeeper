@@ -54,7 +54,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
   if (loading) {
     return (
       <div className="w-full flex justify-center py-8">
-        <div className="w-6 h-6 border-4 border-[#E67E22] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-6 h-6 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -68,7 +68,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
             type="checkbox" 
             checked={showCompleted}
             onChange={(e) => setShowCompleted(e.target.checked)}
-            className="rounded text-[#E67E22] focus:ring-[#E67E22]"
+            className="rounded text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
           />
           Show Completed
         </label>

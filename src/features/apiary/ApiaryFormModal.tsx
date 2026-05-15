@@ -104,7 +104,7 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
       <div className="bg-[var(--color-bg)] w-full max-w-md sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-4 duration-300">
         
         {/* Header */}
-        <div className="bg-[#E67E22] p-5 flex justify-between items-center text-white">
+        <div className="bg-[var(--color-primary)] p-5 flex justify-between items-center text-white">
           <h3 className="font-black text-xl flex items-center gap-2">
             <MapPin size={24} /> 
             {editingApiary ? 'Edit Apiary' : 'Create New Apiary'}
@@ -120,27 +120,27 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
         {/* Form Body */}
         <form onSubmit={handleSave} className="p-6 space-y-5">
           <div>
-            <label className="block text-sm font-black text-gray-400 uppercase tracking-wider mb-2">Apiary Name</label>
+            <label className="block text-sm font-black text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Apiary Name</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Home Yard, South Farm..."
-              className="w-full p-4 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 placeholder-gray-300 focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-lg"
+              className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/20 outline-none transition-all text-lg"
             />
           </div>
 
           {/* Location Section */}
           <div className="space-y-3">
-            <label className="block text-sm font-black text-gray-400 uppercase tracking-wider">Location <span className="text-gray-300 normal-case font-medium">(for weather)</span></label>
+            <label className="block text-sm font-black text-[var(--color-text-muted)] uppercase tracking-wider">Location <span className="text-[var(--color-text-muted)] normal-case font-medium">(for weather)</span></label>
             
-            <div className="flex w-full bg-gray-50 border border-gray-200 p-1 rounded-xl">
+            <div className="flex w-full bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] p-1 rounded-xl">
               <button
                 type="button"
                 onClick={() => setLocationMode('zip')}
                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                  locationMode === 'zip' ? 'bg-white text-[#E67E22] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  locationMode === 'zip' ? 'bg-[var(--color-input-bg)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-gray-700'
                 }`}
               >
                 Postal Code
@@ -149,7 +149,7 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
                 type="button"
                 onClick={() => setLocationMode('coords')}
                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                  locationMode === 'coords' ? 'bg-white text-[#E67E22] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  locationMode === 'coords' ? 'bg-[var(--color-input-bg)] text-[var(--color-primary)] shadow-sm' : 'text-[var(--color-text-muted)] hover:text-gray-700'
                 }`}
               >
                 Coordinates
@@ -162,30 +162,30 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
                 value={zipCode}
                 onChange={(e) => setZipCode(e.target.value)}
                 placeholder="e.g. 12345"
-                className="w-full p-4 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 placeholder-gray-300 focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-lg"
+                className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/20 outline-none transition-all text-lg"
               />
             ) : (
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 px-1">Latitude</label>
+                  <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-1 px-1">Latitude</label>
                   <input
                     type="number"
                     step="any"
                     value={latitude}
                     onChange={(e) => setLatitude(e.target.value)}
                     placeholder="35.0385"
-                    className="w-full p-3 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 placeholder-gray-300 focus:border-[#E67E22] outline-none"
+                    className="w-full p-3 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] outline-none"
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 px-1">Longitude</label>
+                  <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-1 px-1">Longitude</label>
                   <input
                     type="number"
                     step="any"
                     value={longitude}
                     onChange={(e) => setLongitude(e.target.value)}
                     placeholder="-106.7065"
-                    className="w-full p-3 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 placeholder-gray-300 focus:border-[#E67E22] outline-none"
+                    className="w-full p-3 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] outline-none"
                   />
                 </div>
               </div>
@@ -193,13 +193,13 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
           </div>
 
           <div>
-            <label className="block text-sm font-black text-gray-400 uppercase tracking-wider mb-2">Notes <span className="text-gray-300 normal-case font-medium">(optional)</span></label>
+            <label className="block text-sm font-black text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Notes <span className="text-[var(--color-text-muted)] normal-case font-medium">(optional)</span></label>
             <textarea
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g. South Valley, Albuquerque NM"
-              className="w-full p-4 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-bold text-gray-900 placeholder-gray-300 focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-sm resize-none custom-scrollbar"
+              className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/20 outline-none transition-all text-sm resize-none custom-scrollbar"
             />
           </div>
 
@@ -214,7 +214,7 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
             <button
               type="submit"
               disabled={saving || deleting || !name.trim()}
-              className="w-full bg-[#E67E22] text-white py-4 rounded-xl font-black text-lg hover:bg-[#D35400] transition-colors disabled:opacity-50 active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-[#E67E22]/30"
+              className="w-full bg-[var(--color-primary)] text-white py-4 rounded-xl font-black text-lg hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50 active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-[var(--color-primary)]/30"
             >
               {saving ? (
                 <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>

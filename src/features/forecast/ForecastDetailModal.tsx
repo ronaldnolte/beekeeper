@@ -22,25 +22,25 @@ export const ForecastDetailModal: React.FC<Props> = ({ isOpen, onClose, window }
     if (window.rating === 'Excellent') bgClass = 'bg-[#1E824C]'; // Dark Green
     else if (window.rating === 'Good') bgClass = 'bg-[#2ECC71]'; // Light Green
     else if (window.rating === 'Fair') bgClass = 'bg-[#F1C40F]'; // Yellow
-    else if (window.rating === 'Poor') bgClass = 'bg-[#E67E22]'; // Orange
+    else if (window.rating === 'Poor') bgClass = 'bg-[var(--color-primary)]'; // Orange
     else bgClass = 'bg-[#E74C3C]'; // Red
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
             <div
-                className="bg-white rounded-3xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300"
+                className="bg-[var(--color-input-bg)] rounded-3xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header Row */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-2">
                     <div>
                         <h3 className="text-xl font-black text-[#8B4513]">Inspection Conditions</h3>
-                        <p className="text-sm font-bold text-gray-500">{dayDateStr}</p>
-                        <p className="text-sm font-bold text-gray-500">{timeStr}</p>
+                        <p className="text-sm font-bold text-[var(--color-text-muted)]">{dayDateStr}</p>
+                        <p className="text-sm font-bold text-[var(--color-text-muted)]">{timeStr}</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors active:scale-95 self-start"
+                        className="p-2 rounded-full text-[var(--color-text-muted)] hover:text-[var(--color-text-muted)] hover:bg-[var(--color-bg-raised)] transition-colors active:scale-95 self-start"
                     >
                         <X size={24} />
                     </button>
@@ -75,7 +75,7 @@ export const ForecastDetailModal: React.FC<Props> = ({ isOpen, onClose, window }
                                 <h4 className="font-black text-green-600 mb-2 flex items-center gap-1.5 text-sm">
                                     <CheckCircle2 size={16} /> Good Conditions:
                                 </h4>
-                                <ul className="text-sm font-medium text-gray-600 space-y-1 ml-1">
+                                <ul className="text-sm font-medium text-[var(--color-text-muted)] space-y-1 ml-1">
                                     {window.goodConditions.map((cond, i) => (
                                         <li key={i}>• {cond}</li>
                                     ))}
@@ -104,11 +104,11 @@ export const ForecastDetailModal: React.FC<Props> = ({ isOpen, onClose, window }
 
 function MetricCard({ label, value, score, max, isBad }: { label: string, value: string, score: number, max: number, isBad?: boolean }) {
     return (
-        <div className={`bg-gray-50 rounded-xl p-3 border-2 ${isBad ? 'border-red-500 bg-red-50' : 'border-transparent'}`}>
-            <p className="text-xs font-bold text-gray-400 mb-0.5">{label}</p>
-            <p className="text-xs font-medium text-gray-600 mb-2">{value}</p>
+        <div className={`bg-[var(--color-bg-raised)] rounded-xl p-3 border-2 ${isBad ? 'border-red-500 bg-red-50' : 'border-transparent'}`}>
+            <p className="text-xs font-bold text-[var(--color-text-muted)] mb-0.5">{label}</p>
+            <p className="text-xs font-medium text-[var(--color-text-muted)] mb-2">{value}</p>
             <p className="text-lg font-black text-black">
-                {score}<span className="text-sm text-gray-500">/{max}</span>
+                {score}<span className="text-sm text-[var(--color-text-muted)]">/{max}</span>
             </p>
         </div>
     );

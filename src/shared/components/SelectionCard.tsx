@@ -33,7 +33,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
         >
           <div className="flex items-center gap-3">
             {item.icon && (
-              <div className="w-11 h-11 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[var(--color-primary)]/20 to-[var(--color-primary)]/5 flex items-center justify-center text-[var(--color-primary)]">
                 {item.icon}
               </div>
             )}

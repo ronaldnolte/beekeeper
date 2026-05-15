@@ -50,7 +50,7 @@ export const FeedbackModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
+      <div className="bg-[var(--color-input-bg)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
         
         {/* Header */}
         <div className="bg-[#F5A623] p-4 flex justify-between items-center text-white">
@@ -59,7 +59,7 @@ export const FeedbackModal: React.FC = () => {
           </h3>
           <button
             onClick={() => setFeedbackModalOpen(false)}
-            className="hover:bg-white/20 rounded-full p-1 transition-colors active:scale-95"
+            className="hover:bg-[var(--color-input-bg)]/20 rounded-full p-1 transition-colors active:scale-95"
           >
             <X size={20} />
           </button>
@@ -71,7 +71,7 @@ export const FeedbackModal: React.FC = () => {
             <div className="text-center py-10 animate-in zoom-in">
               <div className="text-5xl mb-4">✅</div>
               <h4 className="text-xl font-black text-[var(--color-card-text)] mb-2">Message Sent!</h4>
-              <p className="text-gray-500 font-bold">Thanks for your feedback.</p>
+              <p className="text-[var(--color-text-muted)] font-bold">Thanks for your feedback.</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -87,7 +87,7 @@ export const FeedbackModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleGoToRoadmap}
-                  className="w-full text-center bg-white border-2 border-amber-300 text-amber-700 py-3 rounded-xl font-black hover:bg-amber-100 transition-colors active:scale-95 shadow-sm"
+                  className="w-full text-center bg-[var(--color-input-bg)] border-2 border-amber-300 text-amber-700 py-3 rounded-xl font-black hover:bg-amber-100 transition-colors active:scale-95 shadow-sm"
                 >
                   View Roadmap & Vote →
                 </button>
@@ -95,26 +95,26 @@ export const FeedbackModal: React.FC = () => {
 
               {/* Divider */}
               <div className="relative flex items-center py-2">
-                <div className="flex-grow border-t border-gray-200"></div>
-                <span className="flex-shrink-0 mx-4 text-gray-400 text-sm font-bold uppercase tracking-wider">Or private message</span>
-                <div className="flex-grow border-t border-gray-200"></div>
+                <div className="flex-grow border-t border-[var(--color-card-border)]"></div>
+                <span className="flex-shrink-0 mx-4 text-[var(--color-text-muted)] text-sm font-bold uppercase tracking-wider">Or private message</span>
+                <div className="flex-grow border-t border-[var(--color-card-border)]"></div>
               </div>
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Your Message</label>
+                  <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Your Message</label>
                   <textarea
                     required
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Suggestions, bugs, or questions..."
-                    className="w-full min-h-[120px] p-4 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 placeholder-gray-400 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none resize-none transition-all"
+                    className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none resize-none transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">
                     Your Email <span className="font-normal opacity-70">(Optional)</span>
                   </label>
                   <input
@@ -122,7 +122,7 @@ export const FeedbackModal: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="If you'd like a reply..."
-                    className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 placeholder-gray-400 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none transition-all"
+                    className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none transition-all"
                   />
                 </div>
 
@@ -136,7 +136,7 @@ export const FeedbackModal: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setFeedbackModalOpen(false)}
-                    className="flex-1 py-4 text-gray-500 font-black hover:bg-gray-100 rounded-xl transition-colors active:scale-95"
+                    className="flex-1 py-4 text-[var(--color-text-muted)] font-black hover:bg-[var(--color-bg-raised)] rounded-xl transition-colors active:scale-95"
                   >
                     Cancel
                   </button>

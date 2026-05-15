@@ -114,23 +114,23 @@ export const TopBarVisualizer: React.FC<TopBarVisualizerProps> = ({ hiveId, init
   if (bars.length === 0) return null;
 
   return (
-    <div className="w-full card overflow-hidden flex flex-col relative border-2 border-transparent focus-within:border-[#E67E22] transition-colors">
-      <div className="flex justify-between items-center p-3 bg-gray-50 border-b border-gray-100">
-        <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Top Bar Config</h3>
+    <div className="w-full card overflow-hidden flex flex-col relative border-2 border-transparent focus-within:border-[var(--color-primary)] transition-colors">
+      <div className="flex justify-between items-center p-3 bg-[var(--color-bg-raised)] border-b border-[var(--color-card-border)]">
+        <h3 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Top Bar Config</h3>
         <div className="flex items-center gap-2">
           {/* Bar Count Controls */}
-          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-1 py-0.5">
+          <div className="flex items-center gap-1 bg-[var(--color-input-bg)] border border-[var(--color-card-border)] rounded-lg px-1 py-0.5">
             <button
               onClick={handleRemoveBar}
               disabled={bars.length <= 1}
-              className="w-6 h-6 rounded flex items-center justify-center text-gray-500 hover:bg-gray-100 active:scale-90 transition-all disabled:opacity-30"
+              className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-raised)] active:scale-90 transition-all disabled:opacity-30"
             >
               <Minus size={14} />
             </button>
             <span className="text-xs font-black text-gray-700 min-w-[28px] text-center">{bars.length}</span>
             <button
               onClick={handleAddBar}
-              className="w-6 h-6 rounded flex items-center justify-center text-gray-500 hover:bg-gray-100 active:scale-90 transition-all"
+              className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-raised)] active:scale-90 transition-all"
             >
               <Plus size={14} />
             </button>
@@ -140,8 +140,8 @@ export const TopBarVisualizer: React.FC<TopBarVisualizerProps> = ({ hiveId, init
           disabled={!hasUnsavedChanges || isSaving}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
             hasUnsavedChanges
-              ? 'bg-[#E67E22] text-white shadow-md active:scale-95'
-              : 'bg-gray-200 text-gray-400'
+              ? 'bg-[var(--color-primary)] text-white shadow-md active:scale-95'
+              : 'bg-gray-200 text-[var(--color-text-muted)]'
           }`}
         >
           {isSaving ? (
@@ -177,11 +177,11 @@ export const TopBarVisualizer: React.FC<TopBarVisualizerProps> = ({ hiveId, init
       </div>
 
       {/* Legend */}
-      <div className="p-3 bg-white grid grid-cols-3 gap-2 border-t border-gray-100">
+      <div className="p-3 bg-[var(--color-input-bg)] grid grid-cols-3 gap-2 border-t border-[var(--color-card-border)]">
         {Object.entries(BAR_COLORS).map(([status, color]) => (
           <div key={status} className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-[2px] border border-gray-300 shadow-inner" style={{ backgroundColor: color }}></div>
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
               {status.replace('_', ' ')}
             </span>
           </div>

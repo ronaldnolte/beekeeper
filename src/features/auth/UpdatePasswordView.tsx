@@ -107,10 +107,10 @@ export const UpdatePasswordView: React.FC = () => {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-[#FFFBF0] to-[#f4ecd8]">
         <div className="w-full max-w-md card p-6 sm:p-8 text-center relative overflow-hidden">
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#E67E22] opacity-10 rounded-full blur-2xl"></div>
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-[var(--color-primary)] opacity-10 rounded-full blur-2xl"></div>
           <div className="animate-pulse text-5xl mb-4 relative z-10">🔑</div>
-          <p className="text-gray-800 font-bold text-lg relative z-10">Verifying security link...</p>
-          <p className="text-sm text-gray-500 mt-2 relative z-10">Please wait</p>
+          <p className="text-[var(--color-text)] font-bold text-lg relative z-10">Verifying security link...</p>
+          <p className="text-sm text-[var(--color-text-muted)] mt-2 relative z-10">Please wait</p>
         </div>
       </div>
     );
@@ -120,25 +120,25 @@ export const UpdatePasswordView: React.FC = () => {
     <div className="min-h-[100dvh] flex flex-col p-4 sm:p-6 bg-gradient-to-br from-[#FFFBF0] to-[#f4ecd8]">
       <button 
         onClick={handleCancel}
-        className="self-start mb-6 w-10 h-10 bg-white/80 rounded-full flex items-center justify-center shadow-sm text-gray-500 hover:text-gray-800 hover:bg-white transition-all backdrop-blur-sm"
+        className="self-start mb-6 w-10 h-10 bg-[var(--color-input-bg)]/80 rounded-full flex items-center justify-center shadow-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-input-bg)] transition-all backdrop-blur-sm"
       >
         <XCircle size={24} strokeWidth={1.5} />
       </button>
 
       <div className="w-full max-w-md mx-auto card p-6 sm:p-8 relative overflow-hidden flex-grow flex flex-col justify-center">
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#E67E22] opacity-10 rounded-full blur-2xl"></div>
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-[var(--color-primary)] opacity-10 rounded-full blur-2xl"></div>
         
         <div className="text-center mb-8 relative z-10">
           <div className="text-5xl mb-4">🔐</div>
           <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text)]">Set New Password</h1>
-          <p className="text-gray-500 mt-2 font-medium text-sm sm:text-base">Enter your new secure password below.</p>
+          <p className="text-[var(--color-text-muted)] mt-2 font-medium text-sm sm:text-base">Enter your new secure password below.</p>
         </div>
 
         <form onSubmit={handleUpdate} className="space-y-4 sm:space-y-5 relative z-10">
           <div>
             <label className="block text-xs sm:text-sm font-black text-[var(--color-text)] mb-1 uppercase tracking-wide">New Password</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--color-text-muted)]">
                 <Lock size={18} />
               </div>
               <input
@@ -146,7 +146,7 @@ export const UpdatePasswordView: React.FC = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 sm:py-3.5 border-2 border-[#E6DCC3] rounded-xl focus:ring-4 focus:ring-[#E67E22]/20 focus:border-[#E67E22] transition-all bg-white text-gray-900 font-bold"
+                className="w-full pl-10 pr-4 py-3 sm:py-3.5 border-2 border-[#E6DCC3] rounded-xl focus:ring-4 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] transition-all bg-[var(--color-input-bg)] text-[var(--color-text)] font-bold"
                 placeholder="Min 6 characters"
               />
             </div>
@@ -155,7 +155,7 @@ export const UpdatePasswordView: React.FC = () => {
           <div>
             <label className="block text-xs sm:text-sm font-black text-[var(--color-text)] mb-1 uppercase tracking-wide">Confirm Password</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--color-text-muted)]">
                 <Lock size={18} />
               </div>
               <input
@@ -163,7 +163,7 @@ export const UpdatePasswordView: React.FC = () => {
                 required
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 sm:py-3.5 border-2 border-[#E6DCC3] rounded-xl focus:ring-4 focus:ring-[#E67E22]/20 focus:border-[#E67E22] transition-all bg-white text-gray-900 font-bold"
+                className="w-full pl-10 pr-4 py-3 sm:py-3.5 border-2 border-[#E6DCC3] rounded-xl focus:ring-4 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] transition-all bg-[var(--color-input-bg)] text-[var(--color-text)] font-bold"
                 placeholder="Re-type password"
               />
             </div>
@@ -184,7 +184,7 @@ export const UpdatePasswordView: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-4 py-3.5 bg-gradient-to-r from-[#E67E22] to-[#D35400] text-white rounded-xl font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+            className="w-full mt-4 py-3.5 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-dark)] text-white rounded-xl font-bold text-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70"
           >
             {loading ? 'Updating...' : 'Update Password'}
             {!loading && <ArrowRight size={18} />}

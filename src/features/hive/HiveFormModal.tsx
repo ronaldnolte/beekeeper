@@ -126,7 +126,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
       <div className="bg-[var(--color-bg)] w-full max-w-md sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-4 duration-300 max-h-[90vh]">
         
         {/* Header */}
-        <div className="bg-[#E67E22] p-5 flex justify-between items-center text-white">
+        <div className="bg-[var(--color-primary)] p-5 flex justify-between items-center text-white">
           <h3 className="font-black text-xl flex items-center gap-2">
             <Box size={24} /> 
             {editingHive ? 'Edit Hive' : 'Create New Hive'}
@@ -150,7 +150,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Hive 1, Queen Beatrice..."
-              className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-lg"
+              className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/20 outline-none transition-all text-lg"
             />
           </div>
 
@@ -161,14 +161,14 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
                 required
                 value={selectedApiary}
                 onChange={(e) => setSelectedApiary(e.target.value)}
-                className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all appearance-none text-lg"
+                className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/20 outline-none transition-all appearance-none text-lg"
               >
                 <option value="" disabled>Select an Apiary...</option>
                 {apiaries.map(a => (
                   <option key={a.id} value={a.id}>{a.name}</option>
                 ))}
               </select>
-              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
+              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-[var(--color-text-muted)]">
                 ▼
               </div>
             </div>
@@ -220,7 +220,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
                   max={60}
                   value={barCount}
                   onChange={(e) => setBarCount(Math.max(1, Math.min(60, parseInt(e.target.value) || 1)))}
-                  className="w-20 text-center p-3 bg-white border-2 border-[var(--color-card-border)] rounded-xl font-black text-gray-900 text-xl focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all"
+                  className="w-20 text-center p-3 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-black text-[var(--color-text)] text-xl focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/20 outline-none transition-all"
                 />
                 <button
                   type="button"
@@ -229,7 +229,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
                 >
                   <Plus size={20} />
                 </button>
-                <span className="text-sm font-bold text-gray-400 ml-1">bars</span>
+                <span className="text-sm font-bold text-[var(--color-text-muted)] ml-1">bars</span>
               </div>
             </div>
           )}
@@ -241,7 +241,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
               required
               value={installedOn}
               onChange={(e) => setInstalledOn(e.target.value)}
-              className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[#E67E22] focus:ring-4 focus:ring-[#E67E22]/20 outline-none transition-all text-lg"
+              className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/20 outline-none transition-all text-lg"
             />
           </div>
 
@@ -256,7 +256,7 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
             <button
               type="submit"
               disabled={saving || deleting || !name.trim() || !selectedApiary}
-              className="w-full bg-[#E67E22] text-white py-4 rounded-xl font-black text-lg hover:bg-[#D35400] transition-colors disabled:opacity-50 active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-[#E67E22]/30"
+              className="w-full bg-[var(--color-primary)] text-white py-4 rounded-xl font-black text-lg hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50 active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-[var(--color-primary)]/30"
             >
               {saving ? (
                 <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>

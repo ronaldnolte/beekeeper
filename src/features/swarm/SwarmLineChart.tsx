@@ -81,10 +81,10 @@ export const SwarmLineChart: React.FC<SwarmLineChartProps> = ({ data, lastYearDa
   const avgPoints = (averageData && averageData.length > 0) ? getPoints(averageData) : null;
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+    <div className="w-full bg-[var(--color-input-bg)] rounded-2xl shadow-sm border border-[var(--color-card-border)] p-4">
       
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 mb-4 text-xs font-bold text-gray-500">
+      <div className="flex flex-wrap items-center gap-4 mb-4 text-xs font-bold text-[var(--color-text-muted)]">
         <div className="flex items-center gap-2">
           <div className="w-4 h-1 bg-[#2c3e50] rounded-full"></div>
           Current Year
