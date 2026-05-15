@@ -71,9 +71,17 @@ export const ApiarySelectionView: React.FC = () => {
       
       {/* 1. Task Dashboard */}
       <div className="w-full max-w-2xl px-4 mb-4">
-        <div className="mb-3">
-          <h2 className="text-xl font-black text-[var(--color-text)]">Dashboard</h2>
-          <p className="text-[var(--color-text-muted)] font-medium text-sm mt-0.5">Your beekeeping overview.</p>
+        <div className="flex justify-between items-center mb-3">
+          <div>
+            <h2 className="text-xl font-black text-[var(--color-text)]">Dashboard</h2>
+            <p className="text-[var(--color-text-muted)] font-medium text-sm mt-0.5">Your beekeeping overview.</p>
+          </div>
+          <button
+            onClick={handleCreateTask}
+            className="bg-[var(--color-card-bg)] border border-[var(--color-card-border)] text-[var(--color-text)] px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform"
+          >
+            <ClipboardList size={16} /> New Task
+          </button>
         </div>
         <TaskList onEditTask={handleEditTask} refreshKey={taskRefreshKey} />
       </div>
@@ -99,17 +107,10 @@ export const ApiarySelectionView: React.FC = () => {
         emptyMessage="No apiaries found. Create your first apiary to get started."
       />
 
-      {/* Fixed Bottom Action Bar */}
       <div className="bottom-action-bar">
         <button
-          onClick={handleCreateTask}
-          className="flex-1 max-w-[200px] bg-[var(--color-card-bg)] border border-[var(--color-card-border)] text-[var(--color-text)] py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-        >
-          <ClipboardList size={18} /> New Task
-        </button>
-        <button
           onClick={() => setApiaryFormOpen(true, null)}
-          className="flex-1 max-w-[200px] bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-[var(--color-primary)]/30"
+          className="flex-1 max-w-[300px] bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-[var(--color-primary)]/30"
         >
           <Plus size={18} /> Create Apiary
         </button>

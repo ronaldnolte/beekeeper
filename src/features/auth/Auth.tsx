@@ -55,7 +55,7 @@ export const Auth: React.FC = () => {
           <div className="w-24 h-24 mx-auto flex items-center justify-center mb-2">
             <img src="/logo.png" alt="Beektools Logo" className="w-full h-full object-contain drop-shadow-md" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text)]">TBH Beekeeper</h1>
+          <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text)]">Beekeeper</h1>
           <p className="text-[var(--color-text-muted)] mt-1 font-medium text-sm sm:text-base">Manage your top-bar hives with ease.</p>
         </div>
 
