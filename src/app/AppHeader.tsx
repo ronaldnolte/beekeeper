@@ -67,7 +67,7 @@ export const AppHeader: React.FC = () => {
       {/* Blue sky overlay for text contrast */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#2E86DE]/60 via-[#4A99E0]/30 to-transparent" />
 
-      <div className="relative w-full max-w-4xl px-4 py-3 flex items-center justify-between z-10">
+      <div className="relative w-full max-w-4xl px-4 py-5 flex items-center justify-between z-10">
         {/* Left: Back + Title */}
         <div className="flex items-center gap-2">
           {showBackButton ? (
