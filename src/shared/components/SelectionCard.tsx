@@ -20,30 +20,8 @@ interface SelectionCardProps {
   onEdit?: (id: string) => void;
 }
 
-// Rotating gradient pairs for visual variety
-const CARD_GRADIENTS = [
-  'from-emerald-500/10 to-teal-500/5',
-  'from-amber-500/10 to-orange-500/5',
-  'from-sky-500/10 to-blue-500/5',
-  'from-violet-500/10 to-purple-500/5',
-  'from-rose-500/10 to-pink-500/5',
-];
-
-const ICON_COLORS = [
-  'text-emerald-600 bg-emerald-100',
-  'text-amber-600 bg-amber-100',
-  'text-sky-600 bg-sky-100',
-  'text-violet-600 bg-violet-100',
-  'text-rose-600 bg-rose-100',
-];
-
 export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onEdit }) => {
   const [showActions, setShowActions] = useState(false);
-
-  // Deterministic color based on item title
-  const colorIndex = item.title.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % CARD_GRADIENTS.length;
-  const gradient = CARD_GRADIENTS[colorIndex];
-  const iconColor = ICON_COLORS[colorIndex];
 
   return (
     <div className="relative w-full flex flex-col mb-3">
@@ -51,11 +29,11 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
         {/* Main card button */}
         <button
           onClick={() => onClick(item.id)}
-          className={`flex-1 text-left card p-4 flex items-center justify-between hover:shadow-md transition-all active:scale-[0.98] bg-gradient-to-r ${gradient}`}
+          className="flex-1 text-left card p-4 flex items-center justify-between hover:shadow-md transition-all active:scale-[0.98]"
         >
           <div className="flex items-center gap-3">
             {item.icon && (
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${iconColor}`}>
+              <div className="w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
                 {item.icon}
               </div>
             )}
@@ -103,7 +81,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
                 setShowActions(false);
                 onEdit(item.id);
               }}
-              className="flex-1 py-3 text-sm font-bold text-[var(--color-primary)] bg-[var(--color-primary)]/10 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95 border border-[var(--color-primary)]/20"
+              className="flex-1 py-3 text-sm font-bold text-amber-700 bg-amber-50 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95 border border-amber-200"
             >
               <Pencil size={16} /> Edit
             </button>

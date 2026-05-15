@@ -110,7 +110,7 @@ export const ApiarySelectionView: React.FC = () => {
       <div className="bottom-action-bar">
         <button
           onClick={() => setApiaryFormOpen(true, null)}
-          className="flex-1 max-w-[300px] btn-honey py-4 text-base"
+          className="flex-1 max-w-[240px] btn-honey py-3 text-sm"
         >
           <Plus size={18} /> Create Apiary
         </button>
