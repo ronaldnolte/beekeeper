@@ -119,35 +119,35 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center animate-in fade-in duration-200">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
       {/* Modal Content */}
-      <div className="relative w-full max-w-2xl bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-300">
+      <div className="relative w-full max-w-2xl bg-[var(--color-bg)] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-300">
         
         {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-100 bg-white">
-          <h2 className="text-xl font-bold text-gray-800">
+        <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--color-divider)] bg-[var(--color-primary)]">
+          <h2 className="text-xl font-black text-white">
             {isEditing ? 'Edit Task' : 'New Task'}
           </h2>
           <button 
             onClick={onClose}
-            className="p-2 bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200 transition-colors"
+            className="p-2 text-white/80 hover:bg-black/10 rounded-full transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Scrollable Form Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-gray-50/50">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           
           {/* Title */}
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Task Title</label>
+            <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Task Title</label>
             <input 
               type="text" 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-3.5 bg-white border border-gray-200 rounded-xl font-bold text-gray-800 placeholder-gray-400 focus:border-[#E67E22] focus:ring-1 focus:ring-[#E67E22] transition-all shadow-sm"
+              className="w-full p-3.5 bg-[var(--color-input-bg)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
               placeholder="e.g. Order bee packages, check for mites..."
             />
           </div>
@@ -155,17 +155,17 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           {/* Status (If Editing) */}
           {isEditing && (
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Status</label>
+              <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Status</label>
               <div className="grid grid-cols-2 gap-2">
                 <button 
                   onClick={() => setStatus('pending')}
-                  className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors ${status === 'pending' ? 'bg-amber-50 border-amber-400 text-amber-700' : 'bg-white border-gray-100 text-gray-400 shadow-sm'}`}
+                  className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors ${status === 'pending' ? 'bg-amber-500/15 border-amber-500 text-amber-400' : 'bg-[var(--color-input-bg)] border-[var(--color-card-border)] text-[var(--color-text-muted)]'}`}
                 >
                   Pending
                 </button>
                 <button 
                   onClick={() => setStatus('completed')}
-                  className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors ${status === 'completed' ? 'bg-green-50 border-green-400 text-green-700' : 'bg-white border-gray-100 text-gray-400 shadow-sm'}`}
+                  className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors ${status === 'completed' ? 'bg-green-500/15 border-green-500 text-green-400' : 'bg-[var(--color-input-bg)] border-[var(--color-card-border)] text-[var(--color-text-muted)]'}`}
                 >
                   Completed
                 </button>
@@ -175,23 +175,23 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
           {/* Priority */}
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Priority</label>
+            <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Priority</label>
             <div className="grid grid-cols-3 gap-2">
               <button 
                 onClick={() => setPriority('low')}
-                className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors shadow-sm ${priority === 'low' ? 'bg-blue-50 border-blue-400 text-blue-700' : 'bg-white border-transparent text-gray-500'}`}
+                className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors ${priority === 'low' ? 'bg-blue-500/15 border-blue-500 text-blue-400' : 'bg-[var(--color-input-bg)] border-[var(--color-card-border)] text-[var(--color-text-muted)]'}`}
               >
                 Low
               </button>
               <button 
                 onClick={() => setPriority('medium')}
-                className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors shadow-sm ${priority === 'medium' ? 'bg-amber-50 border-amber-400 text-amber-700' : 'bg-white border-transparent text-gray-500'}`}
+                className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors ${priority === 'medium' ? 'bg-amber-500/15 border-amber-500 text-amber-400' : 'bg-[var(--color-input-bg)] border-[var(--color-card-border)] text-[var(--color-text-muted)]'}`}
               >
                 Medium
               </button>
               <button 
                 onClick={() => setPriority('high')}
-                className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors shadow-sm flex items-center justify-center gap-1 ${priority === 'high' ? 'bg-red-50 border-red-400 text-red-700' : 'bg-white border-transparent text-gray-500'}`}
+                className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors flex items-center justify-center gap-1 ${priority === 'high' ? 'bg-red-500/15 border-red-500 text-red-400' : 'bg-[var(--color-input-bg)] border-[var(--color-card-border)] text-[var(--color-text-muted)]'}`}
               >
                 <AlertTriangle size={16} /> High
               </button>
@@ -200,26 +200,26 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
           {/* Due Date */}
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Due Date</label>
+            <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Due Date</label>
             <div className="relative">
-              <Calendar className="absolute left-3.5 top-3.5 text-gray-400" size={20} />
+              <Calendar className="absolute left-3.5 top-3.5 text-[var(--color-text-muted)]" size={20} />
               <input 
                 type="date" 
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full p-3.5 pl-11 bg-white border border-gray-200 rounded-xl font-bold text-gray-800 focus:border-[#E67E22] focus:ring-1 focus:ring-[#E67E22] transition-all shadow-sm"
+                className="w-full p-3.5 pl-11 bg-[var(--color-input-bg)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-primary)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
               />
             </div>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Description</label>
+            <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Description</label>
             <textarea 
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-3.5 bg-white border border-gray-200 rounded-xl font-bold text-gray-800 placeholder-gray-400 focus:border-[#E67E22] focus:ring-1 focus:ring-[#E67E22] transition-all shadow-sm resize-none"
+              className="w-full p-3.5 bg-[var(--color-input-bg)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all resize-none"
               placeholder="Add any extra details..."
             />
           </div>
@@ -228,19 +228,19 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
         {errorMsg && (
           <div className="px-4 pb-2 sm:px-6">
-            <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border-2 border-red-100 flex items-center gap-2">
+            <div className="bg-red-500/10 text-red-400 p-4 rounded-xl text-sm font-bold border-2 border-red-500/20 flex items-center gap-2">
               <span className="text-xl">⚠️</span> {errorMsg}
             </div>
           </div>
         )}
 
         {/* Footer Actions */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-100 bg-white flex justify-center gap-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="flex-shrink-0 p-4 border-t border-[var(--color-divider)] bg-[var(--color-bg)] flex justify-center gap-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           {isEditing && (
             <button
               onClick={handleDelete}
               disabled={loading}
-              className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl font-black active:scale-95 transition-transform"
+              className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl font-black active:scale-95 transition-transform"
             >
               <Trash2 size={24} />
             </button>
@@ -249,10 +249,10 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             type="button"
             onClick={handleSave}
             disabled={loading}
-            className="flex-1 flex items-center justify-center gap-2 p-4 bg-[#E67E22] text-white rounded-2xl font-black text-lg shadow-lg shadow-[#E67E22]/20 active:scale-95 transition-transform disabled:opacity-70"
+            className="flex-1 flex items-center justify-center gap-2 p-4 bg-[var(--color-primary)] text-white rounded-2xl font-black text-lg shadow-lg shadow-[var(--color-primary)]/20 active:scale-95 transition-transform disabled:opacity-70"
           >
             {loading ? (
-              <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
             ) : (
               <>
                 <Save size={24} />
