@@ -8,15 +8,15 @@
 :root {
   --color-primary: #E67E22;
   --color-primary-dark: #D35400;
-  --color-bg: #1A1410;
-  --color-bg-raised: #2A2218;
+  --color-bg: #241E17;
+  --color-bg-raised: #332B21;
   --color-text: #F5E6D3;
   --color-text-muted: #A89880;
-  --color-card-bg: #2A2218;
+  --color-card-bg: #332B21;
   --color-card-text: #F5E6D3;
-  --color-card-border: #3D3226;
-  --color-input-bg: #231D15;
-  --color-divider: #3D3226;
+  --color-card-border: #4A3D2E;
+  --color-input-bg: #2B2319;
+  --color-divider: #4A3D2E;
 }
 
 body {
