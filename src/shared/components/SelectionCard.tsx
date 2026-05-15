@@ -29,7 +29,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
         {/* Main card button */}
         <button
           onClick={() => onClick(item.id)}
-          className="flex-1 text-left card p-4 flex items-center justify-between hover:border-[var(--color-primary)]/30 transition-all active:scale-[0.98]"
+          className="flex-1 text-left card p-4 flex items-center justify-between hover:border-[var(--color-primary)]/30 transition-all active:scale-[0.98] border-l-[3px] border-l-[var(--color-primary)]"
         >
           <div className="flex items-center gap-3">
             {item.icon && (

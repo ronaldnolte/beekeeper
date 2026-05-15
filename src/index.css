@@ -8,15 +8,15 @@
 :root {
   --color-primary: #E67E22;
   --color-primary-dark: #D35400;
-  --color-bg: #302820;
-  --color-bg-raised: #3D3328;
+  --color-bg: #1E1814;
+  --color-bg-raised: #2E2620;
   --color-text: #F5E6D3;
-  --color-text-muted: #A89880;
-  --color-card-bg: #3D3328;
+  --color-text-muted: #B8A890;
+  --color-card-bg: #3A3028;
   --color-card-text: #F5E6D3;
-  --color-card-border: #544536;
-  --color-input-bg: #362E24;
-  --color-divider: #544536;
+  --color-card-border: #5A4A3A;
+  --color-input-bg: #2A221C;
+  --color-divider: #4A3C30;
 }
 
 body {
@@ -31,11 +31,12 @@ body {
 /* Base utility classes */
 @layer components {
   .card {
-    @apply bg-[var(--color-card-bg)] rounded-2xl shadow-sm border border-[var(--color-card-border)] overflow-hidden;
+    @apply bg-[var(--color-card-bg)] rounded-2xl border border-[var(--color-card-border)] overflow-hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.03) inset;
   }
   
   .glass-header {
-    background-color: var(--color-bg);
+    background: linear-gradient(180deg, #2A2218 0%, var(--color-bg) 100%);
     border-bottom: 1px solid var(--color-card-border);
   }
 
