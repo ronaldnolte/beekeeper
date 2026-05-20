@@ -11,11 +11,21 @@ interface ChatMessage {
 }
 
 export const AskAIView: React.FC = () => {
-  const { selectedApiaryId } = useAppStore();
+  const { selectedApiaryId, apiariesList } = useAppStore();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-select if there is exactly 1 apiary (matches ForecastView behavior)
+  useEffect(() => {
+    if (!selectedApiaryId && apiariesList.length === 1) {
+      useAppStore.setState({ 
+        selectedApiaryId: apiariesList[0].id, 
+        selectedApiaryName: apiariesList[0].name 
+      });
+    }
+  }, [selectedApiaryId, apiariesList]);
 
   // Auto-scroll to bottom of chat
   const scrollToBottom = () => {
