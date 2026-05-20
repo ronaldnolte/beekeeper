@@ -77,48 +77,50 @@ export const HiveDetailView: React.FC = () => {
         </div>
       </div>
 
-      {/* Segregated Bottom Action Bar — 4 primary actions */}
-      <div className="w-full flex-shrink-0 flex justify-center gap-2 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-        <button 
-          onClick={() => useAppStore.getState().goBack()}
-          className="flex-1 max-w-[110px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
-        >
-          <Hexagon size={20} />
-          Hives
-        </button>
+      {/* Bottom Action Bar — matches BottomNavBar styling */}
+      <div className="w-full flex-shrink-0 flex justify-center pt-2 z-40" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 12px))' }}>
+        <div className="w-[92%] max-w-md h-16 rounded-full px-4 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.15)] bg-[#1a1a2e] border border-[#2a2a4a]">
+          <button 
+            onClick={() => useAppStore.getState().goBack()}
+            className="flex flex-col items-center justify-center flex-1 h-full rounded-2xl transition-all duration-300 select-none outline-none active:scale-95 text-white/50 hover:text-white/80 font-semibold"
+          >
+            <Hexagon size={20} />
+            <span className="text-[10px] mt-1 tracking-tight">Hives</span>
+          </button>
 
-        <button 
-          onClick={() => {
-            useAppStore.getState().selectInspection(null);
-            navigateTo('INSPECTION_FORM');
-          }}
-          className="flex-1 max-w-[110px] btn-honey py-3.5 text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
-        >
-          <ClipboardList size={20} />
-          Inspection
-        </button>
-        
-        <button 
-          onClick={() => {
-            useAppStore.getState().selectInspection(null);
-            navigateTo('INTERVENTION_FORM');
-          }}
-          className="flex-1 max-w-[110px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
-        >
-          <PlusCircle size={20} />
-          Intervention
-        </button>
+          <button 
+            onClick={() => {
+              useAppStore.getState().selectInspection(null);
+              navigateTo('INSPECTION_FORM');
+            }}
+            className="flex flex-col items-center justify-center flex-1 h-full rounded-2xl transition-all duration-300 select-none outline-none active:scale-95 text-[#F5A623] font-black"
+          >
+            <ClipboardList size={20} />
+            <span className="text-[10px] mt-1 tracking-tight">Inspection</span>
+          </button>
+          
+          <button 
+            onClick={() => {
+              useAppStore.getState().selectInspection(null);
+              navigateTo('INTERVENTION_FORM');
+            }}
+            className="flex flex-col items-center justify-center flex-1 h-full rounded-2xl transition-all duration-300 select-none outline-none active:scale-95 text-white/50 hover:text-white/80 font-semibold"
+          >
+            <PlusCircle size={20} />
+            <span className="text-[10px] mt-1 tracking-tight">Intervention</span>
+          </button>
 
-        <button 
-          onClick={() => {
-            useAppStore.getState().selectInspection(null);
-            navigateTo('TASK_FORM');
-          }}
-          className="flex-1 max-w-[110px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
-        >
-          <AlertTriangle size={20} />
-          Task
-        </button>
+          <button 
+            onClick={() => {
+              useAppStore.getState().selectInspection(null);
+              navigateTo('TASK_FORM');
+            }}
+            className="flex flex-col items-center justify-center flex-1 h-full rounded-2xl transition-all duration-300 select-none outline-none active:scale-95 text-white/50 hover:text-white/80 font-semibold"
+          >
+            <AlertTriangle size={20} />
+            <span className="text-[10px] mt-1 tracking-tight">Task</span>
+          </button>
+        </div>
       </div>
 
     </div>

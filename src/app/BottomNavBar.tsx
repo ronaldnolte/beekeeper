@@ -62,7 +62,7 @@ export const BottomNavBar: React.FC = () => {
   ];
 
   return (
-    <div className="w-full flex-shrink-0 flex justify-center pt-2 bg-[var(--color-bg)] border-t border-[var(--color-card-border)]/15 z-40" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 12px))' }}>
+    <div className="w-full flex-shrink-0 flex justify-center pt-2 z-40" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 12px))' }}>
       <div className="w-[92%] max-w-md h-16 rounded-full px-4 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.15)] bg-[#1a1a2e] border border-[#2a2a4a]">
         {tabs.map((tab) => (
           <button
