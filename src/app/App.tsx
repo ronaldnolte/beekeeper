@@ -14,6 +14,8 @@ import { StatusUpdateView } from '../features/inspection/StatusUpdateView';
 import { UpdatePasswordView } from '../features/auth/UpdatePasswordView';
 import { FeedbackModal } from '../features/feedback/FeedbackModal';
 import { TaskFormModal } from '../features/tasks/TaskFormModal';
+import { DashboardView } from '../features/dashboard/DashboardView';
+import { BottomNavBar } from './BottomNavBar';
 
 // Lazy-loaded leaf features — only fetched when navigated to
 const ForecastView = lazy(() => import('../features/forecast/ForecastView').then(m => ({ default: m.ForecastView })));
@@ -36,10 +38,10 @@ function App() {
     // 1. Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      // Initialize base history state with whatever was persisted
-      if (typeof window !== 'undefined' && session?.user) {
+      if (session?.user) {
+        useAppStore.getState().loadNavigationContext(session.user.id);
         const persistedView = useAppStore.getState().currentView;
-        const targetView = (persistedView === 'AUTH' || !persistedView) ? 'SELECT_APIARY' : persistedView;
+        const targetView = (persistedView === 'AUTH' || !persistedView) ? 'DASHBOARD' : persistedView;
         window.history.replaceState({ view: targetView }, '');
       }
     });
@@ -49,6 +51,9 @@ function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        useAppStore.getState().loadNavigationContext(session.user.id);
+      }
       
       // If the user clicked a "Reset Password" link in their email, route them to the update screen
       if (event === 'PASSWORD_RECOVERY') {
@@ -72,7 +77,7 @@ function App() {
         // No state means we've gone back before any pushState — go to dashboard
         const user = useAppStore.getState().user;
         if (user) {
-          useAppStore.getState().setCurrentView('SELECT_APIARY');
+          useAppStore.getState().setCurrentView('DASHBOARD');
         }
       }
     };
@@ -84,7 +89,7 @@ function App() {
     if (Capacitor.isNativePlatform()) {
       CapacitorApp.addListener('backButton', () => {
         // Use browser history.back() so it triggers the same popstate handler
-        if (useAppStore.getState().currentView === 'SELECT_APIARY') {
+        if (useAppStore.getState().currentView === 'DASHBOARD') {
           // At the top level — exit the app
           CapacitorApp.exitApp();
         } else {
@@ -120,11 +125,13 @@ function App() {
 
   // --- THE SPA VIEW SWITCHER ---
   return (
-    <div className="w-full min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] flex flex-col">
+    <div className="w-full h-[100dvh] bg-[var(--color-bg)] text-[var(--color-text)] flex flex-col font-sans overflow-hidden">
       <AppHeader />
       
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 flex flex-col overflow-hidden relative">
         {currentView === 'AUTH' && <Auth />}
+        
+        {currentView === 'DASHBOARD' && <DashboardView />}
         
         {currentView === 'SELECT_APIARY' && <ApiarySelectionView />}
 
@@ -176,6 +183,8 @@ function App() {
 
         {currentView === 'UPDATE_PASSWORD' && <UpdatePasswordView />}
       </main>
+
+      <BottomNavBar />
 
       {/* Global Modals */}
       <FeedbackModal />

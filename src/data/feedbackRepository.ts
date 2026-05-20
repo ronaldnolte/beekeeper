@@ -9,6 +9,7 @@ export async function fetchHistoryFeed(
   filter: 'inspections' | 'interventions' | 'snapshots' | 'tasks' | 'all' = 'all'
 ) {
   const promises = [];
+  const limitCount = filter === 'all' ? 10 : 100;
 
   if (filter === 'all' || filter === 'inspections') {
     promises.push(
@@ -17,7 +18,7 @@ export async function fetchHistoryFeed(
         .select('*')
         .eq('hive_id', hiveId)
         .order('timestamp', { ascending: false })
-        .limit(10)
+        .limit(limitCount)
         .then((res) => ({ type: 'inspection', data: res.data }))
     );
   }
@@ -28,7 +29,7 @@ export async function fetchHistoryFeed(
         .select('*')
         .eq('hive_id', hiveId)
         .order('timestamp', { ascending: false })
-        .limit(10)
+        .limit(limitCount)
         .then((res) => ({ type: 'intervention', data: res.data }))
     );
   }
@@ -39,7 +40,7 @@ export async function fetchHistoryFeed(
         .select('*')
         .eq('hive_id', hiveId)
         .order('timestamp', { ascending: false })
-        .limit(10)
+        .limit(limitCount)
         .then((res) => ({ type: 'snapshot', data: res.data }))
     );
   }
@@ -50,7 +51,7 @@ export async function fetchHistoryFeed(
         .select('*')
         .eq('hive_id', hiveId)
         .order('created_at', { ascending: false })
-        .limit(10)
+        .limit(limitCount)
         .then((res) => ({ type: 'task', data: res.data }))
     );
   }
@@ -71,7 +72,7 @@ export async function fetchHistoryFeed(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
-  return merged.slice(0, 10);
+  return filter === 'all' ? merged.slice(0, 10) : merged;
 }
 
 export async function deleteSnapshot(id: string) {

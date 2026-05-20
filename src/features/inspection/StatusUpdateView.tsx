@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { updateHiveStatus } from '../../data/hiveRepository';
 import { createIntervention } from '../../data/interventionRepository';
 import { useAppStore } from '../../store/useAppStore';
-import { CheckCircle, AlertTriangle, Skull, Wind, Archive } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Skull, Wind, Archive, Hexagon } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { value: 'Active', label: 'Active', icon: <CheckCircle size={32} />, color: 'text-green-600', bg: 'bg-green-100', border: 'border-green-500', desc: 'Hive is healthy and active' },
@@ -42,46 +42,53 @@ export const StatusUpdateView: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center p-4 pb-20 space-y-6 animate-in slide-in-from-bottom-8">
+    <div className="w-full h-full flex flex-col overflow-hidden">
       
-      {/* Header */}
-      <div className="w-full max-w-2xl flex justify-between items-center mb-2">
-        <div>
-          <h2 className="text-2xl font-black text-[var(--color-card-text)]">Update Status</h2>
-          <p className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Select new hive state</p>
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-4 space-y-6 animate-in slide-in-from-bottom-8">
+        
+        {/* Header */}
+        <div className="w-full max-w-2xl flex justify-between items-center mb-2">
+          <div>
+            <h2 className="text-2xl font-black text-[var(--color-card-text)]">Update Status</h2>
+            <p className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Select new hive state</p>
+          </div>
         </div>
-        <button 
-          onClick={() => {
-            navigateTo('HIVE_DETAIL');
-          }}
-          className="w-10 h-10 rounded-full bg-[var(--color-bg-raised)] flex items-center justify-center font-bold text-[var(--color-text-muted)] active:scale-95"
-        >
-          ✕
-        </button>
+
+        <div className="w-full max-w-2xl space-y-3">
+          {loading && (
+            <div className="p-8 flex justify-center">
+               <div className="w-10 h-10 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
+
+          {!loading && STATUS_OPTIONS.map((status) => (
+            <button
+              key={status.value}
+              onClick={() => handleUpdateStatus(status.value)}
+              className={`w-full p-5 rounded-2xl flex items-center gap-4 border-2 transition-transform active:scale-95 hover:bg-[var(--color-input-bg)] bg-[var(--color-bg-raised)] border-[var(--color-card-border)] text-left`}
+            >
+              <div className={`p-4 rounded-xl ${status.bg} ${status.color}`}>
+                {status.icon}
+              </div>
+              <div>
+                <h3 className={`text-lg font-black ${status.color}`}>{status.label}</h3>
+                <p className="text-sm font-bold text-[var(--color-text-muted)]">{status.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="w-full max-w-2xl space-y-3">
-        {loading && (
-          <div className="p-8 flex justify-center">
-             <div className="w-10 h-10 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        )}
-
-        {!loading && STATUS_OPTIONS.map((status) => (
-          <button
-            key={status.value}
-            onClick={() => handleUpdateStatus(status.value)}
-            className={`w-full p-5 rounded-2xl flex items-center gap-4 border-2 transition-transform active:scale-95 hover:bg-[var(--color-input-bg)] bg-[var(--color-bg-raised)] border-[var(--color-card-border)] text-left`}
-          >
-            <div className={`p-4 rounded-xl ${status.bg} ${status.color}`}>
-              {status.icon}
-            </div>
-            <div>
-              <h3 className={`text-lg font-black ${status.color}`}>{status.label}</h3>
-              <p className="text-sm font-bold text-[var(--color-text-muted)]">{status.desc}</p>
-            </div>
-          </button>
-        ))}
+      {/* Segregated Bottom Action Bar — Return to Hive Details */}
+      <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <button 
+          onClick={() => navigateTo('HIVE_DETAIL')}
+          className="flex-1 max-w-md bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
+        >
+          <Hexagon size={20} />
+          Return to Hive Details
+        </button>
       </div>
 
     </div>

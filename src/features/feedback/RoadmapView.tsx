@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchFeatureRequests, submitFeatureRequest, voteOnFeature } from '../../data/feedbackRepository';
 import { useAppStore } from '../../store/useAppStore';
-import { Lightbulb, Send, X, Triangle, CheckCircle, Clock } from 'lucide-react';
+import { Lightbulb, Send, X, Triangle, CheckCircle, Clock, LayoutDashboard } from 'lucide-react';
 
 interface FeatureRequest {
   id: string;
@@ -15,7 +15,7 @@ interface FeatureRequest {
 }
 
 export const RoadmapView: React.FC = () => {
-  const { user } = useAppStore();
+  const { user, goBack } = useAppStore();
   const [features, setFeatures] = useState<FeatureRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitModalOpen, setSubmitModalOpen] = useState(false);
@@ -98,7 +98,10 @@ export const RoadmapView: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center p-4 pb-20 space-y-6 animate-in slide-in-from-right-8">
+    <div className="w-full h-full flex flex-col overflow-hidden">
+      
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-4 space-y-6 animate-in slide-in-from-right-8 relative">
       
       {/* Header */}
       <div className="w-full max-w-2xl flex justify-between items-center bg-[#FFFBF0] p-6 rounded-2xl border-2 border-amber-200">
@@ -241,6 +244,20 @@ export const RoadmapView: React.FC = () => {
           </div>
         </div>
       )}
+
+      </div>
+
+      {/* Segregated Bottom Action Bar — Return to Dashboard */}
+      <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <button 
+          onClick={goBack}
+          className="flex-1 max-w-md bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
+        >
+          <LayoutDashboard size={20} />
+          Return to Dashboard
+        </button>
+      </div>
+
     </div>
   );
 };

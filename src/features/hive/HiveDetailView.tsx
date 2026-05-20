@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchHiveDetail } from '../../data/hiveRepository';
 import { useAppStore } from '../../store/useAppStore';
-import { ClipboardList, PlusCircle, AlertTriangle } from 'lucide-react';
+import { ClipboardList, PlusCircle, AlertTriangle, Hexagon } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
 import { HiveConfigWrapper } from './HiveConfigWrapper';
 
@@ -36,48 +36,63 @@ export const HiveDetailView: React.FC = () => {
   if (!hive) return <div className="p-4 text-center text-[var(--color-text-muted)]">Hive not found.</div>;
 
   return (
-    <div className="w-full flex flex-col items-center p-3 sm:p-4 pb-28 space-y-4">
+    <div className="w-full h-full flex flex-col overflow-hidden">
       
-      {/* 1. Hive Status Summary Card */}
-      <div className="w-full max-w-2xl card p-4 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-primary)] rounded-l-2xl"></div>
-        <div className="flex justify-between items-start pl-3">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-[var(--color-text)]">{hive.name}</h2>
-            <p className="text-xs sm:text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider mt-0.5">
-              Type: {hive.type || 'Standard TBH'}
-            </p>
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-3 sm:p-4 space-y-4">
+        {/* 1. Hive Status Summary Card */}
+        <div className="w-full max-w-2xl card p-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-[var(--color-primary)] rounded-l-2xl"></div>
+          <div className="flex justify-between items-start pl-3">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-[var(--color-text)]">{hive.name}</h2>
+              <p className="text-xs sm:text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider mt-0.5">
+                Type: {hive.type || 'Standard TBH'}
+              </p>
+            </div>
+            <span className={`px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase ${
+              (hive.status || 'Active') === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+            }`}>
+              {hive.status || 'Active'}
+            </span>
           </div>
-          <span className={`px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase ${
-            (hive.status || 'Active') === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-          }`}>
-            {hive.status || 'Active'}
-          </span>
+        </div>
+
+        {/* 2. Interactive Hive Config */}
+        <div className="w-full max-w-2xl">
+          <HiveConfigWrapper 
+            hive={hive} 
+            onSnapshotSaved={() => setRefreshKey(prev => prev + 1)} 
+          />
+        </div>
+
+        {/* 3. Complete Hive History */}
+        <div className="w-full max-w-2xl">
+          <HistoryFeed 
+            hiveId={hive.id} 
+            filter="snapshots" 
+            refreshTrigger={refreshKey} 
+            title="Hive Configuration History" 
+          />
         </div>
       </div>
 
-      {/* 2. Interactive Hive Config */}
-      <div className="w-full max-w-2xl">
-        <HiveConfigWrapper 
-          hive={hive} 
-          onSnapshotSaved={() => setRefreshKey(prev => prev + 1)} 
-        />
-      </div>
+      {/* Segregated Bottom Action Bar — 4 primary actions */}
+      <div className="w-full flex-shrink-0 flex justify-center gap-2 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <button 
+          onClick={() => useAppStore.getState().goBack()}
+          className="flex-1 max-w-[110px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
+        >
+          <Hexagon size={20} />
+          Hives
+        </button>
 
-      {/* 3. Complete Hive History */}
-      <div className="w-full max-w-2xl">
-        <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3 px-1">Hive Configuration History</h3>
-        <HistoryFeed hiveId={hive.id} filter="snapshots" refreshTrigger={refreshKey} />
-      </div>
-
-      {/* Fixed Bottom Action Bar — 3 primary actions */}
-      <div className="bottom-action-bar">
         <button 
           onClick={() => {
             useAppStore.getState().selectInspection(null);
             navigateTo('INSPECTION_FORM');
           }}
-          className="flex-1 max-w-[140px] btn-honey py-3.5 text-xs flex-col gap-1"
+          className="flex-1 max-w-[110px] btn-honey py-3.5 text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
         >
           <ClipboardList size={20} />
           Inspection
@@ -88,7 +103,7 @@ export const HiveDetailView: React.FC = () => {
             useAppStore.getState().selectInspection(null);
             navigateTo('INTERVENTION_FORM');
           }}
-          className="flex-1 max-w-[140px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm"
+          className="flex-1 max-w-[110px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
         >
           <PlusCircle size={20} />
           Intervention
@@ -99,7 +114,7 @@ export const HiveDetailView: React.FC = () => {
             useAppStore.getState().selectInspection(null);
             navigateTo('TASK_FORM');
           }}
-          className="flex-1 max-w-[140px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm"
+          className="flex-1 max-w-[110px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
         >
           <AlertTriangle size={20} />
           Task

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Sparkles, Mail, LogOut } from 'lucide-react';
+import { Mail, LogOut } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { supabase } from '../data/supabase';
 
@@ -34,7 +34,7 @@ const LandscapeSVG = () => (
 );
 
 export const AppHeader: React.FC = () => {
-  const { currentView, navigateTo } = useAppStore();
+  const { currentView, isUnifiedHiveView } = useAppStore();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -42,8 +42,9 @@ export const AppHeader: React.FC = () => {
   };
 
   const titleMap: Record<string, string> = {
-    SELECT_APIARY: 'Dashboard',
-    SELECT_HIVE: 'Hives',
+    DASHBOARD: 'Beekeeper',
+    SELECT_APIARY: 'My Apiaries',
+    SELECT_HIVE: isUnifiedHiveView ? 'My Hives' : 'Hives',
     HIVE_DETAIL: 'Hive Detail',
     INSPECTION_FORM: 'Inspection',
     INTERVENTION_FORM: 'Intervention',
@@ -51,14 +52,13 @@ export const AppHeader: React.FC = () => {
     SWARM_PREDICTION: 'Swarm Index',
     FORECAST: 'Forecast',
     ASK_AI: 'Ask AI',
-    STATUS_UPDATE: 'Status',
+    STATUS_UPDATE_FORM: 'Status',
     SETTINGS: 'Settings',
     ROADMAP: 'Roadmap',
   };
 
   const title = titleMap[currentView] || 'Beekeeper';
-  const showBackButton = currentView !== 'SELECT_APIARY';
-
+  
   return (
     <header className="glass-header sticky top-0 z-50 flex justify-center w-full" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       {/* SVG Landscape Background */}
@@ -68,35 +68,14 @@ export const AppHeader: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-[#2E86DE]/60 via-[#4A99E0]/30 to-transparent" />
 
       <div className="relative w-full max-w-4xl px-4 py-5 flex items-center justify-between z-10">
-        {/* Left: Back + Title */}
+        {/* Left: Logo + Title */}
         <div className="flex items-center gap-2">
-          {showBackButton ? (
-            <button 
-              onClick={() => window.history.back()}
-              className="p-2 -ml-2 rounded-xl text-white/90 hover:bg-white/10 transition-colors active:scale-95"
-            >
-              <ArrowLeft size={22} />
-            </button>
-          ) : (
-            <img src="/logo.png" alt="Beektools" className="w-8 h-8 object-contain drop-shadow-md" />
-          )}
+          <img src="/logo.png" alt="Beektools" className="w-8 h-8 object-contain drop-shadow-md" />
           <h1 className="text-lg font-black text-white drop-shadow-sm">{title}</h1>
         </div>
 
         {/* Right: Action Icons */}
         <div className="flex items-center gap-1">
-          {/* Ask AI — only show after apiary is selected */}
-          {currentView !== 'SELECT_APIARY' && (
-            <button 
-              onClick={() => navigateTo('ASK_AI')}
-              className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-amber-200 hover:bg-white/10"
-              title="Ask AI Beekeeper"
-            >
-              <Sparkles size={18} />
-              <span className="text-[9px] font-bold leading-none">Ask AI</span>
-            </button>
-          )}
-          
           {/* Feedback */}
           <button 
             onClick={() => useAppStore.getState().setFeedbackModalOpen(true)}
@@ -106,7 +85,7 @@ export const AppHeader: React.FC = () => {
             <Mail size={16} />
             <span className="text-[9px] font-bold leading-none">Feedback</span>
           </button>
-
+ 
           {/* Logout */}
           <button 
             onClick={handleLogout}

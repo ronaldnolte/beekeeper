@@ -3,50 +3,33 @@ import { fetchApiaries as loadApiaries, deleteApiaryWithCascade } from '../../da
 import { useAppStore } from '../../store/useAppStore';
 import { SelectionList } from '../../shared/components/SelectionList';
 import type { SelectionItem } from '../../shared/components/SelectionCard';
-import { MapPin, Plus, ClipboardList } from 'lucide-react';
+import { MapPin, Plus } from 'lucide-react';
 import { ApiaryFormModal } from './ApiaryFormModal';
-import { TaskList } from '../tasks/TaskList';
-import { TaskFormModal } from '../tasks/TaskFormModal';
 
 export const ApiarySelectionView: React.FC = () => {
   const { user, selectApiary, setApiaryFormOpen } = useAppStore();
   const [apiaries, setApiaries] = useState<SelectionItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Task Form State
-  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<any>(null);
-  const [taskRefreshKey, setTaskRefreshKey] = useState(0);
+  const reloadApiariesList = async () => {
+    if (!user) return;
+    setLoading(true);
+    const data = await loadApiaries(user.id);
+
+    const formatted: SelectionItem[] = data.map((a: any) => ({
+      id: a.id,
+      title: a.name,
+      subtitle: a.zip_code ? `ZIP: ${a.zip_code}` : (a.latitude ? 'Location: Coordinates' : 'No location set'),
+      icon: <MapPin size={22} />,
+      raw: a
+    }));
+    setApiaries(formatted);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchApiaries = async () => {
-      if (!user) return;
-      
-      const data = await loadApiaries(user.id);
-
-      const formatted: SelectionItem[] = data.map((a: any) => ({
-        id: a.id,
-        title: a.name,
-        subtitle: a.zip_code ? `ZIP: ${a.zip_code}` : (a.latitude ? 'Location: Coordinates' : 'No location set'),
-        icon: <MapPin size={22} />,
-        raw: a
-      }));
-      setApiaries(formatted);
-      setLoading(false);
-    };
-
-    fetchApiaries();
+    reloadApiariesList();
   }, [user]);
-
-  const handleEditTask = (task: any) => {
-    setEditingTask(task);
-    setIsTaskFormOpen(true);
-  };
-
-  const handleCreateTask = () => {
-    setEditingTask(null);
-    setIsTaskFormOpen(true);
-  };
 
   const handleDeleteApiary = async (id: string) => {
     const apiary = apiaries.find(a => a.id === id);
@@ -59,6 +42,8 @@ export const ApiarySelectionView: React.FC = () => {
     setLoading(true);
     try {
       await deleteApiaryWithCascade(id, user.id);
+      // Reload navigation cached store state
+      await useAppStore.getState().loadNavigationContext(user.id);
       window.location.reload();
     } catch (err: any) {
       alert(err.message || 'Failed to delete apiary');
@@ -67,39 +52,21 @@ export const ApiarySelectionView: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center pt-4 pb-28">
+    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center pt-4 animate-in fade-in duration-300">
       
-      {/* 1. Task Dashboard */}
-      <div className="w-full max-w-2xl px-4 mb-4">
-        <div className="flex justify-between items-center mb-3">
-          <div>
-            <h2 className="text-xl font-black text-[var(--color-text)]">Dashboard</h2>
-            <p className="text-[var(--color-text-muted)] font-medium text-sm mt-0.5">Your beekeeping overview.</p>
-          </div>
-          <button
-            onClick={handleCreateTask}
-            className="bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] px-5 py-2.5 rounded-full font-bold text-sm flex items-center gap-2 active:scale-95 transition-transform shadow-sm"
-          >
-            <ClipboardList size={16} /> New Task
-          </button>
-        </div>
-        <TaskList onEditTask={handleEditTask} refreshKey={taskRefreshKey} />
-      </div>
-
-      <div className="w-full max-w-2xl px-4 my-3">
-        <hr className="border-[var(--color-divider)]" />
-      </div>
-
-      {/* 2. Apiary Selection */}
-      <div className="w-full max-w-2xl px-4 mb-1">
-        <h3 className="text-lg font-black text-[var(--color-text)]">My Apiaries</h3>
-        <p className="text-[var(--color-text-muted)] font-medium text-xs mt-0.5">Select a location to view hives.</p>
+      {/* Apiary Selection */}
+      <div className="w-full max-w-2xl px-4 mb-2">
+        <h3 className="text-xl font-black text-[var(--color-text)]">My Apiaries</h3>
+        <p className="text-[var(--color-text-muted)] font-medium text-sm mt-0.5">Select a yard location to manage your hives.</p>
       </div>
 
       <SelectionList 
         items={apiaries.map(a => ({ ...a, onDelete: handleDeleteApiary }))}
         isLoading={loading}
-        onSelect={selectApiary}
+        onSelect={(id) => {
+          const apiary = apiaries.find(a => a.id === id);
+          selectApiary(id, apiary?.title);
+        }}
         onEdit={(id) => {
           const apiary = apiaries.find(a => a.id === id);
           setApiaryFormOpen(true, apiary);
@@ -107,29 +74,23 @@ export const ApiarySelectionView: React.FC = () => {
         emptyMessage="No apiaries found. Create your first apiary to get started."
       />
 
-      <div className="bottom-action-bar">
+      {/* Inline Create Apiary Button (scrolls with list, does not overlay floating nav bar) */}
+      <div className="w-full max-w-2xl px-4 mt-6 flex justify-center">
         <button
           onClick={() => setApiaryFormOpen(true, null)}
-          className="flex-1 max-w-[240px] btn-honey py-3 text-sm"
+          className="w-full max-w-[240px] btn-honey py-3.5 text-sm flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
         >
           <Plus size={18} /> Create Apiary
         </button>
       </div>
 
-      <ApiaryFormModal onSuccess={() => {
-        setLoading(true);
+      <ApiaryFormModal onSuccess={async () => {
+        if (user) {
+          await useAppStore.getState().loadNavigationContext(user.id);
+        }
         window.location.reload();
       }} />
 
-      <TaskFormModal 
-        isOpen={isTaskFormOpen}
-        onClose={() => setIsTaskFormOpen(false)}
-        initialData={editingTask}
-        onSuccess={() => {
-          setIsTaskFormOpen(false);
-          setTaskRefreshKey(prev => prev + 1);
-        }}
-      />
     </div>
   );
 };

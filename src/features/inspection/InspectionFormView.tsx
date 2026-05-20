@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createInspection, updateInspection, deleteInspection } from '../../data/inspectionRepository';
 import { useAppStore } from '../../store/useAppStore';
-import { Save, Trash2 } from 'lucide-react';
+import { Save, Trash2, Hexagon } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
 
 const QUEEN_STATUS_OPTIONS = [
@@ -151,68 +151,96 @@ export const InspectionFormView: React.FC = () => {
 
   if (!isFormOpen) {
     return (
-      <div className="w-full flex flex-col items-center p-4 pb-28 space-y-4">
-        <div className="w-full max-w-2xl mb-4">
-          <button
-            onClick={() => setIsFormOpen(true)}
-            className="w-full bg-[var(--color-primary)] text-white py-4 rounded-2xl font-black text-lg transition-colors shadow-lg shadow-[var(--color-primary)]/20 flex items-center justify-center gap-2 active:scale-95"
-          >
-            + Add Inspection
-          </button>
+      <div className="w-full h-full flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-4 space-y-4">
+          <div className="w-full max-w-2xl mb-2">
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="w-full bg-[var(--color-primary)] text-white py-4 rounded-2xl font-black text-lg transition-colors shadow-lg shadow-[var(--color-primary)]/20 flex items-center justify-center gap-2 active:scale-95"
+            >
+              + Add Inspection
+            </button>
+          </div>
+
+          <div className="w-full max-w-2xl">
+            <HistoryFeed hiveId={selectedHiveId!} filter="inspections" />
+          </div>
         </div>
 
-        <div className="w-full max-w-2xl">
-          <HistoryFeed hiveId={selectedHiveId!} filter="inspections" />
+        {/* Segregated Bottom Action Bar — Return to Hive */}
+        <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <button 
+            onClick={goBack}
+            className="flex-1 max-w-md bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
+          >
+            <Hexagon size={20} />
+            Return to Hive Details
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full flex flex-col items-center p-3 sm:p-4 pb-28 space-y-4">
+    <div className="w-full h-full flex flex-col overflow-hidden">
       
-      {/* Date card */}
-      <div className="w-full max-w-2xl card p-4">
-        <h3 className="text-sm font-bold text-[var(--color-text)] mb-2 flex items-center gap-2">
-          <span>📅</span> Date
-        </h3>
-        <input
-          type="date"
-          value={date}
-          onChange={e => setDate(e.target.value)}
-          className="w-full p-3.5 rounded-xl bg-[var(--color-input-bg)] text-[var(--color-primary)] font-bold text-base border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none"
-        />
+      {/* Scrollable Form Body */}
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-3 sm:p-4 space-y-4">
+        {/* Date card */}
+        <div className="w-full max-w-2xl card p-4">
+          <h3 className="text-sm font-bold text-[var(--color-text)] mb-2 flex items-center gap-2">
+            <span>📅</span> Date
+          </h3>
+          <input
+            type="date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            className="w-full p-3.5 rounded-xl bg-[var(--color-input-bg)] text-[var(--color-primary)] font-bold text-base border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none"
+          />
+        </div>
+
+        {/* Notes card */}
+        <div className="w-full max-w-2xl card p-4">
+          <h3 className="text-sm font-bold text-[var(--color-text)] mb-2 flex items-center gap-2">
+            <span>📝</span> Notes
+          </h3>
+          <textarea
+            value={observations}
+            onChange={(e) => setObservations(e.target.value)}
+            placeholder="Tap here to add field notes..."
+            className="w-full h-24 p-3.5 rounded-xl bg-[var(--color-input-bg)] border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none resize-none font-medium text-[var(--color-text)] placeholder-[var(--color-text-muted)]"
+          />
+        </div>
+
+        {/* Queen & Brood card */}
+        <div className="w-full max-w-2xl card p-4 space-y-5">
+          {renderPills('Queen Status', '👑', QUEEN_STATUS_OPTIONS, queenStatus, setQueenStatus)}
+          {renderPills('Brood Pattern', '🐝', BROOD_PATTERN_OPTIONS, broodPattern, setBroodPattern)}
+          {renderPills('Temperament', '🌡️', TEMPERAMENT_OPTIONS, temperament, setTemperament)}
+        </div>
+
+        {/* Stores card */}
+        <div className="w-full max-w-2xl card p-4 space-y-5">
+          <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Stores</h3>
+          {renderPills('Honey', '🍯', STORES_OPTIONS, honeyStores, setHoneyStores)}
+          {renderPills('Pollen', '🌼', STORES_OPTIONS, pollenStores, setPollenStores)}
+        </div>
       </div>
 
-      {/* Notes card */}
-      <div className="w-full max-w-2xl card p-4">
-        <h3 className="text-sm font-bold text-[var(--color-text)] mb-2 flex items-center gap-2">
-          <span>📝</span> Notes
-        </h3>
-        <textarea
-          value={observations}
-          onChange={(e) => setObservations(e.target.value)}
-          placeholder="Tap here to add field notes..."
-          className="w-full h-24 p-3.5 rounded-xl bg-[var(--color-input-bg)] border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none resize-none font-medium text-[var(--color-text)] placeholder-[var(--color-text-muted)]"
-        />
-      </div>
+      {/* Segregated Bottom Save Bar */}
+      <div className="w-full flex-shrink-0 flex justify-center gap-2.5 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <button
+          type="button"
+          onClick={() => {
+            selectInspection(null);
+            setIsFormOpen(false);
+          }}
+          disabled={loading}
+          className="flex-1 max-w-[110px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
+        >
+          Cancel
+        </button>
 
-      {/* Queen & Brood card */}
-      <div className="w-full max-w-2xl card p-4 space-y-5">
-        {renderPills('Queen Status', '👑', QUEEN_STATUS_OPTIONS, queenStatus, setQueenStatus)}
-        {renderPills('Brood Pattern', '🐝', BROOD_PATTERN_OPTIONS, broodPattern, setBroodPattern)}
-        {renderPills('Temperament', '🌡️', TEMPERAMENT_OPTIONS, temperament, setTemperament)}
-      </div>
-
-      {/* Stores card */}
-      <div className="w-full max-w-2xl card p-4 space-y-5">
-        <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Stores</h3>
-        {renderPills('Honey', '🍯', STORES_OPTIONS, honeyStores, setHoneyStores)}
-        {renderPills('Pollen', '🌼', STORES_OPTIONS, pollenStores, setPollenStores)}
-      </div>
-
-      {/* Fixed Bottom Save Bar */}
-      <div className="bottom-action-bar">
         {selectedRecord && (
           <button
             onClick={handleDelete}
@@ -225,7 +253,7 @@ export const InspectionFormView: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={loading}
-          className="flex-1 max-w-md bg-[var(--color-primary)] text-white py-4 rounded-2xl font-black text-lg transition-colors shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
+          className="flex-grow max-w-md bg-[var(--color-primary)] text-white py-4 rounded-2xl font-black text-lg transition-colors shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
         >
           {loading ? (
             <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -237,6 +265,7 @@ export const InspectionFormView: React.FC = () => {
           )}
         </button>
       </div>
+
     </div>
   );
 };

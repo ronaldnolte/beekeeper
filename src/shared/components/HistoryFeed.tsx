@@ -7,16 +7,19 @@ interface HistoryFeedProps {
   hiveId: string;
   filter?: 'inspections' | 'interventions' | 'snapshots' | 'tasks' | 'all';
   refreshTrigger?: number;
+  title?: string;
 }
 
-export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all', refreshTrigger = 0 }) => {
+export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all', refreshTrigger = 0, title }) => {
   const { navigateTo, selectInspection } = useAppStore();
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       const merged = await fetchHistoryFeed(hiveId, filter);
+      console.log(`[HistoryFeed] Loaded ${merged.length} items for hive ${hiveId} (filter: ${filter}):`, merged);
       setHistory(merged);
       setLoading(false);
     };
@@ -48,12 +51,19 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
     } catch(e) {}
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
     
-    const colors: any = { inactive: '#334155', active: '#93C5FD', empty: '#1E293B', brood: '#92400E', resource: '#F59E0B', follower_board: '#1E293B' };
+    const colors: any = { 
+      inactive: '#E5E7EB',      // Light gray
+      active: '#93C5FD',        // Light blue
+      empty: '#FFFFFF',         // White
+      brood: '#8B4513',         // Saddle Brown
+      resource: '#F59E0B',      // Amber/Gold
+      follower_board: '#1F2937' // Dark gray
+    };
     
     return (
       <div className="flex gap-[1px] mt-1.5 bg-[var(--color-input-bg)] p-1.5 rounded-lg border border-[var(--color-card-border)] overflow-x-hidden w-full max-w-full">
         {parsed.map((b: any) => (
-          <div key={b.position} className="w-1.5 h-5 rounded-[1px] border border-[var(--color-card-border)]" style={{ backgroundColor: colors[b.status] || colors.inactive }} />
+          <div key={b.position} className="w-1.5 h-5 rounded-[1px] border border-black/10 shadow-sm" style={{ backgroundColor: colors[b.status] || colors.inactive }} />
         ))}
       </div>
     );
@@ -67,21 +77,57 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
     } catch(e) {}
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
     
-    const colors: any = { deep: '#D97706', medium: '#F59E0B', shallow: '#FBBF24', feeder: '#DBEAFE', inner_cover: '#FEF3C7', slatted_rack: '#F5E1DA', excluder: '#334155' };
+    const colors: any = { 
+      deep: '#C47F0A',          // var(--color-primary-dark)
+      medium: '#E99B1A',        // var(--color-primary)
+      shallow: '#F39C12',       // Shallow Gold
+      feeder: '#DBEAFE',        // Top Feeder Blue
+      inner_cover: '#FEF3C7',   // Inner Cover Yellow
+      slatted_rack: '#F5E1DA',  // Slatted Rack Peach
+      excluder: '#F3F4F6'       // Excluder Gray
+    };
     const heights: any = { deep: 'h-4', medium: 'h-3', shallow: 'h-2', feeder: 'h-2', inner_cover: 'h-1', slatted_rack: 'h-1.5', excluder: 'h-0.5' };
     
     return (
       <div className="flex flex-col items-center gap-[1px] mt-3 bg-[var(--color-input-bg)] p-2 rounded-lg border border-[var(--color-card-border)] w-full max-w-full">
         {parsed.map((b: any) => (
-          <div key={b.id} className={`w-12 border border-black/30 ${heights[b.type] || 'h-2'}`} style={{ backgroundColor: colors[b.type] || '#3D3226' }} />
+          <div key={b.id} className={`w-12 border border-black/20 ${heights[b.type] || 'h-2'}`} style={{ backgroundColor: colors[b.type] || '#3D3226' }} />
         ))}
       </div>
     );
   };
 
+  const defaultTitles: Record<string, string> = {
+    inspections: 'Inspection History',
+    interventions: 'Intervention History',
+    tasks: 'Task History',
+    snapshots: 'Configuration History',
+    all: 'Recent History'
+  };
+  const activeTitle = title || defaultTitles[filter] || 'Recent History';
+
+  const displayedHistory = !showAll 
+    ? history.slice(0, 3) 
+    : history;
+
+  console.log(`[HistoryFeed] Rendering ${displayedHistory.length} of ${history.length} items (filter: ${filter}, showAll: ${showAll})`);
+
   return (
     <div className="space-y-3">
-      {history.map((item) => (
+      {activeTitle && (
+        <div className="flex justify-between items-center mb-3.5 px-1">
+          <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider">{activeTitle}</h3>
+          {history.length > 3 && (
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="px-3.5 py-1.5 rounded-full bg-white/70 hover:bg-white border border-[var(--color-primary)]/30 hover:border-[var(--color-primary)] text-[var(--color-primary-dark)] hover:text-[var(--color-primary-dark)] font-bold text-xs active:scale-95 transition-all shadow-sm outline-none cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              {showAll ? 'Show Less' : `Show All (${history.length})`}
+            </button>
+          )}
+        </div>
+      )}
+      {displayedHistory.map((item) => (
         <div 
           key={`${item._model_type}-${item.id}`} 
           onClick={async () => {
@@ -159,7 +205,7 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
               }`}>{item.status || 'pending'}</span>
               <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
                 item.priority === 'high' ? 'bg-red-900/30 text-red-400' : 'bg-[var(--color-input-bg)] text-[var(--color-text-muted)]'
-              }`}>Priority: {item.priority || 'medium'}</span>
+              }`}>{item.priority || 'medium'} Priority</span>
             </div>
           )}
         </div>

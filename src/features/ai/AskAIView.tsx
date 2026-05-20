@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../data/supabase';
-import { ArrowLeft, Send, Sparkles, AlertTriangle } from 'lucide-react';
+import { Send, Sparkles, AlertTriangle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface ChatMessage {
@@ -90,13 +90,7 @@ export const AskAIView: React.FC = () => {
     <div className="w-full h-full flex flex-col bg-[var(--color-input-bg)] animate-in slide-in-from-bottom-8">
       
       {/* Header */}
-      <div className="w-full flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--color-card-border)] shadow-sm bg-[var(--color-input-bg)] z-10">
-        <button 
-          onClick={() => window.history.back()}
-          className="w-10 h-10 rounded-full bg-[var(--color-bg-raised)] flex items-center justify-center text-[var(--color-text-muted)] active:scale-95 transition-transform"
-        >
-          <ArrowLeft size={20} />
-        </button>
+      <div className="w-full flex-shrink-0 flex items-center justify-center p-4 border-b border-[var(--color-card-border)] shadow-sm bg-[var(--color-input-bg)] z-10">
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-[var(--color-primary)]" />
@@ -104,7 +98,6 @@ export const AskAIView: React.FC = () => {
           </div>
           <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest">Powered by Gemini</span>
         </div>
-        <div className="w-10 h-10" /> {/* Spacer for centering */}
       </div>
 
       {/* Chat Area */}

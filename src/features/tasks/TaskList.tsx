@@ -15,6 +15,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [taskLocations, setTaskLocations] = useState<Record<string, { apiaryName?: string, hiveName?: string }>>({});
 
   useEffect(() => {
@@ -50,6 +51,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
   };
 
   const visibleTasks = tasks.filter(t => showCompleted || t.status !== 'completed');
+  const displayedTasks = !showAll ? visibleTasks.slice(0, 3) : visibleTasks;
 
   if (loading) {
     return (
@@ -62,7 +64,17 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
   return (
     <div className="w-full space-y-3">
       <div className="flex justify-between items-center px-1 mb-2">
-        <h3 className="text-lg font-bold text-[var(--color-text)]">My Upcoming Tasks</h3>
+        <div className="flex items-center gap-2.5">
+          <h3 className="text-lg font-bold text-[var(--color-text)]">My Upcoming Tasks</h3>
+          {visibleTasks.length > 3 && (
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className="px-3.5 py-1.5 rounded-full bg-white/70 hover:bg-white border border-[var(--color-primary)]/30 hover:border-[var(--color-primary)] text-[var(--color-primary-dark)] hover:text-[var(--color-primary-dark)] font-bold text-xs active:scale-95 transition-all shadow-sm outline-none cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              {showAll ? 'Show Less' : `Show All (${visibleTasks.length})`}
+            </button>
+          )}
+        </div>
         <label className="flex items-center gap-2 text-xs text-[var(--color-text-muted)] font-medium cursor-pointer">
           <input 
             type="checkbox" 
@@ -80,7 +92,7 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
         </div>
       ) : (
         <div className="space-y-2">
-          {visibleTasks.map(task => {
+          {displayedTasks.map(task => {
             const isCompleted = task.status === 'completed';
             const isHighPriority = task.priority === 'high';
             const dueDate = task.due_date ? new Date(task.due_date) : null;

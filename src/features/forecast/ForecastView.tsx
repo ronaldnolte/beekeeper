@@ -3,13 +3,13 @@ import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { WeatherService } from './WeatherService';
 import type { InspectionWindow } from './WeatherService';
-import { ArrowLeft } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 import { ForecastScoreGuideModal } from './ForecastScoreGuideModal';
 import { ForecastDetailModal } from './ForecastDetailModal';
 
 export const ForecastView: React.FC = () => {
-  const { selectedApiaryId } = useAppStore();
+  const { selectedApiaryId, apiariesList } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [forecast, setForecast] = useState<InspectionWindow[]>([]);
@@ -19,16 +19,35 @@ export const ForecastView: React.FC = () => {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState<InspectionWindow | null>(null);
 
+  // Auto-select if there is exactly 1 apiary
+  useEffect(() => {
+    if (!selectedApiaryId) {
+      if (apiariesList.length === 1) {
+        useAppStore.setState({ 
+          selectedApiaryId: apiariesList[0].id, 
+          selectedApiaryName: apiariesList[0].name 
+        });
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [selectedApiaryId, apiariesList]);
+
   useEffect(() => {
     const fetchForecast = async () => {
       if (!selectedApiaryId) return;
       setLoading(true);
+      setError(null);
       try {
         const apiary = await fetchApiaryWithCoords(selectedApiaryId);
         setApiaryName(apiary.name);
 
         const lat = apiary.lat;
         const lng = apiary.lng;
+
+        if (lat === null || lng === null || lat === undefined || lng === undefined) {
+          throw new Error('This apiary does not have coordinates. Please edit the apiary to add coordinates.');
+        }
 
         const weatherData = await WeatherService.getWeatherForecast(lat, lng);
         const windows = WeatherService.calculateForecast(weatherData);
@@ -71,24 +90,71 @@ export const ForecastView: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center p-2 sm:p-4 pb-24 space-y-4 animate-in slide-in-from-right-4 duration-300 relative min-h-screen">
+    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center p-2 sm:p-4 space-y-4 animate-in slide-in-from-right-4 duration-300 relative">
       
       {/* Header */}
       <div className="w-full max-w-[800px] flex justify-center items-center py-2 relative">
-        <button 
-          onClick={() => window.history.back()}
-          className="absolute left-0 w-10 h-10 rounded-full bg-[var(--color-input-bg)] shadow-sm flex items-center justify-center text-[var(--color-text-muted)] active:scale-95 border border-[var(--color-card-border)] hover:bg-[var(--color-bg-raised)] transition-colors"
-        >
-          <ArrowLeft size={20} />
-        </button>
         <div className="text-center">
           <h2 className="text-2xl font-black text-[#8B4513]">Hive Forecast</h2>
-          <p className="text-sm font-bold text-[var(--color-text-muted)]">{apiaryName}</p>
+          {selectedApiaryId && apiariesList.length > 1 ? (
+            <div className="relative inline-flex items-center gap-1 mt-0.5 justify-center">
+              <select
+                value={selectedApiaryId}
+                onChange={(e) => {
+                  const selected = apiariesList.find(a => a.id === e.target.value);
+                  if (selected) {
+                    useAppStore.setState({ selectedApiaryId: selected.id, selectedApiaryName: selected.name });
+                  }
+                }}
+                className="bg-transparent text-sm font-bold text-[var(--color-text-muted)] border-none focus:outline-none appearance-none pr-5 cursor-pointer text-center outline-none"
+              >
+                {apiariesList.map(a => (
+                  <option key={a.id} value={a.id} className="text-black dark:text-white bg-[var(--color-bg)]">
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-0 pointer-events-none text-[var(--color-text-muted)]">
+                <ChevronDown size={14} />
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm font-bold text-[var(--color-text-muted)]">{selectedApiaryId ? apiaryName : 'Select Location'}</p>
+          )}
         </div>
       </div>
 
       <div className="w-full max-w-[800px]">
-        {loading ? (
+        {!selectedApiaryId ? (
+          apiariesList.length === 0 ? (
+            <div className="bg-[var(--color-input-bg)] rounded-3xl p-8 text-center shadow-sm border border-[var(--color-card-border)]">
+              <p className="font-bold text-[var(--color-text)] mb-2">No Apiaries Found</p>
+              <p className="text-sm text-[var(--color-text-muted)]">Please create an apiary yard first to view the weather forecast.</p>
+            </div>
+          ) : (
+            <div className="bg-[var(--color-input-bg)] rounded-3xl p-8 flex flex-col items-center justify-center gap-6 shadow-sm border border-[var(--color-card-border)] w-full max-w-md mx-auto">
+              <div className="text-center">
+                <h3 className="text-lg font-black text-[var(--color-text)]">Select Apiary</h3>
+                <p className="text-xs text-[var(--color-text-muted)] font-medium mt-1">
+                  Choose an apiary to view the 7-day inspection forecast.
+                </p>
+              </div>
+              <div className="w-full flex flex-col gap-2">
+                {apiariesList.map(a => (
+                  <button
+                    key={a.id}
+                    onClick={() => {
+                      useAppStore.setState({ selectedApiaryId: a.id, selectedApiaryName: a.name });
+                    }}
+                    className="w-full card p-4 text-center font-bold text-sm hover:border-[var(--color-primary)] active:scale-98 transition-all"
+                  >
+                    {a.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        ) : loading ? (
           <div className="bg-[var(--color-input-bg)] rounded-3xl p-12 flex flex-col items-center justify-center gap-4 shadow-sm border border-[var(--color-card-border)]">
             <div className="w-8 h-8 border-4 border-[#8B4513] border-t-transparent rounded-full animate-spin"></div>
             <p className="font-bold text-[#8B4513] animate-pulse">Analyzing meteorological data...</p>
