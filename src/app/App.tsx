@@ -114,6 +114,11 @@ function App() {
           <div className="w-16 h-16 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-[var(--color-text)] font-bold">Waking up the bees...</p>
         </div>
+        {/* Dark background bar under the system navigation buttons */}
+        <div 
+          className="fixed bottom-0 left-0 right-0 bg-[#1a1a2e] z-[9999] pointer-events-none" 
+          style={{ height: 'env(safe-area-inset-bottom, 0px)' }}
+        />
       </div>
     );
   }
@@ -188,6 +193,12 @@ function App() {
 
       {/* Global Modals */}
       <FeedbackModal />
+
+      {/* Dark background bar under the system navigation buttons */}
+      <div 
+        className="fixed bottom-0 left-0 right-0 bg-[#1a1a2e] z-[9999] pointer-events-none" 
+        style={{ height: 'env(safe-area-inset-bottom, 0px)' }}
+      />
     </div>
   );
 }

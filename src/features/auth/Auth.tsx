@@ -142,6 +142,11 @@ export const Auth: React.FC = () => {
           </button>
         </form>
       </div>
+      {/* Dark background bar under the system navigation buttons */}
+      <div 
+        className="fixed bottom-0 left-0 right-0 bg-[#1a1a2e] z-[9999] pointer-events-none" 
+        style={{ height: 'env(safe-area-inset-bottom, 0px)' }}
+      />
     </div>
   );
 };
