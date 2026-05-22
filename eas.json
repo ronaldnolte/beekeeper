@@ -8,7 +8,8 @@
       "android": {
         "gradleCommand": ":app:bundleRelease",
         "buildType": "app-bundle",
-        "image": "latest"
+        "image": "latest",
+        "applicationArchivePath": "android/app/build/outputs/bundle/release/app-release.aab"
       }
     }
   }
