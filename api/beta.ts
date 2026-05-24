@@ -124,7 +124,7 @@ export default async function handler(req: any, res: any) {
               <h3 style="color: #1a1a1a; font-size: 15px; margin-bottom: 8px;">👉 Step 1: Join the Google Group</h3>
               <p style="margin: 0 0 12px 0; font-size: 13px; color: #555;">Click below and select <strong>"Join Group"</strong>. This instantly authorizes your Gmail address as an approved beta tester.</p>
               <div style="text-align: center; margin: 16px 0;">
-                <a href="https://groups.google.com/a/beektools.com/g/testers" style="background-color: #F5A623; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 14px;">👥 1. Join the Google Group</a>
+                <a href="https://groups.google.com/a/beektools.com/g/testers/join" style="background-color: #F5A623; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 14px;">👥 1. Join the Google Group</a>
               </div>
             </div>
 
