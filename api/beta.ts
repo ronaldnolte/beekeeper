@@ -151,16 +151,31 @@ export default async function handler(req: any, res: any) {
     let googleGroupError = null;
 
     let serviceAccount: any = null;
-    if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-      googleGroupError = 'Environment variable GOOGLE_SERVICE_ACCOUNT_KEY is missing (make sure you redeployed in Vercel)';
-    } else {
+    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY;
+
+    if (clientEmail && privateKey) {
       try {
-        const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-        const cleanKey = rawKey.trim().replace(/^'|'$/g, '');
-        serviceAccount = JSON.parse(cleanKey);
+        serviceAccount = {
+          client_email: clientEmail.trim(),
+          private_key: privateKey.trim().replace(/\\n/g, '\n'),
+        };
       } catch (err: any) {
-        googleGroupError = `JSON parse error: ${err.message}`;
-        console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY env:', err);
+        googleGroupError = `Key assembly error: ${err.message}`;
+      }
+    } else {
+      // Fallback to stringified JSON parsing
+      const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+      if (!rawKey) {
+        googleGroupError = 'Environment variables GOOGLE_CLIENT_EMAIL and GOOGLE_PRIVATE_KEY (or GOOGLE_SERVICE_ACCOUNT_KEY) are missing. Make sure you redeployed in Vercel.';
+      } else {
+        try {
+          const cleanKey = rawKey.trim().replace(/^'|'$/g, '');
+          serviceAccount = JSON.parse(cleanKey);
+        } catch (err: any) {
+          googleGroupError = `JSON parse error: ${err.message}`;
+          console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY env:', err);
+        }
       }
     }
 
