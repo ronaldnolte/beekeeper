@@ -20,13 +20,26 @@ export interface SwarmAnalysisResult {
 export class SwarmService {
   private static AGRO_PROXY = import.meta.env.DEV ? '/api/agro' : 'https://beekeeper.beektools.com/api/agro';
 
+  private static async fetchWithTimeout(url: string, options: any = {}, timeout = 6000): Promise<Response> {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(id);
+      return response;
+    } catch (err) {
+      clearTimeout(id);
+      throw err;
+    }
+  }
+
   private static async getPolygonId(lat: number, lng: number): Promise<string | null> {
     try {
-      const res = await fetch(this.AGRO_PROXY, {
+      const res = await this.fetchWithTimeout(this.AGRO_PROXY, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'createPolygon', lat, lng })
-      });
+      }, 6000);
       if (!res.ok) return null;
       const data = await res.json();
       return data.polygonId || null;
@@ -39,11 +52,11 @@ export class SwarmService {
   private static async getNDVIData(polygonId: string): Promise<{ baseline: number, current: number, dearthDrop: boolean } | null> {
     if (!polygonId) return { baseline: 0.4, current: 0.65, dearthDrop: false };
     try {
-      const res = await fetch(this.AGRO_PROXY, {
+      const res = await this.fetchWithTimeout(this.AGRO_PROXY, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'getNDVI', polygonId })
-      });
+      }, 6000);
       if (!res.ok) return null;
       return await res.json();
     } catch (e) {
@@ -71,7 +84,7 @@ export class SwarmService {
         url += '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch';
       }
 
-      const res = await fetch(url);
+      const res = await this.fetchWithTimeout(url, {}, 6000);
       if (!res.ok) throw new Error("Weather API failed");
       
       const data = await res.json();
