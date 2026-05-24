@@ -72,8 +72,8 @@ export class SwarmService {
       const startDate = `${currentYear - 5}-01-01`;
       
       const today = new Date();
-      // Set end date to 3 days ago to guarantee historical archive data is available on Open-Meteo
-      const endDateObj = new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000);
+      // Set end date to 5 days ago to guarantee historical archive data is available on Open-Meteo
+      const endDateObj = new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000);
       const month = String(endDateObj.getMonth() + 1).padStart(2, '0');
       const day = String(endDateObj.getDate()).padStart(2, '0');
       const endDate = `${endDateObj.getFullYear()}-${month}-${day}`;
@@ -380,9 +380,9 @@ export class SwarmService {
         peakGDD: Math.round(peakGDDThisYear)
       };
 
-    } catch (e) {
+    } catch (e: any) {
       console.error("Swarm analysis failed:", e);
-      return null;
+      throw new Error(`Swarm analysis failed: ${e.message || e}`);
     }
   }
 }
