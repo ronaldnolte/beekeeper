@@ -94,7 +94,7 @@ export default async function handler(req: any, res: any) {
               <p style="margin: 4px 0; font-size: 13px; color: #555;"><strong>Registration Time:</strong> ${new Date().toLocaleString('en-US', { timeZone: 'America/Denver' })} (MST)</p>
               <p style="margin: 4px 0; font-size: 13px; color: #555;"><strong>Saved in Database:</strong> ${dbSuccess ? '✅ Yes' : `❌ No (Details: ${dbErrorDetails || 'Unknown'})`}</p>
             </div>
-            <p style="margin: 0; font-size: 14px; color: #333;">The user has been automatically sent instructions to join your Google Group <strong>beekeeper-beta@googlegroups.com</strong> and download the app. No manual action is required!</p>
+            <p style="margin: 0; font-size: 14px; color: #333;">The user has been automatically sent instructions to join your Google Group <strong>testers@beektools.com</strong> and download the app. No manual action is required!</p>
             <p style="color: #aaa; font-size: 11px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">Sent automatically by BeekTools Beta Signup</p>
           </div>
         `,
@@ -124,7 +124,7 @@ export default async function handler(req: any, res: any) {
               <h3 style="color: #1a1a1a; font-size: 15px; margin-bottom: 8px;">👉 Step 1: Join the Google Group</h3>
               <p style="margin: 0 0 12px 0; font-size: 13px; color: #555;">Click below and select <strong>"Join Group"</strong>. This instantly authorizes your Gmail address as an approved beta tester.</p>
               <div style="text-align: center; margin: 16px 0;">
-                <a href="https://groups.google.com/g/beekeeper-beta/about" style="background-color: #F5A623; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 14px;">👥 1. Join the Google Group</a>
+                <a href="https://groups.google.com/a/beektools.com/g/testers/about" style="background-color: #F5A623; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 14px;">👥 1. Join the Google Group</a>
               </div>
             </div>
 
