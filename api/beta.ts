@@ -48,7 +48,8 @@ export default async function handler(req: any, res: any) {
         .maybeSingle();
 
       if (existing) {
-        res.status(400).json({ error: 'This email is already on the list!' });
+        console.log(`User ${cleanEmail} already exists. Succeeding silently to trigger redirect...`);
+        res.status(200).json({ success: true, dbSuccess: true, alreadyExists: true });
         return;
       }
 
