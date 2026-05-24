@@ -163,7 +163,7 @@ export default async function handler(req: any, res: any) {
 
     if (serviceAccount) {
       try {
-        const adminEmail = process.env.GOOGLE_ADMIN_EMAIL || 'ron@thenoltefamily.com';
+        const adminEmail = process.env.GOOGLE_ADMIN_EMAIL || 'admin@thenoltefamily.com';
         const groupEmail = process.env.GOOGLE_GROUP_EMAIL || 'testers@beektools.com';
         
         console.log(`Adding ${cleanEmail} to Google Group ${groupEmail} impersonating ${adminEmail}...`);
