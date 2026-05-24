@@ -84,6 +84,7 @@ export async function deleteSnapshot(id: string) {
 }
 
 export async function submitFeedback(message: string, email?: string) {
+  // 1. Save to Supabase (so we have a database record backup)
   const { error } = await supabase.from('app_feedback').insert([
     {
       message,
@@ -92,6 +93,23 @@ export async function submitFeedback(message: string, email?: string) {
     },
   ]);
   if (error) throw error;
+
+  // 2. Call our Vercel serverless function to trigger the Gmail notification in real time
+  try {
+    const response = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message, email }),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      console.error('Failed to trigger feedback email:', data);
+    }
+  } catch (err) {
+    console.error('Error calling feedback API endpoint:', err);
+  }
 }
 
 export async function fetchFeatureRequests(userId?: string) {
