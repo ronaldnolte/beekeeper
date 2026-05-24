@@ -16,6 +16,7 @@ import { FeedbackModal } from '../features/feedback/FeedbackModal';
 import { TaskFormModal } from '../features/tasks/TaskFormModal';
 import { DashboardView } from '../features/dashboard/DashboardView';
 import { BottomNavBar } from './BottomNavBar';
+import { BetaSignupView } from '../features/auth/BetaSignupView';
 
 // Lazy-loaded leaf features — only fetched when navigated to
 const ForecastView = lazy(() => import('../features/forecast/ForecastView').then(m => ({ default: m.ForecastView })));
@@ -63,6 +64,10 @@ function App() {
     // FOOLPROOF ROUTING BYPASS: If the URL physically contains /auth/update-password, lock the screen!
     if (typeof window !== 'undefined' && window.location.pathname === '/auth/update-password') {
       useAppStore.getState().setCurrentView('UPDATE_PASSWORD');
+    }
+
+    if (typeof window !== 'undefined' && window.location.pathname === '/beta') {
+      useAppStore.getState().setCurrentView('BETA_SIGNUP');
     }
 
     // 3. BROWSER BACK BUTTON — read the view from history state
@@ -123,8 +128,13 @@ function App() {
   }
 
   // Auth guard — prevent protected views from rendering without a session
-  if (!user && currentView !== 'AUTH' && currentView !== 'UPDATE_PASSWORD') {
-    return <Auth />;
+  if (!user) {
+    if (currentView === 'BETA_SIGNUP') {
+      return <BetaSignupView />;
+    }
+    if (currentView !== 'AUTH' && currentView !== 'UPDATE_PASSWORD') {
+      return <Auth />;
+    }
   }
 
   // --- THE SPA VIEW SWITCHER ---
@@ -181,6 +191,8 @@ function App() {
         )}
 
         {currentView === 'UPDATE_PASSWORD' && <UpdatePasswordView />}
+        
+        {currentView === 'BETA_SIGNUP' && <BetaSignupView />}
       </main>
 
       <BottomNavBar />

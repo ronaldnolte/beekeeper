@@ -17,7 +17,8 @@ export type AppView =
   | 'FORECAST'          // Root Tab 4: Dynamic weather forecast
   | 'ASK_AI'            // Root Tab 5: AI chat assistant
   | 'ROADMAP'           // Global: Feedback & Roadmap
-  | 'UPDATE_PASSWORD';  // Global: Reset password flow
+  | 'UPDATE_PASSWORD'   // Global: Reset password flow
+  | 'BETA_SIGNUP';      // Public: Closed Beta signup waitlist
 
 // Discriminated union for selected records (replaces `selectedInspection: any`)
 export type SelectedRecord =
@@ -225,7 +226,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
       setUser: (user) => set((state) => {
         if (!user) {
-          if (state.currentView === 'UPDATE_PASSWORD') {
+          if (state.currentView === 'UPDATE_PASSWORD' || state.currentView === 'BETA_SIGNUP') {
             return { user: null, isAuthLoading: false };
           }
           // Clear all sensitive state on logout
