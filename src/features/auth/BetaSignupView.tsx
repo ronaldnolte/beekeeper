@@ -63,7 +63,7 @@ export const BetaSignupView: React.FC = () => {
           <div className="w-20 h-20 mx-auto flex items-center justify-center mb-2">
             <img src="/logo.png" alt="Beektools Logo" className="w-full h-full object-contain drop-shadow-md" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text)]">Join the Closed Beta</h1>
+          <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text)]">Join the Beta</h1>
           <p className="text-[var(--color-text-muted)] mt-1 font-medium text-xs sm:text-sm">Get early access to Beekeeper on Android.</p>
         </div>
 
@@ -72,7 +72,7 @@ export const BetaSignupView: React.FC = () => {
             <div className="text-5xl mb-4">✅</div>
             <h2 className="text-xl font-black text-[var(--color-text)] mb-3">You're on the list!</h2>
             <p className="text-[var(--color-text-muted)] font-bold text-sm leading-relaxed mb-6">
-              We'll add your email to the closed beta within <strong>24 hours</strong>. Once added, click the button below to opt-in and download the app on Google Play.
+              We'll add your email to the beta within <strong>24 hours</strong>. Once added, click the button below to opt-in and download the app on Google Play.
             </p>
             <a
               href={PLAY_CONSOLE_JOIN_URL}
