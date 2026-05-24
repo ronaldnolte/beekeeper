@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
-const PLAY_CONSOLE_JOIN_URL = 'https://play.google.com/apps/testing/com.beektools.beekeeper';
-
 export const BetaSignupView: React.FC = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,6 +28,8 @@ export const BetaSignupView: React.FC = () => {
 
       if (response.ok) {
         setStatus('success');
+        // Instantly redirect to the Google Group!
+        window.location.href = 'https://groups.google.com/g/beekeeper-bata';
       } else {
         setStatus('error');
         setError(data.error || 'Something went wrong. Please try again.');
@@ -68,53 +68,11 @@ export const BetaSignupView: React.FC = () => {
         </div>
 
         {status === 'success' ? (
-          <div className="text-center py-4 animate-in zoom-in duration-300">
-            <div className="text-5xl mb-3">🎉</div>
-            <h2 className="text-xl font-black text-[var(--color-text)] mb-2">You are ready!</h2>
-            <p className="text-[var(--color-text-muted)] font-bold text-xs sm:text-sm leading-relaxed mb-4">
-              To download Beekeeper instantly, follow these <strong>2 quick steps</strong>:
-            </p>
-
-            <div className="space-y-4">
-              {/* Step 1 */}
-              <div className="p-3.5 bg-[var(--color-input-bg)] border border-[var(--color-card-border)] rounded-xl text-left">
-                <h3 className="text-xs sm:text-sm font-black text-[var(--color-text)] flex items-center gap-1.5 mb-1">
-                  <span>👥</span> Step 1: Join the Google Group
-                </h3>
-                <p className="text-[11px] text-[var(--color-text-muted)] font-semibold mb-2.5">
-                  Click below and select <strong>"Join Group"</strong> to instantly authorize your Gmail account.
-                </p>
-                <a
-                  href="https://groups.google.com/g/beekeeper-bata"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 btn-honey text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-md active:scale-95 transition-transform"
-                >
-                  Join Google Group
-                </a>
-              </div>
-
-              {/* Step 2 */}
-              <div className="p-3.5 bg-[var(--color-input-bg)] border border-[var(--color-card-border)] rounded-xl text-left">
-                <h3 className="text-xs sm:text-sm font-black text-[var(--color-text)] flex items-center gap-1.5 mb-1">
-                  <span>📱</span> Step 2: Download the App
-                </h3>
-                <p className="text-[11px] text-[var(--color-text-muted)] font-semibold mb-2.5">
-                  Once you have joined the group, click below to opt-in and download the app on Google Play.
-                </p>
-                <a
-                  href={PLAY_CONSOLE_JOIN_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-black flex items-center justify-center gap-2 rounded-xl shadow-md active:scale-95 transition-transform"
-                >
-                  Download on Google Play
-                </a>
-              </div>
-            </div>
-
-            <p className="text-[9px] text-[var(--color-text-muted)] font-medium mt-4">
-              Make sure you are logged in to Google Play with the exact same Gmail address used to join the group.
+          <div className="text-center py-8 animate-in zoom-in duration-300">
+            <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 className="text-xl font-black text-[var(--color-text)] mb-2">🎉 Success!</h2>
+            <p className="text-[var(--color-text-muted)] font-bold text-xs sm:text-sm leading-relaxed">
+              Redirecting you to join the Google Group...
             </p>
           </div>
         ) : (
