@@ -7,7 +7,7 @@ import { SwarmLineChart } from './SwarmLineChart';
 import { AlertTriangle, ShieldCheck, Flame, Hexagon, ChevronDown } from 'lucide-react';
 
 export const SwarmPredictionView: React.FC = () => {
-  const { selectedApiaryId, apiariesList, selectedApiaryName, goBack } = useAppStore();
+  const { selectedApiaryId, apiariesList, goBack } = useAppStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SwarmAnalysisResult | null>(null);

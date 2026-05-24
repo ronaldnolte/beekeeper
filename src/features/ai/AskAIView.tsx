@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../data/supabase';
-import { Send, Sparkles, AlertTriangle, ChevronDown } from 'lucide-react';
+import { Send, Sparkles, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface ChatMessage {
