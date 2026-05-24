@@ -72,9 +72,11 @@ export class SwarmService {
       const startDate = `${currentYear - 5}-01-01`;
       
       const today = new Date();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      const endDate = `${currentYear}-${month}-${day}`;
+      // Set end date to 3 days ago to guarantee historical archive data is available on Open-Meteo
+      const endDateObj = new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000);
+      const month = String(endDateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(endDateObj.getDate()).padStart(2, '0');
+      const endDate = `${endDateObj.getFullYear()}-${month}-${day}`;
 
       const isUS = lat > 24 && lat < 50 && lng < -66 && lng > -125;
       
