@@ -19,7 +19,6 @@ export interface SwarmAnalysisResult {
 
 export class SwarmService {
   private static AGRO_PROXY = import.meta.env.DEV ? '/api/agro' : 'https://beekeeper.beektools.com/api/agro';
-  private static WEATHER_PROXY = import.meta.env.DEV ? '/api/weather' : 'https://beekeeper.beektools.com/api/weather';
 
   private static async fetchWithTimeout(url: string, options: any = {}, timeout = 6000): Promise<Response> {
     const controller = new AbortController();
@@ -80,20 +79,22 @@ export class SwarmService {
       const endDate = `${endDateObj.getFullYear()}-${month}-${day}`;
 
       const isUS = lat > 24 && lat < 50 && lng < -66 && lng > -125;
+      
+      let url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&timezone=auto`;
+      
+      if (isUS) {
+        url += '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch';
+      }
 
-      const res = await this.fetchWithTimeout(this.WEATHER_PROXY, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lng, startDate, endDate, isUS })
-      }, 15000);
-
+      // Query Open-Meteo directly from the browser with a highly generous 25s timeout (prevents premature aborts)
+      const res = await this.fetchWithTimeout(url, {}, 25000);
       if (!res.ok) {
         let errDetails = "";
         try {
           const errData = await res.json();
           errDetails = JSON.stringify(errData);
         } catch (_) {}
-        throw new Error(`Weather proxy failed with status ${res.status}: ${errDetails || res.statusText}`);
+        throw new Error(`Weather API failed with status ${res.status}: ${errDetails || res.statusText}`);
       }
       
       const data = await res.json();
