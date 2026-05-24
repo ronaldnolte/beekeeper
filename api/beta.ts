@@ -68,19 +68,21 @@ export default async function handler(req: any, res: any) {
       console.error('Database connection error during beta signup:', dbErr);
     }
 
-    // 3. Trigger Resend Email Notification (always do this so Ron is notified)
+    // 3. Trigger Resend Emails (1 to Ron as notification, 1 to Tester as welcome)
     const apiKey = process.env.RESEND_API_KEY || 're_RRkAoNA9_KZQBPSR9MRexZ8T2EBNybUpA';
 
-    console.log(`Sending beta waitlist alert for user: ${cleanEmail}...`);
-    const emailResponse = await fetch('https://api.resend.com/emails', {
+    console.log(`Sending beta emails for: ${cleanEmail}...`);
+
+    // Fetch call 1: Notification to Ron
+    const ronEmailPromise = fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: 'BeekTools <onboarding@resend.dev>',
-        to: 'ron.nolte@gmail.com', // Always route to Ron
+        from: 'BeekTools <beta@beektools.com>',
+        to: 'ron.nolte@gmail.com',
         subject: '🐝 New Beta Tester Signup!',
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 500px; line-height: 1.6; color: #333;">
@@ -98,15 +100,54 @@ export default async function handler(req: any, res: any) {
       }),
     });
 
-    const emailData = await emailResponse.json();
+    // Fetch call 2: Welcome to Tester
+    const testerEmailPromise = fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from: 'BeekTools <beta@beektools.com>',
+        to: cleanEmail,
+        subject: '🐝 Welcome to the Beekeeper Beta!',
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 500px; line-height: 1.6; color: #333;">
+            <h2 style="color: #F5A623; margin-top: 0; border-bottom: 2px solid #FFFBF0; padding-bottom: 10px; font-weight: 900; font-size: 20px; text-transform: uppercase; tracking-wide">🐝 Welcome to the Beekeeper Beta!</h2>
+            <div style="background: #FFFBF0; border: 1px solid #E6DCC3; border-radius: 12px; padding: 18px; margin: 18px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+              <p style="margin: 0 0 12px 0; font-size: 15px; color: #1a1a1a; font-weight: bold;">We've received your request for beta access!</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px; color: #444;">We are currently preparing your Google Play tester account. Access is typically authorized within <strong>24 hours</strong>.</p>
+              <p style="margin: 0; font-size: 14px; color: #444;">Once added, you can opt-in to the beta track and download the app directly on Google Play using the button below:</p>
+            </div>
+            
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="https://play.google.com/apps/testing/com.beektools.beekeeper" style="background-color: #F5A623; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-size: 15px;">📱 Access Beekeeper Beta on Google Play</a>
+            </div>
+            
+            <p style="margin: 0; font-size: 12px; color: #666; background: #f9f9f9; padding: 10px; border-radius: 8px; border-left: 3px solid #F5A623;">
+              <strong>Note:</strong> If the Google Play link says "App not available", don't worry! This just means we are still activating your account on the developer console. Please check back in a few hours.
+            </p>
+            
+            <p style="color: #aaa; font-size: 11px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">Best regards,<br/>The BeekTools Team</p>
+          </div>
+        `,
+      }),
+    });
 
-    if (!emailResponse.ok) {
-      console.error('Resend Webhook API Error:', emailData);
-      res.status(emailResponse.status).json({ error: 'Failed to send signup email via Resend', details: emailData });
-      return;
+    // Run both email requests concurrently
+    const [ronRes, testerRes] = await Promise.all([ronEmailPromise, testerEmailPromise]);
+
+    const ronEmailData = await ronRes.json();
+    const testerEmailData = await testerRes.json();
+
+    if (!ronRes.ok) {
+      console.warn('Resend Notification API Error:', ronEmailData);
+    }
+    if (!testerRes.ok) {
+      console.warn('Resend Welcome Email API Error:', testerEmailData);
     }
 
-    console.log(`Beta request sent successfully for: ${cleanEmail}!`);
+    console.log(`Beta signup process completed successfully for: ${cleanEmail}!`);
     res.status(200).json({ success: true, dbSuccess });
   } catch (error: any) {
     console.error('Beta Webhook Serverless Error:', error.message || error);

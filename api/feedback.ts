@@ -38,7 +38,7 @@ export default async function handler(req: any, res: any) {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: 'BeekTools <onboarding@resend.dev>',
+        from: 'BeekTools <beta@beektools.com>',
         to: 'ron.nolte@gmail.com', // Always route to Ron
         replyTo: email || undefined, // Direct reply to the user if email is provided
         subject: '🐝 App Feedback: Beekeeper',
