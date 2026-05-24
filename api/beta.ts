@@ -151,14 +151,17 @@ export default async function handler(req: any, res: any) {
     let googleGroupError = null;
 
     let serviceAccount: any = null;
-    try {
-      const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-      if (rawKey) {
+    if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+      googleGroupError = 'Environment variable GOOGLE_SERVICE_ACCOUNT_KEY is missing (make sure you redeployed in Vercel)';
+    } else {
+      try {
+        const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
         const cleanKey = rawKey.trim().replace(/^'|'$/g, '');
         serviceAccount = JSON.parse(cleanKey);
+      } catch (err: any) {
+        googleGroupError = `JSON parse error: ${err.message}`;
+        console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY env:', err);
       }
-    } catch (err: any) {
-      console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY env:', err);
     }
 
     if (serviceAccount) {
