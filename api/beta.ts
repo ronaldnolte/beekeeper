@@ -184,13 +184,19 @@ export default async function handler(req: any, res: any) {
         const adminEmail = process.env.GOOGLE_ADMIN_EMAIL || 'admin@thenoltefamily.com';
         const groupEmail = process.env.GOOGLE_GROUP_EMAIL || 'testers@beektools.com';
         
-        console.log(`Adding ${cleanEmail} to Google Group ${groupEmail} impersonating ${adminEmail}...`);
+        // Resolve primary Google Account by stripping plus-addressing (e.g. user+alias@gmail.com -> user@gmail.com)
+        // since Google Groups Directory API cannot resolve virtual plus-aliases as distinct Google identities.
+        const googleMemberEmail = cleanEmail.includes('+')
+          ? cleanEmail.replace(/\+[^@]+/, '')
+          : cleanEmail;
+        
+        console.log(`Adding ${googleMemberEmail} (derived from ${cleanEmail}) to Google Group ${groupEmail} impersonating ${adminEmail}...`);
         const accessToken = await getGoogleAccessToken(serviceAccount, adminEmail);
-        const groupRes = await addMemberToGoogleGroup(accessToken, groupEmail, cleanEmail);
+        const groupRes = await addMemberToGoogleGroup(accessToken, groupEmail, googleMemberEmail);
         
         if (groupRes.success) {
           googleGroupSuccess = true;
-          console.log(`Successfully added/verified ${cleanEmail} in Google Group!`);
+          console.log(`Successfully added/verified ${googleMemberEmail} in Google Group!`);
         }
       } catch (groupErr: any) {
         googleGroupError = groupErr.message || groupErr;
