@@ -17,8 +17,7 @@ export type AppView =
   | 'FORECAST'          // Root Tab 4: Dynamic weather forecast
   | 'ASK_AI'            // Root Tab 5: AI chat assistant
   | 'ROADMAP'           // Global: Feedback & Roadmap
-  | 'UPDATE_PASSWORD'   // Global: Reset password flow
-  | 'SWARM_PREDICTION'; // Global: Swarm risk analysis
+  | 'UPDATE_PASSWORD';  // Global: Reset password flow
 
 // Discriminated union for selected records (replaces `selectedInspection: any`)
 export type SelectedRecord =
@@ -282,7 +281,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
         ) {
           prevView = 'HIVE_DETAIL';
         } else if (
-          ['FORECAST', 'ASK_AI', 'ROADMAP', 'UPDATE_PASSWORD', 'SWARM_PREDICTION'].includes(state.currentView)
+          ['FORECAST', 'ASK_AI', 'ROADMAP', 'UPDATE_PASSWORD'].includes(state.currentView)
         ) {
           prevView = 'DASHBOARD';
         }

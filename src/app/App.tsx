@@ -19,7 +19,6 @@ import { BottomNavBar } from './BottomNavBar';
 
 // Lazy-loaded leaf features — only fetched when navigated to
 const ForecastView = lazy(() => import('../features/forecast/ForecastView').then(m => ({ default: m.ForecastView })));
-const SwarmPredictionView = lazy(() => import('../features/swarm/SwarmPredictionView').then(m => ({ default: m.SwarmPredictionView })));
 const AskAIView = lazy(() => import('../features/ai/AskAIView').then(m => ({ default: m.AskAIView })));
 const RoadmapView = lazy(() => import('../features/feedback/RoadmapView').then(m => ({ default: m.RoadmapView })));
 
@@ -174,11 +173,6 @@ function App() {
           </Suspense>
         )}
 
-        {currentView === 'SWARM_PREDICTION' && (
-          <Suspense fallback={<ViewLoader />}>
-            <SwarmPredictionView />
-          </Suspense>
-        )}
 
         {currentView === 'ROADMAP' && (
           <Suspense fallback={<ViewLoader />}>

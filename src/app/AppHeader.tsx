@@ -49,7 +49,6 @@ export const AppHeader: React.FC = () => {
     INSPECTION_FORM: 'Inspection',
     INTERVENTION_FORM: 'Intervention',
     TASK_FORM: 'Task',
-    SWARM_PREDICTION: 'Swarm Index',
     FORECAST: 'Forecast',
     ASK_AI: 'Ask AI',
     STATUS_UPDATE_FORM: 'Status',
