@@ -29,7 +29,7 @@ export const BetaSignupView: React.FC = () => {
       if (response.ok) {
         setStatus('success');
         // Instantly redirect to the Google Group!
-        window.location.href = 'https://groups.google.com/g/beekeeper-bata';
+        window.location.href = 'https://groups.google.com/g/beekeeper-beta';
       } else {
         setStatus('error');
         setError(data.error || 'Something went wrong. Please try again.');
