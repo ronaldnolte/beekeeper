@@ -68,8 +68,8 @@ export class SwarmService {
   private static async getHistoricalWeather(lat: number, lng: number): Promise<{ time: string[], tmax: number[], tmin: number[], precip: number[], wind: number[], isUS: boolean }> {
     try {
       const currentYear = new Date().getFullYear();
-      // Fetch 5 full years plus current year
-      const startDate = `${currentYear - 5}-01-01`;
+      // Fetch 3 full years plus current year
+      const startDate = `${currentYear - 3}-01-01`;
       
       const today = new Date();
       // Set end date to 5 days ago to guarantee historical archive data is available on Open-Meteo
@@ -347,10 +347,10 @@ export class SwarmService {
              });
           }
 
-          // 5-Year Average
+          // 3-Year Average
           let sum = 0;
           let count = 0;
-          for (let y = 1; y <= 5; y++) {
+          for (let y = 1; y <= 3; y++) {
              const pastDate = new Date(dateStr);
              pastDate.setFullYear(pastDate.getFullYear() - y);
              const pastDateStr = pastDate.toISOString().split('T')[0];
