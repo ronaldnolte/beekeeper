@@ -65,7 +65,7 @@ export class SwarmService {
     }
   }
 
-  private static async getHistoricalWeather(lat: number, lng: number): Promise<{ time: string[], tmax: number[], tmin: number[], precip: number[], wind: number[], isUS: boolean } | null> {
+  private static async getHistoricalWeather(lat: number, lng: number): Promise<{ time: string[], tmax: number[], tmin: number[], precip: number[], wind: number[], isUS: boolean }> {
     try {
       const currentYear = new Date().getFullYear();
       // Fetch 5 full years plus current year
@@ -86,11 +86,20 @@ export class SwarmService {
         url += '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch';
       }
 
-      const res = await this.fetchWithTimeout(url, {}, 6000);
-      if (!res.ok) throw new Error("Weather API failed");
+      const res = await this.fetchWithTimeout(url, {}, 15000);
+      if (!res.ok) {
+        let errDetails = "";
+        try {
+          const errData = await res.json();
+          errDetails = JSON.stringify(errData);
+        } catch (_) {}
+        throw new Error(`Weather API failed with status ${res.status}: ${errDetails || res.statusText}`);
+      }
       
       const data = await res.json();
-      if (!data?.daily) return null;
+      if (!data?.daily) {
+        throw new Error("Open-Meteo response is missing 'daily' weather properties.");
+      }
 
       return {
         time: data.daily.time,
@@ -100,9 +109,9 @@ export class SwarmService {
         wind: data.daily.wind_speed_10m_max,
         isUS
       };
-    } catch (e) {
+    } catch (e: any) {
       console.error("Open-Meteo error:", e);
-      return null;
+      throw new Error(`Historical weather query failed: ${e.message || e}`);
     }
   }
 
