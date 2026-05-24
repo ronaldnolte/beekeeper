@@ -1,7 +1,5 @@
 import React from 'react';
-import { Mail, LogOut } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
-import { supabase } from '../data/supabase';
 
 // Layered SVG landscape silhouette
 const LandscapeSVG = () => (
@@ -36,10 +34,6 @@ const LandscapeSVG = () => (
 export const AppHeader: React.FC = () => {
   const { currentView, isUnifiedHiveView } = useAppStore();
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.reload();
-  };
 
   const titleMap: Record<string, string> = {
     DASHBOARD: 'Beekeeper',
@@ -66,34 +60,11 @@ export const AppHeader: React.FC = () => {
       {/* Blue sky overlay for text contrast */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#2E86DE]/60 via-[#4A99E0]/30 to-transparent" />
 
-      <div className="relative w-full max-w-4xl px-4 py-5 flex items-center justify-between z-10">
+      <div className="relative w-full max-w-4xl px-4 py-5 flex items-center justify-start z-10">
         {/* Left: Logo + Title */}
         <div className="flex items-center gap-2">
           <img src="/logo.png" alt="Beektools" className="w-8 h-8 object-contain drop-shadow-md" />
           <h1 className="text-lg font-black text-white drop-shadow-sm">{title}</h1>
-        </div>
-
-        {/* Right: Action Icons */}
-        <div className="flex items-center gap-1">
-          {/* Feedback */}
-          <button 
-            onClick={() => useAppStore.getState().setFeedbackModalOpen(true)}
-            className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-white/70 hover:bg-white/10"
-            title="Send Feedback"
-          >
-            <Mail size={16} />
-            <span className="text-[9px] font-bold leading-none">Feedback</span>
-          </button>
- 
-          {/* Logout */}
-          <button 
-            onClick={handleLogout}
-            className="w-12 rounded-xl flex flex-col items-center justify-center gap-0.5 py-1 transition-colors active:scale-95 text-red-300 hover:bg-white/10"
-            title="Log Out"
-          >
-            <LogOut size={16} />
-            <span className="text-[9px] font-bold leading-none">Log Out</span>
-          </button>
         </div>
       </div>
     </header>

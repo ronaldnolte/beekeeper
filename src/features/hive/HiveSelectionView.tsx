@@ -66,18 +66,6 @@ export const HiveSelectionView: React.FC = () => {
   return (
     <div className="w-full flex-1 overflow-y-auto flex flex-col items-center pt-4 animate-in fade-in duration-300">
       
-      {/* 1. Quick nav buttons (Only for specific apiary drilldown mode) */}
-      {!isUnifiedHiveView && selectedApiaryId && (
-        <div className="w-full max-w-2xl px-4 mb-2">
-          <button
-            onClick={() => useAppStore.getState().navigateTo('FORECAST')}
-            className="w-full px-3 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 justify-center active:scale-95 transition-transform bg-[var(--color-card-bg)] text-[var(--color-text)] border border-[var(--color-card-border)]"
-          >
-            <span>⛅</span> Forecast
-          </button>
-        </div>
-      )}
-
       {/* 2. Sleek yard filter pills (For Hives flat list view if hivesList.length > 5) */}
       {isUnifiedHiveView && hivesList.length > 5 && (
         <div className="w-full max-w-2xl px-4 mb-4 flex gap-1.5 overflow-x-auto py-1 custom-scrollbar">

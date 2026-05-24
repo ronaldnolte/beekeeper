@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { LayoutDashboard, Map, Hexagon, CloudSun, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Map, Hexagon, CloudSun, Sparkles, Mail, LogOut } from 'lucide-react';
+import { supabase } from '../data/supabase';
 
 export const BottomNavBar: React.FC = () => {
   const { currentView, isUnifiedHiveView, navigateTo, navigateToApiariesTab, navigateToHivesTab } = useAppStore();
@@ -59,11 +60,28 @@ export const BottomNavBar: React.FC = () => {
       isActive: isAskAIActive,
       onClick: () => navigateTo('ASK_AI'),
     },
+    {
+      id: 'FEEDBACK',
+      label: 'Feedback',
+      icon: <Mail size={20} />,
+      isActive: false,
+      onClick: () => useAppStore.getState().setFeedbackModalOpen(true),
+    },
+    {
+      id: 'LOGOUT',
+      label: 'Log Out',
+      icon: <LogOut size={20} />,
+      isActive: false,
+      onClick: async () => {
+        await supabase.auth.signOut();
+        window.location.reload();
+      },
+    },
   ];
 
   return (
     <div className="w-full flex-shrink-0 flex justify-center pt-2 z-40" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 12px))' }}>
-      <div className="w-[92%] max-w-md h-16 rounded-full px-4 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.15)] bg-[#1a1a2e] border border-[#2a2a4a]">
+      <div className="w-[96%] max-w-[500px] h-16 rounded-full px-3 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.15)] bg-[#1a1a2e] border border-[#2a2a4a]">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -71,7 +89,9 @@ export const BottomNavBar: React.FC = () => {
             className={`flex flex-col items-center justify-center flex-1 h-full rounded-2xl transition-all duration-300 relative select-none outline-none active:scale-95 ${
               tab.isActive 
                 ? 'text-[#F5A623] font-black' 
-                : 'text-white/50 hover:text-white/80 font-semibold'
+                : tab.id === 'LOGOUT'
+                  ? 'text-red-400/50 hover:text-red-400 font-semibold'
+                  : 'text-white/50 hover:text-white/80 font-semibold'
             }`}
           >
             {/* Subtle top indicator bar */}
@@ -83,7 +103,7 @@ export const BottomNavBar: React.FC = () => {
               {tab.icon}
             </div>
             
-            <span className="text-[10px] mt-1 tracking-tight select-none">
+            <span className="text-[9px] mt-0.5 tracking-tight select-none">
               {tab.label}
             </span>
           </button>
