@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, AlertTriangle, Flame } from 'lucide-react';
+import { X, AlertTriangle, Info } from 'lucide-react';
 
 interface Props {
     isOpen: boolean;
@@ -12,18 +12,18 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
             <div
-                className="bg-[#FFFBF0] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300 border-2 border-amber-100"
+                className="bg-[var(--color-input-bg)] text-[var(--color-text)] rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300 border border-[var(--color-card-border)]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-5 bg-[var(--color-input-bg)] border-b border-amber-100">
+                <div className="flex items-center justify-between px-6 py-5 bg-[var(--color-input-bg)] border-b border-[var(--color-card-border)]">
                     <div>
-                        <h3 className="text-xl font-black text-[#8B4513]">How Scores are Calculated</h3>
-                        <p className="text-xs text-[#8B4513]/70 font-bold uppercase tracking-wider mt-0.5">Optimal conditions for hive inspections</p>
+                        <h3 className="text-xl font-black text-[#8B4513] dark:text-amber-500">How Scores are Calculated</h3>
+                        <p className="text-xs text-[#8B4513]/70 dark:text-amber-400/80 font-bold uppercase tracking-wider mt-0.5">Optimal conditions for hive inspections</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-full text-[var(--color-text-muted)] hover:text-[var(--color-text-muted)] hover:bg-[var(--color-bg-raised)] transition-colors active:scale-95"
+                        className="p-2 rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-bg-raised)] transition-colors active:scale-95"
                     >
                         <X size={24} />
                     </button>
@@ -33,85 +33,75 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
                 <div className="p-6 overflow-y-auto space-y-6 text-sm custom-scrollbar">
                     {/* Intro */}
                     <p className="text-[var(--color-text-muted)] font-medium leading-relaxed">
-                        The inspection suitability score (0-100) is a weighted calculation based on 5 key weather factors. High scores indicate ideal conditions for opening the hive with minimal stress to the colony.
+                        The V2 suitability score (0-9) is calculated using a weighted points scoring matrix. High scores indicate ideal conditions for opening the hive with minimal stress to the colony.
                     </p>
 
                     {/* Point Breakdown */}
                     <div className="space-y-4">
-                        <h4 className="font-black text-[#4A3C28] uppercase tracking-wider text-xs">Point System</h4>
+                        <h4 className="font-black text-[#8B4513] dark:text-amber-500 uppercase tracking-wider text-xs">Weighted Points Matrix</h4>
 
                         <div className="grid gap-3">
                             <ScoreRule
                                 label="Temperature"
-                                max="40"
-                                description="Best above 75°F (24°C). Bees are more active and brood is less likely to chill."
-                                detail="75°F+/24°C+ (40 pts), 70°F/21°C (37 pts), 65°F/18°C (33 pts), 60°F/16°C (27 pts), 57°F/14°C (18 pts), 55°F/13°C (8 pts)."
+                                max="3"
+                                description="Warm weather is safer. Brood chilling is a primary concern."
+                                detail="Optimal: 68°F - 85°F (3 pts). Sub-optimal: 58°F - 67°F or 86°F - 91°F (1 pt). Else (0 pts)."
                             />
                             <ScoreRule
-                                label="Cloud Cover"
-                                max="20"
-                                description="Bees prefer sun. Foragers are out working, making the hive less crowded."
-                                detail="Sunny (20 pts), Partly Cloudy (17 pts), Mostly Cloudy (12 pts), Overcast (6 pts)."
+                                label="Time of Day"
+                                max="2"
+                                description="Inspect after the colony wakes up and before foragers return."
+                                detail="Optimal: >= 1 hour since temperature hit 55°F AND starts >= 1 hour before sunset (2 pts). Else (0 pts)."
+                            />
+                            <ScoreRule
+                                label="Sky Condition"
+                                max="2"
+                                description="Sunny, clear weather encourages flight and lowers defensive tempers."
+                                detail="Clear / Sunny (< 30% clouds) (2 pts). Partly Cloudy (30% - 70% clouds) (1 pt). Overcast (> 70% clouds) (0 pts)."
                             />
                             <ScoreRule
                                 label="Wind Speed"
-                                max="20"
-                                description="High winds make bees defensive and can chill the brood."
-                                detail="<5mph/8km/h (20 pts), 10mph/16km/h (18 pts), 15mph/24km/h (12 pts), 20mph/32km/h (6 pts), 24mph/39km/h (2 pts)."
-                            />
-                            <ScoreRule
-                                label="Precipitation"
-                                max="15"
-                                description="Rain is a hard limit. Never open a hive in the rain."
-                                detail="0% Prob (15 pts), 10% (12 pts), 20% (8 pts), 35% (4 pts), 49% (1 pt)."
-                            />
-                            <ScoreRule
-                                label="Humidity"
-                                max="5"
-                                description="Bees regulate humidity easily if the air is moderate (30-70%)."
-                                detail="30-70% (5 pts). Outside this range (0 pts)."
+                                max="2"
+                                description="Calm winds preserve hive warmth and prevent flight disruptions."
+                                detail="Optimal: < 10mph (2 pts). Sub-optimal: 10 - 15mph (1 pt). Else (0 pts)."
                             />
                         </div>
                     </div>
 
-                    {/* Critical Limits */}
-                    <div className="bg-red-50 rounded-xl p-5 border-2 border-red-100">
-                        <h4 className="font-black text-red-700 mb-3 flex items-center gap-2">
+                    {/* V2 Fail-Safes */}
+                    <div className="bg-red-50 dark:bg-red-950/20 rounded-xl p-5 border border-red-100 dark:border-red-900/30">
+                        <h4 className="font-black text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
                             <AlertTriangle size={18} />
-                            Hard Limits
+                            Safety Fail-Safes (Forces Red Cell Abort)
                         </h4>
-                        <p className="text-xs font-medium text-red-600 mb-3">
-                            A score will appear in <span className="font-bold text-black border-b border-black">black text</span> if any of these conditions are met, suggesting you should **not** inspect:
+                        <p className="text-xs font-medium text-red-600 dark:text-red-400/80 mb-3">
+                            If any of these conditions evaluate to TRUE, execution is immediately aborted (classification: <strong>Inadvisable / Red Cell</strong>) and points default to 0:
                         </p>
-                        <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-bold text-red-700 list-disc ml-4">
-                            <li>Score below 40</li>
-                            <li>Temperature &lt; 55°F</li>
-                            <li>Wind &gt; 24mph</li>
-                            <li>Rain Chance &gt; 49%</li>
-                            <li>Active Storms</li>
-                            <li>Raining Now</li>
+                        <ul className="grid grid-cols-1 gap-y-2 text-xs font-bold text-red-700 dark:text-red-400 list-disc ml-4">
+                            <li><strong>Brood Chill Threshold:</strong> Temperature &lt; 57°F (14°C) (extreme cold risk)</li>
+                            <li><strong>Comb Heat/Heat Stroke:</strong> Temperature &gt; 92°F (33°C) (slumping wax risk)</li>
+                            <li><strong>Flight Disruption Wind:</strong> Wind speed &gt; 18mph (colony aggression risk)</li>
+                            <li><strong>Active Precipitation:</strong> Raining, stormy, or precipitation chance &ge; 50%</li>
+                            <li><strong>Severe Storm Plunge:</strong> 3-hour barometric pressure drop &ge; 4.0 hPa (severe front approaching)</li>
+                            <li><strong>Wake-up Temperature:</strong> Must be at least 1 hour since temperature crossed &ge; 55°F (colony activity wake-up buffer)</li>
+                            <li><strong>Sunset Safety Buffer:</strong> Inspection must start at least 1 hour before daily sunset (allows foragers to safely return to hive)</li>
                         </ul>
                     </div>
 
-                    {/* TBH Heat Penalty */}
-                    <div className="bg-orange-50 rounded-xl p-5 border-2 border-orange-100">
-                        <h4 className="font-black text-orange-700 mb-3 flex items-center gap-2">
-                            <Flame size={18} />
-                            Top Bar Hive Heat Penalty
+                    {/* Barometric storm tracking */}
+                    <div className="bg-blue-50 dark:bg-blue-950/20 rounded-xl p-5 border border-blue-100 dark:border-blue-900/30">
+                        <h4 className="font-black text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-2">
+                            <Info size={18} />
+                            Storm Front Tracking
                         </h4>
-                        <p className="text-xs font-medium text-orange-600 mb-3">
-                            Top Bar Hives are sensitive to heat — high temperatures can cause wax comb to slump or collapse. This penalty is always active.
+                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400/80 mb-3">
+                            A moderate 3-hour pressure drop (between 1.5 and 4.0 hPa) does not completely abort the inspection, but it applies a **-2 point penalty** to reflect the approaching weather disturbance.
                         </p>
-                        <ul className="text-xs font-bold text-orange-700 space-y-2 list-disc ml-4">
-                            <li><strong>Heat Penalty:</strong> -10 pts for every 5°F above 80°F</li>
-                            <li><strong>Example:</strong> 85°F = -10 pts, 90°F = -20 pts</li>
-                            <li><strong>Hard Fail:</strong> Temperature &gt; 92°F triggers a fail</li>
-                        </ul>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 bg-[var(--color-input-bg)] border-t border-amber-100 flex justify-end">
+                <div className="p-4 bg-[var(--color-input-bg)] border-t border-[var(--color-card-border)] flex justify-end">
                     <button
                         onClick={onClose}
                         className="px-8 py-3 bg-[#8B4513] text-white rounded-xl font-black hover:bg-[#6D360F] transition-colors active:scale-95 shadow-md shadow-[#8B4513]/20"
@@ -126,13 +116,13 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
 
 function ScoreRule({ label, max, description, detail }: { label: string, max: string, description: string, detail: string }) {
     return (
-        <div className="group border-2 border-white bg-[var(--color-input-bg)] rounded-xl p-4 shadow-sm hover:border-amber-200 hover:shadow-md transition-all">
+        <div className="group border border-[var(--color-card-border)] bg-[var(--color-bg-raised)] rounded-xl p-4 shadow-sm hover:border-amber-200 hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-                <span className="font-black text-[#4A3C28] text-base">{label}</span>
-                <span className="text-xs font-black bg-amber-100 text-[#8B4513] px-3 py-1 rounded-full">{max} pts</span>
+                <span className="font-black text-[#8B4513] dark:text-amber-500 text-base">{label}</span>
+                <span className="text-xs font-black bg-amber-100 dark:bg-amber-950/50 text-[#8B4513] dark:text-amber-400 px-3 py-1 rounded-full">{max} pts</span>
             </div>
             <p className="text-xs font-medium text-[var(--color-text-muted)] mb-3">{description}</p>
-            <p className="text-[10px] text-[var(--color-text-muted)] font-mono bg-[var(--color-bg-raised)] p-2 rounded-lg leading-relaxed">{detail}</p>
+            <p className="text-[10px] text-[var(--color-text-muted)] font-mono bg-[var(--color-input-bg)] p-2 rounded-lg leading-relaxed">{detail}</p>
         </div>
     );
 }
