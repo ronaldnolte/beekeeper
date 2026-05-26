@@ -28,7 +28,7 @@ export class WeatherService {
         // Use generic GFS model for global support
         const model = 'gfs_seamless';
         
-        const url = `${this.WEATHER_API_URL}?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weathercode,cloudcover,windspeed_10m,is_day&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7&models=${model}`;
+        const url = `${this.WEATHER_API_URL}?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weathercode,cloudcover,windspeed_10m,is_day&daily=sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7&models=${model}`;
 
         const response = await fetch(url);
         if (!response.ok) {
@@ -40,21 +40,42 @@ export class WeatherService {
     static calculateForecast(weatherData: any): InspectionWindow[] {
         if (!weatherData?.hourly) return [];
 
-        const { time, temperature_2m, windspeed_10m, cloudcover, precipitation_probability, relative_humidity_2m, weathercode, is_day } = weatherData.hourly;
+        const { time, temperature_2m, windspeed_10m, cloudcover, precipitation_probability, relative_humidity_2m, weathercode } = weatherData.hourly;
+        const daily = weatherData.daily || {};
+        const sunrises = (daily.sunrise || []) as string[];
+        const sunsets = (daily.sunset || []) as string[];
+
+        // Dynamically compute the earliest sunrise hour and latest sunset hour of the week
+        let earliestSunriseHour = 6; // default fallback
+        let latestSunsetHour = 18;  // default fallback
+
+        if (sunrises.length > 0) {
+            const sunriseHours = sunrises.map(s => parseInt(s.slice(11, 13)));
+            earliestSunriseHour = Math.min(...sunriseHours);
+        }
+
+        if (sunsets.length > 0) {
+            const sunsetHours = sunsets.map(s => {
+                const hourPart = parseInt(s.slice(11, 13));
+                const minutePart = parseInt(s.slice(14, 16));
+                // Ceil the sunset hour so we completely cover the hour during which sunset occurs
+                return minutePart > 0 ? hourPart + 1 : hourPart;
+            });
+            latestSunsetHour = Math.max(...sunsetHours);
+        }
+
+        // Apply sensible constraints
+        earliestSunriseHour = Math.max(0, Math.min(earliestSunriseHour, 12));
+        latestSunsetHour = Math.min(23, Math.max(latestSunsetHour, 12));
+
         const windows: InspectionWindow[] = [];
 
         for (let i = 0; i < time.length; i++) {
             // Parse hour directly from string "YYYY-MM-DDTHH:00" to avoid JS timezone shifts
             const hour = parseInt(time[i].slice(11, 13));
             
-            let isDaylight = false;
-            if (is_day) {
-                // Include this hour if it is daylight at the start of the hour,
-                // OR if it's morning and the NEXT hour is daylight (meaning sunrise happens during this hour)
-                isDaylight = is_day[i] === 1 || (i + 1 < time.length && is_day[i + 1] === 1 && hour < 12);
-            } else {
-                isDaylight = (hour >= 6 && hour <= 17);
-            }
+            // Restrict daylight slots to active hours between astronomical sunrise and sunset
+            const isDaylight = hour >= earliestSunriseHour && hour < latestSunsetHour;
             if (!isDaylight) continue;
 
             const temp = temperature_2m[i];
