@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react';
 
 interface HistoryFeedProps {
   hiveId: string;
-  filter?: 'inspections' | 'interventions' | 'snapshots' | 'tasks' | 'all';
+  filter?: 'inspections' | 'interventions' | 'snapshots' | 'tasks' | 'varroa_tests' | 'all';
   refreshTrigger?: number;
   title?: string;
 }
@@ -102,6 +102,7 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
     interventions: 'Intervention History',
     tasks: 'Task History',
     snapshots: 'Configuration History',
+    varroa_tests: 'Mite Test History',
     all: 'Recent History'
   };
   const activeTitle = title || defaultTitles[filter] || 'Recent History';
@@ -146,6 +147,7 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
             let targetView = 'INSPECTION_FORM';
             if (item._model_type === 'intervention') targetView = 'INTERVENTION_FORM';
             if (item._model_type === 'task') targetView = 'TASK_FORM';
+            if (item._model_type === 'varroa_test') targetView = 'VARROA_FORM';
             
             window.scrollTo({ top: 0, behavior: 'smooth' });
             navigateTo(targetView as any);
@@ -154,6 +156,10 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
             item._model_type === 'snapshot' ? 'border-blue-500/60 cursor-default' : 
             item._model_type === 'intervention' ? 'border-purple-500/60 cursor-pointer hover:border-purple-400' : 
             item._model_type === 'task' ? 'border-cyan-500/60 cursor-pointer hover:border-cyan-400' :
+            item._model_type === 'varroa_test' ? 
+              (Number(item.mite_pct) >= Number(item.threshold) * 1.5 ? 'border-red-500/60 cursor-pointer hover:border-red-400' : 
+               Number(item.mite_pct) >= Number(item.threshold) ? 'border-amber-500/60 cursor-pointer hover:border-amber-400' : 
+               'border-green-500/60 cursor-pointer hover:border-green-400') :
             'border-[var(--color-primary)] cursor-pointer hover:border-[var(--color-primary)]'
           }`}
         >
@@ -163,15 +169,20 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
                 <h4 className={`font-bold text-sm ${
                   item._model_type === 'intervention' ? 'text-purple-400' : 
                   item._model_type === 'task' ? 'text-cyan-400' :
+                  item._model_type === 'varroa_test' ? 
+                    (Number(item.mite_pct) >= Number(item.threshold) * 1.5 ? 'text-red-400' : 
+                     Number(item.mite_pct) >= Number(item.threshold) ? 'text-amber-400' : 
+                     'text-green-400') :
                   'text-[var(--color-text)]'
                 }`}>
                   {item._model_type === 'intervention' ? `Intervention: ${item.type || 'Other'}` : 
                    item._model_type === 'task' ? `Task: ${item.title}` :
+                   item._model_type === 'varroa_test' ? `Mite Test: ${Number(item.mite_pct).toFixed(1)}% Load` :
                    'Inspection'}
                 </h4>
               )}
               <p className="text-[11px] sm:text-xs text-[var(--color-text-muted)] font-bold uppercase tracking-wide">
-                {new Date(item.timestamp).toLocaleDateString()} {new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                {new Date(item.tested_at || item.timestamp).toLocaleDateString()} {new Date(item.tested_at || item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </p>
             </div>
             {item._model_type !== 'snapshot' && (
@@ -193,10 +204,17 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
             })()
           )}
 
-          {(item.observations || item.description || (item._model_type === 'task' && item.description)) && (
+          {(item.observations || item.description || item.notes || (item._model_type === 'task' && item.description)) && (
             <p className="mt-2 text-sm text-[var(--color-text-muted)] line-clamp-2">
-              {item.observations || item.description}
+              {item.observations || item.description || item.notes}
             </p>
+          )}
+          {item._model_type === 'varroa_test' && (
+            <div className="mt-2 flex gap-x-3 text-[10px] bg-[var(--color-input-bg)] px-2 py-1.5 rounded-lg border border-[var(--color-card-border)] w-fit font-bold uppercase text-[var(--color-text-muted)]">
+              <span>Bees: <strong className="text-[var(--color-text)]">{item.bee_count}</strong></span>
+              <span>Mites: <strong className="text-[var(--color-text)]">{item.mite_count}</strong></span>
+              <span>Threshold: <strong className="text-[var(--color-text)]">{item.threshold}%</strong></span>
+            </div>
           )}
           {item._model_type === 'task' && (
             <div className="mt-2 flex gap-2">

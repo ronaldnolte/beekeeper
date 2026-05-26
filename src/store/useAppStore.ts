@@ -12,6 +12,7 @@ export type AppView =
   | 'HIVE_DETAIL'       // Detail View: Viewing hive history & charts
   | 'INSPECTION_FORM'   // Form: Inspection overlay
   | 'INTERVENTION_FORM' // Form: Intervention overlay
+  | 'VARROA_FORM'       // Form: Varroa testing overlay
   | 'TASK_FORM'         // Form: Task overlay
   | 'STATUS_UPDATE_FORM'// Form: Status update overlay
   | 'FORECAST'          // Root Tab 4: Dynamic weather forecast
@@ -25,6 +26,7 @@ export type SelectedRecord =
   | { _model_type: 'inspection'; id: string; [key: string]: any }
   | { _model_type: 'intervention'; id: string; [key: string]: any }
   | { _model_type: 'task'; id: string; [key: string]: any }
+  | { _model_type: 'varroa_test'; id: string; [key: string]: any }
   | null;
 
 interface AppState {
@@ -278,7 +280,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
           prevView = 'SELECT_HIVE';
           hiveName = null;
         } else if (
-          ['INSPECTION_FORM', 'INTERVENTION_FORM', 'TASK_FORM', 'STATUS_UPDATE_FORM'].includes(state.currentView)
+          ['INSPECTION_FORM', 'INTERVENTION_FORM', 'VARROA_FORM', 'TASK_FORM', 'STATUS_UPDATE_FORM'].includes(state.currentView)
         ) {
           prevView = 'HIVE_DETAIL';
         } else if (

@@ -3,6 +3,7 @@ import { createIntervention, updateIntervention, deleteIntervention } from '../.
 import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, Droplet, Pill, Wrench, Scissors, Crown, Archive, Hash, Hexagon } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
+import { SubTabBar } from '../../shared/components/SubTabBar';
 
 const INTERVENTION_TYPES = [
   { value: 'feeding', label: 'Feeding', icon: <Droplet size={24} /> },
@@ -97,6 +98,7 @@ export const InterventionFormView: React.FC = () => {
     return (
       <div className="w-full h-full flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-4 space-y-4">
+          <SubTabBar activeView="INTERVENTION_FORM" />
           <div className="w-full max-w-2xl mb-2">
             <button
               onClick={() => setIsFormOpen(true)}
@@ -130,6 +132,7 @@ export const InterventionFormView: React.FC = () => {
       
       {/* Scrollable Form Body */}
       <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-3 sm:p-4 space-y-4">
+        <SubTabBar activeView="INTERVENTION_FORM" />
         {/* Date card */}
         <div className="w-full max-w-2xl card p-4">
           <h3 className="text-sm font-bold text-[var(--color-text)] mb-2 flex items-center gap-2">

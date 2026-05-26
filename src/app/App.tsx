@@ -10,6 +10,7 @@ import { HiveSelectionView } from '../features/hive/HiveSelectionView';
 import { HiveDetailView } from '../features/hive/HiveDetailView';
 import { InspectionFormView } from '../features/inspection/InspectionFormView';
 import { InterventionFormView } from '../features/inspection/InterventionFormView';
+import { VarroaFormView } from '../features/varroa/VarroaFormView';
 import { StatusUpdateView } from '../features/inspection/StatusUpdateView';
 import { UpdatePasswordView } from '../features/auth/UpdatePasswordView';
 import { FeedbackModal } from '../features/feedback/FeedbackModal';
@@ -156,6 +157,8 @@ function App() {
         {currentView === 'INSPECTION_FORM' && <InspectionFormView />}
 
         {currentView === 'INTERVENTION_FORM' && <InterventionFormView />}
+
+        {currentView === 'VARROA_FORM' && <VarroaFormView />}
 
         {/* TASK_FORM now uses the consolidated modal */}
         {currentView === 'TASK_FORM' && (

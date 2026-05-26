@@ -6,7 +6,7 @@ import { supabase } from './supabase';
  */
 export async function fetchHistoryFeed(
   hiveId: string,
-  filter: 'inspections' | 'interventions' | 'snapshots' | 'tasks' | 'all' = 'all'
+  filter: 'inspections' | 'interventions' | 'snapshots' | 'tasks' | 'varroa_tests' | 'all' = 'all'
 ) {
   const promises = [];
   const limitCount = filter === 'all' ? 10 : 100;
@@ -53,6 +53,17 @@ export async function fetchHistoryFeed(
         .order('created_at', { ascending: false })
         .limit(limitCount)
         .then((res) => ({ type: 'task', data: res.data }))
+    );
+  }
+  if (filter === 'all' || filter === 'varroa_tests') {
+    promises.push(
+      supabase
+        .from('varroa_tests')
+        .select('*')
+        .eq('hive_id', hiveId)
+        .order('tested_at', { ascending: false })
+        .limit(limitCount)
+        .then((res) => ({ type: 'varroa_test', data: res.data }))
     );
   }
 

@@ -45,6 +45,7 @@ export async function deleteHive(id: string) {
     supabase.from('interventions').delete().eq('hive_id', id),
     supabase.from('hive_snapshots').delete().eq('hive_id', id),
     supabase.from('inspections').delete().eq('hive_id', id),
+    supabase.from('varroa_tests').delete().eq('hive_id', id),
   ]);
 
   const childError = results.find((r) => r.error)?.error;

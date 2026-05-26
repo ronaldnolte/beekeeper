@@ -3,6 +3,7 @@ import { createInspection, updateInspection, deleteInspection } from '../../data
 import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, Hexagon } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
+import { SubTabBar } from '../../shared/components/SubTabBar';
 
 const QUEEN_STATUS_OPTIONS = [
   { value: 'seen', label: 'Seen' },
@@ -153,6 +154,7 @@ export const InspectionFormView: React.FC = () => {
     return (
       <div className="w-full h-full flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-4 space-y-4">
+          <SubTabBar activeView="INSPECTION_FORM" />
           <div className="w-full max-w-2xl mb-2">
             <button
               onClick={() => setIsFormOpen(true)}
@@ -186,6 +188,7 @@ export const InspectionFormView: React.FC = () => {
       
       {/* Scrollable Form Body */}
       <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-3 sm:p-4 space-y-4">
+        <SubTabBar activeView="INSPECTION_FORM" />
         {/* Date card */}
         <div className="w-full max-w-2xl card p-4">
           <h3 className="text-sm font-bold text-[var(--color-text)] mb-2 flex items-center gap-2">
