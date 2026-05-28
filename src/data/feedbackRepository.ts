@@ -107,7 +107,8 @@ export async function submitFeedback(message: string, email?: string) {
 
   // 2. Call our Vercel serverless function to trigger the Gmail notification in real time
   try {
-    const response = await fetch('/api/feedback', {
+    const apiUrl = import.meta.env.DEV ? '/api/feedback' : 'https://beekeeper.beektools.com/api/feedback';
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -117,9 +118,11 @@ export async function submitFeedback(message: string, email?: string) {
     if (!response.ok) {
       const data = await response.json();
       console.error('Failed to trigger feedback email:', data);
+      throw new Error(data.error || 'Failed to trigger feedback email');
     }
   } catch (err) {
     console.error('Error calling feedback API endpoint:', err);
+    throw err;
   }
 }
 

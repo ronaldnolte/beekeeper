@@ -16,7 +16,8 @@ export const BetaSignupView: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch('/api/beta', {
+      const apiUrl = import.meta.env.DEV ? '/api/beta' : 'https://beekeeper.beektools.com/api/beta';
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
