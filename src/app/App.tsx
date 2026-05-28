@@ -128,14 +128,16 @@ function App() {
     );
   }
 
-  // Auth guard — prevent protected views from rendering without a session
+  // Standalone full-screen views (no app header or navigation bar)
+  if (['AUTH', 'BETA_SIGNUP', 'UPDATE_PASSWORD'].includes(currentView)) {
+    if (currentView === 'BETA_SIGNUP') return <BetaSignupView />;
+    if (currentView === 'UPDATE_PASSWORD') return <UpdatePasswordView />;
+    return <Auth />;
+  }
+
+  // Auth guard — prevent internal protected views from rendering without a session
   if (!user) {
-    if (currentView === 'BETA_SIGNUP') {
-      return <BetaSignupView />;
-    }
-    if (currentView !== 'AUTH' && currentView !== 'UPDATE_PASSWORD') {
-      return <Auth />;
-    }
+    return <Auth />;
   }
 
   // --- THE SPA VIEW SWITCHER ---
