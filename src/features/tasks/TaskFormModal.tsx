@@ -207,7 +207,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 type="date" 
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full p-3.5 pl-11 bg-[var(--color-input-bg)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-primary)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
+                className="w-full h-12 pl-11 pr-4 py-0 block bg-[var(--color-input-bg)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-primary)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
               />
             </div>
           </div>

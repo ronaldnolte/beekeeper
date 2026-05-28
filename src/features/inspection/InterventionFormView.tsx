@@ -131,7 +131,7 @@ export const InterventionFormView: React.FC = () => {
     <div className="w-full h-full flex flex-col overflow-hidden">
       
       {/* Scrollable Form Body */}
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-3 sm:p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-3 sm:p-4 space-y-4 pb-28">
         <SubTabBar activeView="INTERVENTION_FORM" />
         {/* Date card */}
         <div className="w-full max-w-2xl card p-4">
@@ -142,7 +142,7 @@ export const InterventionFormView: React.FC = () => {
             type="date"
             value={date}
             onChange={e => setDate(e.target.value)}
-            className="w-full p-3.5 rounded-xl bg-[var(--color-input-bg)] text-[var(--color-primary)] font-bold text-base border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none"
+            className="w-full h-12 px-4 py-0 block rounded-xl bg-[var(--color-input-bg)] text-[var(--color-primary)] font-bold text-base border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none"
           />
         </div>
 
