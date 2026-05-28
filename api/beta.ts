@@ -115,6 +115,7 @@ export default async function handler(req: any, res: any) {
 
     let dbSuccess = false;
     let dbErrorDetails = null;
+    let alreadyExists = false;
 
     try {
       // 1. Check duplicate
@@ -125,21 +126,21 @@ export default async function handler(req: any, res: any) {
         .maybeSingle();
 
       if (existing) {
-        console.log(`User ${cleanEmail} already exists. Succeeding silently to trigger redirect...`);
-        res.status(200).json({ success: true, dbSuccess: true, alreadyExists: true });
-        return;
-      }
-
-      // 2. Insert record
-      const { error: insertError } = await supabase
-        .from('beta_signups')
-        .insert([{ email: cleanEmail, created_at: new Date().toISOString() }]);
-
-      if (insertError) {
-        dbErrorDetails = insertError.message;
-        console.warn('Database insert failed (possibly RLS restriction):', insertError);
-      } else {
+        console.log(`User ${cleanEmail} already exists. Continuing to send welcome emails and verify Google Group...`);
         dbSuccess = true;
+        alreadyExists = true;
+      } else {
+        // 2. Insert record
+        const { error: insertError } = await supabase
+          .from('beta_signups')
+          .insert([{ email: cleanEmail, created_at: new Date().toISOString() }]);
+
+        if (insertError) {
+          dbErrorDetails = insertError.message;
+          console.warn('Database insert failed (possibly RLS restriction):', insertError);
+        } else {
+          dbSuccess = true;
+        }
       }
     } catch (dbErr: any) {
       dbErrorDetails = dbErr.message || dbErr;
@@ -287,7 +288,7 @@ export default async function handler(req: any, res: any) {
     }
 
     console.log(`Beta signup process completed successfully for: ${cleanEmail}!`);
-    res.status(200).json({ success: true, dbSuccess });
+    res.status(200).json({ success: true, dbSuccess, alreadyExists });
   } catch (error: any) {
     console.error('Beta Webhook Serverless Error:', error.message || error);
     res.status(500).json({ error: 'Failed to process beta signup', details: error.message || error });
