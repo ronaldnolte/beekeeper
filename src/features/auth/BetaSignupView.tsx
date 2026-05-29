@@ -80,7 +80,7 @@ export const BetaSignupView: React.FC = () => {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 relative z-10">
             <p className="text-xs text-[var(--color-text-muted)] font-semibold leading-relaxed">
-              Enter your Google Play / Gmail address. You will be automatically authorized for instant download access.
+              Enter your Google Account email address. You will be automatically authorized for instant download access.
             </p>
 
             {error && (
@@ -90,7 +90,7 @@ export const BetaSignupView: React.FC = () => {
             )}
 
             <div>
-              <label className="block text-xs font-black text-[var(--color-text)] mb-1.5 uppercase tracking-wide">Gmail Address</label>
+              <label className="block text-xs font-black text-[var(--color-text)] mb-1.5 uppercase tracking-wide">Google Account Email</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--color-text-muted)]">
                   <Mail size={18} />
@@ -100,7 +100,7 @@ export const BetaSignupView: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-3.5 border-2 border-[var(--color-card-border)] rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-all bg-[var(--color-input-bg)] text-[var(--color-text)] font-bold placeholder-[var(--color-text-muted)]"
-                  placeholder="you@gmail.com"
+                  placeholder="you@example.com"
                   required
                 />
               </div>
