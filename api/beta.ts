@@ -1,81 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import crypto from 'crypto';
-
-// Helper to get Google OAuth Access Token using signed JWT (Domain-Wide Delegation)
-async function getGoogleAccessToken(serviceAccount: any, adminEmail: string) {
-  const header = {
-    alg: 'RS256',
-    typ: 'JWT',
-  };
-
-  const now = Math.floor(Date.now() / 1000);
-  const claimSet = {
-    iss: serviceAccount.client_email,
-    sub: adminEmail,
-    scope: 'https://www.googleapis.com/auth/admin.directory.group',
-    aud: 'https://oauth2.googleapis.com/token',
-    exp: now + 3600,
-    iat: now,
-  };
-
-  const base64Header = Buffer.from(JSON.stringify(header)).toString('base64url');
-  const base64ClaimSet = Buffer.from(JSON.stringify(claimSet)).toString('base64url');
-  
-  const signInput = `${base64Header}.${base64ClaimSet}`;
-  const signer = crypto.createSign('RSA-SHA256');
-  signer.update(signInput);
-  const signature = signer.sign(serviceAccount.private_key, 'base64url');
-
-  const jwt = `${signInput}.${signature}`;
-
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(`Google OAuth error: ${JSON.stringify(errorData)}`);
-  }
-
-  const data = await response.json();
-  return data.access_token;
-}
-
-// Helper to add member to Google Group
-async function addMemberToGoogleGroup(accessToken: string, groupEmail: string, memberEmail: string) {
-  const url = `https://admin.googleapis.com/admin/directory/v1/groups/${encodeURIComponent(groupEmail)}/members`;
-  
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email: memberEmail,
-      role: 'MEMBER',
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    if (response.status === 409) {
-      console.log(`User ${memberEmail} is already a member of ${groupEmail}`);
-      return { success: true, alreadyMember: true };
-    }
-    throw new Error(`Google Directory API error: ${JSON.stringify(errorData)}`);
-  }
-
-  const data = await response.json();
-  return { success: true, alreadyMember: false, data };
-}
 
 // Vercel Serverless Function signature:
 export default async function handler(req: any, res: any) {
@@ -126,7 +49,7 @@ export default async function handler(req: any, res: any) {
         .maybeSingle();
 
       if (existing) {
-        console.log(`User ${cleanEmail} already exists. Continuing to send welcome emails and verify Google Group...`);
+        console.log(`User ${cleanEmail} already exists. Continuing to send verification emails...`);
         dbSuccess = true;
         alreadyExists = true;
       } else {
@@ -147,67 +70,7 @@ export default async function handler(req: any, res: any) {
       console.error('Database connection error during beta signup:', dbErr);
     }
 
-    // 3. Google Groups Integration
-    let googleGroupSuccess = false;
-    let googleGroupError = null;
-
-    let serviceAccount: any = null;
-    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY;
-
-    if (clientEmail && privateKey) {
-      try {
-        serviceAccount = {
-          client_email: clientEmail.trim(),
-          private_key: privateKey.trim().replace(/\\n/g, '\n'),
-        };
-      } catch (err: any) {
-        googleGroupError = `Key assembly error: ${err.message}`;
-      }
-    } else {
-      // Fallback to stringified JSON parsing
-      const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-      if (!rawKey) {
-        googleGroupError = 'Environment variables GOOGLE_CLIENT_EMAIL and GOOGLE_PRIVATE_KEY (or GOOGLE_SERVICE_ACCOUNT_KEY) are missing. Make sure you redeployed in Vercel.';
-      } else {
-        try {
-          const cleanKey = rawKey.trim().replace(/^'|'$/g, '');
-          serviceAccount = JSON.parse(cleanKey);
-        } catch (err: any) {
-          googleGroupError = `JSON parse error: ${err.message}`;
-          console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY env:', err);
-        }
-      }
-    }
-
-    if (serviceAccount) {
-      try {
-        const adminEmail = process.env.GOOGLE_ADMIN_EMAIL || 'admin@thenoltefamily.com';
-        const groupEmail = process.env.GOOGLE_GROUP_EMAIL || 'testers@beektools.com';
-        
-        // Resolve primary Google Account by stripping plus-addressing (e.g. user+alias@gmail.com -> user@gmail.com)
-        // since Google Groups Directory API cannot resolve virtual plus-aliases as distinct Google identities.
-        const googleMemberEmail = cleanEmail.includes('+')
-          ? cleanEmail.replace(/\+[^@]+/, '')
-          : cleanEmail;
-        
-        console.log(`Adding ${googleMemberEmail} (derived from ${cleanEmail}) to Google Group ${groupEmail} impersonating ${adminEmail}...`);
-        const accessToken = await getGoogleAccessToken(serviceAccount, adminEmail);
-        const groupRes = await addMemberToGoogleGroup(accessToken, groupEmail, googleMemberEmail);
-        
-        if (groupRes.success) {
-          googleGroupSuccess = true;
-          console.log(`Successfully added/verified ${googleMemberEmail} in Google Group!`);
-        }
-      } catch (groupErr: any) {
-        googleGroupError = groupErr.message || groupErr;
-        console.error('Google Group integration error:', groupErr);
-      }
-    } else {
-      console.warn('Google service account key not configured. Skipping Google Group automated add.');
-    }
-
-    // 4. Trigger Resend Emails (1 to Ron as notification, 1 to Tester as welcome)
+    // 3. Trigger Resend Emails (1 to Ron as notification, 1 to Tester as welcome)
     const apiKey = process.env.RESEND_API_KEY || 're_RRkAoNA9_KZQBPSR9MRexZ8T2EBNybUpA';
 
     console.log(`Sending beta emails for: ${cleanEmail}...`);
@@ -231,9 +94,10 @@ export default async function handler(req: any, res: any) {
               <p style="margin: 12px 0 4px 0; font-size: 14px;"><strong>Tester Email:</strong> <a href="mailto:${cleanEmail}" style="color:#F5A623; font-weight:bold; text-decoration:none;">${cleanEmail}</a></p>
               <p style="margin: 4px 0; font-size: 13px; color: #555;"><strong>Registration Time:</strong> ${new Date().toLocaleString('en-US', { timeZone: 'America/Denver' })} (MST)</p>
               <p style="margin: 4px 0; font-size: 13px; color: #555;"><strong>Saved in Database:</strong> ${dbSuccess ? '✅ Yes' : `❌ No (Details: ${dbErrorDetails || 'Unknown'})`}</p>
-              <p style="margin: 4px 0; font-size: 13px; color: #555;"><strong>Added to Google Group:</strong> ${googleGroupSuccess ? '✅ Yes' : `❌ No (Details: ${googleGroupError || 'Not configured'})`}</p>
             </div>
-            <p style="margin: 0; font-size: 14px; color: #333;">The user has been automatically added to your Google Group <strong>testers@beektools.com</strong> and sent immediate download instructions. No manual action is required!</p>
+            <p style="margin: 0; font-size: 14px; color: #333; font-weight: bold; background: #fffcf4; border: 1px dashed #F5A623; padding: 12px; border-radius: 8px;">
+              👉 Action required: Copy the email address above and paste it into your Google Play Console's Beta Testers email list to grant them access!
+            </p>
             <p style="color: #aaa; font-size: 11px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 10px;">Sent automatically by BeekTools Beta Signup</p>
           </div>
         `,
@@ -255,9 +119,8 @@ export default async function handler(req: any, res: any) {
           <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 500px; line-height: 1.6; color: #333;">
             <h2 style="color: #F5A623; margin-top: 0; border-bottom: 2px solid #FFFBF0; padding-bottom: 10px; font-weight: 900; font-size: 20px; text-transform: uppercase; tracking-wide">🐝 Welcome to the Beekeeper Beta!</h2>
             <div style="background: #FFFBF0; border: 1px solid #E6DCC3; border-radius: 12px; padding: 18px; margin: 18px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-              <p style="margin: 0 0 12px 0; font-size: 15px; color: #1a1a1a; font-weight: bold;">You are ready to test!</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px; color: #444;">Your Gmail address has been automatically added to our approved closed testing list (<strong>testers@beektools.com</strong>).</p>
-              <p style="margin: 0; font-size: 14px; color: #444;">You are authorized to join the beta track and download the app directly on Google Play using the button below:</p>
+              <p style="margin: 0 0 12px 0; font-size: 15px; color: #1a1a1a; font-weight: bold;">We've received your request!</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px; color: #444;">We are currently adding your Gmail address to our approved tester list. Once authorized (usually within 24 hours), you will be able to download the app directly on Google Play using the link below:</p>
             </div>
             
             <div style="text-align: center; margin: 24px 0;">

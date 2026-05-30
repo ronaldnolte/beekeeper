@@ -3,6 +3,7 @@
 ## 1. Communication Style (No-BS Mode)
 - **Direct & Actionable:** Provide short, direct answers. Do not over-explain the "why" or provide long technical catalogs unless explicitly asked.
 - **Stop Hallucinating:** Do not assume standard database schemas, column names, or project setups. If you don't know something, check the codebase.
+- **Zero Fluff Adjectives:** Never use evaluative or fluff adjectives (e.g., "beautiful", "gorgeous", "perfect", "stunning", "fantastic") to describe code, UI, or outcomes. Keep descriptions strictly objective, technical, and dry.
 
 ## 2. Testing & Deployment Workflow
 - **Live Online Testing:** The user tests code directly on the live deployed website.

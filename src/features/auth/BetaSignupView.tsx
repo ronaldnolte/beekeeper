@@ -69,18 +69,18 @@ export const BetaSignupView: React.FC = () => {
         {status === 'success' ? (
           <div className="text-center py-6 animate-in zoom-in duration-300">
             <div className="text-5xl mb-4">✅</div>
-            <h2 className="text-xl font-black text-[var(--color-text)] mb-3">You are ready to test!</h2>
+            <h2 className="text-xl font-black text-[var(--color-text)] mb-3">Request Registered!</h2>
             <p className="text-[var(--color-text-muted)] font-bold text-sm leading-relaxed mb-6">
-              Your email has been automatically added to our approved closed testing list. You can start testing the app instantly!
+              We have received your request. We will whitelist your account for testing shortly (typically within 24 hours).
             </p>
             <div className="text-xs text-[var(--color-text-muted)] font-semibold bg-[var(--color-input-bg)] p-4 rounded-xl border border-[var(--color-card-border)]">
-              📱 Keep an eye out for a welcome email from <strong>beta@beektools.com</strong> with direct download links and instructions!
+              📱 Keep an eye out for a welcome email from <strong>beta@beektools.com</strong> with direct download links and instructions once active!
             </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 relative z-10">
             <p className="text-xs text-[var(--color-text-muted)] font-semibold leading-relaxed">
-              Enter your Google Account email address. You will be automatically authorized for instant download access.
+              Enter your Google Account email address. We will add your account to our approved tester list and notify you.
             </p>
 
             {error && (
