@@ -199,31 +199,56 @@ export default async function handler(req: any, res: any) {
     const currentMonth = new Date().getMonth() + 1; // 1-12
     const defaultBaselineForMonth = defaultBaselines[currentMonth.toString()] || 0.5;
 
-    // 2. Manage Agromonitoring Polygon
-    if (!polygonId) {
-      const geojson = generateCirclePolygon(lat, lng, 1.9);
-      
-      const polyResp = await fetch(
-        `https://api.agromonitoring.com/agro/1.0/polygons?appid=${apiKey}&duplicated=true`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: `NFI_Apiary_${Date.now()}`, geo_json: geojson }),
-        }
+    const currentEndUnix = Math.floor(Date.now() / 1000);
+    const start365Unix = currentEndUnix - 365 * 24 * 60 * 60; // 365 days
+
+    let currentJson: any[] = [];
+    let currentRespOk = false;
+
+    // 2. Manage and Verify Agromonitoring Polygon
+    if (polygonId) {
+      const currentResp = await fetch(
+        `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${start365Unix}&end=${currentEndUnix}&appid=${apiKey}`
       );
-
-      if (!polyResp.ok) {
-        const text = await polyResp.text();
-        throw new Error(`Polygon registration failed: ${text}`);
+      
+      if (currentResp.status === 400 || currentResp.status === 404) {
+        // Cached polygon ID is stale (e.g. was deleted or invalid)
+        polygonId = null;
+        baselineNDVI = null;
+      } else if (currentResp.ok) {
+        currentJson = await currentResp.json();
+        currentRespOk = true;
       }
-
-      const polyData = await polyResp.json();
-      polygonId = polyData.id;
-      isPolygonCreated = true;
     }
 
-    // 3. Obtain Baseline NDVI (if not cached)
-    if (baselineNDVI === undefined || baselineNDVI === null) {
+    if (!polygonId) {
+      const geojson = generateCirclePolygon(lat, lng, 1.0); // Reduced to 1.0 mile to fit multiple yards in quota
+      
+      try {
+        const polyResp = await fetch(
+          `https://api.agromonitoring.com/agro/1.0/polygons?appid=${apiKey}&duplicated=true`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: `NFI_Apiary_${Date.now()}`, geo_json: geojson }),
+          }
+        );
+
+        if (polyResp.ok) {
+          const polyData = await polyResp.json();
+          polygonId = polyData.id;
+          isPolygonCreated = true;
+        } else {
+          const text = await polyResp.text();
+          console.error(`Polygon registration failed: ${text}. Falling back to static baseline.`);
+        }
+      } catch (err: any) {
+        console.error(`Polygon registration call failed: ${err.message}. Falling back to static baseline.`);
+      }
+    }
+
+    // 3. Obtain Baseline NDVI (if not cached and we have a valid polygonId)
+    if (polygonId && (baselineNDVI === undefined || baselineNDVI === null)) {
       const currentYear = new Date().getFullYear();
       const jan1Unix = Math.floor(new Date(`${currentYear}-01-01T00:00:00Z`).getTime() / 1000);
       const jan31Unix = Math.floor(new Date(`${currentYear}-01-31T00:00:00Z`).getTime() / 1000);
@@ -244,49 +269,45 @@ export default async function handler(req: any, res: any) {
         baselineNDVI = defaultBaselines["1"]; // January baseline fallback
       }
       isHistoryQueried = true;
+    } else if (!polygonId) {
+      baselineNDVI = defaultBaselines["1"]; // Fallback if no polygon exists
     }
 
-    // 4. Fetch 1-Year NDVI History from Agromonitoring (last 365 days)
-    const currentEndUnix = Math.floor(Date.now() / 1000);
-    const start365Unix = currentEndUnix - 365 * 24 * 60 * 60; // 365 days
+    // 4. Fetch 1-Year NDVI History from Agromonitoring (if we registered a new polygon)
+    if (polygonId && !currentRespOk) {
+      const currentResp = await fetch(
+        `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${start365Unix}&end=${currentEndUnix}&appid=${apiKey}`
+      );
+      
+      if (currentResp.ok) {
+        currentJson = await currentResp.json();
+        currentRespOk = true;
+      }
+    }
 
-    const currentResp = await fetch(
-      `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${start365Unix}&end=${currentEndUnix}&appid=${apiKey}`
-    );
+    if (currentRespOk && currentJson && currentJson.length > 0) {
+      currentJson.sort((a: any, b: any) => a.dt - b.dt);
+      
+      const latestReading = currentJson[currentJson.length - 1];
+      currentNDVI = latestReading.data.mean;
 
-    let currentJson: any[] = [];
-    if (currentResp.ok) {
-      currentJson = await currentResp.json();
-      if (currentJson && currentJson.length > 0) {
-        currentJson.sort((a: any, b: any) => a.dt - b.dt);
-        
-        const latestReading = currentJson[currentJson.length - 1];
-        currentNDVI = latestReading.data.mean;
+      if (currentJson.length > 1) {
+        const latestDt = latestReading.dt;
+        const targetDt = latestDt - 8 * 24 * 60 * 60; // 8 days prior
 
-        if (currentJson.length > 1) {
-          const latestDt = latestReading.dt;
-          const targetDt = latestDt - 8 * 24 * 60 * 60; // 8 days prior
+        let bestMatch = currentJson[0];
+        let bestDiff = Math.abs(bestMatch.dt - targetDt);
 
-          let bestMatch = currentJson[0];
-          let bestDiff = Math.abs(bestMatch.dt - targetDt);
-
-          for (let i = 0; i < currentJson.length - 1; i++) {
-            const diff = Math.abs(currentJson[i].dt - targetDt);
-            if (diff < bestDiff) {
-              bestDiff = diff;
-              bestMatch = currentJson[i];
-            }
+        for (let i = 0; i < currentJson.length - 1; i++) {
+          const diff = Math.abs(currentJson[i].dt - targetDt);
+          if (diff < bestDiff) {
+            bestDiff = diff;
+            bestMatch = currentJson[i];
           }
-          previousNDVI = bestMatch.data.mean;
-        } else {
-          previousNDVI = currentNDVI;
         }
+        previousNDVI = bestMatch.data.mean;
       } else {
-        currentNDVI = defaultBaselineForMonth;
-        const prevDate = new Date();
-        prevDate.setDate(prevDate.getDate() - 8);
-        const prevMonth = prevDate.getMonth() + 1;
-        previousNDVI = defaultBaselines[prevMonth.toString()] || 0.5;
+        previousNDVI = currentNDVI;
       }
     } else {
       currentNDVI = defaultBaselineForMonth;
