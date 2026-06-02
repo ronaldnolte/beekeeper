@@ -31,24 +31,8 @@ export function calculateNFI(
   previousNDVI: number,
   tempF: number,
   relativeHumidity: number,
-  precipitationMm: number
+  _precipitationMm: number
 ): NFIBreakdown {
-  // Hard Gatekeeper: Precipitation Washout
-  // If rainfall exceeds 2.0mm, return a hard 0 index score (washout / no foraging)
-  if (precipitationMm > 2.0) {
-    return {
-      nfi: 0,
-      ratio: currentNDVI / (historicalNDVI || 0.4),
-      layer1Score: 0,
-      layer1Max: historicalNDVI < 0.7 ? (historicalNDVI / 0.7) * 70 : 70,
-      delta: currentNDVI - previousNDVI,
-      phenologyMultiplier: 1.0,
-      tempMultiplier: 0.0,
-      humidityMultiplier: 0.0,
-      isWashout: true
-    };
-  }
-
   // --- Layer 1: Biomass Base ---
   const ratio = historicalNDVI > 0 ? currentNDVI / historicalNDVI : 1.0;
   

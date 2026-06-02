@@ -138,19 +138,19 @@ describe('Nectar Flow Index Calculation Engine', () => {
     expect(result.nfi).toBe(30);
   });
 
-  // Case 8: Foraging Washout (Rain > 2mm)
-  test('returns 0 NFI score during rain washout', () => {
+  // Case 8: Rain does not suppress environmental availability
+  test('does not suppress NFI score during rain', () => {
     const result = calculateNFI(
       0.65, // current
       0.50, // historical
       0.64, // previous
       80,   // tempF
       50,   // relativeHumidity
-      2.5   // precipitation (washout: > 2.0mm)
+      2.5   // precipitation (normally washout, now ignored)
     );
 
-    expect(result.isWashout).toBe(true);
-    expect(result.nfi).toBe(0);
+    expect(result.isWashout).toBe(false);
+    expect(result.nfi).toBe(60); // calculated normally
   });
 
   // Case 9: Lush area without L1 cap
