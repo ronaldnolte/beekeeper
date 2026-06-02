@@ -12,6 +12,7 @@ export const NectarFlowView: React.FC = () => {
   const [data, setData] = useState<NectarIndexResponse | null>(null);
   const [apiaryName, setApiaryName] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   // Auto-select if there is exactly 1 apiary
   useEffect(() => {
@@ -62,6 +63,22 @@ export const NectarFlowView: React.FC = () => {
   useEffect(() => {
     loadNFI(false);
   }, [selectedApiaryId]);
+
+  const handlePointerMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    if (!data?.history || data.history.length === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    let clientX: number;
+    if ('touches' in e) {
+      if (e.touches.length === 0) return;
+      clientX = e.touches[0].clientX;
+    } else {
+      clientX = e.clientX;
+    }
+    const x = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, x / rect.width));
+    const index = Math.round(percentage * (data.history.length - 1));
+    setHoveredIndex(index);
+  };
 
   // UI Helper for status classification
   const getIndexStatus = (score: number, isWashout: boolean) => {
@@ -242,13 +259,25 @@ export const NectarFlowView: React.FC = () => {
             {/* 1-Year Nectar Index Trend Chart */}
             {data.history && data.history.length > 0 && (
               <div className="bg-[#1a1a2e]/70 backdrop-blur-md rounded-3xl p-5 border border-[#2a2a4a] shadow-xl w-full flex flex-col">
-                <div className="flex items-center justify-between text-xs uppercase font-extrabold tracking-wider text-amber-500 mb-3 select-none">
+                <div className="flex items-center justify-between text-xs uppercase font-extrabold tracking-wider text-amber-500 mb-3 select-none h-6">
                   <span>1-Year Nectar Index Trend</span>
-                  <span className="text-white/40 font-semibold lowercase italic text-[10px]">past year</span>
+                  {hoveredIndex !== null && data.history[hoveredIndex] ? (
+                    <span className="text-amber-400 font-extrabold text-[11px] normal-case bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 animate-in fade-in duration-200">
+                      {new Date(data.history[hoveredIndex].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}: <strong className="text-white">{data.history[hoveredIndex].nfi} NFI</strong>
+                    </span>
+                  ) : (
+                    <span className="text-white/40 font-semibold lowercase italic text-[10px]">past year</span>
+                  )}
                 </div>
                 
                 {/* SVG Container */}
-                <div className="relative w-full h-32 flex items-center justify-center bg-[#111122]/50 border border-[#24243e] rounded-2xl p-2">
+                <div 
+                  className="relative w-full h-32 flex items-center justify-center bg-[#111122]/50 border border-[#24243e] rounded-2xl p-2 cursor-crosshair select-none touch-none"
+                  onMouseMove={handlePointerMove}
+                  onTouchMove={handlePointerMove}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  onTouchEnd={() => setHoveredIndex(null)}
+                >
                   <svg className="w-full h-full" viewBox="0 0 300 100" preserveAspectRatio="none">
                     <defs>
                       <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
@@ -300,8 +329,32 @@ export const NectarFlowView: React.FC = () => {
                             style={{ filter: 'drop-shadow(0px 0px 4px rgba(245,166,35,0.3))' }}
                           />
 
+                          {/* Hover Vertical Line & Intersecting Circle */}
+                          {hoveredIndex !== null && points[hoveredIndex] && (
+                            <>
+                              <line
+                                x1={points[hoveredIndex].x}
+                                y1="0"
+                                x2={points[hoveredIndex].x}
+                                y2="100"
+                                stroke="#FFD700"
+                                strokeWidth="1.5"
+                                strokeDasharray="3,3"
+                                opacity="0.8"
+                              />
+                              <circle
+                                cx={points[hoveredIndex].x}
+                                cy={points[hoveredIndex].y}
+                                r="5.5"
+                                fill="#FFD700"
+                                stroke="#1a1a2e"
+                                strokeWidth="2"
+                              />
+                            </>
+                          )}
+
                           {/* Draw indicator dot for current today point */}
-                          {points.length > 0 && (
+                          {hoveredIndex === null && points.length > 0 && (
                             <circle
                               cx={points[points.length - 1].x}
                               cy={points[points.length - 1].y}
