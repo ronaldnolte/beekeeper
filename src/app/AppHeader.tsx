@@ -44,6 +44,7 @@ export const AppHeader: React.FC = () => {
     INTERVENTION_FORM: 'Intervention',
     TASK_FORM: 'Task',
     FORECAST: 'Forecast',
+    NECTAR_FLOW: 'Nectar Flow',
     ASK_AI: 'Ask AI',
     STATUS_UPDATE_FORM: 'Status',
     SETTINGS: 'Settings',

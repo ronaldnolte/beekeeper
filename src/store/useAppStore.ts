@@ -16,6 +16,7 @@ export type AppView =
   | 'TASK_FORM'         // Form: Task overlay
   | 'STATUS_UPDATE_FORM'// Form: Status update overlay
   | 'FORECAST'          // Root Tab 4: Dynamic weather forecast
+  | 'NECTAR_FLOW'        // Root Tab 6: Localized Nectar Flow Index
   | 'ASK_AI'            // Root Tab 5: AI chat assistant
   | 'ROADMAP'           // Global: Feedback & Roadmap
   | 'UPDATE_PASSWORD'   // Global: Reset password flow
@@ -284,7 +285,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
         ) {
           prevView = 'HIVE_DETAIL';
         } else if (
-          ['FORECAST', 'ASK_AI', 'ROADMAP', 'UPDATE_PASSWORD'].includes(state.currentView)
+          ['FORECAST', 'NECTAR_FLOW', 'ASK_AI', 'ROADMAP', 'UPDATE_PASSWORD'].includes(state.currentView)
         ) {
           prevView = 'DASHBOARD';
         }

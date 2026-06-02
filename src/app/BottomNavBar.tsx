@@ -1,17 +1,18 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { LayoutDashboard, Map, Hexagon, CloudSun, Sparkles, Mail, LogOut } from 'lucide-react';
+import { LayoutDashboard, Map, Hexagon, CloudSun, Sparkles, Mail, LogOut, Flower } from 'lucide-react';
 import { supabase } from '../data/supabase';
 
 export const BottomNavBar: React.FC = () => {
   const { currentView, isUnifiedHiveView, navigateTo, navigateToApiariesTab, navigateToHivesTab } = useAppStore();
 
-  // Only render the floating bottom bar on the 5 root-level tabs
+  // Only render the floating bottom bar on the 6 root-level tabs
   const showNavBar = [
     'DASHBOARD',
     'SELECT_APIARY',
     'SELECT_HIVE',
     'FORECAST',
+    'NECTAR_FLOW',
     'ASK_AI'
   ].includes(currentView);
 
@@ -22,6 +23,7 @@ export const BottomNavBar: React.FC = () => {
   const isApiaryActive = currentView === 'SELECT_APIARY' || (currentView === 'SELECT_HIVE' && !isUnifiedHiveView);
   const isHivesActive = (currentView === 'SELECT_HIVE' && isUnifiedHiveView) || currentView === 'HIVE_DETAIL';
   const isForecastActive = currentView === 'FORECAST';
+  const isNectarActive = currentView === 'NECTAR_FLOW';
   const isAskAIActive = currentView === 'ASK_AI';
 
   const tabs = [
@@ -52,6 +54,13 @@ export const BottomNavBar: React.FC = () => {
       icon: <CloudSun size={20} />,
       isActive: isForecastActive,
       onClick: () => navigateTo('FORECAST'),
+    },
+    {
+      id: 'NECTAR_FLOW',
+      label: 'Nectar',
+      icon: <Flower size={20} />,
+      isActive: isNectarActive,
+      onClick: () => navigateTo('NECTAR_FLOW'),
     },
     {
       id: 'ASK_AI',

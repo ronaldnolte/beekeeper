@@ -21,6 +21,7 @@ import { BetaSignupView } from '../features/auth/BetaSignupView';
 
 // Lazy-loaded leaf features — only fetched when navigated to
 const ForecastView = lazy(() => import('../features/forecast/ForecastView').then(m => ({ default: m.ForecastView })));
+const NectarFlowView = lazy(() => import('../features/nectar/NectarFlowView').then(m => ({ default: m.NectarFlowView })));
 const AskAIView = lazy(() => import('../features/ai/AskAIView').then(m => ({ default: m.AskAIView })));
 const RoadmapView = lazy(() => import('../features/feedback/RoadmapView').then(m => ({ default: m.RoadmapView })));
 
@@ -179,6 +180,12 @@ function App() {
         {currentView === 'FORECAST' && (
           <Suspense fallback={<ViewLoader />}>
             <ForecastView />
+          </Suspense>
+        )}
+
+        {currentView === 'NECTAR_FLOW' && (
+          <Suspense fallback={<ViewLoader />}>
+            <NectarFlowView />
           </Suspense>
         )}
 
