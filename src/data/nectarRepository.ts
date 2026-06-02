@@ -27,6 +27,7 @@ export interface NectarIndexResponse {
   };
   isHistoryQueried: boolean;
   isPolygonCreated: boolean;
+  history?: { date: string; nfi: number }[];
 }
 
 /**

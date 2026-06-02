@@ -239,6 +239,93 @@ export const NectarFlowView: React.FC = () => {
               </p>
             </div>
 
+            {/* 30-Day Nectar Index Trend Chart */}
+            {data.history && data.history.length > 0 && (
+              <div className="bg-[#1a1a2e]/70 backdrop-blur-md rounded-3xl p-5 border border-[#2a2a4a] shadow-xl w-full flex flex-col">
+                <div className="flex items-center justify-between text-xs uppercase font-extrabold tracking-wider text-amber-500 mb-3 select-none">
+                  <span>30-Day Nectar Index Trend</span>
+                  <span className="text-white/40 font-semibold lowercase italic text-[10px]">past 30 days</span>
+                </div>
+                
+                {/* SVG Container */}
+                <div className="relative w-full h-32 flex items-center justify-center bg-[#111122]/50 border border-[#24243e] rounded-2xl p-2">
+                  <svg className="w-full h-full" viewBox="0 0 300 100" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#F5A623" stopOpacity="0.3" />
+                        <stop offset="100%" stopColor="#F5A623" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+                    
+                    {/* Grid lines */}
+                    <line x1="0" y1="20" x2="300" y2="20" stroke="#24243e" strokeWidth="1" strokeDasharray="3,3" />
+                    <line x1="0" y1="50" x2="300" y2="50" stroke="#24243e" strokeWidth="1" strokeDasharray="3,3" />
+                    <line x1="0" y1="80" x2="300" y2="80" stroke="#24243e" strokeWidth="1" strokeDasharray="3,3" />
+                    
+                    {/* Label lines */}
+                    <text x="5" y="15" fill="white" opacity="0.25" fontSize="8" fontWeight="bold">100</text>
+                    <text x="5" y="45" fill="white" opacity="0.25" fontSize="8" fontWeight="bold">50</text>
+                    <text x="5" y="75" fill="white" opacity="0.25" fontSize="8" fontWeight="bold">0</text>
+
+                    {/* Draw Area & Line */}
+                    {(() => {
+                      const width = 300;
+                      const height = 90;
+                      const yOffset = 5;
+                      const points = data.history!.map((pt, idx) => {
+                        const x = (idx / (data.history!.length - 1)) * width;
+                        const y = yOffset + height - (pt.nfi / 100) * height;
+                        return { x, y };
+                      });
+
+                      const pathD = points.reduce((acc, pt, idx) => {
+                        return acc + `${idx === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+                      }, '');
+
+                      const areaD = pathD + ` L ${width} ${yOffset + height} L 0 ${yOffset + height} Z`;
+
+                      return (
+                        <>
+                          {/* Area Fill */}
+                          <path d={areaD} fill="url(#chartGrad)" />
+                          
+                          {/* Line Stroke */}
+                          <path
+                            d={pathD}
+                            fill="none"
+                            stroke="#F5A623"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{ filter: 'drop-shadow(0px 0px 4px rgba(245,166,35,0.3))' }}
+                          />
+
+                          {/* Draw indicator dot for current today point */}
+                          {points.length > 0 && (
+                            <circle
+                              cx={points[points.length - 1].x}
+                              cy={points[points.length - 1].y}
+                              r="4"
+                              fill="#FFD700"
+                              stroke="#1a1a2e"
+                              strokeWidth="1.5"
+                            />
+                          )}
+                        </>
+                      );
+                    })()}
+                  </svg>
+                </div>
+                
+                {/* Date Labels below chart */}
+                <div className="flex justify-between text-[9px] text-white/40 font-bold px-1 mt-1.5 uppercase tracking-wider select-none">
+                  <span>{new Date(data.history[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  <span>mid-period</span>
+                  <span>{new Date(data.history[data.history.length - 1].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                </div>
+              </div>
+            )}
+
             {/* Weather & Satellite Columns Grid */}
             <div className="grid grid-cols-2 gap-3">
               {/* Weather Stats Card */}

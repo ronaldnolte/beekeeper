@@ -178,8 +178,8 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    // 1. Fetch weather from Open-Meteo
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation&temperature_unit=fahrenheit&timezone=auto`;
+    // 1. Fetch weather from Open-Meteo (includes 30 past days hourly weather)
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation&hourly=temperature_2m,relative_humidity_2m,precipitation&past_days=30&forecast_days=1&temperature_unit=fahrenheit&timezone=auto`;
     const weatherResp = await fetch(weatherUrl);
     if (!weatherResp.ok) {
       throw new Error(`Failed to fetch weather data: ${weatherResp.statusText}`);
@@ -254,8 +254,9 @@ export default async function handler(req: any, res: any) {
       `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${currentStartUnix}&end=${currentEndUnix}&appid=${apiKey}`
     );
 
+    let currentJson: any[] = [];
     if (currentResp.ok) {
-      const currentJson = await currentResp.json();
+      currentJson = await currentResp.json();
       if (currentJson && currentJson.length > 0) {
         currentJson.sort((a: any, b: any) => a.dt - b.dt);
         
@@ -289,7 +290,7 @@ export default async function handler(req: any, res: any) {
       previousNDVI = defaultBaselineForMonth;
     }
 
-    // 5. Calculate final NFI via engine
+    // 5. Calculate current NFI via engine
     const breakdown = calculateNFI(
       currentNDVI,
       baselineNDVI,
@@ -299,6 +300,94 @@ export default async function handler(req: any, res: any) {
       currentRainMm
     );
 
+    // 6. Calculate 30-day history of NFI
+    const nfiHistory: { date: string; nfi: number }[] = [];
+    
+    // Group hourly weather by date (YYYY-MM-DD)
+    const dailyWeather: Record<string, { temps: number[]; hums: number[]; rainSum: number }> = {};
+    if (weatherData.hourly && weatherData.hourly.time) {
+      const times = weatherData.hourly.time as string[];
+      const temps = weatherData.hourly.temperature_2m as number[];
+      const hums = weatherData.hourly.relative_humidity_2m as number[];
+      const rains = weatherData.hourly.precipitation as number[];
+      
+      for (let i = 0; i < times.length; i++) {
+        const dateStr = times[i].slice(0, 10);
+        const hour = parseInt(times[i].slice(11, 13));
+        
+        if (!dailyWeather[dateStr]) {
+          dailyWeather[dateStr] = { temps: [], hums: [], rainSum: 0 };
+        }
+        
+        dailyWeather[dateStr].rainSum += rains[i] || 0;
+        
+        // Collect foraging hours (10:00 to 16:00)
+        if (hour >= 10 && hour <= 16) {
+          dailyWeather[dateStr].temps.push(temps[i]);
+          dailyWeather[dateStr].hums.push(hums[i]);
+        }
+      }
+    }
+
+    // Generate date keys for the past 30 days (excluding today)
+    const todayStr = new Date(weatherData.current.time).toISOString().slice(0, 10);
+    const dateKeys = Object.keys(dailyWeather).sort().filter(d => d < todayStr).slice(-30);
+
+    for (const dKey of dateKeys) {
+      const wDay = dailyWeather[dKey];
+      const avgTemp = wDay.temps.length > 0 
+        ? wDay.temps.reduce((a, b) => a + b, 0) / wDay.temps.length 
+        : currentTemp;
+      const avgHum = wDay.hums.length > 0 
+        ? wDay.hums.reduce((a, b) => a + b, 0) / wDay.hums.length 
+        : currentRH;
+      const rainSum = wDay.rainSum;
+
+      // Find closest NDVI for this day (noon timestamp)
+      const targetDt = Math.floor(new Date(`${dKey}T12:00:00Z`).getTime() / 1000);
+      
+      let dayNDVI = defaultBaselineForMonth;
+      let bestDiff = Infinity;
+      if (currentJson && currentJson.length > 0) {
+        for (const pt of currentJson) {
+          const diff = Math.abs(pt.dt - targetDt);
+          if (diff < bestDiff) {
+            bestDiff = diff;
+            dayNDVI = pt.data.mean;
+          }
+        }
+      }
+
+      // Find previous NDVI (~8 days prior)
+      let dayPrevNDVI = dayNDVI;
+      let bestPrevDiff = Infinity;
+      if (currentJson && currentJson.length > 0) {
+        const prevTargetDt = targetDt - 8 * 24 * 60 * 60;
+        for (const pt of currentJson) {
+          const diff = Math.abs(pt.dt - prevTargetDt);
+          if (diff < bestPrevDiff) {
+            bestPrevDiff = diff;
+            dayPrevNDVI = pt.data.mean;
+          }
+        }
+      }
+
+      const dayBreakdown = calculateNFI(
+        dayNDVI,
+        baselineNDVI,
+        dayPrevNDVI,
+        avgTemp,
+        avgHum,
+        rainSum
+      );
+
+      nfiHistory.push({
+        date: dKey,
+        nfi: dayBreakdown.nfi
+      });
+    }
+
+    // 7. Return response
     res.status(200).json({
       polygonId,
       baselineNDVI,
@@ -312,7 +401,8 @@ export default async function handler(req: any, res: any) {
       nfi: breakdown.nfi,
       breakdown,
       isHistoryQueried,
-      isPolygonCreated
+      isPolygonCreated,
+      history: nfiHistory
     });
 
   } catch (error: any) {
