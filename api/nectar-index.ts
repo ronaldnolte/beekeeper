@@ -1,9 +1,151 @@
-import { generateCirclePolygon } from '../src/features/nectar/geo';
-import { calculateNFI } from '../src/features/nectar/engine';
-import fallbackHistory from '../src/features/nectar/ndviHistory.json';
+// Self-contained Nectar Flow Index (NFI) Serverless Handler for Vercel
 
+// 1. Inlined GeoJSON Circle Generator
+function generateCirclePolygon(lat: number, lng: number, radiusMiles: number = 1.9) {
+  const EARTH_RADIUS_MILES = 3959;
+  const numPoints = 32;
+  const coordinates: [number, number][] = [];
+
+  const latRad = (lat * Math.PI) / 180;
+  const lngRad = (lng * Math.PI) / 180;
+  const angularDistance = radiusMiles / EARTH_RADIUS_MILES;
+
+  for (let i = 0; i <= numPoints; i++) {
+    const bearing = (i * 2 * Math.PI) / numPoints;
+
+    const destLatRad = Math.asin(
+      Math.sin(latRad) * Math.cos(angularDistance) +
+        Math.cos(latRad) * Math.sin(angularDistance) * Math.cos(bearing)
+    );
+
+    const destLngRad =
+      lngRad +
+      Math.atan2(
+        Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(latRad),
+        Math.cos(angularDistance) - Math.sin(latRad) * Math.sin(destLatRad)
+      );
+
+    const destLat = (destLatRad * 180) / Math.PI;
+    const destLng = (((destLngRad * 180) / Math.PI + 540) % 360) - 180;
+
+    coordinates.push([destLng, destLat]);
+  }
+
+  return {
+    type: 'Feature',
+    properties: {
+      center: [lng, lat],
+      radiusMiles
+    },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [coordinates]
+    }
+  };
+}
+
+// 2. Inlined NFI Calculation Engine
+interface NFIBreakdown {
+  nfi: number;
+  ratio: number;
+  layer1Score: number;
+  layer1Max: number;
+  delta: number;
+  phenologyMultiplier: number;
+  tempMultiplier: number;
+  humidityMultiplier: number;
+  isWashout: boolean;
+}
+
+function calculateNFI(
+  currentNDVI: number,
+  historicalNDVI: number,
+  previousNDVI: number,
+  tempF: number,
+  relativeHumidity: number,
+  precipitationMm: number
+): NFIBreakdown {
+  if (precipitationMm > 2.0) {
+    return {
+      nfi: 0,
+      ratio: currentNDVI / (historicalNDVI || 0.4),
+      layer1Score: 0,
+      layer1Max: historicalNDVI < 0.7 ? (historicalNDVI / 0.7) * 70 : 70,
+      delta: currentNDVI - previousNDVI,
+      phenologyMultiplier: 1.0,
+      tempMultiplier: 0.0,
+      humidityMultiplier: 0.0,
+      isWashout: true
+    };
+  }
+
+  const ratio = historicalNDVI > 0 ? currentNDVI / historicalNDVI : 1.0;
+  
+  let layer1Max = 70;
+  if (historicalNDVI < 0.70) {
+    layer1Max = (historicalNDVI / 0.70) * 70;
+  }
+  
+  const layer1Score = Math.min(ratio * 70, layer1Max);
+
+  const delta = currentNDVI - previousNDVI;
+  let phenologyMultiplier = 1.0;
+  
+  if (delta > 0.03) {
+    phenologyMultiplier = 1.15;
+  } else if (delta < -0.05) {
+    phenologyMultiplier = 0.60;
+  }
+
+  const baseScore = layer1Score * phenologyMultiplier;
+
+  let tempMultiplier = 1.0;
+  if (tempF < 65 || tempF > 98) {
+    tempMultiplier = 0.2;
+  } else if (tempF >= 75 && tempF <= 88) {
+    tempMultiplier = 1.2;
+  } else if (tempF >= 65 && tempF < 75) {
+    tempMultiplier = 0.2 + ((tempF - 65) / 10) * 1.0;
+  } else if (tempF > 88 && tempF <= 98) {
+    tempMultiplier = 1.2 - ((tempF - 88) / 10) * 1.0;
+  }
+
+  const humidityMultiplier = relativeHumidity < 35 ? 0.5 : 1.0;
+
+  const rawNFI = baseScore * tempMultiplier * humidityMultiplier;
+  const nfi = Math.min(100, Math.max(0, Math.round(rawNFI)));
+
+  return {
+    nfi,
+    ratio,
+    layer1Score,
+    layer1Max,
+    delta,
+    phenologyMultiplier,
+    tempMultiplier,
+    humidityMultiplier,
+    isWashout: false
+  };
+}
+
+// 3. Inlined Fallback Baseline Database
+const defaultBaselines: Record<string, number> = {
+  "1": 0.35,
+  "2": 0.38,
+  "3": 0.45,
+  "4": 0.58,
+  "5": 0.72,
+  "6": 0.78,
+  "7": 0.74,
+  "8": 0.65,
+  "9": 0.55,
+  "10": 0.46,
+  "11": 0.38,
+  "12": 0.34
+};
+
+// 4. Serverless Handler
 export default async function handler(req: any, res: any) {
-  // 1. CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
@@ -36,7 +178,7 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    // 1. Fetch weather from Open-Meteo (Fahrenheit, mm rain, 0-100% RH)
+    // 1. Fetch weather from Open-Meteo
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation&temperature_unit=fahrenheit&timezone=auto`;
     const weatherResp = await fetch(weatherUrl);
     if (!weatherResp.ok) {
@@ -55,12 +197,10 @@ export default async function handler(req: any, res: any) {
     let isPolygonCreated = false;
 
     const currentMonth = new Date().getMonth() + 1; // 1-12
-    const defaultBaselines: Record<string, number> = fallbackHistory.defaultBaselines;
     const defaultBaselineForMonth = defaultBaselines[currentMonth.toString()] || 0.5;
 
     // 2. Manage Agromonitoring Polygon
     if (!polygonId) {
-      // Create a 1.9-mile circle polygon around the coordinate
       const geojson = generateCirclePolygon(lat, lng, 1.9);
       
       const polyResp = await fetch(
@@ -95,20 +235,18 @@ export default async function handler(req: any, res: any) {
       if (janResp.ok) {
         const janJson = await janResp.json();
         if (janJson && janJson.length > 0) {
-          // Average the mean values of the passes in January
           const sum = janJson.reduce((acc: number, val: any) => acc + val.data.mean, 0);
           baselineNDVI = sum / janJson.length;
         }
       }
 
-      // Fallback if no history or fetch failed
       if (baselineNDVI === undefined || baselineNDVI === null) {
         baselineNDVI = defaultBaselineForMonth;
       }
       isHistoryQueried = true;
     }
 
-    // 4. Fetch Current NDVI (last 60 days to handle cloud covers)
+    // 4. Fetch Current NDVI (last 60 days)
     const currentEndUnix = Math.floor(Date.now() / 1000);
     const currentStartUnix = currentEndUnix - 60 * 24 * 60 * 60; // 60 days
 
@@ -119,19 +257,15 @@ export default async function handler(req: any, res: any) {
     if (currentResp.ok) {
       const currentJson = await currentResp.json();
       if (currentJson && currentJson.length > 0) {
-        // Sort by date ascending to ensure proper chronological delta
         currentJson.sort((a: any, b: any) => a.dt - b.dt);
         
-        // Latest reading is the current NDVI
         const latestReading = currentJson[currentJson.length - 1];
         currentNDVI = latestReading.data.mean;
 
-        // Previous reading (try to find the reading closest to 7-10 days ago, or second-to-last)
         if (currentJson.length > 1) {
           const latestDt = latestReading.dt;
           const targetDt = latestDt - 8 * 24 * 60 * 60; // 8 days prior
 
-          // Find the reading that is closest to 8 days prior to the latest reading
           let bestMatch = currentJson[0];
           let bestDiff = Math.abs(bestMatch.dt - targetDt);
 
@@ -144,11 +278,9 @@ export default async function handler(req: any, res: any) {
           }
           previousNDVI = bestMatch.data.mean;
         } else {
-          // Fallback if only one reading exists
           previousNDVI = currentNDVI;
         }
       } else {
-        // Fallback if no passes are found in the last 60 days
         currentNDVI = defaultBaselineForMonth;
         previousNDVI = defaultBaselineForMonth;
       }
@@ -167,7 +299,6 @@ export default async function handler(req: any, res: any) {
       currentRainMm
     );
 
-    // 6. Return response
     res.status(200).json({
       polygonId,
       baselineNDVI,
