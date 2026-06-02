@@ -164,15 +164,17 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
+  let polygonId: string | null = null;
+  const apiKey = process.env.AGRO_API_KEY;
+
   try {
-    const { lat, lng, cachedBaseline, polygonId: clientPolygonId } = req.body;
+    const { lat, lng, cachedBaseline } = req.body;
 
     if (lat === undefined || lng === undefined) {
       res.status(400).json({ error: 'Latitude and Longitude are required' });
       return;
     }
 
-    const apiKey = process.env.AGRO_API_KEY;
     if (!apiKey) {
       res.status(500).json({ error: 'Agromonitoring API key not configured on server.' });
       return;
@@ -189,7 +191,6 @@ export default async function handler(req: any, res: any) {
     const currentRH = weatherData.current.relative_humidity_2m;
     const currentRainMm = weatherData.current.precipitation; // mm
 
-    let polygonId = clientPolygonId;
     let baselineNDVI = cachedBaseline;
     let currentNDVI = 0.6;
     let previousNDVI = 0.6;
@@ -205,46 +206,29 @@ export default async function handler(req: any, res: any) {
     let currentJson: any[] = [];
     let currentRespOk = false;
 
-    // 2. Manage and Verify Agromonitoring Polygon
-    if (polygonId) {
-      const currentResp = await fetch(
-        `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${start365Unix}&end=${currentEndUnix}&appid=${apiKey}`
-      );
-      
-      if (currentResp.status === 400 || currentResp.status === 404) {
-        // Cached polygon ID is stale (e.g. was deleted or invalid)
-        polygonId = null;
-        baselineNDVI = null;
-      } else if (currentResp.ok) {
-        currentJson = await currentResp.json();
-        currentRespOk = true;
-      }
-    }
-
-    if (!polygonId) {
-      const geojson = generateCirclePolygon(lat, lng, 1.0); // Reduced to 1.0 mile to fit multiple yards in quota
-      
-      try {
-        const polyResp = await fetch(
-          `https://api.agromonitoring.com/agro/1.0/polygons?appid=${apiKey}&duplicated=true`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: `NFI_Apiary_${Date.now()}`, geo_json: geojson }),
-          }
-        );
-
-        if (polyResp.ok) {
-          const polyData = await polyResp.json();
-          polygonId = polyData.id;
-          isPolygonCreated = true;
-        } else {
-          const text = await polyResp.text();
-          console.error(`Polygon registration failed: ${text}. Falling back to static baseline.`);
+    // 2. Create Temporary Agromonitoring Polygon
+    const geojson = generateCirclePolygon(lat, lng, 1.0); // 1.0 mile foraging radius
+    
+    try {
+      const polyResp = await fetch(
+        `https://api.agromonitoring.com/agro/1.0/polygons?appid=${apiKey}&duplicated=true`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: `NFI_Temp_${Date.now()}`, geo_json: geojson }),
         }
-      } catch (err: any) {
-        console.error(`Polygon registration call failed: ${err.message}. Falling back to static baseline.`);
+      );
+
+      if (polyResp.ok) {
+        const polyData = await polyResp.json();
+        polygonId = polyData.id;
+        isPolygonCreated = true;
+      } else {
+        const text = await polyResp.text();
+        console.error(`Polygon registration failed: ${text}. Falling back to static baseline.`);
       }
+    } catch (err: any) {
+      console.error(`Polygon registration call failed: ${err.message}. Falling back to static baseline.`);
     }
 
     // 3. Obtain Baseline NDVI (if not cached and we have a valid polygonId)
@@ -273,8 +257,8 @@ export default async function handler(req: any, res: any) {
       baselineNDVI = defaultBaselines["1"]; // Fallback if no polygon exists
     }
 
-    // 4. Fetch 1-Year NDVI History from Agromonitoring (if we registered a new polygon)
-    if (polygonId && !currentRespOk) {
+    // 4. Fetch 1-Year NDVI History from Agromonitoring
+    if (polygonId) {
       const currentResp = await fetch(
         `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${start365Unix}&end=${currentEndUnix}&appid=${apiKey}`
       );
@@ -426,7 +410,7 @@ export default async function handler(req: any, res: any) {
 
     // 8. Return response
     res.status(200).json({
-      polygonId,
+      polygonId: null, // Polygon is deleted immediately, so do not return an ID to cache
       baselineNDVI,
       currentNDVI,
       previousNDVI,
@@ -447,5 +431,20 @@ export default async function handler(req: any, res: any) {
     res.status(500).json({
       error: 'Failed to calculate Nectar Flow Index: ' + (error.message || 'Unknown error')
     });
+  } finally {
+    // 9. Clean up temporary polygon from Agromonitoring to maintain quota at exactly 0
+    if (polygonId && apiKey) {
+      try {
+        const delResp = await fetch(
+          `https://api.agromonitoring.com/agro/1.0/polygons/${polygonId}?appid=${apiKey}`,
+          { method: 'DELETE' }
+        );
+        if (!delResp.ok) {
+          console.error(`Failed to delete temporary polygon ${polygonId}: status ${delResp.status}`);
+        }
+      } catch (err: any) {
+        console.error(`Failed to delete temporary polygon ${polygonId}: ${err.message}`);
+      }
+    }
   }
 }

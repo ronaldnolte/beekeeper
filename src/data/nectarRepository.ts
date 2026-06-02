@@ -49,8 +49,9 @@ export async function fetchNectarIndex(
 
   const currentYear = new Date().getFullYear();
   
-  // Read cache
-  let cachedPolygonId = localStorage.getItem(polygonKey);
+  // Clean up old cached polygon IDs (no longer used since polygons are ephemeral on server)
+  localStorage.removeItem(polygonKey);
+
   let cachedBaseline: number | null = null;
   const cachedBaselineYear = localStorage.getItem(baselineYearKey);
 
@@ -84,7 +85,6 @@ export async function fetchNectarIndex(
         lat,
         lng,
         cachedBaseline,
-        polygonId: cachedPolygonId || undefined,
       }),
       signal: controller.signal,
     });
@@ -98,9 +98,6 @@ export async function fetchNectarIndex(
     const data = (await response.json()) as NectarIndexResponse;
 
     // Persist responses to cache for subsequent calls
-    if (data.polygonId) {
-      localStorage.setItem(polygonKey, data.polygonId);
-    }
     if (data.baselineNDVI !== undefined && data.baselineNDVI !== null) {
       localStorage.setItem(baselineKey, data.baselineNDVI.toString());
       localStorage.setItem(baselineYearKey, currentYear.toString());
