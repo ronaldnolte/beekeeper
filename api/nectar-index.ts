@@ -67,9 +67,11 @@ function calculateNFI(
 ): NFIBreakdown {
   const ratio = historicalNDVI > 0 ? currentNDVI / historicalNDVI : 1.0;
   
+  // Cap potential if baseline drops below 70% (0.70), but allow high absolute greenness to lift the cap
   let layer1Max = 70;
   if (historicalNDVI < 0.70) {
-    layer1Max = (historicalNDVI / 0.70) * 70;
+    const localMax = (historicalNDVI / 0.70) * 70;
+    layer1Max = Math.max(localMax, Math.min(70, currentNDVI * 100));
   }
   
   const layer1Score = Math.min(ratio * 70, layer1Max);
@@ -96,7 +98,17 @@ function calculateNFI(
     tempMultiplier = 1.2 - ((tempF - 88) / 10) * 1.0;
   }
 
-  const humidityMultiplier = relativeHumidity < 35 ? 0.5 : 1.0;
+  // Humidity Modifier
+  // Optimal: >= 40% (no penalty)
+  // Low/Dry: 20% to 40% (linearly interpolate between 0.7 and 1.0)
+  // Extreme Dry: < 20% (0.7 multiplier max penalty, acknowledging desert plant adaptations)
+  let humidityMultiplier = 1.0;
+  if (relativeHumidity < 20) {
+    humidityMultiplier = 0.7;
+  } else if (relativeHumidity < 40) {
+    // Interpolate between 0.7 (at 20%) and 1.0 (at 40%)
+    humidityMultiplier = 0.7 + ((relativeHumidity - 20) / 20) * 0.3;
+  }
 
   const rawNFI = baseScore * tempMultiplier * humidityMultiplier;
   const nfi = Math.min(100, Math.max(0, Math.round(rawNFI)));
