@@ -239,12 +239,12 @@ export const NectarFlowView: React.FC = () => {
               </p>
             </div>
 
-            {/* 30-Day Nectar Index Trend Chart */}
+            {/* 1-Year Nectar Index Trend Chart */}
             {data.history && data.history.length > 0 && (
               <div className="bg-[#1a1a2e]/70 backdrop-blur-md rounded-3xl p-5 border border-[#2a2a4a] shadow-xl w-full flex flex-col">
                 <div className="flex items-center justify-between text-xs uppercase font-extrabold tracking-wider text-amber-500 mb-3 select-none">
-                  <span>30-Day Nectar Index Trend</span>
-                  <span className="text-white/40 font-semibold lowercase italic text-[10px]">past 30 days</span>
+                  <span>1-Year Nectar Index Trend</span>
+                  <span className="text-white/40 font-semibold lowercase italic text-[10px]">past year</span>
                 </div>
                 
                 {/* SVG Container */}
@@ -319,9 +319,9 @@ export const NectarFlowView: React.FC = () => {
                 
                 {/* Date Labels below chart */}
                 <div className="flex justify-between text-[9px] text-white/40 font-bold px-1 mt-1.5 uppercase tracking-wider select-none">
-                  <span>{new Date(data.history[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                  <span>mid-period</span>
-                  <span>{new Date(data.history[data.history.length - 1].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  <span>{new Date(data.history[0].date).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}</span>
+                  <span>6 months ago</span>
+                  <span>{new Date(data.history[data.history.length - 1].date).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}</span>
                 </div>
               </div>
             )}
