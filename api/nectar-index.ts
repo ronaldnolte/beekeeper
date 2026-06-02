@@ -241,7 +241,7 @@ export default async function handler(req: any, res: any) {
       }
 
       if (baselineNDVI === undefined || baselineNDVI === null) {
-        baselineNDVI = defaultBaselineForMonth;
+        baselineNDVI = defaultBaselines["1"]; // January baseline fallback
       }
       isHistoryQueried = true;
     }
@@ -283,11 +283,17 @@ export default async function handler(req: any, res: any) {
         }
       } else {
         currentNDVI = defaultBaselineForMonth;
-        previousNDVI = defaultBaselineForMonth;
+        const prevDate = new Date();
+        prevDate.setDate(prevDate.getDate() - 8);
+        const prevMonth = prevDate.getMonth() + 1;
+        previousNDVI = defaultBaselines[prevMonth.toString()] || 0.5;
       }
     } else {
       currentNDVI = defaultBaselineForMonth;
-      previousNDVI = defaultBaselineForMonth;
+      const prevDate = new Date();
+      prevDate.setDate(prevDate.getDate() - 8);
+      const prevMonth = prevDate.getMonth() + 1;
+      previousNDVI = defaultBaselines[prevMonth.toString()] || 0.5;
     }
 
     // 5. Calculate current NFI via engine
@@ -327,10 +333,15 @@ export default async function handler(req: any, res: any) {
           const avgHum = humMeans[i] || 50;
           const rain = rainSums[i] || 0;
 
+          // Determine month of this specific day for correct fallback baseline
+          const dayDate = new Date(dateStr);
+          const dayMonth = dayDate.getMonth() + 1;
+          const dayDefaultBaseline = defaultBaselines[dayMonth.toString()] || 0.5;
+
           // Find closest NDVI for this day (noon timestamp)
-          const targetDt = Math.floor(new Date(`${dateStr}T12:00:00Z`).getTime() / 1000);
+          const targetDt = Math.floor(dayDate.getTime() / 1000);
           
-          let dayNDVI = defaultBaselineForMonth;
+          let dayNDVI = dayDefaultBaseline;
           let bestDiff = Infinity;
           if (currentJson && currentJson.length > 0) {
             for (const pt of currentJson) {
@@ -354,6 +365,11 @@ export default async function handler(req: any, res: any) {
                 dayPrevNDVI = pt.data.mean;
               }
             }
+          } else {
+            const prevDate = new Date(dayDate);
+            prevDate.setDate(prevDate.getDate() - 8);
+            const prevMonth = prevDate.getMonth() + 1;
+            dayPrevNDVI = defaultBaselines[prevMonth.toString()] || 0.5;
           }
 
           const dayBreakdown = calculateNFI(
