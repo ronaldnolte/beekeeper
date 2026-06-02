@@ -71,34 +71,47 @@ export async function fetchNectarIndex(
     ? '/api/nectar-index'
     : 'https://beekeeper.beektools.com/api/nectar-index';
 
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      lat,
-      lng,
-      cachedBaseline,
-      polygonId: cachedPolygonId || undefined,
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s serverless timeout
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText || 'Failed to fetch nectar flow index');
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        lat,
+        lng,
+        cachedBaseline,
+        polygonId: cachedPolygonId || undefined,
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Failed to fetch nectar flow index');
+    }
+
+    const data = (await response.json()) as NectarIndexResponse;
+
+    // Persist responses to cache for subsequent calls
+    if (data.polygonId) {
+      localStorage.setItem(polygonKey, data.polygonId);
+    }
+    if (data.baselineNDVI !== undefined && data.baselineNDVI !== null) {
+      localStorage.setItem(baselineKey, data.baselineNDVI.toString());
+      localStorage.setItem(baselineYearKey, currentYear.toString());
+    }
+
+    return data;
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Nectar Flow Index request timed out. Please try again.');
+    }
+    throw err;
   }
-
-  const data = (await response.json()) as NectarIndexResponse;
-
-  // Persist responses to cache for subsequent calls
-  if (data.polygonId) {
-    localStorage.setItem(polygonKey, data.polygonId);
-  }
-  if (data.baselineNDVI !== undefined && data.baselineNDVI !== null) {
-    localStorage.setItem(baselineKey, data.baselineNDVI.toString());
-    localStorage.setItem(baselineYearKey, currentYear.toString());
-  }
-
-  return data;
 }
