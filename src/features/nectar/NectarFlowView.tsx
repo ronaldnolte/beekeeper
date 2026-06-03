@@ -431,7 +431,7 @@ export const NectarFlowView: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/60 font-semibold">14-Day Avg</span>
+                    <span className="text-white/60 font-semibold">10-Day Avg</span>
                     <span className="font-bold">{data.currentNDVI.toFixed(3)}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
@@ -464,7 +464,7 @@ export const NectarFlowView: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-[10px] text-white/50 mt-1 font-semibold leading-relaxed">
-                    Measures the 14-day moving average NDVI scaled against your local winter dormant baseline. This represents the total live green forage in the environment.
+                    Measures the 10-day moving average NDVI scaled against your local winter dormant baseline. This represents the total live green forage in the environment.
                   </p>
                 </div>
 

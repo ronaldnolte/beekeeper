@@ -16,9 +16,9 @@ export interface NFIBreakdown {
 /**
  * Calculates the Nectar Flow Index (0-100) based on satellite NDVI trends.
  * 
- * @param currentNDVI 14-day moving average NDVI (latest)
+ * @param currentNDVI 10-day moving average NDVI (latest)
  * @param historicalNDVI January dormant baseline NDVI
- * @param previousNDVI 14-day moving average NDVI (7 days ago)
+ * @param previousNDVI 10-day moving average NDVI (7 days ago)
  * @returns Comprehensive NFI calculation breakdown
  */
 export function calculateNFI(

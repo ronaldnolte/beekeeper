@@ -100,10 +100,41 @@ function calculateNFI(
   };
 }
 
-// Helper to calculate 14-day moving average from a list of readings
-function calculate14DayAvg(history: any[], targetUnix: number): number {
-  const fourteenDaysSec = 14 * 24 * 60 * 60;
-  const windowStart = targetUnix - fourteenDaysSec;
+// Helper to filter out sudden downward or upward spikes (cloud shadows / sensor anomalies)
+function filterNDVIOutliers(history: any[]): any[] {
+  if (history.length < 3) return history;
+  const filtered: any[] = [];
+  
+  // Keep first point
+  filtered.push(history[0]);
+  
+  for (let i = 1; i < history.length - 1; i++) {
+    const prev = history[i - 1].data.mean;
+    const cur = history[i].data.mean;
+    const next = history[i + 1].data.mean;
+    
+    // Cloud/Shadow signature: drop of > 0.12 followed by recovery
+    const isCloudDrop = (prev - cur > 0.12) && (next - cur > 0.12);
+    
+    // Sensor reflection spike signature: jump of > 0.15 followed by drop
+    const isSensorSpike = (cur - prev > 0.15) && (cur - next > 0.15);
+    
+    if (!isCloudDrop && !isSensorSpike) {
+      filtered.push(history[i]);
+    } else {
+      console.log(`Filtered out NDVI outlier: ${cur} on ${new Date(history[i].dt * 1000).toISOString().slice(0, 10)}`);
+    }
+  }
+  
+  // Keep last point
+  filtered.push(history[history.length - 1]);
+  return filtered;
+}
+
+// Helper to calculate 10-day moving average from a list of readings
+function calculate10DayAvg(history: any[], targetUnix: number): number {
+  const tenDaysSec = 10 * 24 * 60 * 60;
+  const windowStart = targetUnix - tenDaysSec;
   const pointsInWindow = history.filter(pt => pt.dt >= windowStart && pt.dt <= targetUnix);
   
   if (pointsInWindow.length > 0) {
@@ -366,7 +397,9 @@ export default async function handler(req: any, res: any) {
           currentJson = await currentResp.json();
           if (currentJson && currentJson.length > 0) {
             currentRespOk = true;
-            console.log(`Successfully fetched 1-Year NDVI history on attempt ${attempt}.`);
+            currentJson.sort((a: any, b: any) => a.dt - b.dt);
+            currentJson = filterNDVIOutliers(currentJson);
+            console.log(`Successfully fetched and outlier-filtered 1-Year NDVI history.`);
             break;
           }
         } else {
@@ -382,8 +415,8 @@ export default async function handler(req: any, res: any) {
     }
 
     if (currentRespOk && currentJson && currentJson.length > 0) {
-      currentNDVI = calculate14DayAvg(currentJson, currentEndUnix);
-      previousNDVI = calculate14DayAvg(currentJson, currentEndUnix - 7 * 24 * 60 * 60);
+      currentNDVI = calculate10DayAvg(currentJson, currentEndUnix);
+      previousNDVI = calculate10DayAvg(currentJson, currentEndUnix - 7 * 24 * 60 * 60);
     } else {
       currentNDVI = getInterpolatedNDVI(new Date());
       const prevDate = new Date();
@@ -406,8 +439,8 @@ export default async function handler(req: any, res: any) {
       
       for (const pt of currentJson) {
         const dateStr = new Date(pt.dt * 1000).toISOString().slice(0, 10);
-        const currentMA = calculate14DayAvg(currentJson, pt.dt);
-        const prevMA = calculate14DayAvg(currentJson, pt.dt - 7 * 24 * 60 * 60);
+        const currentMA = calculate10DayAvg(currentJson, pt.dt);
+        const prevMA = calculate10DayAvg(currentJson, pt.dt - 7 * 24 * 60 * 60);
         
         const ptBreakdown = calculateNFI(currentMA, baselineNDVI, prevMA);
         dailyNFIs.push({
