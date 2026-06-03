@@ -445,49 +445,37 @@ export const NectarFlowView: React.FC = () => {
                 {/* Layer 1: Biomass Base */}
                 <div className="flex flex-col text-xs border-b border-[#24243e] pb-3">
                   <div className="flex items-center justify-between font-bold">
-                    <span className="text-white/90">Layer 1: Foraging Biomass Base</span>
+                    <span className="text-white/90">Layer 1: Vegetation Biomass Base</span>
                     <span className="text-amber-400 font-black">
-                      {data.breakdown.layer1Score.toFixed(1)} / {data.breakdown.layer1Max.toFixed(1)}
+                      {data.breakdown.layer1Score.toFixed(0)}%
                     </span>
                   </div>
                   <p className="text-[10px] text-white/50 mt-1 font-semibold leading-relaxed">
-                    Compares the 14-day moving average NDVI against the historical dormant season baseline. 
-                    {data.baselineNDVI < 0.70 
-                      ? ' Capped potential because local baseline is below 0.70 (sparse area).' 
-                      : ' Full forage potential allowed.'}
+                    Measures the 14-day moving average NDVI scaled against your local winter dormant baseline. This represents the total live green forage in the environment.
                   </p>
                 </div>
 
                 {/* Layer 2: Phenology Trend */}
                 <div className="flex flex-col text-xs border-b border-[#24243e] pb-3">
                   <div className="flex items-center justify-between font-bold">
-                    <span className="text-white/90">Layer 2: Seasonal Phenology Delta (Slope)</span>
-                    <span className={`font-black ${data.slope > 0.002 ? 'text-green-400' : data.slope < -0.005 ? 'text-rose-400' : 'text-white/80'}`}>
+                    <span className="text-white/90">Layer 2: Botanical Growth Velocity (Slope)</span>
+                    <span className={`font-black ${data.slope > 0.005 ? 'text-green-400' : data.slope < -0.010 ? 'text-rose-400' : 'text-white/80'}`}>
                       {data.slope > 0 ? '+' : ''}{data.slope.toFixed(4)}
                     </span>
                   </div>
                   <p className="text-[10px] text-white/50 mt-1 font-semibold leading-relaxed">
-                    Measures the weekly direction of the NDVI curve.
-                    {data.slope > 0.005 
-                      ? ' Boost (+20) applied for a rapid greening/bloom surge.' 
-                      : data.slope > 0.002
-                        ? ' Boost (+10) applied for moderate growth.'
-                        : data.slope < -0.010 
-                          ? ' Penalty (-40) applied for steep vegetation drying (entering dearth).'
-                          : data.slope < -0.005
-                            ? ' Penalty (-20) applied for moderate seasonal decline.'
-                            : ' Stable trend: vegetation growth is flat.'}
+                    Measures the weekly direction and speed of the vegetation curve. A positive slope indicates active greenup/bloom; a negative slope indicates drying up/decline.
                   </p>
                 </div>
 
                 {/* Layer 3: Colony Transition Impact */}
                 <div className="flex flex-col text-xs">
                   <div className="flex items-center justify-between font-bold">
-                    <span className="text-white/90">Layer 3: Hive Biology Status</span>
+                    <span className="text-white/90">Layer 3: Colony Transition Phase</span>
                     <span className="text-amber-400 font-black">{data.status}</span>
                   </div>
                   <p className="text-[10px] text-white/50 mt-1 font-semibold leading-relaxed">
-                    Calculates the colony's biological phase based on the combination of vegetative density (Layer 1) and growth momentum (Layer 2).
+                    Determines the colony's current transition state and recommended management actions based on the absolute biomass level and growth velocity.
                   </p>
                 </div>
               </div>
