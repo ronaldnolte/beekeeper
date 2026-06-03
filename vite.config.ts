@@ -8,6 +8,15 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://beekeeper.beektools.com',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  },
   build: {
     target: 'es2015'
   }
