@@ -37,6 +37,9 @@ export interface NectarIndexResponse {
  * @param lat Latitude in degrees
  * @param lng Longitude in degrees
  */
+// Bump this version to invalidate all client-side NFI caches (e.g. after fixing API bugs)
+const NFI_CACHE_VERSION = 2;
+
 export async function fetchNectarIndex(
   apiaryId: string,
   lat: number,
@@ -47,11 +50,28 @@ export async function fetchNectarIndex(
   const baselineYearKey = `nfi_baseline_year_${apiaryId}`;
   const responseCacheKey = `nfi_response_${apiaryId}`;
   const responseTimeCacheKey = `nfi_response_time_${apiaryId}`;
+  const cacheVersionKey = `nfi_cache_version`;
 
   const currentYear = new Date().getFullYear();
   
   // Clean up old cached polygon IDs
   localStorage.removeItem(polygonKey);
+
+  // Invalidate all caches if version has changed
+  const storedVersion = localStorage.getItem(cacheVersionKey);
+  if (storedVersion !== NFI_CACHE_VERSION.toString()) {
+    // Clear ALL NFI cache entries for every apiary
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('nfi_response_') || key.startsWith('nfi_response_time_') || key.startsWith('nfi_baseline_') || key.startsWith('nfi_baseline_year_'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    localStorage.setItem(cacheVersionKey, NFI_CACHE_VERSION.toString());
+    console.log(`NFI cache version bumped to ${NFI_CACHE_VERSION}, cleared ${keysToRemove.length} stale entries.`);
+  }
 
   // 1. Check client-side full response cache (1 hour lifetime)
   const cachedResponseStr = localStorage.getItem(responseCacheKey);
@@ -67,10 +87,10 @@ export async function fetchNectarIndex(
         // Validate the cache contains the new schema fields to prevent UI crashes
         if (
           cachedData &&
-          cachedData.breakdown &&
           cachedData.status &&
           typeof cachedData.slope === 'number' &&
-          Array.isArray(cachedData.history)
+          Array.isArray(cachedData.history) &&
+          typeof cachedData.nfi === 'number'
         ) {
           console.log(`Loaded cached Nectar Flow Index for apiary ${apiaryId} (cache age: ${Math.round((now - cachedTime) / 60000)} mins)`);
           return cachedData;
