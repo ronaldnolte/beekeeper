@@ -204,29 +204,74 @@ export default async function handler(req: any, res: any) {
     let currentJson: any[] = [];
     let currentRespOk = false;
 
-    // 2. Create Temporary Agromonitoring Polygon
+    // 2. Find or Create Agromonitoring Polygon
     const geojson = generateCirclePolygon(lat, lng, 1.0); // 1.0 mile foraging radius
-    
-    try {
-      const polyResp = await fetch(
-        `https://api.agromonitoring.com/agro/1.0/polygons?appid=${apiKey}&duplicated=true`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: `NFI_Temp_${Date.now()}`, geo_json: geojson }),
-        }
-      );
+    let matchedPolyId: string | null = null;
+    let shouldCreateNewPolygon = true;
 
-      if (polyResp.ok) {
-        const polyData = await polyResp.json();
-        polygonId = polyData.id;
-        isPolygonCreated = true;
+    try {
+      // Query existing active polygons
+      const listResp = await fetch(
+        `https://api.agromonitoring.com/agro/1.0/polygons?appid=${apiKey}`
+      );
+      if (listResp.ok) {
+        const polygons = await listResp.json();
+        if (polygons && polygons.length > 0) {
+          for (const poly of polygons) {
+            if (poly.properties && poly.properties.center) {
+              const [polyLng, polyLat] = poly.properties.center;
+              // Check if coordinates match closely (within ~11 meters / 0.0001 deg)
+              const distance = Math.sqrt(Math.pow(polyLat - lat, 2) + Math.pow(polyLng - lng, 2));
+              if (distance < 0.0001) {
+                matchedPolyId = poly.id;
+                shouldCreateNewPolygon = false;
+                console.log(`Reusing existing matching polygon ${poly.id} for location [${lat}, ${lng}]`);
+                break;
+              }
+            }
+          }
+
+          // If no matching polygon but we have active ones, delete them to stay within 1-polygon limit
+          if (shouldCreateNewPolygon) {
+            for (const poly of polygons) {
+              console.log(`Deleting non-matching polygon ${poly.id} to respect free-tier quota...`);
+              await fetch(
+                `https://api.agromonitoring.com/agro/1.0/polygons/${poly.id}?appid=${apiKey}`,
+                { method: 'DELETE' }
+              );
+            }
+          }
+        }
       } else {
-        const text = await polyResp.text();
-        console.error(`Polygon registration failed: ${text}. Falling back to static baseline.`);
+        const errText = await listResp.text();
+        console.error(`Failed to list active polygons: ${errText}`);
+      }
+
+      if (shouldCreateNewPolygon) {
+        const polyResp = await fetch(
+          `https://api.agromonitoring.com/agro/1.0/polygons?appid=${apiKey}&duplicated=true`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: `NFI_Persist_${Date.now()}`, geo_json: geojson }),
+          }
+        );
+
+        if (polyResp.ok) {
+          const polyData = await polyResp.json();
+          polygonId = polyData.id;
+          isPolygonCreated = true;
+          console.log(`Created new persistent polygon: ${polygonId}`);
+        } else {
+          const text = await polyResp.text();
+          console.error(`Polygon registration failed: ${text}. Falling back to static baseline.`);
+        }
+      } else {
+        polygonId = matchedPolyId;
+        isPolygonCreated = false;
       }
     } catch (err: any) {
-      console.error(`Polygon registration call failed: ${err.message}. Falling back to static baseline.`);
+      console.error(`Polygon management failed: ${err.message}. Falling back to static baseline.`);
     }
 
     // 3. Obtain Baseline NDVI (if not cached and we have a valid polygonId)
@@ -235,15 +280,29 @@ export default async function handler(req: any, res: any) {
       const jan1Unix = Math.floor(new Date(`${currentYear}-01-01T00:00:00Z`).getTime() / 1000);
       const jan31Unix = Math.floor(new Date(`${currentYear}-01-31T00:00:00Z`).getTime() / 1000);
 
-      const janResp = await fetch(
-        `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${jan1Unix}&end=${jan31Unix}&appid=${apiKey}`
-      );
+      // Retry/polling loop if polygon is newly created
+      const maxAttempts = isPolygonCreated ? 5 : 1;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const janResp = await fetch(
+          `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${jan1Unix}&end=${jan31Unix}&appid=${apiKey}`
+        );
 
-      if (janResp.ok) {
-        const janJson = await janResp.json();
-        if (janJson && janJson.length > 0) {
-          const sum = janJson.reduce((acc: number, val: any) => acc + val.data.mean, 0);
-          baselineNDVI = sum / janJson.length;
+        if (janResp.ok) {
+          const janJson = await janResp.json();
+          if (janJson && janJson.length > 0) {
+            const sum = janJson.reduce((acc: number, val: any) => acc + val.data.mean, 0);
+            baselineNDVI = sum / janJson.length;
+            console.log(`Successfully fetched baseline NDVI on attempt ${attempt}: ${baselineNDVI}`);
+            break;
+          }
+        } else {
+          const text = await janResp.text();
+          console.warn(`Baseline NDVI attempt ${attempt} failed: ${text}`);
+        }
+
+        if (attempt < maxAttempts) {
+          console.log(`Baseline NDVI empty/failed. Retrying in 1.5s (attempt ${attempt + 1}/${maxAttempts})...`);
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       }
 
@@ -257,13 +316,28 @@ export default async function handler(req: any, res: any) {
 
     // 4. Fetch 1-Year NDVI History from Agromonitoring
     if (polygonId) {
-      const currentResp = await fetch(
-        `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${start365Unix}&end=${currentEndUnix}&appid=${apiKey}`
-      );
-      
-      if (currentResp.ok) {
-        currentJson = await currentResp.json();
-        currentRespOk = true;
+      const maxAttempts = isPolygonCreated ? 5 : 1;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const currentResp = await fetch(
+          `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${start365Unix}&end=${currentEndUnix}&appid=${apiKey}`
+        );
+        
+        if (currentResp.ok) {
+          currentJson = await currentResp.json();
+          if (currentJson && currentJson.length > 0) {
+            currentRespOk = true;
+            console.log(`Successfully fetched 1-Year NDVI history on attempt ${attempt}.`);
+            break;
+          }
+        } else {
+          const text = await currentResp.text();
+          console.warn(`1-Year NDVI history attempt ${attempt} failed: ${text}`);
+        }
+
+        if (attempt < maxAttempts) {
+          console.log(`1-Year NDVI history empty/failed. Retrying in 1.5s (attempt ${attempt + 1}/${maxAttempts})...`);
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
       }
     }
 
@@ -430,19 +504,6 @@ export default async function handler(req: any, res: any) {
       error: 'Failed to calculate Nectar Flow Index: ' + (error.message || 'Unknown error')
     });
   } finally {
-    // 9. Clean up temporary polygon from Agromonitoring to maintain quota at exactly 0
-    if (polygonId && apiKey) {
-      try {
-        const delResp = await fetch(
-          `https://api.agromonitoring.com/agro/1.0/polygons/${polygonId}?appid=${apiKey}`,
-          { method: 'DELETE' }
-        );
-        if (!delResp.ok) {
-          console.error(`Failed to delete temporary polygon ${polygonId}: status ${delResp.status}`);
-        }
-      } catch (err: any) {
-        console.error(`Failed to delete temporary polygon ${polygonId}: ${err.message}`);
-      }
-    }
+    // Persistent polygon is preserved in AgroMonitoring to avoid recalculation/polling delays on subsequent calls
   }
 }
