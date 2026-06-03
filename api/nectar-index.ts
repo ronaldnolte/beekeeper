@@ -1,7 +1,7 @@
 // Self-contained Nectar Flow Index (NFI) Serverless Handler for Vercel
 
 // 1. Inlined GeoJSON Circle Generator
-function generateCirclePolygon(lat: number, lng: number, radiusMiles: number = 1.9) {
+function generateCirclePolygon(lat: number, lng: number, radiusMiles: number = 1.0) {
   const EARTH_RADIUS_MILES = 3959;
   const numPoints = 32;
   const coordinates: [number, number][] = [];

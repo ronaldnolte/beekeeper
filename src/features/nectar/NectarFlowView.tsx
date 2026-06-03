@@ -150,7 +150,7 @@ export const NectarFlowView: React.FC = () => {
               <div className="text-center">
                 <h3 className="text-lg font-black text-amber-500">Select Apiary Yard</h3>
                 <p className="text-xs text-[var(--color-text-muted)] font-medium mt-1">
-                  Choose a location to compute the 1.9-mile foraging nectar index.
+                  Choose a location to compute the 1.0-mile foraging nectar index.
                 </p>
               </div>
               <div className="w-full flex flex-col gap-2">
@@ -254,7 +254,7 @@ export const NectarFlowView: React.FC = () => {
               </div>
 
               <p className="text-xs text-white/70 text-center font-medium mt-3 px-4 leading-relaxed">
-                Calculated availability in a <strong>1.9-mile foraging circle</strong> around your hives.
+                Calculated availability in a <strong>1.0-mile foraging circle</strong> around your hives.
               </p>
             </div>
 

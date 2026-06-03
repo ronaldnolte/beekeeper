@@ -10,13 +10,13 @@
  * 
  * @param lat Center latitude in degrees
  * @param lng Center longitude in degrees
- * @param radiusMiles Radius of the circle in miles (default 1.9 miles)
+ * @param radiusMiles Radius of the circle in miles (default 1.0 miles)
  * @returns GeoJSON feature object representing the polygon
  */
 export function generateCirclePolygon(
   lat: number,
   lng: number,
-  radiusMiles: number = 1.9
+  radiusMiles: number = 1.0
 ) {
   const EARTH_RADIUS_MILES = 3959;
   const numPoints = 32;
