@@ -1,117 +1,20 @@
-// Self-contained Nectar Flow Index (NFI) Serverless Handler for Vercel
+import { fetchNDVI, NDVIRecord } from './ndvi-fetcher';
+import { computeBloomFactor, PlantProfileEntry } from '../src/features/nectar/bloomFactor';
+import { computeWeatherSuitability, WeatherSuitabilityInput } from '../src/features/nectar/weatherSuitability';
+import { computeNectarStatus, Apiary, DailyEnvironment } from '../src/features/nectar/engine';
 
-// 1. Inlined GeoJSON Circle Generator
-function generateCirclePolygon(lat: number, lng: number, radiusMiles: number = 1.0) {
-  const EARTH_RADIUS_MILES = 3959;
-  const numPoints = 32;
-  const coordinates: [number, number][] = [];
-
-  const latRad = (lat * Math.PI) / 180;
-  const lngRad = (lng * Math.PI) / 180;
-  const angularDistance = radiusMiles / EARTH_RADIUS_MILES;
-
-  for (let i = 0; i <= numPoints; i++) {
-    const bearing = (i * 2 * Math.PI) / numPoints;
-
-    const destLatRad = Math.asin(
-      Math.sin(latRad) * Math.cos(angularDistance) +
-        Math.cos(latRad) * Math.sin(angularDistance) * Math.cos(bearing)
-    );
-
-    const destLngRad =
-      lngRad +
-      Math.atan2(
-        Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(latRad),
-        Math.cos(angularDistance) - Math.sin(latRad) * Math.sin(destLatRad)
-      );
-
-    const destLat = (destLatRad * 180) / Math.PI;
-    const destLng = (((destLngRad * 180) / Math.PI + 540) % 360) - 180;
-
-    coordinates.push([destLng, destLat]);
-  }
-
-  return {
-    type: 'Feature',
-    properties: {
-      center: [lng, lat],
-      radiusMiles
-    },
-    geometry: {
-      type: 'Polygon',
-      coordinates: [coordinates]
-    }
-  };
-}
-
-// 2. Inlined NFI Calculation Engine
-interface NFIBreakdown {
-  nfi: number;
-  ratio: number;
-  layer1Score: number;
-  layer1Max: number;
-  slope: number;
-  phenologyBoost: number;
-  status: 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low';
-  transitionAdvice: string;
-}
-
-function calculateNFI(
-  currentNDVI: number,
-  historicalNDVI: number,
-  previousNDVI: number
-): NFIBreakdown {
-  // 1. Calculate Forage Biomass Base (Layer 1)
-  // Scale the 14-day moving average NDVI directly between the winter dormant baseline and a peak of 0.85.
-  const maxPossibleDelta = Math.max(0.15, 0.85 - historicalNDVI);
-  const growthDelta = currentNDVI - historicalNDVI;
-  const nfi = Math.min(100, Math.max(0, Math.round((growthDelta / maxPossibleDelta) * 100)));
-
-  // 2. Calculate weekly slope of the 14-day moving average
-  const slope = currentNDVI - previousNDVI;
-
-  // 3. Classify status and advice directly from the 14-day MA value and its slope
-  let status: 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low' = 'Stable Low';
-  let transitionAdvice = 'Stable low forage availability. Brood rearing is moderate. Monitor reserves.';
-
-  if (currentNDVI < 0.45) {
-    status = 'Dearth';
-    transitionAdvice = 'Colony is in a dearth or dormant winter state. Monitor food reserves closely. Supplemental feeding may be required to maintain colony strength.';
-  } else if (slope < -0.010) {
-    status = 'Flow Ending';
-    transitionAdvice = 'Nectar flow is shutting down rapidly. Queen egg-laying will slow down. Robbing behavior may rise; check honey stores.';
-  } else if (slope > 0.005) {
-    status = 'Pre-Flow';
-    transitionAdvice = 'Greening up rapidly. Queen egg-laying is stimulated. Colony is building comb and expanding the brood nest. Queen cells and swarm preparation risk are rising.';
-  } else if (nfi >= 50) {
-    status = 'Peak Flow';
-    transitionAdvice = 'Peak nectar flow is active. Ensure honey supers are in place. Colony is actively storing surplus honey.';
-  }
-
-  return {
-    nfi,
-    ratio: historicalNDVI > 0 ? currentNDVI / historicalNDVI : 1.0,
-    layer1Score: nfi,
-    layer1Max: 100,
-    slope,
-    phenologyBoost: 0,
-    status,
-    transitionAdvice
-  };
-}
-
-// Helper to filter out sudden downward or upward spikes (cloud shadows / sensor anomalies)
-function filterNDVIOutliers(history: any[]): any[] {
-  if (history.length < 3) return history;
-  const filtered: any[] = [];
+// Helper to filter out sudden spikes in NDVI (cloud shadow / sensor anomaly)
+function filterNDVIOutliers(records: NDVIRecord[]): NDVIRecord[] {
+  if (records.length < 3) return records;
+  const filtered: NDVIRecord[] = [];
   
   // Keep first point
-  filtered.push(history[0]);
+  filtered.push(records[0]);
   
-  for (let i = 1; i < history.length - 1; i++) {
-    const prev = history[i - 1].data.mean;
-    const cur = history[i].data.mean;
-    const next = history[i + 1].data.mean;
+  for (let i = 1; i < records.length - 1; i++) {
+    const prev = records[i - 1].ndvi;
+    const cur = records[i].ndvi;
+    const next = records[i + 1].ndvi;
     
     // Cloud/Shadow signature: drop of > 0.12 followed by recovery
     const isCloudDrop = (prev - cur > 0.12) && (next - cur > 0.12);
@@ -120,68 +23,39 @@ function filterNDVIOutliers(history: any[]): any[] {
     const isSensorSpike = (cur - prev > 0.15) && (cur - next > 0.15);
     
     if (!isCloudDrop && !isSensorSpike) {
-      filtered.push(history[i]);
-    } else {
-      console.log(`Filtered out NDVI outlier: ${cur} on ${new Date(history[i].dt * 1000).toISOString().slice(0, 10)}`);
+      filtered.push(records[i]);
     }
   }
   
   // Keep last point
-  filtered.push(history[history.length - 1]);
+  filtered.push(records[records.length - 1]);
   return filtered;
 }
 
-// Helper to calculate 10-day moving average from a list of readings
-function calculate10DayAvg(history: any[], targetUnix: number): number {
-  const tenDaysSec = 10 * 24 * 60 * 60;
-  const windowStart = targetUnix - tenDaysSec;
-  const pointsInWindow = history.filter(pt => pt.dt >= windowStart && pt.dt <= targetUnix);
-  
-  if (pointsInWindow.length > 0) {
-    const sum = pointsInWindow.reduce((acc, val) => acc + val.data.mean, 0);
-    return sum / pointsInWindow.length;
-  }
-  
-  // Fallback: find the closest point before targetUnix
-  const pointsBefore = history.filter(pt => pt.dt <= targetUnix);
-  if (pointsBefore.length > 0) {
-    return pointsBefore[pointsBefore.length - 1].data.mean;
-  }
-  
-  return 0.5; // Final default fallback
-}
-
-// 3. Inlined Fallback Baseline Database
+// Fallback baseline monthly values
 const defaultBaselines: Record<string, number> = {
-  "1": 0.35,
-  "2": 0.38,
-  "3": 0.45,
-  "4": 0.58,
-  "5": 0.72,
-  "6": 0.78,
-  "7": 0.74,
-  "8": 0.65,
-  "9": 0.55,
-  "10": 0.46,
-  "11": 0.38,
-  "12": 0.34
+  "1": 0.35, "2": 0.38, "3": 0.45, "4": 0.58, "5": 0.72,
+  "6": 0.78, "7": 0.74, "8": 0.65, "9": 0.55, "10": 0.46,
+  "11": 0.38, "12": 0.34
 };
 
-// Helper to linearly interpolate monthly baselines into smooth daily/weekly values
-function getInterpolatedNDVI(date: Date, isSouthern: boolean = false): number {
+// Fallback linear interpolation for daily mock NDVI
+function getInterpolatedNDVI(date: Date, lat: number = 39, lng: number = -98): number {
+  const isSouthern = lat < 0;
+  const absLat = Math.abs(lat);
+  
+  const hash = Math.sin(lat * 12.9898 + lng * 78.233) * 43758.5453;
+  const coordOffset = (hash - Math.floor(hash)) * 0.06 - 0.03;
+  const amplitudeOffset = ((hash * 10 - Math.floor(hash * 10)) * 0.1) - 0.05;
+  
+  const latContrast = (absLat - 38) * 0.003; 
+  const springDelay = Math.round((absLat - 38) * 0.7);
+  
   const midpoints = [
-    { day: 15, val: 0.35 },   // Jan
-    { day: 45, val: 0.38 },   // Feb
-    { day: 74, val: 0.45 },   // Mar
-    { day: 105, val: 0.58 },  // Apr
-    { day: 135, val: 0.72 },  // May
-    { day: 166, val: 0.78 },  // Jun
-    { day: 196, val: 0.74 },  // Jul
-    { day: 227, val: 0.65 },  // Aug
-    { day: 258, val: 0.55 },  // Sep
-    { day: 288, val: 0.46 },  // Oct
-    { day: 319, val: 0.38 },  // Nov
-    { day: 349, val: 0.34 }   // Dec
+    { day: 15, val: 0.35 }, { day: 45, val: 0.38 }, { day: 74, val: 0.45 },
+    { day: 105, val: 0.58 }, { day: 135, val: 0.72 }, { day: 166, val: 0.78 },
+    { day: 196, val: 0.74 }, { day: 227, val: 0.65 }, { day: 258, val: 0.55 },
+    { day: 288, val: 0.46 }, { day: 319, val: 0.38 }, { day: 349, val: 0.34 }
   ];
 
   let lookupDate = date;
@@ -193,20 +67,43 @@ function getInterpolatedNDVI(date: Date, isSouthern: boolean = false): number {
   const startOfYear = new Date(lookupDate.getFullYear(), 0, 1);
   const diff = lookupDate.getTime() - startOfYear.getTime();
   const oneDay = 24 * 60 * 60 * 1000;
-  const dayOfYear = Math.floor(diff / oneDay);
+  const baseDayOfYear = Math.floor(diff / oneDay);
+  
+  let dayOfYear = baseDayOfYear - springDelay;
+  if (dayOfYear < 1) dayOfYear += 365;
+  if (dayOfYear > 365) dayOfYear -= 365;
+
+  const getAdjustedVal = (baseVal: number, day: number) => {
+    const isSummerMonth = day > 120 && day < 270;
+    let newVal = baseVal;
+    if (isSummerMonth) {
+      newVal = baseVal + latContrast + coordOffset + amplitudeOffset;
+    } else {
+      newVal = baseVal - latContrast + coordOffset;
+    }
+    return Math.min(0.88, Math.max(0.18, newVal));
+  };
+
+  const adjJan = getAdjustedVal(0.35, 15);
+  const adjDec = getAdjustedVal(0.34, 349);
 
   if (dayOfYear <= 15) {
     const t = (dayOfYear + (365 - 349)) / (15 + (365 - 349));
-    return 0.34 + t * (0.35 - 0.34);
+    return adjDec + t * (adjJan - adjDec);
   }
   if (dayOfYear >= 349) {
     const t = (dayOfYear - 349) / (365 - 349 + 15);
-    return 0.34 + t * (0.35 - 0.34);
+    return adjDec + t * (adjJan - adjDec);
   }
 
-  for (let i = 0; i < midpoints.length - 1; i++) {
-    const m1 = midpoints[i];
-    const m2 = midpoints[i + 1];
+  const adjustedMidpoints = midpoints.map(m => ({
+    day: m.day,
+    val: getAdjustedVal(m.val, m.day)
+  }));
+
+  for (let i = 0; i < adjustedMidpoints.length - 1; i++) {
+    const m1 = adjustedMidpoints[i];
+    const m2 = adjustedMidpoints[i + 1];
     if (dayOfYear >= m1.day && dayOfYear <= m2.day) {
       const t = (dayOfYear - m1.day) / (m2.day - m1.day);
       return m1.val + t * (m2.val - m1.val);
@@ -216,7 +113,130 @@ function getInterpolatedNDVI(date: Date, isSouthern: boolean = false): number {
   return 0.5;
 }
 
-// 4. Serverless Handler
+// Default regional plant profile
+const defaultPlantProfile: PlantProfileEntry[] = [
+  {
+    name: 'Spring Wildflowers & Dandelion',
+    bloom_start: '03-15',
+    bloom_peak: '04-30',
+    bloom_end: '06-15'
+  },
+  {
+    name: 'Clover & Alfalfa',
+    bloom_start: '05-01',
+    bloom_peak: '06-30',
+    bloom_end: '09-15'
+  },
+  {
+    name: 'Goldenrod & Aster',
+    bloom_start: '08-01',
+    bloom_peak: '09-15',
+    bloom_end: '11-15'
+  }
+];
+
+// Open-Meteo Weather Interfaces
+interface OpenMeteoDaily {
+  time: string[];
+  temperature_2m_max: (number | null)[];
+  temperature_2m_min: (number | null)[];
+  precipitation_sum: (number | null)[];
+  wind_speed_10m_max: (number | null)[];
+}
+
+interface WeatherDayRecord {
+  temp_max: number | null;
+  temp_min: number | null;
+  rain_sum: number | null;
+  wind_max: number | null;
+}
+
+/**
+ * Fetch and merge Open-Meteo weather data (Archive + Forecast)
+ */
+async function fetchOpenMeteoWeather(
+  lat: number,
+  lng: number,
+  startDateStr: string,
+  endDateStr: string
+): Promise<Record<string, WeatherDayRecord>> {
+  const weatherMap: Record<string, WeatherDayRecord> = {};
+
+  const today = new Date();
+  const archiveEnd = new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000); // 3 days ago
+  const archiveEndStr = archiveEnd.toISOString().slice(0, 10);
+  
+  // 1. Fetch Archive
+  let archiveData: OpenMeteoDaily | null = null;
+  let archiveErrorMsg = '';
+  try {
+    const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${startDateStr}&end_date=${archiveEndStr}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=auto`;
+    const res = await fetch(archiveUrl);
+    if (res.ok) {
+      const json = await res.json();
+      archiveData = json.daily;
+    } else {
+      archiveErrorMsg = `HTTP status ${res.status}`;
+    }
+  } catch (e: any) {
+    archiveErrorMsg = e.message || 'unknown network error';
+  }
+
+  if (!archiveData) {
+    throw new Error(`Open-Meteo Archive API failed to return data: ${archiveErrorMsg}`);
+  }
+
+  // 2. Fetch Forecast
+  let forecastData: OpenMeteoDaily | null = null;
+  let forecastErrorMsg = '';
+  try {
+    const forecastStart = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000); // 6 days ago (overlap)
+    const forecastStartStr = forecastStart.toISOString().slice(0, 10);
+    const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&start_date=${forecastStartStr}&end_date=${endDateStr}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=auto`;
+    const res = await fetch(forecastUrl);
+    if (res.ok) {
+      const json = await res.json();
+      forecastData = json.daily;
+    } else {
+      forecastErrorMsg = `HTTP status ${res.status}`;
+    }
+  } catch (e: any) {
+    forecastErrorMsg = e.message || 'unknown network error';
+  }
+
+  if (!forecastData) {
+    throw new Error(`Open-Meteo Forecast API failed to return data: ${forecastErrorMsg}`);
+  }
+
+  // Populate map with archive
+  if (archiveData) {
+    for (let i = 0; i < archiveData.time.length; i++) {
+      const d = archiveData.time[i];
+      weatherMap[d] = {
+        temp_max: archiveData.temperature_2m_max[i],
+        temp_min: archiveData.temperature_2m_min[i],
+        rain_sum: archiveData.precipitation_sum[i],
+        wind_max: archiveData.wind_speed_10m_max[i]
+      };
+    }
+  }
+
+  // Override/populate with forecast
+  if (forecastData) {
+    for (let i = 0; i < forecastData.time.length; i++) {
+      const d = forecastData.time[i];
+      weatherMap[d] = {
+        temp_max: forecastData.temperature_2m_max[i],
+        temp_min: forecastData.temperature_2m_min[i],
+        rain_sum: forecastData.precipitation_sum[i],
+        wind_max: forecastData.wind_speed_10m_max[i]
+      };
+    }
+  }
+
+  return weatherMap;
+}
+
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -235,9 +255,6 @@ export default async function handler(req: any, res: any) {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
-
-  let polygonId: string | null = null;
-  const apiKey = process.env.AGRO_API_KEY;
 
   try {
     const isGet = req.method === 'GET';
@@ -262,231 +279,246 @@ export default async function handler(req: any, res: any) {
       ? parseFloat(cachedBaselineRaw)
       : null;
 
-    if (!apiKey) {
-      res.status(500).json({ error: 'Agromonitoring API key not configured on server.' });
-      return;
+    const end = new Date();
+    const start = new Date(end.getTime() - 365 * 24 * 60 * 60 * 1000);
+    const startDateStr = start.toISOString().slice(0, 10);
+    const endDateStr = end.toISOString().slice(0, 10);
+
+    // 1. Fetch Weather from Open-Meteo
+    const weatherMap = await fetchOpenMeteoWeather(lat, lng, startDateStr, endDateStr);
+
+    // 2. Fetch NDVI from Earth Engine (or use climate model mock fallback if it fails/empty)
+    let ndviRecords: NDVIRecord[] = [];
+    let isMock = false;
+
+    if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+      ndviRecords = await fetchNDVI({
+        lat,
+        lon: lng,
+        radius_km: 1.6,
+        start_date: startDateStr,
+        end_date: endDateStr,
+        dataset: 'sentinel2',
+        smoothing: 'none'
+      });
     }
 
-    let baselineNDVI = cachedBaseline;
-    let currentNDVI = 0.6;
-    let previousNDVI = 0.6;
-    let isHistoryQueried = false;
-    let isPolygonCreated = false;
-
-
-
-    const currentEndUnix = Math.floor(Date.now() / 1000);
-    const start365Unix = currentEndUnix - 365 * 24 * 60 * 60; // 365 days
-
-    let currentJson: any[] = [];
-    let currentRespOk = false;
-
-    // 2. Find or Create Agromonitoring Polygon
-    const geojson = generateCirclePolygon(lat, lng, 1.0); // 1.0 mile foraging radius
-    let matchedPolyId: string | null = null;
-    let shouldCreateNewPolygon = true;
-
-    try {
-      // Query existing active polygons
-      const listResp = await fetch(
-        `https://api.agromonitoring.com/agro/1.0/polygons?appid=${apiKey}`
-      );
-      if (listResp.ok) {
-        const polygons = await listResp.json();
-        if (polygons && polygons.length > 0) {
-          for (const poly of polygons) {
-            if (poly.properties && poly.properties.center) {
-              const [polyLng, polyLat] = poly.properties.center;
-              // Check if coordinates match closely (within ~11 meters / 0.0001 deg)
-              const distance = Math.sqrt(Math.pow(polyLat - lat, 2) + Math.pow(polyLng - lng, 2));
-              if (distance < 0.0001) {
-                matchedPolyId = poly.id;
-                shouldCreateNewPolygon = false;
-                console.log(`Reusing existing matching polygon ${poly.id} for location [${lat}, ${lng}]`);
-                break;
-              }
-            }
-          }
-
-          // If no matching polygon but we have active ones, delete them to stay within 1-polygon limit
-          if (shouldCreateNewPolygon) {
-            for (const poly of polygons) {
-              console.log(`Deleting non-matching polygon ${poly.id} to respect free-tier quota...`);
-              await fetch(
-                `https://api.agromonitoring.com/agro/1.0/polygons/${poly.id}?appid=${apiKey}`,
-                { method: 'DELETE' }
-              );
-            }
-          }
-        }
-      } else {
-        const errText = await listResp.text();
-        console.error(`Failed to list active polygons: ${errText}`);
-      }
-
-      if (shouldCreateNewPolygon) {
-        const polyResp = await fetch(
-          `https://api.agromonitoring.com/agro/1.0/polygons?appid=${apiKey}&duplicated=true`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: `NFI_Persist_${Date.now()}`, geo_json: geojson }),
-          }
-        );
-
-        if (polyResp.ok) {
-          const polyData = await polyResp.json();
-          polygonId = polyData.id;
-          isPolygonCreated = true;
-          console.log(`Created new persistent polygon: ${polygonId}`);
-        } else {
-          const text = await polyResp.text();
-          console.error(`Polygon registration failed: ${text}. Falling back to static baseline.`);
-        }
-      } else {
-        polygonId = matchedPolyId;
-        isPolygonCreated = false;
-      }
-    } catch (err: any) {
-      console.error(`Polygon management failed: ${err.message}. Falling back to static baseline.`);
-    }
-
-    // 3. Fetch 1-Year NDVI History from Agromonitoring
-    if (polygonId) {
-      const maxAttempts = isPolygonCreated ? 5 : 1;
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        const currentResp = await fetch(
-          `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${start365Unix}&end=${currentEndUnix}&appid=${apiKey}`
-        );
-        
-        if (currentResp.ok) {
-          currentJson = await currentResp.json();
-          if (currentJson && currentJson.length > 0) {
-            currentRespOk = true;
-            currentJson.sort((a: any, b: any) => a.dt - b.dt);
-            currentJson = filterNDVIOutliers(currentJson);
-            console.log(`Successfully fetched and outlier-filtered 1-Year NDVI history.`);
-            break;
-          }
-        } else {
-          const text = await currentResp.text();
-          console.warn(`1-Year NDVI history attempt ${attempt} failed: ${text}`);
-        }
-
-        if (attempt < maxAttempts) {
-          console.log(`1-Year NDVI history empty/failed. Retrying in 1.5s (attempt ${attempt + 1}/${maxAttempts})...`);
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-        }
-      }
-    }
-
-    const isSouthern = lat < 0;
-
-    // 4. Determine Baseline, Current and Previous NDVI values
-    if (currentRespOk && currentJson && currentJson.length > 0) {
-      currentNDVI = calculate10DayAvg(currentJson, currentEndUnix);
-      previousNDVI = calculate10DayAvg(currentJson, currentEndUnix - 7 * 24 * 60 * 60);
-      
-      if (baselineNDVI === undefined || baselineNDVI === null) {
-        // Dynamic Baseline: Find the lowest NDVI value in the outlier-filtered 1-Year history
-        const minPt = currentJson.reduce((min, pt) => pt.data.mean < min.data.mean ? pt : min, currentJson[0]);
-        baselineNDVI = minPt.data.mean;
-        console.log(`Dynamic baseline NDVI determined from 1-Year history minimum: ${baselineNDVI} on ${new Date(minPt.dt * 1000).toISOString().slice(0, 10)}`);
-        isHistoryQueried = true;
-      }
+    if (ndviRecords.length === 0) {
+      throw new Error('Google Earth Engine could not retrieve any vegetation data for this location. Please check your service account key and confirm that the Google Earth Engine API is enabled for the project in GCP console.');
     } else {
-      currentNDVI = getInterpolatedNDVI(new Date(), isSouthern);
-      const prevDate = new Date();
-      prevDate.setDate(prevDate.getDate() - 7);
-      previousNDVI = getInterpolatedNDVI(prevDate, isSouthern);
-      
-      if (baselineNDVI === undefined || baselineNDVI === null) {
-        // Fallback baseline: Winter low (July 15 for South, Jan 15 for North)
-        const baselineDate = new Date(new Date().getFullYear(), isSouthern ? 6 : 0, 15);
-        baselineNDVI = getInterpolatedNDVI(baselineDate, isSouthern);
-      }
+      ndviRecords = filterNDVIOutliers(ndviRecords);
     }
 
-    // 5. Calculate current NFI via engine
-    const breakdown = calculateNFI(
-      currentNDVI,
-      baselineNDVI,
-      previousNDVI
-    );
+    // Sort NDVI records chronologically to ensure chronological processing
+    ndviRecords.sort((a, b) => a.date.localeCompare(b.date));
 
-    // 6. Construct 1-Year NFI History from NDVI History
-    const dailyNFIs: { date: string; nfi: number }[] = [];
+    // Determine baseline (min) and max NDVI for the year
+    const ndviVals = ndviRecords.map(r => r.ndvi);
+    const baselineNDVI = cachedBaseline ?? (ndviVals.length > 0 ? Math.min(...ndviVals) : 0.35);
+    const maxNDVI = ndviVals.length > 0 ? Math.max(...ndviVals) : 0.85;
 
-    if (currentRespOk && currentJson && currentJson.length > 0) {
-      currentJson.sort((a: any, b: any) => a.dt - b.dt);
-      
-      for (const pt of currentJson) {
-        const dateStr = new Date(pt.dt * 1000).toISOString().slice(0, 10);
-        const currentMA = calculate10DayAvg(currentJson, pt.dt);
-        const prevMA = calculate10DayAvg(currentJson, pt.dt - 7 * 24 * 60 * 60);
-        
-        const ptBreakdown = calculateNFI(currentMA, baselineNDVI, prevMA);
-        dailyNFIs.push({
-          date: dateStr,
-          nfi: ptBreakdown.nfi
-        });
+    // 3. Compile daily environments list
+    const dailyEnvironmentHistory: DailyEnvironment[] = ndviRecords.map((ndviRec, idx) => {
+      const dateStr = ndviRec.date;
+      const weatherVal = weatherMap[dateStr];
+
+      // Calculate bloom factor
+      const bloomResult = computeBloomFactor({
+        date: dateStr,
+        lat,
+        lon: lng,
+        plant_profile: defaultPlantProfile
+      });
+
+      // Calculate rain in the past 7 days (rolling sum)
+      let rain_last_7_days: number | null = null;
+      if (weatherVal) {
+        let sum = 0;
+        let validDays = 0;
+        for (let i = Math.max(0, idx - 6); i <= idx; i++) {
+          const recDate = ndviRecords[i].date;
+          const w = weatherMap[recDate];
+          if (w && w.rain_sum !== null && w.rain_sum !== undefined) {
+            sum += w.rain_sum;
+            validDays++;
+          }
+        }
+        if (validDays > 0) {
+          rain_last_7_days = sum;
+        }
+      }
+
+      // Calculate weather suitability
+      const weatherInput: WeatherSuitabilityInput = {
+        date: dateStr,
+        lat,
+        lon: lng,
+        temperature_max: weatherVal?.temp_max,
+        temperature_min: weatherVal?.temp_min,
+        rain_last_7_days,
+        wind_speed_avg: weatherVal?.wind_max,
+        drought_index: null // Omit drought index (let USDM penalty be null/ignored)
+      };
+
+      const suitResult = computeWeatherSuitability(weatherInput);
+
+      return {
+        date: dateStr,
+        ndvi: ndviRec.ndvi,
+        ndvi_min: baselineNDVI,
+        ndvi_max: maxNDVI,
+        bloom_factor: bloomResult.bloom_factor,
+        temp_suitability: suitResult.temp_suitability,
+        rain_suitability: suitResult.rain_suitability,
+        wind_suitability: suitResult.wind_suitability
+      };
+    });
+
+    // 4. Compute Nectar Status History
+    const mockApiary: Apiary = {
+      id: 'active',
+      name: 'Active Apiary',
+      lat,
+      lon: lng,
+      forage_radius_km: 1.6
+    };
+
+    const statusHistory = computeNectarStatus(mockApiary, dailyEnvironmentHistory);
+
+    // Latest status calculations
+    const latestStatus = statusHistory[statusHistory.length - 1];
+    const latestEnv = dailyEnvironmentHistory[dailyEnvironmentHistory.length - 1];
+    const latestWeatherVal = weatherMap[latestStatus.date];
+
+    // Compute rain_last_7_days today
+    let rain_last_7_days_today: number | null = null;
+    let sumRain = 0;
+    let validRainDays = 0;
+    for (let i = Math.max(0, dailyEnvironmentHistory.length - 7); i < dailyEnvironmentHistory.length; i++) {
+      const recDate = dailyEnvironmentHistory[i].date;
+      const w = weatherMap[recDate];
+      if (w && w.rain_sum !== null && w.rain_sum !== undefined) {
+        sumRain += w.rain_sum;
+        validRainDays++;
       }
     }
+    if (validRainDays > 0) {
+      rain_last_7_days_today = sumRain;
+    }
 
-    // 7. Group the NFI values into weekly averages
+    const nfi = latestStatus.forage_index_smoothed !== null 
+      ? Math.round(latestStatus.forage_index_smoothed * 100) 
+      : 0;
+    const slope = latestStatus.delta_forage !== null ? latestStatus.delta_forage : 0;
+
+    let trend_direction: 'rising' | 'falling' | 'flat' = 'flat';
+    if (slope > 0.01) {
+      trend_direction = 'rising';
+    } else if (slope < -0.01) {
+      trend_direction = 'falling';
+    }
+
+    // Map UI statuses for backward-compatibility
+    let uiStatus: 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low' = 'Stable Low';
+    let transitionAdvice = 'Transition state. Monitor forage levels and colony strength.';
+
+    switch (latestStatus.phase) {
+      case 'IN_FLOW':
+        uiStatus = 'Peak Flow';
+        transitionAdvice = 'Peak nectar flow is active. Ensure honey supers are in place. Colony is actively storing surplus honey.';
+        break;
+      case 'FLOW_STARTING':
+        uiStatus = 'Pre-Flow';
+        transitionAdvice = 'Nectar flow is starting. Queen egg-laying is stimulated. Colony is building comb and expanding the brood nest. Queen cells and swarm preparation risk are rising.';
+        break;
+      case 'FLOW_ENDING':
+        uiStatus = 'Flow Ending';
+        transitionAdvice = 'Nectar flow is shutting down rapidly. Queen egg-laying will slow down. Robbing behavior may rise; check honey stores.';
+        break;
+      case 'DEARTH':
+        uiStatus = 'Dearth';
+        transitionAdvice = 'Colony is in a dearth. Monitor food reserves closely. Supplemental feeding may be required to maintain colony strength.';
+        break;
+      case 'TRANSITION':
+      default:
+        uiStatus = 'Stable Low';
+        transitionAdvice = 'Transition state. Monitor forage levels and colony strength.';
+        break;
+    }
+
+    // Weekly history mapping (chunking daily index to approx weekly)
     const weeklyHistory: { date: string; nfi: number }[] = [];
-    if (dailyNFIs.length > 0) {
-      dailyNFIs.sort((a, b) => a.date.localeCompare(b.date));
-      // Chunk into blocks of 2 (approx weekly since satellite is every 3-5 days)
-      for (let i = 0; i < dailyNFIs.length; i += 2) {
-        const slice = dailyNFIs.slice(i, Math.min(i + 2, dailyNFIs.length));
-        const sum = slice.reduce((acc, val) => acc + val.nfi, 0);
-        const avg = Math.round(sum / slice.length);
+    for (let i = 0; i < statusHistory.length; i += 7) {
+      const slice = statusHistory.slice(i, Math.min(i + 7, statusHistory.length));
+      const validPoints = slice.filter(pt => pt.forage_index_smoothed !== null);
+      if (validPoints.length > 0) {
+        const sum = validPoints.reduce((acc, val) => acc + val.forage_index_smoothed!, 0);
+        const avg = Math.round((sum / validPoints.length) * 100);
         weeklyHistory.push({
           date: slice[slice.length - 1].date,
           nfi: avg
         });
       }
-    } else {
-      // Fallback: Generate mock history based on monthly default baselines with linear midpoint interpolation for smooth curves
-      const now = new Date();
-      const isSouthern = lat < 0;
-      for (let i = 52; i >= 0; i--) {
-        const d = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
-        const baselineVal = getInterpolatedNDVI(new Date(d.getFullYear(), isSouthern ? 6 : 0, 15), isSouthern); // mid-winter baseline
-        const curVal = getInterpolatedNDVI(d, isSouthern);
-        
-        const prevDate = new Date(d);
-        prevDate.setDate(prevDate.getDate() - 7); // 7 days ago
-        const prevVal = getInterpolatedNDVI(prevDate, isSouthern);
-        
-        const mockBreakdown = calculateNFI(curVal, baselineVal, prevVal);
-        weeklyHistory.push({
-          date: d.toISOString().slice(0, 10),
-          nfi: mockBreakdown.nfi
-        });
-      }
     }
 
-    // 8. Return response
+    // 5. Return complete response payload
     if (req.method === 'GET') {
       res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600');
     }
+
     res.status(200).json({
+      // Backward compatibility fields
       polygonId: null,
       baselineNDVI,
-      currentNDVI,
-      previousNDVI,
-      ndviRawLatest: currentJson && currentJson.length > 0 ? currentJson[currentJson.length - 1].data.mean : currentNDVI,
-      nfi: breakdown.nfi,
-      status: breakdown.status,
-      slope: breakdown.slope,
-      transitionAdvice: breakdown.transitionAdvice,
-      breakdown,
-      isHistoryQueried,
-      isPolygonCreated,
-      isMock: !currentRespOk || currentJson.length === 0,
-      history: weeklyHistory
+      currentNDVI: latestEnv.ndvi ?? 0.6,
+      previousNDVI: dailyEnvironmentHistory.length > 7 ? dailyEnvironmentHistory[dailyEnvironmentHistory.length - 8].ndvi ?? 0.6 : 0.6,
+      ndviRawLatest: latestEnv.ndvi ?? 0.6,
+      nfi,
+      status: uiStatus,
+      slope,
+      transitionAdvice,
+      isHistoryQueried: true,
+      isPolygonCreated: false,
+      isMock,
+      history: weeklyHistory,
+
+      // New UI Data Binding fields
+      phase: latestStatus.phase,
+      ndvi_normalized: latestEnv.ndvi !== null && baselineNDVI !== null && maxNDVI !== null && (maxNDVI - baselineNDVI) > 0
+        ? Math.min(1.0, Math.max(0.0, (latestEnv.ndvi! - baselineNDVI) / (maxNDVI - baselineNDVI)))
+        : 0.0,
+      bloom_factor: latestEnv.bloom_factor ?? 0.0,
+      weather_suitability: latestEnv.temp_suitability !== null && latestEnv.rain_suitability !== null && latestEnv.wind_suitability !== null
+        ? Math.min(1.0, Math.max(0.0, latestEnv.temp_suitability! * latestEnv.rain_suitability! * latestEnv.wind_suitability!))
+        : null,
+      forage_index_smoothed: latestStatus.forage_index_smoothed,
+      delta_forage: latestStatus.delta_forage,
+      trend_direction,
+      ndvi_raw: latestEnv.ndvi,
+      temperature_max: latestWeatherVal?.temp_max,
+      temperature_min: latestWeatherVal?.temp_min,
+      rain_last_7_days: rain_last_7_days_today,
+      wind_speed_avg: latestWeatherVal?.wind_max,
+      breakdown: {
+        temp_suitability: latestEnv.temp_suitability,
+        rain_suitability: latestEnv.rain_suitability,
+        wind_suitability: latestEnv.wind_suitability,
+        vigor: latestEnv.ndvi !== null && baselineNDVI !== null && (maxNDVI - baselineNDVI) > 0
+          ? Math.min(1.0, Math.max(0.0, (latestEnv.ndvi! - baselineNDVI) / (maxNDVI - baselineNDVI)))
+          : 0.0
+      },
+      full_history: statusHistory.map((s, idx) => ({
+        date: s.date,
+        forage_index_smoothed: s.forage_index_smoothed,
+        phase: s.phase,
+        ndvi_normalized: dailyEnvironmentHistory[idx].ndvi !== null && baselineNDVI !== null && (maxNDVI - baselineNDVI) > 0
+          ? Math.min(1.0, Math.max(0.0, (dailyEnvironmentHistory[idx].ndvi! - baselineNDVI) / (maxNDVI - baselineNDVI)))
+          : 0.0,
+        bloom_factor: dailyEnvironmentHistory[idx].bloom_factor,
+        weather_suitability: dailyEnvironmentHistory[idx].temp_suitability !== null && dailyEnvironmentHistory[idx].rain_suitability !== null && dailyEnvironmentHistory[idx].wind_suitability !== null
+          ? Math.min(1.0, Math.max(0.0, dailyEnvironmentHistory[idx].temp_suitability! * dailyEnvironmentHistory[idx].rain_suitability! * dailyEnvironmentHistory[idx].wind_suitability!))
+          : null
+      }))
     });
 
   } catch (error: any) {
@@ -494,7 +526,5 @@ export default async function handler(req: any, res: any) {
     res.status(500).json({
       error: 'Failed to calculate Nectar Flow Index: ' + (error.message || 'Unknown error')
     });
-  } finally {
-    // Persistent polygon is preserved in AgroMonitoring to avoid recalculation/polling delays on subsequent calls
   }
 }

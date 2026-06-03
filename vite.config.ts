@@ -10,6 +10,11 @@ export default defineConfig({
   ],
   server: {
     proxy: {
+      '/api/nectar-index': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
       '/api': {
         target: 'https://beekeeper.beektools.com',
         changeOrigin: true,

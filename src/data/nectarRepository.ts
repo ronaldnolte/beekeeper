@@ -57,7 +57,8 @@ export async function fetchNectarIndex(
   const cachedResponseStr = localStorage.getItem(responseCacheKey);
   const cachedResponseTimeStr = localStorage.getItem(responseTimeCacheKey);
 
-  if (cachedResponseStr && cachedResponseTimeStr) {
+  // Bypass cache in development mode to ensure changes are always loaded fresh
+  if (cachedResponseStr && cachedResponseTimeStr && !import.meta.env.DEV) {
     const cachedTime = parseInt(cachedResponseTimeStr, 10);
     const now = Date.now();
     if (now - cachedTime < 3600000) { // 1 hour
@@ -87,14 +88,14 @@ export async function fetchNectarIndex(
   let cachedBaseline: number | null = null;
   const cachedBaselineYear = localStorage.getItem(baselineYearKey);
 
-  // Only use cached baseline if it was calculated in the current calendar year
-  if (cachedBaselineYear === currentYear.toString()) {
+  // Only use cached baseline if it was calculated in the current calendar year (skip in DEV mode)
+  if (cachedBaselineYear === currentYear.toString() && !import.meta.env.DEV) {
     const rawBaseline = localStorage.getItem(baselineKey);
     if (rawBaseline) {
       cachedBaseline = parseFloat(rawBaseline);
     }
   } else {
-    // Clear stale baseline cache for new years
+    // Clear stale baseline cache for new years or DEV mode
     localStorage.removeItem(baselineKey);
     localStorage.removeItem(baselineYearKey);
   }
@@ -140,13 +141,16 @@ export async function fetchNectarIndex(
     const data = (await response.json()) as NectarIndexResponse;
 
     // Persist baseline and full response to localStorage cache
-    if (data.baselineNDVI !== undefined && data.baselineNDVI !== null) {
+    if (data.baselineNDVI !== undefined && data.baselineNDVI !== null && !isNaN(data.baselineNDVI)) {
       localStorage.setItem(baselineKey, data.baselineNDVI.toString());
       localStorage.setItem(baselineYearKey, currentYear.toString());
     }
 
-    localStorage.setItem(responseCacheKey, JSON.stringify(data));
-    localStorage.setItem(responseTimeCacheKey, Date.now().toString());
+    const hasNaN = isNaN(data.baselineNDVI) || isNaN(data.currentNDVI) || isNaN(data.nfi) || isNaN(data.slope);
+    if (!hasNaN) {
+      localStorage.setItem(responseCacheKey, JSON.stringify(data));
+      localStorage.setItem(responseTimeCacheKey, Date.now().toString());
+    }
 
     return data;
   } catch (err: any) {
