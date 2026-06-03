@@ -50,20 +50,16 @@ interface NFIBreakdown {
   ratio: number;
   layer1Score: number;
   layer1Max: number;
-  delta: number;
-  phenologyMultiplier: number;
-  tempMultiplier: number;
-  humidityMultiplier: number;
-  isWashout: boolean;
+  slope: number;
+  phenologyBoost: number;
+  status: 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low';
+  transitionAdvice: string;
 }
 
 function calculateNFI(
   currentNDVI: number,
   historicalNDVI: number,
-  previousNDVI: number,
-  tempF: number,
-  relativeHumidity: number,
-  _precipitationMm: number
+  previousNDVI: number
 ): NFIBreakdown {
   const ratio = historicalNDVI > 0 ? currentNDVI / historicalNDVI : 1.0;
   
@@ -76,54 +72,70 @@ function calculateNFI(
   
   const layer1Score = Math.min(ratio * 70, layer1Max);
 
-  const delta = currentNDVI - previousNDVI;
-  let phenologyMultiplier = 1.0;
+  const slope = currentNDVI - previousNDVI;
+  let phenologyBoost = 0;
   
-  if (delta > 0.03) {
-    phenologyMultiplier = 1.15;
-  } else if (delta < -0.05) {
-    phenologyMultiplier = 0.60;
+  if (slope > 0.005) {
+    phenologyBoost = 20; // Upward trend / startup boost
+  } else if (slope > 0.002) {
+    phenologyBoost = 10;
+  } else if (slope < -0.010) {
+    phenologyBoost = -40; // Steep downward trend / dearth penalty
+  } else if (slope < -0.005) {
+    phenologyBoost = -20; // Moderate downward trend / decline penalty
   }
 
-  const baseScore = layer1Score * phenologyMultiplier;
-
-  let tempMultiplier = 1.0;
-  if (tempF < 65 || tempF > 98) {
-    tempMultiplier = 0.2;
-  } else if (tempF >= 75 && tempF <= 88) {
-    tempMultiplier = 1.2;
-  } else if (tempF >= 65 && tempF < 75) {
-    tempMultiplier = 0.2 + ((tempF - 65) / 10) * 1.0;
-  } else if (tempF > 88 && tempF <= 98) {
-    tempMultiplier = 1.2 - ((tempF - 88) / 10) * 1.0;
-  }
-
-  // Humidity Modifier
-  // Optimal: >= 40% (no penalty)
-  // Low/Dry: 20% to 40% (linearly interpolate between 0.7 and 1.0)
-  // Extreme Dry: < 20% (0.7 multiplier max penalty, acknowledging desert plant adaptations)
-  let humidityMultiplier = 1.0;
-  if (relativeHumidity < 20) {
-    humidityMultiplier = 0.7;
-  } else if (relativeHumidity < 40) {
-    // Interpolate between 0.7 (at 20%) and 1.0 (at 40%)
-    humidityMultiplier = 0.7 + ((relativeHumidity - 20) / 20) * 0.3;
-  }
-
-  const rawNFI = baseScore * tempMultiplier * humidityMultiplier;
+  const rawNFI = layer1Score + phenologyBoost;
   const nfi = Math.min(100, Math.max(0, Math.round(rawNFI)));
+
+  // Classify status and advice
+  let status: 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low' = 'Stable Low';
+  let transitionAdvice = 'Stable low forage availability. Brood rearing is moderate. Monitor reserves.';
+
+  if (slope < -0.010) {
+    status = 'Flow Ending';
+    transitionAdvice = 'Nectar flow is shutting down rapidly. Queen egg-laying will slow down. Robbing behavior may rise; check honey stores.';
+  } else if (currentNDVI < 0.45 && Math.abs(slope) <= 0.005) {
+    status = 'Dearth';
+    transitionAdvice = 'Colony is in a dearth. Monitor food reserves closely. Supplemental feeding may be required to maintain colony strength.';
+  } else if (slope > 0.005) {
+    status = 'Pre-Flow';
+    transitionAdvice = 'Greening up rapidly. Queen egg-laying is stimulated. Colony is building comb and expanding the brood nest. Queen cells and swarm preparation risk are rising.';
+  } else if (ratio > 1.25 && Math.abs(slope) <= 0.005) {
+    status = 'Peak Flow';
+    transitionAdvice = 'Peak nectar flow is active. Ensure honey supers are in place. Colony is actively storing surplus honey.';
+  }
 
   return {
     nfi,
     ratio,
     layer1Score,
     layer1Max,
-    delta,
-    phenologyMultiplier,
-    tempMultiplier,
-    humidityMultiplier,
-    isWashout: false
+    slope,
+    phenologyBoost,
+    status,
+    transitionAdvice
   };
+}
+
+// Helper to calculate 14-day moving average from a list of readings
+function calculate14DayAvg(history: any[], targetUnix: number): number {
+  const fourteenDaysSec = 14 * 24 * 60 * 60;
+  const windowStart = targetUnix - fourteenDaysSec;
+  const pointsInWindow = history.filter(pt => pt.dt >= windowStart && pt.dt <= targetUnix);
+  
+  if (pointsInWindow.length > 0) {
+    const sum = pointsInWindow.reduce((acc, val) => acc + val.data.mean, 0);
+    return sum / pointsInWindow.length;
+  }
+  
+  // Fallback: find the closest point before targetUnix
+  const pointsBefore = history.filter(pt => pt.dt <= targetUnix);
+  if (pointsBefore.length > 0) {
+    return pointsBefore[pointsBefore.length - 1].data.mean;
+  }
+  
+  return 0.5; // Final default fallback
 }
 
 // 3. Inlined Fallback Baseline Database
@@ -192,17 +204,6 @@ export default async function handler(req: any, res: any) {
       res.status(500).json({ error: 'Agromonitoring API key not configured on server.' });
       return;
     }
-
-    // 1. Fetch current weather from Open-Meteo
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation&temperature_unit=fahrenheit&timezone=auto`;
-    const weatherResp = await fetch(weatherUrl);
-    if (!weatherResp.ok) {
-      throw new Error(`Failed to fetch weather data: ${weatherResp.statusText}`);
-    }
-    const weatherData = await weatherResp.json();
-    const currentTemp = weatherData.current.temperature_2m;
-    const currentRH = weatherData.current.relative_humidity_2m;
-    const currentRainMm = weatherData.current.precipitation; // mm
 
     let baselineNDVI = cachedBaseline;
     let currentNDVI = 0.6;
@@ -357,29 +358,8 @@ export default async function handler(req: any, res: any) {
     }
 
     if (currentRespOk && currentJson && currentJson.length > 0) {
-      currentJson.sort((a: any, b: any) => a.dt - b.dt);
-      
-      const latestReading = currentJson[currentJson.length - 1];
-      currentNDVI = latestReading.data.mean;
-
-      if (currentJson.length > 1) {
-        const latestDt = latestReading.dt;
-        const targetDt = latestDt - 8 * 24 * 60 * 60; // 8 days prior
-
-        let bestMatch = currentJson[0];
-        let bestDiff = Math.abs(bestMatch.dt - targetDt);
-
-        for (let i = 0; i < currentJson.length - 1; i++) {
-          const diff = Math.abs(currentJson[i].dt - targetDt);
-          if (diff < bestDiff) {
-            bestDiff = diff;
-            bestMatch = currentJson[i];
-          }
-        }
-        previousNDVI = bestMatch.data.mean;
-      } else {
-        previousNDVI = currentNDVI;
-      }
+      currentNDVI = calculate14DayAvg(currentJson, currentEndUnix);
+      previousNDVI = calculate14DayAvg(currentJson, currentEndUnix - 7 * 24 * 60 * 60);
     } else {
       currentNDVI = defaultBaselineForMonth;
       const prevDate = new Date();
@@ -392,105 +372,59 @@ export default async function handler(req: any, res: any) {
     const breakdown = calculateNFI(
       currentNDVI,
       baselineNDVI,
-      previousNDVI,
-      currentTemp,
-      currentRH,
-      currentRainMm
+      previousNDVI
     );
 
-    // 6. Fetch 1-Year Historical Weather from Open-Meteo Archive
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 365);
-    const startDateStr = startDate.toISOString().slice(0, 10);
-    const endDateStr = endDate.toISOString().slice(0, 10);
-
-    const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${startDateStr}&end_date=${endDateStr}&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,precipitation_sum&temperature_unit=fahrenheit&timezone=auto`;
-    const archiveResp = await fetch(archiveUrl);
-    
+    // 6. Construct 1-Year NFI History from NDVI History
     const dailyNFIs: { date: string; nfi: number }[] = [];
 
-    if (archiveResp.ok) {
-      const archiveData = await archiveResp.json();
-      if (archiveData.daily && archiveData.daily.time) {
-        const times = archiveData.daily.time as string[];
-        const tempMaxs = archiveData.daily.temperature_2m_max as number[];
-        const tempMins = archiveData.daily.temperature_2m_min as number[];
-        const humMeans = archiveData.daily.relative_humidity_2m_mean as number[];
-        const rainSums = archiveData.daily.precipitation_sum as number[];
-
-        for (let i = 0; i < times.length; i++) {
-          const dateStr = times[i];
-          const avgTemp = (tempMaxs[i] + tempMins[i]) / 2;
-          const avgHum = humMeans[i] || 50;
-          const rain = rainSums[i] || 0;
-
-          // Determine month of this specific day for correct fallback baseline
-          const dayDate = new Date(dateStr);
-          const dayMonth = dayDate.getMonth() + 1;
-          const dayDefaultBaseline = defaultBaselines[dayMonth.toString()] || 0.5;
-
-          // Find closest NDVI for this day (noon timestamp)
-          const targetDt = Math.floor(dayDate.getTime() / 1000);
-          
-          let dayNDVI = dayDefaultBaseline;
-          let bestDiff = Infinity;
-          if (currentJson && currentJson.length > 0) {
-            for (const pt of currentJson) {
-              const diff = Math.abs(pt.dt - targetDt);
-              if (diff < bestDiff) {
-                bestDiff = diff;
-                dayNDVI = pt.data.mean;
-              }
-            }
-          }
-
-          // Find previous NDVI (~8 days prior)
-          let dayPrevNDVI = dayNDVI;
-          let bestPrevDiff = Infinity;
-          if (currentJson && currentJson.length > 0) {
-            const prevTargetDt = targetDt - 8 * 24 * 60 * 60;
-            for (const pt of currentJson) {
-              const diff = Math.abs(pt.dt - prevTargetDt);
-              if (diff < bestPrevDiff) {
-                bestPrevDiff = diff;
-                dayPrevNDVI = pt.data.mean;
-              }
-            }
-          } else {
-            const prevDate = new Date(dayDate);
-            prevDate.setDate(prevDate.getDate() - 8);
-            const prevMonth = prevDate.getMonth() + 1;
-            dayPrevNDVI = defaultBaselines[prevMonth.toString()] || 0.5;
-          }
-
-          const dayBreakdown = calculateNFI(
-            dayNDVI,
-            baselineNDVI,
-            dayPrevNDVI,
-            avgTemp,
-            avgHum,
-            rain
-          );
-
-          dailyNFIs.push({
-            date: dateStr,
-            nfi: dayBreakdown.nfi
-          });
-        }
+    if (currentRespOk && currentJson && currentJson.length > 0) {
+      currentJson.sort((a: any, b: any) => a.dt - b.dt);
+      
+      for (const pt of currentJson) {
+        const dateStr = new Date(pt.dt * 1000).toISOString().slice(0, 10);
+        const currentMA = calculate14DayAvg(currentJson, pt.dt);
+        const prevMA = calculate14DayAvg(currentJson, pt.dt - 7 * 24 * 60 * 60);
+        
+        const ptBreakdown = calculateNFI(currentMA, baselineNDVI, prevMA);
+        dailyNFIs.push({
+          date: dateStr,
+          nfi: ptBreakdown.nfi
+        });
       }
     }
 
-    // 7. Group the 365 daily NFI values into 52 weekly averages
+    // 7. Group the NFI values into weekly averages
     const weeklyHistory: { date: string; nfi: number }[] = [];
-    for (let i = 0; i < dailyNFIs.length; i += 7) {
-      const slice = dailyNFIs.slice(i, i + 7);
-      if (slice.length > 0) {
+    if (dailyNFIs.length > 0) {
+      dailyNFIs.sort((a, b) => a.date.localeCompare(b.date));
+      // Chunk into blocks of 2 (approx weekly since satellite is every 3-5 days)
+      for (let i = 0; i < dailyNFIs.length; i += 2) {
+        const slice = dailyNFIs.slice(i, Math.min(i + 2, dailyNFIs.length));
         const sum = slice.reduce((acc, val) => acc + val.nfi, 0);
         const avg = Math.round(sum / slice.length);
         weeklyHistory.push({
           date: slice[slice.length - 1].date,
           nfi: avg
+        });
+      }
+    } else {
+      // Fallback: Generate mock history based on monthly default baselines
+      const now = new Date();
+      for (let i = 52; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
+        const m = d.getMonth() + 1;
+        const baselineVal = defaultBaselines["1"];
+        const curVal = defaultBaselines[m.toString()] || 0.5;
+        
+        const prevD = new Date(d.getTime() - 28 * 24 * 60 * 60 * 1000);
+        const prevM = prevD.getMonth() + 1;
+        const prevVal = defaultBaselines[prevM.toString()] || 0.5;
+        
+        const mockBreakdown = calculateNFI(curVal, baselineVal, prevVal);
+        weeklyHistory.push({
+          date: d.toISOString().slice(0, 10),
+          nfi: mockBreakdown.nfi
         });
       }
     }
@@ -500,20 +434,19 @@ export default async function handler(req: any, res: any) {
       res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600');
     }
     res.status(200).json({
-      polygonId: null, // Polygon is deleted immediately, so do not return an ID to cache
+      polygonId: null,
       baselineNDVI,
       currentNDVI,
       previousNDVI,
-      weather: {
-        tempF: currentTemp,
-        humidity: currentRH,
-        precipitationMm: currentRainMm
-      },
+      ndviRawLatest: currentJson && currentJson.length > 0 ? currentJson[currentJson.length - 1].data.mean : currentNDVI,
       nfi: breakdown.nfi,
+      status: breakdown.status,
+      slope: breakdown.slope,
+      transitionAdvice: breakdown.transitionAdvice,
       breakdown,
       isHistoryQueried,
       isPolygonCreated,
-      history: weeklyHistory // 52-week array
+      history: weeklyHistory
     });
 
   } catch (error: any) {

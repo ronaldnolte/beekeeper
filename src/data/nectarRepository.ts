@@ -8,22 +8,20 @@ export interface NectarIndexResponse {
   baselineNDVI: number;
   currentNDVI: number;
   previousNDVI: number;
-  weather: {
-    tempF: number;
-    humidity: number;
-    precipitationMm: number;
-  };
+  ndviRawLatest: number;
   nfi: number;
+  status: 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low';
+  slope: number;
+  transitionAdvice: string;
   breakdown: {
     nfi: number;
     ratio: number;
     layer1Score: number;
     layer1Max: number;
-    delta: number;
-    phenologyMultiplier: number;
-    tempMultiplier: number;
-    humidityMultiplier: number;
-    isWashout: boolean;
+    slope: number;
+    phenologyBoost: number;
+    status: 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low';
+    transitionAdvice: string;
   };
   isHistoryQueried: boolean;
   isPolygonCreated: boolean;

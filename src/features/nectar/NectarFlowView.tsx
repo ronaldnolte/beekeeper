@@ -3,7 +3,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { fetchNectarIndex } from '../../data/nectarRepository';
 import type { NectarIndexResponse } from '../../data/nectarRepository';
-import { ChevronDown, Droplets, Thermometer, CloudRain, Activity, Gauge, Flower, AlertTriangle, RefreshCw } from 'lucide-react';
+import { ChevronDown, Activity, Gauge, Flower, AlertTriangle, RefreshCw } from 'lucide-react';
 
 export const NectarFlowView: React.FC = () => {
   const { selectedApiaryId, apiariesList } = useAppStore();
@@ -83,13 +83,19 @@ export const NectarFlowView: React.FC = () => {
   };
 
   // UI Helper for status classification
-  const getIndexStatus = (score: number, isWashout: boolean) => {
-    if (isWashout) return { label: 'Washout (No Foraging)', color: 'text-red-500', bg: 'bg-red-500/10 border-red-500/20' };
-    if (score >= 80) return { label: 'Peak Nectar Flow', color: 'text-green-400', bg: 'bg-green-400/10 border-green-400/20' };
-    if (score >= 60) return { label: 'Strong Nectar Flow', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20' };
-    if (score >= 40) return { label: 'Moderate Flow', color: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-400/20' };
-    if (score >= 20) return { label: 'Low Flow / Alert', color: 'text-orange-400', bg: 'bg-orange-400/10 border-orange-400/20' };
-    return { label: 'Nectar Dearth', color: 'text-rose-500 font-extrabold', bg: 'bg-rose-500/10 border-rose-500/20' };
+  const getIndexStatus = (status: string) => {
+    switch (status) {
+      case 'Peak Flow':
+        return { label: 'Peak Nectar Flow', color: 'text-green-400', bg: 'bg-green-400/10 border-green-400/20' };
+      case 'Pre-Flow':
+        return { label: 'Flow Startup / Greening', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20' };
+      case 'Flow Ending':
+        return { label: 'Flow Ending / Alert', color: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-400/20' };
+      case 'Dearth':
+        return { label: 'Nectar Dearth', color: 'text-rose-500 font-extrabold', bg: 'bg-rose-500/10 border-rose-500/20' };
+      default:
+        return { label: 'Stable Low', color: 'text-orange-400', bg: 'bg-orange-400/10 border-orange-400/20' };
+    }
   };
 
   // Radial Gauge Math
@@ -205,8 +211,8 @@ export const NectarFlowView: React.FC = () => {
               </div>
 
               {/* Status Chip */}
-              <div className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border mb-4 ${getIndexStatus(score, data.breakdown.isWashout).bg} ${getIndexStatus(score, data.breakdown.isWashout).color}`}>
-                {getIndexStatus(score, data.breakdown.isWashout).label}
+              <div className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border mb-4 ${getIndexStatus(data.status).bg} ${getIndexStatus(data.status).color}`}>
+                {getIndexStatus(data.status).label}
               </div>
 
               {/* Radial Gauge SVG */}
@@ -383,23 +389,24 @@ export const NectarFlowView: React.FC = () => {
 
             {/* Weather & Satellite Columns Grid */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Weather Stats Card */}
+              {/* Colony Transitions Card */}
               <div className="bg-[#1a1a2e]/70 backdrop-blur-md rounded-3xl p-4 border border-[#2a2a4a] flex flex-col justify-between">
                 <div className="flex items-center gap-1.5 text-amber-500 font-extrabold text-xs mb-3">
-                  <Activity size={14} /> Weather Modifiers
+                  <Activity size={14} /> Colony Transition Analysis
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1 text-white/60 font-semibold"><Thermometer size={12} /> Temp</span>
-                    <span className="font-bold">{Math.round(data.weather.tempF)}°F</span>
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/60 font-semibold">State</span>
+                    <span className="font-bold text-amber-400">{data.status}</span>
                   </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1 text-white/60 font-semibold"><Droplets size={12} /> Humidity</span>
-                    <span className="font-bold">{data.weather.humidity}%</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/60 font-semibold">Weekly Slope</span>
+                    <span className={`font-bold ${data.slope > 0 ? 'text-green-400' : data.slope < 0 ? 'text-rose-400' : ''}`}>
+                      {data.slope > 0 ? '+' : ''}{data.slope.toFixed(4)}
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-1 text-white/60 font-semibold"><CloudRain size={12} /> Rainfall</span>
-                    <span className="font-bold">{data.weather.precipitationMm.toFixed(1)}mm</span>
+                  <div className="text-[10px] text-white/70 bg-[#111122]/50 p-2 rounded-lg border border-[#24243e] leading-relaxed mt-2 font-medium">
+                    {data.transitionAdvice}
                   </div>
                 </div>
               </div>
@@ -411,7 +418,7 @@ export const NectarFlowView: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/60 font-semibold">Current</span>
+                    <span className="text-white/60 font-semibold">14-Day Avg</span>
                     <span className="font-bold">{data.currentNDVI.toFixed(3)}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
@@ -420,8 +427,8 @@ export const NectarFlowView: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-white/60 font-semibold">Weekly Δ</span>
-                    <span className={`font-bold ${data.breakdown.delta > 0 ? 'text-green-400' : data.breakdown.delta < 0 ? 'text-rose-400' : ''}`}>
-                      {data.breakdown.delta > 0 ? '+' : ''}{data.breakdown.delta.toFixed(3)}
+                    <span className={`font-bold ${data.slope > 0 ? 'text-green-400' : data.slope < 0 ? 'text-rose-400' : ''}`}>
+                      {data.slope > 0 ? '+' : ''}{data.slope.toFixed(3)}
                     </span>
                   </div>
                 </div>
@@ -431,7 +438,7 @@ export const NectarFlowView: React.FC = () => {
             {/* Calculations Engine Detail Breakdown Accordion */}
             <div className="bg-[#1a1a2e]/70 backdrop-blur-md rounded-3xl p-5 border border-[#2a2a4a] shadow-xl space-y-4">
               <h4 className="text-xs uppercase font-extrabold tracking-wider text-amber-500">
-                3-Layer Engine Breakdown
+                Botanical & Trend Engine
               </h4>
 
               <div className="space-y-3.5">
@@ -444,58 +451,43 @@ export const NectarFlowView: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-[10px] text-white/50 mt-1 font-semibold leading-relaxed">
-                    Evaluates current vegetative index against historical baseline. 
+                    Compares the 14-day moving average NDVI against the historical dormant season baseline. 
                     {data.baselineNDVI < 0.70 
-                      ? ' Capped potential because local baseline is below 70% (sparse area).' 
+                      ? ' Capped potential because local baseline is below 0.70 (sparse area).' 
                       : ' Full forage potential allowed.'}
                   </p>
                 </div>
 
-                {/* Layer 2: Phenology Trigger */}
+                {/* Layer 2: Phenology Trend */}
                 <div className="flex flex-col text-xs border-b border-[#24243e] pb-3">
                   <div className="flex items-center justify-between font-bold">
-                    <span className="text-white/90">Layer 2: Seasonal Phenology Δ</span>
-                    <span className={`font-black ${data.breakdown.phenologyMultiplier > 1 ? 'text-green-400' : data.breakdown.phenologyMultiplier < 1 ? 'text-rose-400' : 'text-white/80'}`}>
-                      x{data.breakdown.phenologyMultiplier.toFixed(2)}
+                    <span className="text-white/90">Layer 2: Seasonal Phenology Delta (Slope)</span>
+                    <span className={`font-black ${data.slope > 0.002 ? 'text-green-400' : data.slope < -0.005 ? 'text-rose-400' : 'text-white/80'}`}>
+                      {data.slope > 0 ? '+' : ''}{data.slope.toFixed(4)}
                     </span>
                   </div>
                   <p className="text-[10px] text-white/50 mt-1 font-semibold leading-relaxed">
-                    Detects vegetative change.
-                    {data.breakdown.delta > 0.03 
-                      ? ' Boost (+15%) applied for rising growth/bloom surge.' 
-                      : data.breakdown.delta < -0.05 
-                        ? ' Penalty (-40%) applied for a steep decline (nectar dearth).' 
-                        : ' Neutral index: vegetation is stable.'}
+                    Measures the weekly direction of the NDVI curve.
+                    {data.slope > 0.005 
+                      ? ' Boost (+20) applied for a rapid greening/bloom surge.' 
+                      : data.slope > 0.002
+                        ? ' Boost (+10) applied for moderate growth.'
+                        : data.slope < -0.010 
+                          ? ' Penalty (-40) applied for steep vegetation drying (entering dearth).'
+                          : data.slope < -0.005
+                            ? ' Penalty (-20) applied for moderate seasonal decline.'
+                            : ' Stable trend: vegetation growth is flat.'}
                   </p>
                 </div>
 
-                {/* Layer 3: Weather Gatekeeper */}
+                {/* Layer 3: Colony Transition Impact */}
                 <div className="flex flex-col text-xs">
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex items-center justify-between font-bold">
-                      <span className="text-white/90">Layer 3: Weather Gatekeeper</span>
-                      <span className="font-semibold text-white/50">Multipliers</span>
-                    </div>
-                    {/* Temperature */}
-                    <div className="flex items-center justify-between text-[11px] font-semibold pl-2">
-                      <span className="text-white/60">Temperature Multiplier</span>
-                      <span className={`font-bold ${data.breakdown.tempMultiplier === 1.2 ? 'text-green-400' : data.breakdown.tempMultiplier === 0.2 ? 'text-rose-400' : 'text-white/80'}`}>
-                        x{data.breakdown.tempMultiplier.toFixed(1)}
-                      </span>
-                    </div>
-                    {/* Humidity */}
-                    <div className="flex items-center justify-between text-[11px] font-semibold pl-2">
-                      <span className="text-white/60">Humidity Multiplier</span>
-                      <span className={`font-bold ${data.breakdown.humidityMultiplier === 0.5 ? 'text-rose-400' : 'text-white/80'}`}>
-                        x{data.breakdown.humidityMultiplier.toFixed(1)}
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-white/90">Layer 3: Hive Biology Status</span>
+                    <span className="text-amber-400 font-black">{data.status}</span>
                   </div>
-                  <p className="text-[10px] text-white/50 mt-2 font-semibold leading-relaxed">
-                    Adjusts for plant secretion. 
-                    {data.breakdown.isWashout 
-                      ? ' Hard Foraging Washout active (Rain > 2mm). Score is forced to 0.' 
-                      : ` Optimal temp is 75-88°F. Current temp provides x${data.breakdown.tempMultiplier.toFixed(1)} modifier. ${data.weather.humidity < 35 ? 'Penalty (x0.5) applied because dry air is drying out nectar.' : 'Humidity is favorable.'}`}
+                  <p className="text-[10px] text-white/50 mt-1 font-semibold leading-relaxed">
+                    Calculates the colony's biological phase based on the combination of vegetative density (Layer 1) and growth momentum (Layer 2).
                   </p>
                 </div>
               </div>
