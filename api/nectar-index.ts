@@ -63,23 +63,32 @@ function calculateNFI(
 ): NFIBreakdown {
   const ratio = historicalNDVI > 0 ? currentNDVI / historicalNDVI : 1.0;
   
-  // Cap potential if baseline drops below 70% (0.70), but allow high absolute greenness to lift the cap
-  let layer1Max = 70;
-  if (historicalNDVI < 0.70) {
-    const localMax = (historicalNDVI / 0.70) * 70;
-    layer1Max = Math.max(localMax, Math.min(70, currentNDVI * 100));
-  }
+  // 1. Calculate Forage Biomass Base (Layer 1)
+  // Scale the greenness increase above the historical dormant baseline.
+  // We estimate the maximum possible greenup delta as (0.85 - baseline), capped at a minimum of 0.15 to avoid division by zero.
+  const maxPossibleDelta = Math.max(0.15, 0.85 - historicalNDVI);
+  const growthDelta = currentNDVI - historicalNDVI;
   
-  const layer1Score = Math.min(ratio * 70, layer1Max);
+  // Layer 1 score is out of 80 points.
+  const layer1Score = Math.max(0, Math.min(80, (growthDelta / maxPossibleDelta) * 80));
+  const layer1Max = 80;
 
+  // 2. Calculate Phenology Trend (Layer 2)
   const slope = currentNDVI - previousNDVI;
   let phenologyBoost = 0;
   
-  if (slope > 0.005) {
-    phenologyBoost = 20; // Upward trend / startup boost
-  } else if (slope > 0.002) {
-    phenologyBoost = 10;
-  } else if (slope < -0.010) {
+  // Apply positive phenology boosts only if the absolute greenness is above a dormant threshold (0.45).
+  // Tiny slope changes at low dormant levels are just winter cover crop fluctuations/noise.
+  if (currentNDVI >= 0.45) {
+    if (slope > 0.005) {
+      phenologyBoost = 20; // Upward trend / startup boost
+    } else if (slope > 0.002) {
+      phenologyBoost = 10;
+    }
+  }
+  
+  // Penalties are always active (though capped by NFI >= 0 floor)
+  if (slope < -0.010) {
     phenologyBoost = -40; // Steep downward trend / dearth penalty
   } else if (slope < -0.005) {
     phenologyBoost = -20; // Moderate downward trend / decline penalty
@@ -88,7 +97,7 @@ function calculateNFI(
   const rawNFI = layer1Score + phenologyBoost;
   const nfi = Math.min(100, Math.max(0, Math.round(rawNFI)));
 
-  // Classify status and advice
+  // 3. Classify Status & Advice (Layer 3)
   let status: 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low' = 'Stable Low';
   let transitionAdvice = 'Stable low forage availability. Brood rearing is moderate. Monitor reserves.';
 
@@ -98,10 +107,10 @@ function calculateNFI(
   } else if (currentNDVI < 0.45 && Math.abs(slope) <= 0.005) {
     status = 'Dearth';
     transitionAdvice = 'Colony is in a dearth. Monitor food reserves closely. Supplemental feeding may be required to maintain colony strength.';
-  } else if (slope > 0.005) {
+  } else if (slope > 0.005 && currentNDVI >= 0.45) {
     status = 'Pre-Flow';
     transitionAdvice = 'Greening up rapidly. Queen egg-laying is stimulated. Colony is building comb and expanding the brood nest. Queen cells and swarm preparation risk are rising.';
-  } else if (ratio > 1.25 && Math.abs(slope) <= 0.005) {
+  } else if (layer1Score >= 40 && Math.abs(slope) <= 0.005 && currentNDVI >= 0.45) {
     status = 'Peak Flow';
     transitionAdvice = 'Peak nectar flow is active. Ensure honey supers are in place. Colony is actively storing surplus honey.';
   }
@@ -417,8 +426,9 @@ export default async function handler(req: any, res: any) {
         const baselineVal = defaultBaselines["1"];
         const curVal = defaultBaselines[m.toString()] || 0.5;
         
-        const prevD = new Date(d.getTime() - 28 * 24 * 60 * 60 * 1000);
-        const prevM = prevD.getMonth() + 1;
+        const prevDate = new Date(d);
+        prevDate.setMonth(prevDate.getMonth() - 1);
+        const prevM = prevDate.getMonth() + 1;
         const prevVal = defaultBaselines[prevM.toString()] || 0.5;
         
         const mockBreakdown = calculateNFI(curVal, baselineVal, prevVal);
