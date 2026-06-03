@@ -87,6 +87,8 @@ export const NectarFlowView: React.FC = () => {
   };
 
   useEffect(() => {
+    setData(null);
+    setError(null);
     loadNFI(false);
   }, [selectedApiaryId]);
 
