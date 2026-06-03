@@ -1,7 +1,7 @@
-import { fetchNDVI, NDVIRecord } from './ndvi-fetcher';
-import { computeBloomFactor, PlantProfileEntry } from '../src/features/nectar/bloomFactor';
-import { computeWeatherSuitability, WeatherSuitabilityInput } from '../src/features/nectar/weatherSuitability';
-import { computeNectarStatus, Apiary, DailyEnvironment } from '../src/features/nectar/engine';
+import { fetchNDVI, NDVIRecord } from './ndvi-fetcher.js';
+import { computeBloomFactor, PlantProfileEntry } from '../src/features/nectar/bloomFactor.js';
+import { computeWeatherSuitability, WeatherSuitabilityInput } from '../src/features/nectar/weatherSuitability.js';
+import { computeNectarStatus, Apiary, DailyEnvironment } from '../src/features/nectar/engine.js';
 
 // Helper to filter out sudden spikes in NDVI (cloud shadow / sensor anomaly)
 function filterNDVIOutliers(records: NDVIRecord[]): NDVIRecord[] {
