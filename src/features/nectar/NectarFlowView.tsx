@@ -410,16 +410,16 @@ export const NectarFlowView: React.FC = () => {
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-white/60 font-semibold">State</span>
-                    <span className="font-bold text-amber-400">{data.status}</span>
+                    <span className="font-bold text-amber-400">{data.status ?? 'Stable Low'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-white/60 font-semibold">Weekly Slope</span>
-                    <span className={`font-bold ${data.slope > 0 ? 'text-green-400' : data.slope < 0 ? 'text-rose-400' : ''}`}>
-                      {data.slope > 0 ? '+' : ''}{data.slope.toFixed(4)}
+                    <span className={`font-bold ${(data.slope ?? 0) > 0 ? 'text-green-400' : (data.slope ?? 0) < 0 ? 'text-rose-400' : ''}`}>
+                      {(data.slope ?? 0) > 0 ? '+' : ''}{data.slope?.toFixed(4) ?? '0.0000'}
                     </span>
                   </div>
                   <div className="text-[10px] text-white/70 bg-[#111122]/50 p-2 rounded-lg border border-[#24243e] leading-relaxed mt-2 font-medium">
-                    {data.transitionAdvice}
+                    {data.transitionAdvice ?? 'No transition advice available.'}
                   </div>
                 </div>
               </div>
@@ -432,16 +432,16 @@ export const NectarFlowView: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-white/60 font-semibold">10-Day Avg</span>
-                    <span className="font-bold">{data.currentNDVI.toFixed(3)}</span>
+                    <span className="font-bold">{data.currentNDVI?.toFixed(3) ?? '0.000'}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-white/60 font-semibold">Baseline</span>
-                    <span className="font-bold">{data.baselineNDVI.toFixed(3)}</span>
+                    <span className="font-bold">{data.baselineNDVI?.toFixed(3) ?? '0.000'}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-white/60 font-semibold">Weekly Δ</span>
-                    <span className={`font-bold ${data.slope > 0 ? 'text-green-400' : data.slope < 0 ? 'text-rose-400' : ''}`}>
-                      {data.slope > 0 ? '+' : ''}{data.slope.toFixed(3)}
+                    <span className={`font-bold ${(data.slope ?? 0) > 0 ? 'text-green-400' : (data.slope ?? 0) < 0 ? 'text-rose-400' : ''}`}>
+                      {(data.slope ?? 0) > 0 ? '+' : ''}{data.slope?.toFixed(3) ?? '0.000'}
                     </span>
                   </div>
                 </div>
@@ -460,7 +460,7 @@ export const NectarFlowView: React.FC = () => {
                   <div className="flex items-center justify-between font-bold">
                     <span className="text-white/90">Layer 1: Vegetation Biomass Base</span>
                     <span className="text-amber-400 font-black">
-                      {data.breakdown.layer1Score.toFixed(0)}%
+                      {(data.breakdown?.layer1Score ?? 0).toFixed(0)}%
                     </span>
                   </div>
                   <p className="text-[10px] text-white/50 mt-1 font-semibold leading-relaxed">
@@ -472,8 +472,8 @@ export const NectarFlowView: React.FC = () => {
                 <div className="flex flex-col text-xs border-b border-[#24243e] pb-3">
                   <div className="flex items-center justify-between font-bold">
                     <span className="text-white/90">Layer 2: Botanical Growth Velocity (Slope)</span>
-                    <span className={`font-black ${data.slope > 0.005 ? 'text-green-400' : data.slope < -0.010 ? 'text-rose-400' : 'text-white/80'}`}>
-                      {data.slope > 0 ? '+' : ''}{data.slope.toFixed(4)}
+                    <span className={`font-black ${(data.slope ?? 0) > 0.005 ? 'text-green-400' : (data.slope ?? 0) < -0.010 ? 'text-rose-400' : 'text-white/80'}`}>
+                      {(data.slope ?? 0) > 0 ? '+' : ''}{data.slope?.toFixed(4) ?? '0.0000'}
                     </span>
                   </div>
                   <p className="text-[10px] text-white/50 mt-1 font-semibold leading-relaxed">
@@ -485,7 +485,7 @@ export const NectarFlowView: React.FC = () => {
                 <div className="flex flex-col text-xs">
                   <div className="flex items-center justify-between font-bold">
                     <span className="text-white/90">Layer 3: Colony Transition Phase</span>
-                    <span className="text-amber-400 font-black">{data.status}</span>
+                    <span className="text-amber-400 font-black">{data.status ?? 'Stable Low'}</span>
                   </div>
                   <p className="text-[10px] text-white/50 mt-1 font-semibold leading-relaxed">
                     Determines the colony's current transition state and recommended management actions based on the absolute biomass level and growth velocity.

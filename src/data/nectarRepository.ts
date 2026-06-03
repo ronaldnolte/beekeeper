@@ -63,8 +63,21 @@ export async function fetchNectarIndex(
     if (now - cachedTime < 3600000) { // 1 hour
       try {
         const cachedData = JSON.parse(cachedResponseStr) as NectarIndexResponse;
-        console.log(`Loaded cached Nectar Flow Index for apiary ${apiaryId} (cache age: ${Math.round((now - cachedTime) / 60000)} mins)`);
-        return cachedData;
+        // Validate the cache contains the new schema fields to prevent UI crashes
+        if (
+          cachedData &&
+          cachedData.breakdown &&
+          cachedData.status &&
+          typeof cachedData.slope === 'number' &&
+          Array.isArray(cachedData.history)
+        ) {
+          console.log(`Loaded cached Nectar Flow Index for apiary ${apiaryId} (cache age: ${Math.round((now - cachedTime) / 60000)} mins)`);
+          return cachedData;
+        } else {
+          console.warn(`Ignoring cached NFI response for apiary ${apiaryId} due to outdated or incomplete schema.`);
+          localStorage.removeItem(responseCacheKey);
+          localStorage.removeItem(responseTimeCacheKey);
+        }
       } catch (e) {
         console.error("Failed to parse cached NFI response:", e);
       }
