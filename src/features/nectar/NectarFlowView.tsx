@@ -292,6 +292,32 @@ export const NectarFlowView: React.FC = () => {
   return (
     <div className="w-full flex-1 overflow-hidden flex flex-col text-white bg-[#0a0a14] relative">
       
+      {/* Apiary Selector */}
+      {apiariesList.length > 1 && (
+        <div className="w-full bg-[#12121f] border-b border-[#2a2a4a] px-4 py-2.5 flex items-center gap-2 z-20">
+          <MapPin size={14} className="text-amber-500 flex-shrink-0" />
+          <select
+            id="nectar-apiary-selector"
+            value={selectedApiaryId || ''}
+            onChange={(e) => {
+              const selected = apiariesList.find(a => a.id === e.target.value);
+              if (selected) {
+                useAppStore.setState({ selectedApiaryId: selected.id, selectedApiaryName: selected.name });
+              }
+            }}
+            className="flex-1 bg-transparent text-white text-sm font-semibold outline-none cursor-pointer appearance-none border-none"
+            style={{ WebkitAppearance: 'none' }}
+          >
+            {apiariesList.map(a => (
+              <option key={a.id} value={a.id} className="bg-[#1a1a2e] text-white">
+                {a.name}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={14} className="text-slate-400 flex-shrink-0 pointer-events-none" />
+        </div>
+      )}
+
       {/* 2. TOP STATUS BANNER (Always Visible) */}
       <div className={`w-full ${colors.bg} ${colors.text} p-5 text-center shadow-lg transition-all duration-300 relative select-none z-10`}>
         <div className="absolute top-4 right-4">
