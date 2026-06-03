@@ -468,6 +468,7 @@ export default async function handler(req: any, res: any) {
       breakdown,
       isHistoryQueried,
       isPolygonCreated,
+      isMock: !currentRespOk || currentJson.length === 0,
       history: weeklyHistory
     });
 

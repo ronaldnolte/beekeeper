@@ -211,9 +211,15 @@ export const NectarFlowView: React.FC = () => {
               </div>
 
               {/* Status Chip */}
-              <div className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border mb-4 ${getIndexStatus(data.status).bg} ${getIndexStatus(data.status).color}`}>
+              <div className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border mb-3.5 ${getIndexStatus(data.status).bg} ${getIndexStatus(data.status).color}`}>
                 {getIndexStatus(data.status).label}
               </div>
+
+              {data.isMock && (
+                <div className="text-[10px] text-amber-500/80 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-md mb-4 text-center select-none">
+                  Estimated Climate Model (Satellite API Offline)
+                </div>
+              )}
 
               {/* Radial Gauge SVG */}
               <div className="relative w-40 h-40 flex items-center justify-center">
@@ -268,7 +274,14 @@ export const NectarFlowView: React.FC = () => {
             {data.history && data.history.length > 0 && (
               <div className="bg-[#1a1a2e]/70 backdrop-blur-md rounded-3xl p-5 border border-[#2a2a4a] shadow-xl w-full flex flex-col">
                 <div className="flex items-center justify-between text-xs uppercase font-extrabold tracking-wider text-amber-500 mb-3 select-none h-6">
-                  <span>1-Year Nectar Index Trend</span>
+                  <span>
+                    1-Year Nectar Index Trend
+                    {data.isMock && (
+                      <span className="text-[9px] text-amber-500/50 normal-case italic font-normal ml-1.5">
+                        (estimated model)
+                      </span>
+                    )}
+                  </span>
                   {hoveredIndex !== null && data.history[hoveredIndex] ? (
                     <span className="text-amber-400 font-extrabold text-[11px] normal-case bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 animate-in fade-in duration-200">
                       {new Date(data.history[hoveredIndex].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}: <strong className="text-white">{data.history[hoveredIndex].nfi} NFI</strong>

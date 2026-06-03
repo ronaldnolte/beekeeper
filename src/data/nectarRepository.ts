@@ -25,6 +25,7 @@ export interface NectarIndexResponse {
   };
   isHistoryQueried: boolean;
   isPolygonCreated: boolean;
+  isMock: boolean;
   history?: { date: string; nfi: number }[];
 }
 
