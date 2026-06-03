@@ -168,7 +168,7 @@ const defaultBaselines: Record<string, number> = {
 };
 
 // Helper to linearly interpolate monthly baselines into smooth daily/weekly values
-function getInterpolatedNDVI(date: Date): number {
+function getInterpolatedNDVI(date: Date, isSouthern: boolean = false): number {
   const midpoints = [
     { day: 15, val: 0.35 },   // Jan
     { day: 45, val: 0.38 },   // Feb
@@ -184,8 +184,14 @@ function getInterpolatedNDVI(date: Date): number {
     { day: 349, val: 0.34 }   // Dec
   ];
 
-  const startOfYear = new Date(date.getFullYear(), 0, 1);
-  const diff = date.getTime() - startOfYear.getTime();
+  let lookupDate = date;
+  if (isSouthern) {
+    lookupDate = new Date(date.getTime());
+    lookupDate.setMonth(lookupDate.getMonth() + 6);
+  }
+
+  const startOfYear = new Date(lookupDate.getFullYear(), 0, 1);
+  const diff = lookupDate.getTime() - startOfYear.getTime();
   const oneDay = 24 * 60 * 60 * 1000;
   const dayOfYear = Math.floor(diff / oneDay);
 
@@ -345,47 +351,7 @@ export default async function handler(req: any, res: any) {
       console.error(`Polygon management failed: ${err.message}. Falling back to static baseline.`);
     }
 
-    // 3. Obtain Baseline NDVI (if not cached and we have a valid polygonId)
-    if (polygonId && (baselineNDVI === undefined || baselineNDVI === null)) {
-      const currentYear = new Date().getFullYear();
-      const jan1Unix = Math.floor(new Date(`${currentYear}-01-01T00:00:00Z`).getTime() / 1000);
-      const jan31Unix = Math.floor(new Date(`${currentYear}-01-31T00:00:00Z`).getTime() / 1000);
-
-      // Retry/polling loop if polygon is newly created
-      const maxAttempts = isPolygonCreated ? 5 : 1;
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        const janResp = await fetch(
-          `https://api.agromonitoring.com/agro/1.0/ndvi/history?polyid=${polygonId}&start=${jan1Unix}&end=${jan31Unix}&appid=${apiKey}`
-        );
-
-        if (janResp.ok) {
-          const janJson = await janResp.json();
-          if (janJson && janJson.length > 0) {
-            const sum = janJson.reduce((acc: number, val: any) => acc + val.data.mean, 0);
-            baselineNDVI = sum / janJson.length;
-            console.log(`Successfully fetched baseline NDVI on attempt ${attempt}: ${baselineNDVI}`);
-            break;
-          }
-        } else {
-          const text = await janResp.text();
-          console.warn(`Baseline NDVI attempt ${attempt} failed: ${text}`);
-        }
-
-        if (attempt < maxAttempts) {
-          console.log(`Baseline NDVI empty/failed. Retrying in 1.5s (attempt ${attempt + 1}/${maxAttempts})...`);
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-        }
-      }
-
-      if (baselineNDVI === undefined || baselineNDVI === null) {
-        baselineNDVI = getInterpolatedNDVI(new Date(new Date().getFullYear(), 0, 15)); // January baseline fallback
-      }
-      isHistoryQueried = true;
-    } else if (!polygonId) {
-      baselineNDVI = getInterpolatedNDVI(new Date(new Date().getFullYear(), 0, 15)); // Fallback if no polygon exists
-    }
-
-    // 4. Fetch 1-Year NDVI History from Agromonitoring
+    // 3. Fetch 1-Year NDVI History from Agromonitoring
     if (polygonId) {
       const maxAttempts = isPolygonCreated ? 5 : 1;
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -414,14 +380,31 @@ export default async function handler(req: any, res: any) {
       }
     }
 
+    const isSouthern = lat < 0;
+
+    // 4. Determine Baseline, Current and Previous NDVI values
     if (currentRespOk && currentJson && currentJson.length > 0) {
       currentNDVI = calculate10DayAvg(currentJson, currentEndUnix);
       previousNDVI = calculate10DayAvg(currentJson, currentEndUnix - 7 * 24 * 60 * 60);
+      
+      if (baselineNDVI === undefined || baselineNDVI === null) {
+        // Dynamic Baseline: Find the lowest NDVI value in the outlier-filtered 1-Year history
+        const minPt = currentJson.reduce((min, pt) => pt.data.mean < min.data.mean ? pt : min, currentJson[0]);
+        baselineNDVI = minPt.data.mean;
+        console.log(`Dynamic baseline NDVI determined from 1-Year history minimum: ${baselineNDVI} on ${new Date(minPt.dt * 1000).toISOString().slice(0, 10)}`);
+        isHistoryQueried = true;
+      }
     } else {
-      currentNDVI = getInterpolatedNDVI(new Date());
+      currentNDVI = getInterpolatedNDVI(new Date(), isSouthern);
       const prevDate = new Date();
       prevDate.setDate(prevDate.getDate() - 7);
-      previousNDVI = getInterpolatedNDVI(prevDate);
+      previousNDVI = getInterpolatedNDVI(prevDate, isSouthern);
+      
+      if (baselineNDVI === undefined || baselineNDVI === null) {
+        // Fallback baseline: Winter low (July 15 for South, Jan 15 for North)
+        const baselineDate = new Date(new Date().getFullYear(), isSouthern ? 6 : 0, 15);
+        baselineNDVI = getInterpolatedNDVI(baselineDate, isSouthern);
+      }
     }
 
     // 5. Calculate current NFI via engine
@@ -467,14 +450,15 @@ export default async function handler(req: any, res: any) {
     } else {
       // Fallback: Generate mock history based on monthly default baselines with linear midpoint interpolation for smooth curves
       const now = new Date();
+      const isSouthern = lat < 0;
       for (let i = 52; i >= 0; i--) {
         const d = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
-        const baselineVal = getInterpolatedNDVI(new Date(d.getFullYear(), 0, 15)); // mid-January baseline
-        const curVal = getInterpolatedNDVI(d);
+        const baselineVal = getInterpolatedNDVI(new Date(d.getFullYear(), isSouthern ? 6 : 0, 15), isSouthern); // mid-winter baseline
+        const curVal = getInterpolatedNDVI(d, isSouthern);
         
         const prevDate = new Date(d);
         prevDate.setDate(prevDate.getDate() - 7); // 7 days ago
-        const prevVal = getInterpolatedNDVI(prevDate);
+        const prevVal = getInterpolatedNDVI(prevDate, isSouthern);
         
         const mockBreakdown = calculateNFI(curVal, baselineVal, prevVal);
         weeklyHistory.push({

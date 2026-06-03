@@ -464,7 +464,7 @@ export const NectarFlowView: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-[10px] text-white/50 mt-1 font-semibold leading-relaxed">
-                    Measures the 10-day moving average NDVI scaled against your local winter dormant baseline. This represents the total live green forage in the environment.
+                    Measures the 10-day moving average NDVI scaled against your dynamically calculated annual dormant baseline (the lowest NDVI reading in the past 12 months). This represents the total live green forage in the environment.
                   </p>
                 </div>
 
