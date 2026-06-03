@@ -1,3 +1,10 @@
+// Polyfill XMLHttpRequest for Google Earth Engine in Node.js serverless environments
+// @ts-ignore
+import { XMLHttpRequest } from 'xmlhttprequest';
+if (typeof global !== 'undefined' && !(global as any).XMLHttpRequest) {
+  (global as any).XMLHttpRequest = XMLHttpRequest;
+}
+
 // @ts-ignore
 import ee from '@google/earthengine';
 
