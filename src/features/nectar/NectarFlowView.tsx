@@ -558,43 +558,121 @@ export const NectarFlowView: React.FC = () => {
               <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
             </div>
 
-            {/* Sparkline chart */}
-            <div className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-4 flex flex-col items-center justify-center relative h-36">
+            {/* Enhanced Trend Chart */}
+            <div className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-4 flex flex-col items-center justify-center relative">
               {validForageHistory.length > 1 ? (
-                <div className="w-full h-full flex flex-col justify-between">
-                  <svg className="w-full h-20" viewBox="0 0 100 30" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="sparklineGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2ECC71" stopOpacity="0.4" />
-                        <stop offset="100%" stopColor="#2ECC71" stopOpacity="0.0" />
-                      </linearGradient>
-                    </defs>
-                    {(() => {
-                      const points = validForageHistory.map((val: number, idx: number) => {
-                        const x = (idx / (validForageHistory.length - 1)) * 100;
-                        const y = 26 - (val * 22);
-                        return `${x},${y}`;
-                      }).join(' ');
+                <div className="w-full flex flex-col justify-between">
+                  {/* Y-axis labels + chart area */}
+                  <div className="flex items-stretch gap-2">
+                    {/* Y-axis labels */}
+                    <div className="flex flex-col justify-between text-[9px] text-slate-500 font-bold py-0.5 w-8 flex-shrink-0">
+                      <span>100%</span>
+                      <span>75%</span>
+                      <span>50%</span>
+                      <span>25%</span>
+                      <span>0%</span>
+                    </div>
+                    {/* SVG chart */}
+                    <svg className="w-full" viewBox="0 0 100 50" preserveAspectRatio="none" style={{ height: '160px' }}>
+                      <defs>
+                        {/* Phase zone colors */}
+                        <linearGradient id="flowGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#2ECC71" stopOpacity="0.5" />
+                          <stop offset="50%" stopColor="#F1C40F" stopOpacity="0.3" />
+                          <stop offset="100%" stopColor="#E74C3C" stopOpacity="0.1" />
+                        </linearGradient>
+                        <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#2ECC71" stopOpacity="0.35" />
+                          <stop offset="100%" stopColor="#2ECC71" stopOpacity="0.02" />
+                        </linearGradient>
+                      </defs>
 
-                      return (
-                        <>
-                          <path
-                            d={`M 0,30 L ${points} L 100,30 Z`}
-                            fill="url(#sparklineGrad)"
-                          />
-                          <polyline
-                            fill="none"
-                            stroke="#2ECC71"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            points={points}
-                          />
-                        </>
-                      );
-                    })()}
-                  </svg>
-                  <div className="flex justify-between w-full text-[9px] text-slate-500 font-bold border-t border-[#222240]/40 pt-1.5 px-0.5">
+                      {/* Phase zone bands */}
+                      <rect x="0" y="0" width="100" height="12.5" fill="#2ECC71" opacity="0.06" />
+                      <rect x="0" y="12.5" width="100" height="12.5" fill="#F1C40F" opacity="0.06" />
+                      <rect x="0" y="25" width="100" height="12.5" fill="#E67E22" opacity="0.06" />
+                      <rect x="0" y="37.5" width="100" height="12.5" fill="#E74C3C" opacity="0.06" />
+
+                      {/* Phase zone labels */}
+                      <text x="1" y="7" fill="#2ECC71" opacity="0.4" fontSize="2.5" fontWeight="bold">PEAK</text>
+                      <text x="1" y="19.5" fill="#F1C40F" opacity="0.4" fontSize="2.5" fontWeight="bold">FLOW</text>
+                      <text x="1" y="32" fill="#E67E22" opacity="0.4" fontSize="2.5" fontWeight="bold">TRANSITION</text>
+                      <text x="1" y="44.5" fill="#E74C3C" opacity="0.4" fontSize="2.5" fontWeight="bold">DEARTH</text>
+
+                      {/* Horizontal grid lines */}
+                      <line x1="0" y1="12.5" x2="100" y2="12.5" stroke="#ffffff" strokeOpacity="0.04" strokeWidth="0.3" />
+                      <line x1="0" y1="25" x2="100" y2="25" stroke="#ffffff" strokeOpacity="0.06" strokeWidth="0.3" strokeDasharray="1,1" />
+                      <line x1="0" y1="37.5" x2="100" y2="37.5" stroke="#ffffff" strokeOpacity="0.04" strokeWidth="0.3" />
+
+                      {/* Area fill under curve */}
+                      {(() => {
+                        const points = validForageHistory.map((val: number, idx: number) => {
+                          const x = (idx / (validForageHistory.length - 1)) * 100;
+                          const y = 50 - (val * 50);
+                          return `${x},${y}`;
+                        }).join(' ');
+
+                        // Determine line color segments based on phase data
+                        const getPhaseColor = (phase: string) => {
+                          switch(phase) {
+                            case 'IN_FLOW': return '#2ECC71';
+                            case 'FLOW_STARTING': return '#F1C40F';
+                            case 'FLOW_ENDING': return '#E67E22';
+                            case 'DEARTH': return '#E74C3C';
+                            default: return '#95A5A6';
+                          }
+                        };
+
+                        // Build colored line segments
+                        const segments: React.ReactNode[] = [];
+                        if (recentHistory.length > 1) {
+                          for (let i = 0; i < recentHistory.length - 1; i++) {
+                            const x1 = (i / (recentHistory.length - 1)) * 100;
+                            const y1 = 50 - ((recentHistory[i].forage_index_smoothed ?? 0) * 50);
+                            const x2 = ((i + 1) / (recentHistory.length - 1)) * 100;
+                            const y2 = 50 - ((recentHistory[i + 1].forage_index_smoothed ?? 0) * 50);
+                            const color = getPhaseColor(recentHistory[i].phase);
+                            segments.push(
+                              <line
+                                key={i}
+                                x1={x1} y1={y1} x2={x2} y2={y2}
+                                stroke={color}
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                              />
+                            );
+                          }
+                        }
+
+                        // Current position dot
+                        const lastVal = validForageHistory[validForageHistory.length - 1];
+                        const lastX = 100;
+                        const lastY = 50 - (lastVal * 50);
+                        const lastPhase = recentHistory.length > 0 ? recentHistory[recentHistory.length - 1].phase : 'TRANSITION';
+                        const dotColor = getPhaseColor(lastPhase);
+
+                        return (
+                          <>
+                            {/* Gradient area fill */}
+                            <path
+                              d={`M 0,50 L ${points} L 100,50 Z`}
+                              fill="url(#areaFill)"
+                            />
+                            {/* Phase-colored line segments */}
+                            {segments}
+                            {/* Current position indicator */}
+                            <circle cx={lastX} cy={lastY} r="2" fill={dotColor} stroke="#0f0f20" strokeWidth="0.8" />
+                            <circle cx={lastX} cy={lastY} r="3.5" fill={dotColor} opacity="0.2">
+                              <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite" />
+                              <animate attributeName="opacity" values="0.3;0.1;0.3" dur="2s" repeatCount="indefinite" />
+                            </circle>
+                          </>
+                        );
+                      })()}
+                    </svg>
+                  </div>
+                  {/* X-axis date labels */}
+                  <div className="flex justify-between w-full text-[9px] text-slate-500 font-bold border-t border-[#222240]/40 pt-1.5 pl-10 pr-0.5 mt-1">
                     <span>{startMonth}</span>
                     <span>{midMonth}</span>
                     <span>{endMonth}</span>
