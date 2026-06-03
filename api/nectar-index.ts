@@ -136,6 +136,49 @@ const defaultBaselines: Record<string, number> = {
   "12": 0.34
 };
 
+// Helper to linearly interpolate monthly baselines into smooth daily/weekly values
+function getInterpolatedNDVI(date: Date): number {
+  const midpoints = [
+    { day: 15, val: 0.35 },   // Jan
+    { day: 45, val: 0.38 },   // Feb
+    { day: 74, val: 0.45 },   // Mar
+    { day: 105, val: 0.58 },  // Apr
+    { day: 135, val: 0.72 },  // May
+    { day: 166, val: 0.78 },  // Jun
+    { day: 196, val: 0.74 },  // Jul
+    { day: 227, val: 0.65 },  // Aug
+    { day: 258, val: 0.55 },  // Sep
+    { day: 288, val: 0.46 },  // Oct
+    { day: 319, val: 0.38 },  // Nov
+    { day: 349, val: 0.34 }   // Dec
+  ];
+
+  const startOfYear = new Date(date.getFullYear(), 0, 1);
+  const diff = date.getTime() - startOfYear.getTime();
+  const oneDay = 24 * 60 * 60 * 1000;
+  const dayOfYear = Math.floor(diff / oneDay);
+
+  if (dayOfYear <= 15) {
+    const t = (dayOfYear + (365 - 349)) / (15 + (365 - 349));
+    return 0.34 + t * (0.35 - 0.34);
+  }
+  if (dayOfYear >= 349) {
+    const t = (dayOfYear - 349) / (365 - 349 + 15);
+    return 0.34 + t * (0.35 - 0.34);
+  }
+
+  for (let i = 0; i < midpoints.length - 1; i++) {
+    const m1 = midpoints[i];
+    const m2 = midpoints[i + 1];
+    if (dayOfYear >= m1.day && dayOfYear <= m2.day) {
+      const t = (dayOfYear - m1.day) / (m2.day - m1.day);
+      return m1.val + t * (m2.val - m1.val);
+    }
+  }
+
+  return 0.5;
+}
+
 // 4. Serverless Handler
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -193,8 +236,7 @@ export default async function handler(req: any, res: any) {
     let isHistoryQueried = false;
     let isPolygonCreated = false;
 
-    const currentMonth = new Date().getMonth() + 1; // 1-12
-    const defaultBaselineForMonth = defaultBaselines[currentMonth.toString()] || 0.5;
+
 
     const currentEndUnix = Math.floor(Date.now() / 1000);
     const start365Unix = currentEndUnix - 365 * 24 * 60 * 60; // 365 days
@@ -305,11 +347,11 @@ export default async function handler(req: any, res: any) {
       }
 
       if (baselineNDVI === undefined || baselineNDVI === null) {
-        baselineNDVI = defaultBaselines["1"]; // January baseline fallback
+        baselineNDVI = getInterpolatedNDVI(new Date(new Date().getFullYear(), 0, 15)); // January baseline fallback
       }
       isHistoryQueried = true;
     } else if (!polygonId) {
-      baselineNDVI = defaultBaselines["1"]; // Fallback if no polygon exists
+      baselineNDVI = getInterpolatedNDVI(new Date(new Date().getFullYear(), 0, 15)); // Fallback if no polygon exists
     }
 
     // 4. Fetch 1-Year NDVI History from Agromonitoring
@@ -343,11 +385,10 @@ export default async function handler(req: any, res: any) {
       currentNDVI = calculate14DayAvg(currentJson, currentEndUnix);
       previousNDVI = calculate14DayAvg(currentJson, currentEndUnix - 7 * 24 * 60 * 60);
     } else {
-      currentNDVI = defaultBaselineForMonth;
+      currentNDVI = getInterpolatedNDVI(new Date());
       const prevDate = new Date();
-      prevDate.setDate(prevDate.getDate() - 8);
-      const prevMonth = prevDate.getMonth() + 1;
-      previousNDVI = defaultBaselines[prevMonth.toString()] || 0.5;
+      prevDate.setDate(prevDate.getDate() - 7);
+      previousNDVI = getInterpolatedNDVI(prevDate);
     }
 
     // 5. Calculate current NFI via engine
@@ -391,18 +432,16 @@ export default async function handler(req: any, res: any) {
         });
       }
     } else {
-      // Fallback: Generate mock history based on monthly default baselines
+      // Fallback: Generate mock history based on monthly default baselines with linear midpoint interpolation for smooth curves
       const now = new Date();
       for (let i = 52; i >= 0; i--) {
         const d = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
-        const m = d.getMonth() + 1;
-        const baselineVal = defaultBaselines["1"];
-        const curVal = defaultBaselines[m.toString()] || 0.5;
+        const baselineVal = getInterpolatedNDVI(new Date(d.getFullYear(), 0, 15)); // mid-January baseline
+        const curVal = getInterpolatedNDVI(d);
         
         const prevDate = new Date(d);
-        prevDate.setMonth(prevDate.getMonth() - 1);
-        const prevM = prevDate.getMonth() + 1;
-        const prevVal = defaultBaselines[prevM.toString()] || 0.5;
+        prevDate.setDate(prevDate.getDate() - 7); // 7 days ago
+        const prevVal = getInterpolatedNDVI(prevDate);
         
         const mockBreakdown = calculateNFI(curVal, baselineVal, prevVal);
         weeklyHistory.push({
