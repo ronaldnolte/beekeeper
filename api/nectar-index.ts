@@ -157,7 +157,7 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  if (req.method !== 'POST') {
+  if (req.method !== 'GET' && req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
@@ -166,12 +166,27 @@ export default async function handler(req: any, res: any) {
   const apiKey = process.env.AGRO_API_KEY;
 
   try {
-    const { lat, lng, cachedBaseline } = req.body;
+    const isGet = req.method === 'GET';
+    const latRaw = isGet ? req.query.lat : req.body.lat;
+    const lngRaw = isGet ? req.query.lng : req.body.lng;
+    const cachedBaselineRaw = isGet ? req.query.cachedBaseline : req.body.cachedBaseline;
 
-    if (lat === undefined || lng === undefined) {
+    if (latRaw === undefined || lngRaw === undefined) {
       res.status(400).json({ error: 'Latitude and Longitude are required' });
       return;
     }
+
+    const lat = parseFloat(latRaw);
+    const lng = parseFloat(lngRaw);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      res.status(400).json({ error: 'Latitude and Longitude must be valid numbers' });
+      return;
+    }
+
+    const cachedBaseline = cachedBaselineRaw !== undefined && cachedBaselineRaw !== null && cachedBaselineRaw !== 'null'
+      ? parseFloat(cachedBaselineRaw)
+      : null;
 
     if (!apiKey) {
       res.status(500).json({ error: 'Agromonitoring API key not configured on server.' });
@@ -481,6 +496,9 @@ export default async function handler(req: any, res: any) {
     }
 
     // 8. Return response
+    if (req.method === 'GET') {
+      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600');
+    }
     res.status(200).json({
       polygonId: null, // Polygon is deleted immediately, so do not return an ID to cache
       baselineNDVI,

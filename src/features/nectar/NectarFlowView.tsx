@@ -35,6 +35,8 @@ export const NectarFlowView: React.FC = () => {
       // Clear localStorage cache to force recalculation on server
       localStorage.removeItem(`nfi_baseline_${selectedApiaryId}`);
       localStorage.removeItem(`nfi_baseline_year_${selectedApiaryId}`);
+      localStorage.removeItem(`nfi_response_${selectedApiaryId}`);
+      localStorage.removeItem(`nfi_response_time_${selectedApiaryId}`);
     } else {
       setLoading(true);
     }

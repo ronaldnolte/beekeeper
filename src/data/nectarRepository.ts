@@ -46,11 +46,31 @@ export async function fetchNectarIndex(
   const polygonKey = `nfi_polygon_${apiaryId}`;
   const baselineKey = `nfi_baseline_${apiaryId}`;
   const baselineYearKey = `nfi_baseline_year_${apiaryId}`;
+  const responseCacheKey = `nfi_response_${apiaryId}`;
+  const responseTimeCacheKey = `nfi_response_time_${apiaryId}`;
 
   const currentYear = new Date().getFullYear();
   
-  // Clean up old cached polygon IDs (no longer used since polygons are ephemeral on server)
+  // Clean up old cached polygon IDs
   localStorage.removeItem(polygonKey);
+
+  // 1. Check client-side full response cache (1 hour lifetime)
+  const cachedResponseStr = localStorage.getItem(responseCacheKey);
+  const cachedResponseTimeStr = localStorage.getItem(responseTimeCacheKey);
+
+  if (cachedResponseStr && cachedResponseTimeStr) {
+    const cachedTime = parseInt(cachedResponseTimeStr, 10);
+    const now = Date.now();
+    if (now - cachedTime < 3600000) { // 1 hour
+      try {
+        const cachedData = JSON.parse(cachedResponseStr) as NectarIndexResponse;
+        console.log(`Loaded cached Nectar Flow Index for apiary ${apiaryId} (cache age: ${Math.round((now - cachedTime) / 60000)} mins)`);
+        return cachedData;
+      } catch (e) {
+        console.error("Failed to parse cached NFI response:", e);
+      }
+    }
+  }
 
   let cachedBaseline: number | null = null;
   const cachedBaselineYear = localStorage.getItem(baselineYearKey);
@@ -72,20 +92,30 @@ export async function fetchNectarIndex(
     ? '/api/nectar-index'
     : 'https://beekeeper.beektools.com/api/nectar-index';
 
+  // Format coordinates to 4 decimal places (~11m precision) to maximize CDN cache hit rate
+  const roundedLat = lat.toFixed(4);
+  const roundedLng = lng.toFixed(4);
+
+  let queryUrl = `${apiUrl}?lat=${roundedLat}&lng=${roundedLng}`;
+  if (cachedBaseline !== undefined && cachedBaseline !== null) {
+    queryUrl += `&cachedBaseline=${cachedBaseline}`;
+  }
+
+  // If cachedBaseline is null, it means it's a force-refresh (the cache was cleared).
+  // Append timestamp to force Vercel CDN cache bypass.
+  if (cachedBaseline === null) {
+    queryUrl += `&t=${Date.now()}`;
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s serverless timeout
 
   try {
-    const response = await fetch(apiUrl, {
-      method: 'POST',
+    const response = await fetch(queryUrl, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
-      body: JSON.stringify({
-        lat,
-        lng,
-        cachedBaseline,
-      }),
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
@@ -97,11 +127,14 @@ export async function fetchNectarIndex(
 
     const data = (await response.json()) as NectarIndexResponse;
 
-    // Persist responses to cache for subsequent calls
+    // Persist baseline and full response to localStorage cache
     if (data.baselineNDVI !== undefined && data.baselineNDVI !== null) {
       localStorage.setItem(baselineKey, data.baselineNDVI.toString());
       localStorage.setItem(baselineYearKey, currentYear.toString());
     }
+
+    localStorage.setItem(responseCacheKey, JSON.stringify(data));
+    localStorage.setItem(responseTimeCacheKey, Date.now().toString());
 
     return data;
   } catch (err: any) {
