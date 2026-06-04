@@ -313,6 +313,10 @@ export const NectarFlowView: React.FC = () => {
   const recentHistory = data.full_history ? data.full_history.slice(-90) : [];
   const validForageHistory = recentHistory.map((h: any) => h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed) ? h.forage_index_smoothed : 0);
 
+  // Extract full year history (365 days) for baseline annual scaling
+  const fullYearHistory = data.full_history || [];
+  const validYearlyHistory = fullYearHistory.map((h: any) => h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed) ? h.forage_index_smoothed : 0);
+
   // Format timeline labels for 3-month history
   let startMonth = '';
   let midMonth = '';
@@ -343,20 +347,28 @@ export const NectarFlowView: React.FC = () => {
       );
     }
 
-    // Y-axis Dynamic Auto-Scaling (discrete steps)
-    const maxHistoryVal = Math.max(...validForageHistory);
+    // Y-axis Dynamic Auto-Scaling (110% of Yearly Maximum with discrete grid-friendly steps)
+    const maxYearlyVal = validYearlyHistory.length > 0 ? Math.max(...validYearlyHistory) : 0.20;
+    const targetYMax = maxYearlyVal * 1.10;
+    
     let yMax = 1.0;
     let yGridValues = [1.0, 0.75, 0.50, 0.25, 0.0];
 
-    if (maxHistoryVal <= 0.20) {
-      yMax = 0.25;
-      yGridValues = [0.25, 0.20, 0.15, 0.10, 0.05, 0.0];
-    } else if (maxHistoryVal <= 0.50) {
-      yMax = 0.50;
-      yGridValues = [0.50, 0.40, 0.30, 0.20, 0.10, 0.0];
+    if (targetYMax <= 0.20) {
+      yMax = 0.20;
+      yGridValues = [0.20, 0.15, 0.10, 0.05, 0.0];
+    } else if (targetYMax <= 0.40) {
+      yMax = 0.40;
+      yGridValues = [0.40, 0.30, 0.20, 0.10, 0.0];
+    } else if (targetYMax <= 0.60) {
+      yMax = 0.60;
+      yGridValues = [0.60, 0.45, 0.30, 0.15, 0.0];
+    } else if (targetYMax <= 0.80) {
+      yMax = 0.80;
+      yGridValues = [0.80, 0.60, 0.40, 0.20, 0.0];
     } else {
       yMax = 1.0;
-      yGridValues = [1.0, 0.75, 0.50, 0.25, 0.0];
+      yGridValues = [1.00, 0.75, 0.50, 0.25, 0.0];
     }
 
     const yCoord = (val: number) => {
@@ -482,7 +494,7 @@ export const NectarFlowView: React.FC = () => {
           {/* Grid lines and Y-axis text */}
           {yGridValues.map((val) => {
             const y = yCoord(val);
-            const isDashed = val === (yMax === 1.0 ? 0.50 : yMax === 0.50 ? 0.20 : 0.10);
+            const isDashed = Math.abs(val - yMax / 2) < 0.0001;
             return (
               <g key={val}>
                 <line
