@@ -5,6 +5,7 @@ import { Mail, Lock, ArrowRight } from 'lucide-react';
 export const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
@@ -16,15 +17,22 @@ export const Auth: React.FC = () => {
     return null;
   });
   const [message, setMessage] = useState<string | null>(null);
-  const [isResetMode, setIsResetMode] = useState(false);
+  const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const switchMode = (newMode: 'login' | 'signup' | 'reset') => {
+    setMode(newMode);
+    setError(null);
+    setMessage(null);
+    setConfirmPassword('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setMessage(null);
 
-    if (isResetMode) {
+    if (mode === 'reset') {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: 'https://beekeeper.beektools.com/auth/update-password'
       });
@@ -37,6 +45,23 @@ export const Auth: React.FC = () => {
       } else {
         setMessage('Check your email for the password reset link.');
       }
+    } else if (mode === 'signup') {
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters.');
+        setLoading(false);
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
+        setLoading(false);
+        return;
+      }
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Account created! Check your email to confirm, then log in.');
+      }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
@@ -44,6 +69,12 @@ export const Auth: React.FC = () => {
     
     setLoading(false);
   };
+
+  const submitLabel = mode === 'reset' 
+    ? (loading ? 'Sending...' : 'Send Reset Link') 
+    : mode === 'signup' 
+      ? (loading ? 'Creating Account...' : 'Create Account') 
+      : (loading ? 'Logging in...' : 'Log In');
 
   return (
     <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[var(--color-bg)]">
@@ -71,7 +102,7 @@ export const Auth: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5 relative z-10">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 relative z-10">
           <div>
             <label className="block text-xs sm:text-sm font-black text-[var(--color-text)] mb-1.5 uppercase tracking-wide">Email</label>
             <div className="relative">
@@ -89,7 +120,7 @@ export const Auth: React.FC = () => {
             </div>
           </div>
 
-          {!isResetMode && (
+          {mode !== 'reset' && (
             <div>
               <label className="block text-xs sm:text-sm font-black text-[var(--color-text)] mb-1.5 uppercase tracking-wide">Password</label>
               <div className="relative">
@@ -102,17 +133,36 @@ export const Auth: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-4 py-3.5 border-2 border-[var(--color-card-border)] rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-all bg-[var(--color-input-bg)] text-[var(--color-text)] font-bold placeholder-[var(--color-text-muted)]"
                   placeholder="••••••••"
-                  required={!isResetMode}
+                  required
                 />
               </div>
             </div>
           )}
 
-          {!isResetMode && (
+          {mode === 'signup' && (
+            <div>
+              <label className="block text-xs sm:text-sm font-black text-[var(--color-text)] mb-1.5 uppercase tracking-wide">Confirm Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[var(--color-text-muted)]">
+                  <Lock size={18} />
+                </div>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3.5 border-2 border-[var(--color-card-border)] rounded-xl focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-all bg-[var(--color-input-bg)] text-[var(--color-text)] font-bold placeholder-[var(--color-text-muted)]"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          {mode === 'login' && (
             <div className="flex justify-end">
               <button 
                 type="button" 
-                onClick={() => { setIsResetMode(true); setError(null); setMessage(null); }}
+                onClick={() => switchMode('reset')}
                 className="text-xs sm:text-sm font-bold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition-colors"
               >
                 Forgot Password?
@@ -120,11 +170,11 @@ export const Auth: React.FC = () => {
             </div>
           )}
 
-          {isResetMode && (
+          {mode === 'reset' && (
             <div className="flex justify-end">
               <button 
                 type="button" 
-                onClick={() => { setIsResetMode(false); setError(null); setMessage(null); }}
+                onClick={() => switchMode('login')}
                 className="text-xs sm:text-sm font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
               >
                 Back to Login
@@ -137,9 +187,25 @@ export const Auth: React.FC = () => {
             disabled={loading}
             className="w-full py-4 btn-honey text-lg"
           >
-            {loading ? (isResetMode ? 'Sending...' : 'Logging in...') : (isResetMode ? 'Send Reset Link' : 'Log In')}
+            {submitLabel}
             {!loading && <ArrowRight size={18} />}
           </button>
+
+          {/* Toggle between Login and Sign Up */}
+          {mode !== 'reset' && (
+            <div className="text-center pt-1">
+              <p className="text-xs text-[var(--color-text-muted)] font-medium">
+                {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
+                <button
+                  type="button"
+                  onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}
+                  className="font-bold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] transition-colors"
+                >
+                  {mode === 'login' ? 'Create Account' : 'Log In'}
+                </button>
+              </p>
+            </div>
+          )}
         </form>
       </div>
       {/* Dark background bar under the system navigation buttons */}
