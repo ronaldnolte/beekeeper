@@ -343,15 +343,29 @@ export const NectarFlowView: React.FC = () => {
       );
     }
 
+    // Y-axis Dynamic Auto-Scaling (discrete steps)
+    const maxHistoryVal = Math.max(...validForageHistory);
+    let yMax = 1.0;
+    let yGridValues = [1.0, 0.75, 0.50, 0.25, 0.0];
+
+    if (maxHistoryVal <= 0.20) {
+      yMax = 0.25;
+      yGridValues = [0.25, 0.20, 0.15, 0.10, 0.05, 0.0];
+    } else if (maxHistoryVal <= 0.50) {
+      yMax = 0.50;
+      yGridValues = [0.50, 0.40, 0.30, 0.20, 0.10, 0.0];
+    } else {
+      yMax = 1.0;
+      yGridValues = [1.0, 0.75, 0.50, 0.25, 0.0];
+    }
+
     const yCoord = (val: number) => {
-      return height - paddingBottom - (val * chartHeight);
+      return height - paddingBottom - ((val / yMax) * chartHeight);
     };
 
     const xCoord = (idx: number) => {
       return paddingLeft + (idx / (validForageHistory.length - 1)) * chartWidth;
     };
-
-    const yGridValues = [1.0, 0.75, 0.5, 0.25, 0.0];
 
     // Build area fill path
     const pathPoints = validForageHistory.map((val: number, idx: number) => {
@@ -420,15 +434,55 @@ export const NectarFlowView: React.FC = () => {
             </linearGradient>
           </defs>
 
-          {/* Phase zone background bands */}
-          <rect x={paddingLeft} y={yCoord(1.0)} width={chartWidth} height={yCoord(0.75) - yCoord(1.0)} fill="#2ECC71" opacity="0.05" />
-          <rect x={paddingLeft} y={yCoord(0.75)} width={chartWidth} height={yCoord(0.5) - yCoord(0.75)} fill="#F1C40F" opacity="0.05" />
-          <rect x={paddingLeft} y={yCoord(0.5)} width={chartWidth} height={yCoord(0.25) - yCoord(0.5)} fill="#E67E22" opacity="0.05" />
-          <rect x={paddingLeft} y={yCoord(0.25)} width={chartWidth} height={yCoord(0.0) - yCoord(0.25)} fill="#E74C3C" opacity="0.05" />
+          {/* Phase zone background bands (dynamically clipped to yMax) */}
+          {(() => {
+            const bands = [
+              { id: 'peak', label: 'PEAK', low: 0.75, high: 1.00, color: '#2ECC71', opacity: 0.05 },
+              { id: 'flow', label: 'FLOW', low: 0.30, high: 0.75, color: '#F1C40F', opacity: 0.05 },
+              { id: 'transition', label: 'TRANSITION', low: 0.20, high: 0.30, color: '#E67E22', opacity: 0.05 },
+              { id: 'dearth', label: 'DEARTH', low: 0.00, high: 0.20, color: '#E74C3C', opacity: 0.05 },
+            ];
+
+            return bands.map((band) => {
+              const clippedLow = Math.max(0.0, Math.min(yMax, band.low));
+              const clippedHigh = Math.max(0.0, Math.min(yMax, band.high));
+
+              if (clippedHigh <= clippedLow) return null;
+
+              const yTop = yCoord(clippedHigh);
+              const yBottom = yCoord(clippedLow);
+              const rectHeight = yBottom - yTop;
+              const yMid = yCoord((clippedLow + clippedHigh) / 2);
+
+              return (
+                <g key={band.id}>
+                  <rect
+                    x={paddingLeft}
+                    y={yTop}
+                    width={chartWidth}
+                    height={rectHeight}
+                    fill={band.color}
+                    opacity={band.opacity}
+                  />
+                  <text
+                    x={paddingLeft + 10}
+                    y={yMid + 3}
+                    fill={band.color}
+                    opacity="0.35"
+                    fontSize={isFullscreen ? "9" : "7"}
+                    fontWeight="extrabold"
+                  >
+                    {band.label}
+                  </text>
+                </g>
+              );
+            });
+          })()}
 
           {/* Grid lines and Y-axis text */}
           {yGridValues.map((val) => {
             const y = yCoord(val);
+            const isDashed = val === (yMax === 1.0 ? 0.50 : yMax === 0.50 ? 0.20 : 0.10);
             return (
               <g key={val}>
                 <line
@@ -437,9 +491,9 @@ export const NectarFlowView: React.FC = () => {
                   x2={width - paddingRight}
                   y2={y}
                   stroke="#ffffff"
-                  strokeOpacity={val === 0.5 ? 0.08 : 0.04}
+                  strokeOpacity={isDashed ? 0.08 : 0.04}
                   strokeWidth="0.8"
-                  strokeDasharray={val === 0.5 ? "1,2" : undefined}
+                  strokeDasharray={isDashed ? "1,2" : undefined}
                 />
                 <text
                   x={paddingLeft - 8}
@@ -454,12 +508,6 @@ export const NectarFlowView: React.FC = () => {
               </g>
             );
           })}
-
-          {/* Phase names drawn inside the zones */}
-          <text x={paddingLeft + 10} y={yCoord(0.875) + 3} fill="#2ECC71" opacity="0.35" fontSize={isFullscreen ? "9" : "7"} fontWeight="extrabold">PEAK</text>
-          <text x={paddingLeft + 10} y={yCoord(0.625) + 3} fill="#F1C40F" opacity="0.35" fontSize={isFullscreen ? "9" : "7"} fontWeight="extrabold">FLOW</text>
-          <text x={paddingLeft + 10} y={yCoord(0.375) + 3} fill="#E67E22" opacity="0.35" fontSize={isFullscreen ? "9" : "7"} fontWeight="extrabold">TRANSITION</text>
-          <text x={paddingLeft + 10} y={yCoord(0.125) + 3} fill="#E74C3C" opacity="0.35" fontSize={isFullscreen ? "9" : "7"} fontWeight="extrabold">DEARTH</text>
 
           {/* Area fill under curve */}
           <path d={areaPath} fill="url(#areaFill)" />
