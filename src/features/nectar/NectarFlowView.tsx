@@ -35,6 +35,9 @@ export const NectarFlowView: React.FC = () => {
   const [expandDrivers, setExpandDrivers] = useState(false);
   const [expandTrends, setExpandTrends] = useState(false);
 
+  // Hover cursor state for trends chart
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
   // Settings state (local config overrides)
   const [radiusKm, setRadiusKm] = useState(1.6);
   const [dataset, setDataset] = useState<'sentinel2' | 'modis'>('sentinel2');
@@ -107,6 +110,35 @@ export const NectarFlowView: React.FC = () => {
       default:
         return { bg: 'bg-[#95A5A6]', text: 'text-white', label: 'Transition', emoji: '🌫️' };
     }
+  };
+
+  const getPhaseColor = (phase: string) => {
+    switch (phase) {
+      case 'IN_FLOW': return '#2ECC71';
+      case 'FLOW_STARTING': return '#F1C40F';
+      case 'FLOW_ENDING': return '#E67E22';
+      case 'DEARTH': return '#E74C3C';
+      default: return '#95A5A6';
+    }
+  };
+
+  const handlePointerMove = (e: React.MouseEvent<SVGSVGElement> | React.TouchEvent<SVGSVGElement>) => {
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const xPercent = (clientX - rect.left) / rect.width;
+    
+    if (recentHistory && recentHistory.length > 0) {
+      const index = Math.min(
+        recentHistory.length - 1,
+        Math.max(0, Math.round(xPercent * (recentHistory.length - 1)))
+      );
+      setHoveredIndex(index);
+    }
+  };
+
+  const handlePointerLeave = () => {
+    setHoveredIndex(null);
   };
 
   // Get Phase Specific Advice
@@ -548,10 +580,12 @@ export const NectarFlowView: React.FC = () => {
         {/* TRENDS TAB PANEL */}
         {activeTab === 'trends' && (
           <div 
-            onClick={() => setExpandTrends(!expandTrends)}
-            className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg cursor-pointer select-none"
+            className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg select-none"
           >
-            <div className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4">
+            <div 
+              onClick={() => setExpandTrends(!expandTrends)}
+              className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4 cursor-pointer"
+            >
               <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider flex items-center gap-2">
                 <TrendingUp size={16} /> 3-Month Trend
               </h3>
@@ -573,7 +607,16 @@ export const NectarFlowView: React.FC = () => {
                       <span>0%</span>
                     </div>
                     {/* SVG chart */}
-                    <svg className="w-full" viewBox="0 0 100 50" preserveAspectRatio="none" style={{ height: '160px' }}>
+                    <svg 
+                      className="w-full cursor-crosshair" 
+                      viewBox="0 0 100 50" 
+                      preserveAspectRatio="none" 
+                      style={{ height: '160px', touchAction: 'none' }}
+                      onMouseMove={handlePointerMove}
+                      onTouchMove={handlePointerMove}
+                      onMouseLeave={handlePointerLeave}
+                      onTouchEnd={handlePointerLeave}
+                    >
                       <defs>
                         {/* Phase zone colors */}
                         <linearGradient id="flowGradient" x1="0" y1="0" x2="0" y2="1">
@@ -611,17 +654,6 @@ export const NectarFlowView: React.FC = () => {
                           const y = 50 - (val * 50);
                           return `${x},${y}`;
                         }).join(' ');
-
-                        // Determine line color segments based on phase data
-                        const getPhaseColor = (phase: string) => {
-                          switch(phase) {
-                            case 'IN_FLOW': return '#2ECC71';
-                            case 'FLOW_STARTING': return '#F1C40F';
-                            case 'FLOW_ENDING': return '#E67E22';
-                            case 'DEARTH': return '#E74C3C';
-                            default: return '#95A5A6';
-                          }
-                        };
 
                         // Build colored line segments
                         const segments: React.ReactNode[] = [];
@@ -666,6 +698,35 @@ export const NectarFlowView: React.FC = () => {
                               <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite" />
                               <animate attributeName="opacity" values="0.3;0.1;0.3" dur="2s" repeatCount="indefinite" />
                             </circle>
+
+                            {/* Hover Interactive Cursor */}
+                            {hoveredIndex !== null && recentHistory[hoveredIndex] && (() => {
+                              const hoveredX = (hoveredIndex / (recentHistory.length - 1)) * 100;
+                              const val = recentHistory[hoveredIndex].forage_index_smoothed ?? 0;
+                              const hoveredY = 50 - (val * 50);
+                              const hoverColor = getPhaseColor(recentHistory[hoveredIndex].phase);
+                              return (
+                                <>
+                                  <line
+                                    x1={hoveredX}
+                                    y1={0}
+                                    x2={hoveredX}
+                                    y2={50}
+                                    stroke="#555577"
+                                    strokeWidth="0.5"
+                                    strokeDasharray="1,1"
+                                  />
+                                  <circle
+                                    cx={hoveredX}
+                                    cy={hoveredY}
+                                    r="2.2"
+                                    fill={hoverColor}
+                                    stroke="#ffffff"
+                                    strokeWidth="0.6"
+                                  />
+                                </>
+                              );
+                            })()}
                           </>
                         );
                       })()}
@@ -684,15 +745,47 @@ export const NectarFlowView: React.FC = () => {
             </div>
 
             {/* Labels below sparkline */}
-            <div className="flex items-center justify-between mt-3 text-xs">
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Trend Direction</span>
-                <span className="font-extrabold text-white capitalize mt-0.5">{data.trend_direction || 'Flat'}</span>
-              </div>
-              <div className="flex flex-col text-right">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Phase</span>
-                <span className="font-extrabold text-white mt-0.5">{currentPhase}</span>
-              </div>
+            <div className="flex items-center justify-between mt-3 text-xs bg-[#121226] border border-[#222240] rounded-xl p-3 min-h-[52px]">
+              {hoveredIndex !== null && recentHistory[hoveredIndex] ? (
+                <>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Date</span>
+                    <span className="font-extrabold text-white mt-0.5">
+                      {new Date(recentHistory[hoveredIndex].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Forage Index</span>
+                    <span className="font-black text-amber-500 mt-0.5">
+                      {recentHistory[hoveredIndex].forage_index_smoothed !== null 
+                        ? `${(recentHistory[hoveredIndex].forage_index_smoothed * 100).toFixed(0)}%` 
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col text-right">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Phase</span>
+                    <span className={`font-extrabold px-2 py-0.5 rounded-full text-[10px] mt-0.5 ${getPhaseColors(recentHistory[hoveredIndex].phase).bg} ${getPhaseColors(recentHistory[hoveredIndex].phase).text}`}>
+                      {getPhaseColors(recentHistory[hoveredIndex].phase).emoji} {getPhaseColors(recentHistory[hoveredIndex].phase).label}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Trend Direction</span>
+                    <span className="font-extrabold text-white capitalize mt-0.5 flex items-center gap-1">
+                      {resolvedTrendDirection === 'rising' ? <TrendingUp size={12} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={12} className="text-red-400" /> : <Minus size={12} className="text-slate-400" />}
+                      {resolvedTrendDirection || 'Flat'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col text-right">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Current Phase</span>
+                    <span className={`font-extrabold px-2 py-0.5 rounded-full text-[10px] mt-0.5 ${colors.bg} ${colors.text}`}>
+                      {colors.emoji} {colors.label}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Expand list of numeric values */}
