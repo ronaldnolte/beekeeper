@@ -4,7 +4,7 @@ import './index.css'
 import App from './app/App.tsx'
 
 // Google Analytics (gtag.js) Dynamic Loader
-const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-4WLKRJRNHY';
+const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-V3F9W1WQT0';
 if (gaId && typeof window !== 'undefined') {
   const script = document.createElement('script');
   script.async = true;
