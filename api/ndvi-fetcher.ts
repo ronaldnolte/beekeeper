@@ -97,7 +97,7 @@ async function queryEarthEngine(
   if (isS2) {
     // Sentinel-2 Cloud Masking and NDVI Math
     processedCol = col.map((image: any) => {
-      const dateStr = image.date().format('YYYY-MM-DD');
+      const dateStr = image.date().format('YYYY-MM-dd');
       
       // Cloud Mask using SCL band
       const scl = image.select('SCL');
@@ -127,7 +127,7 @@ async function queryEarthEngine(
   } else {
     // MODIS NDVI Math (stored scaled by 0.0001)
     processedCol = col.map((image: any) => {
-      const dateStr = image.date().format('YYYY-MM-DD');
+      const dateStr = image.date().format('YYYY-MM-dd');
       
       const ndvi = image.select('NDVI').multiply(0.0001).rename('ndvi');
 
