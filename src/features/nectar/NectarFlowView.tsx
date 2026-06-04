@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { fetchNectarIndex } from '../../data/nectarRepository';
@@ -17,7 +17,9 @@ import {
   Wind,
   Droplets,
   Thermometer,
-  ShieldAlert
+  ShieldAlert,
+  Maximize2,
+  X
 } from 'lucide-react';
 
 export const NectarFlowView: React.FC = () => {
@@ -37,6 +39,25 @@ export const NectarFlowView: React.FC = () => {
 
   // Hover cursor state for trends chart
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // Enlarged Landscape Modal State
+  const [isEnlarged, setIsEnlarged] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(320);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) {
+          setContainerWidth(w);
+        }
+      }
+    });
+    observer.observe(chartContainerRef.current);
+    return () => observer.disconnect();
+  }, [activeTab]);
 
   // Settings state (local config overrides)
   const [radiusKm, setRadiusKm] = useState(1.6);
@@ -121,22 +142,6 @@ export const NectarFlowView: React.FC = () => {
       default: return '#95A5A6';
     }
   };
-
-  const handlePointerMove = (e: React.MouseEvent<SVGSVGElement> | React.TouchEvent<SVGSVGElement>) => {
-    const svg = e.currentTarget;
-    const rect = svg.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const xPercent = (clientX - rect.left) / rect.width;
-    
-    if (recentHistory && recentHistory.length > 0) {
-      const index = Math.min(
-        recentHistory.length - 1,
-        Math.max(0, Math.round(xPercent * (recentHistory.length - 1)))
-      );
-      setHoveredIndex(index);
-    }
-  };
-
   const handlePointerLeave = () => {
     setHoveredIndex(null);
   };
@@ -321,6 +326,197 @@ export const NectarFlowView: React.FC = () => {
     endMonth = getMonthName(recentHistory[recentHistory.length - 1].date);
   }
 
+  const renderChartSvg = (width: number, height: number, isFullscreen: boolean = false) => {
+    const paddingLeft = 40;
+    const paddingRight = 15;
+    const paddingTop = 15;
+    const paddingBottom = 20;
+
+    const chartWidth = width - paddingLeft - paddingRight;
+    const chartHeight = height - paddingTop - paddingBottom;
+
+    if (validForageHistory.length <= 1) {
+      return (
+        <div className="flex items-center justify-center text-xs text-slate-500" style={{ height }}>
+          Insufficient history for trend line
+        </div>
+      );
+    }
+
+    const yCoord = (val: number) => {
+      return height - paddingBottom - (val * chartHeight);
+    };
+
+    const xCoord = (idx: number) => {
+      return paddingLeft + (idx / (validForageHistory.length - 1)) * chartWidth;
+    };
+
+    const yGridValues = [1.0, 0.75, 0.5, 0.25, 0.0];
+
+    // Build area fill path
+    const pathPoints = validForageHistory.map((val: number, idx: number) => {
+      return `${xCoord(idx)},${yCoord(val)}`;
+    }).join(' ');
+    const areaPath = `M ${xCoord(0)},${yCoord(0)} L ${pathPoints} L ${xCoord(validForageHistory.length - 1)},${yCoord(0)} Z`;
+
+    // Build colored line segments
+    const segments: React.ReactNode[] = [];
+    for (let i = 0; i < recentHistory.length - 1; i++) {
+      const x1 = xCoord(i);
+      const y1 = yCoord(recentHistory[i].forage_index_smoothed ?? 0);
+      const x2 = xCoord(i + 1);
+      const y2 = yCoord(recentHistory[i + 1].forage_index_smoothed ?? 0);
+      const color = getPhaseColor(recentHistory[i].phase);
+      segments.push(
+        <line
+          key={i}
+          x1={x1} y1={y1} x2={x2} y2={y2}
+          stroke={color}
+          strokeWidth={isFullscreen ? 2.5 : 1.5}
+          strokeLinecap="round"
+        />
+      );
+    }
+
+    // Current position dot
+    const lastVal = validForageHistory[validForageHistory.length - 1];
+    const lastX = xCoord(validForageHistory.length - 1);
+    const lastY = yCoord(lastVal);
+    const lastPhase = recentHistory.length > 0 ? recentHistory[recentHistory.length - 1].phase : 'TRANSITION';
+    const dotColor = getPhaseColor(lastPhase);
+
+    // Hover calculation helper for this width/padding
+    const handleMove = (e: React.MouseEvent<SVGSVGElement> | React.TouchEvent<SVGSVGElement>) => {
+      const svg = e.currentTarget;
+      const rect = svg.getBoundingClientRect();
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const xInSvg = clientX - rect.left;
+      const xPercent = (xInSvg - paddingLeft) / chartWidth;
+      
+      if (recentHistory && recentHistory.length > 0) {
+        const index = Math.min(
+          recentHistory.length - 1,
+          Math.max(0, Math.round(xPercent * (recentHistory.length - 1)))
+        );
+        setHoveredIndex(index);
+      }
+    };
+
+    return (
+      <div className="w-full flex flex-col justify-between" style={{ height }}>
+        <svg
+          className="w-full cursor-crosshair select-none"
+          viewBox={`0 0 ${width} ${height}`}
+          style={{ height: `${height}px`, touchAction: 'none' }}
+          onMouseMove={handleMove}
+          onTouchMove={handleMove}
+          onMouseLeave={handlePointerLeave}
+          onTouchEnd={handlePointerLeave}
+        >
+          <defs>
+            <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2ECC71" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#2ECC71" stopOpacity="0.01" />
+            </linearGradient>
+          </defs>
+
+          {/* Phase zone background bands */}
+          <rect x={paddingLeft} y={yCoord(1.0)} width={chartWidth} height={yCoord(0.75) - yCoord(1.0)} fill="#2ECC71" opacity="0.05" />
+          <rect x={paddingLeft} y={yCoord(0.75)} width={chartWidth} height={yCoord(0.5) - yCoord(0.75)} fill="#F1C40F" opacity="0.05" />
+          <rect x={paddingLeft} y={yCoord(0.5)} width={chartWidth} height={yCoord(0.25) - yCoord(0.5)} fill="#E67E22" opacity="0.05" />
+          <rect x={paddingLeft} y={yCoord(0.25)} width={chartWidth} height={yCoord(0.0) - yCoord(0.25)} fill="#E74C3C" opacity="0.05" />
+
+          {/* Grid lines and Y-axis text */}
+          {yGridValues.map((val) => {
+            const y = yCoord(val);
+            return (
+              <g key={val}>
+                <line
+                  x1={paddingLeft}
+                  y1={y}
+                  x2={width - paddingRight}
+                  y2={y}
+                  stroke="#ffffff"
+                  strokeOpacity={val === 0.5 ? 0.08 : 0.04}
+                  strokeWidth="0.8"
+                  strokeDasharray={val === 0.5 ? "1,2" : undefined}
+                />
+                <text
+                  x={paddingLeft - 8}
+                  y={y + 3}
+                  fill="#64748b"
+                  fontSize={isFullscreen ? "9" : "8"}
+                  fontWeight="bold"
+                  textAnchor="end"
+                >
+                  {(val * 100).toFixed(0)}%
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Phase names drawn inside the zones */}
+          <text x={paddingLeft + 10} y={yCoord(0.875) + 3} fill="#2ECC71" opacity="0.35" fontSize={isFullscreen ? "9" : "7"} fontWeight="extrabold">PEAK</text>
+          <text x={paddingLeft + 10} y={yCoord(0.625) + 3} fill="#F1C40F" opacity="0.35" fontSize={isFullscreen ? "9" : "7"} fontWeight="extrabold">FLOW</text>
+          <text x={paddingLeft + 10} y={yCoord(0.375) + 3} fill="#E67E22" opacity="0.35" fontSize={isFullscreen ? "9" : "7"} fontWeight="extrabold">TRANSITION</text>
+          <text x={paddingLeft + 10} y={yCoord(0.125) + 3} fill="#E74C3C" opacity="0.35" fontSize={isFullscreen ? "9" : "7"} fontWeight="extrabold">DEARTH</text>
+
+          {/* Area fill under curve */}
+          <path d={areaPath} fill="url(#areaFill)" />
+
+          {/* Phase-colored line segments */}
+          {segments}
+
+          {/* Last value dot */}
+          <circle cx={lastX} cy={lastY} r={isFullscreen ? "3" : "2"} fill={dotColor} stroke="#0f0f20" strokeWidth="0.8" />
+          <circle cx={lastX} cy={lastY} r={isFullscreen ? "5" : "3.5"} fill={dotColor} opacity="0.2">
+            <animate attributeName="r" values={isFullscreen ? "3;6;3" : "2;4;2"} dur="2.5s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.3;0.05;0.3" dur="2.5s" repeatCount="indefinite" />
+          </circle>
+
+          {/* Hover date line & dot */}
+          {hoveredIndex !== null && recentHistory[hoveredIndex] && (() => {
+            const hX = xCoord(hoveredIndex);
+            const val = recentHistory[hoveredIndex].forage_index_smoothed ?? 0;
+            const hY = yCoord(val);
+            const color = getPhaseColor(recentHistory[hoveredIndex].phase);
+            return (
+              <g>
+                <line
+                  x1={hX}
+                  y1={paddingTop}
+                  x2={hX}
+                  y2={height - paddingBottom}
+                  stroke="#475569"
+                  strokeWidth="1"
+                  strokeDasharray="2,2"
+                />
+                <circle
+                  cx={hX}
+                  cy={hY}
+                  r={isFullscreen ? "3.5" : "2.5"}
+                  fill={color}
+                  stroke="#ffffff"
+                  strokeWidth="1"
+                />
+              </g>
+            );
+          })()}
+        </svg>
+
+        {/* X-axis date labels */}
+        <div 
+          className="flex justify-between w-full text-slate-500 font-bold border-t border-[#222240]/40 pt-1.5 mt-1 select-none"
+          style={{ paddingLeft: `${paddingLeft}px`, paddingRight: `${paddingRight}px`, fontSize: isFullscreen ? '10px' : '9px' }}
+        >
+          <span>{startMonth}</span>
+          <span>{midMonth}</span>
+          <span>{endMonth}</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full flex-1 overflow-hidden flex flex-col text-white bg-[#0a0a14] relative">
       
@@ -405,11 +601,11 @@ export const NectarFlowView: React.FC = () => {
               {/* Grid of basic key metrics */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Forage Index</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Nectar Index</span>
                   <span className="text-2xl font-black text-white">{forageIndexVal === 'N/A' ? 'N/A' : `${forageIndexVal}%`}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Delta Forage</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Delta Nectar</span>
                   <span className={`text-2xl font-black flex items-center gap-1 ${deltaVal > 0.01 ? 'text-green-400' : deltaVal < -0.01 ? 'text-red-400' : 'text-slate-300'}`}>
                     {deltaVal > 0.01 ? <TrendingUp size={20} /> : deltaVal < -0.01 ? <TrendingDown size={20} /> : <Minus size={20} />}
                     {deltaStr}
@@ -458,14 +654,14 @@ export const NectarFlowView: React.FC = () => {
               )}
             </div>
 
-            {/* 5. SWIPE PANEL 3 - Forage Drivers */}
+            {/* 5. SWIPE PANEL 3 - Nectar Drivers */}
             <div 
               onClick={() => setExpandDrivers(!expandDrivers)}
               className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
             >
               <div className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4">
                 <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider flex items-center gap-2">
-                  <Sparkles size={16} /> Forage Drivers
+                  <Sparkles size={16} /> Nectar Drivers
                 </h3>
                 <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandDrivers ? 'rotate-180' : ''}`} />
               </div>
@@ -587,211 +783,129 @@ export const NectarFlowView: React.FC = () => {
               className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4 cursor-pointer"
             >
               <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider flex items-center gap-2">
-                <TrendingUp size={16} /> 3-Month Trend
+                <TrendingUp size={16} /> 3-Month Nectar Trend
               </h3>
               <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
             </div>
 
             {/* Enhanced Trend Chart */}
-            <div className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-4 flex flex-col items-center justify-center relative">
+            <div 
+              ref={chartContainerRef}
+              className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-4 flex flex-col items-center justify-center relative w-full"
+            >
               {validForageHistory.length > 1 ? (
                 <div className="w-full flex flex-col justify-between">
-                  {/* Y-axis labels + chart area */}
-                  <div className="flex items-stretch gap-2">
-                    {/* Y-axis labels */}
-                    <div className="flex flex-col justify-between text-[9px] text-slate-500 font-bold py-0.5 w-8 flex-shrink-0">
-                      <span>100%</span>
-                      <span>75%</span>
-                      <span>50%</span>
-                      <span>25%</span>
-                      <span>0%</span>
-                    </div>
-                    {/* SVG chart */}
-                    <svg 
-                      className="w-full cursor-crosshair" 
-                      viewBox="0 0 100 50" 
-                      preserveAspectRatio="none" 
-                      style={{ height: '160px', touchAction: 'none' }}
-                      onMouseMove={handlePointerMove}
-                      onTouchMove={handlePointerMove}
-                      onMouseLeave={handlePointerLeave}
-                      onTouchEnd={handlePointerLeave}
+                  <div className="absolute top-3 right-3 z-10">
+                    <button
+                      onClick={() => setIsEnlarged(true)}
+                      className="p-1.5 bg-[#1b1b36]/80 hover:bg-[#2b2b54] border border-[#2b2b54] rounded-lg text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center justify-center"
+                      title="Enlarge Landscape Chart"
                     >
-                      <defs>
-                        {/* Phase zone colors */}
-                        <linearGradient id="flowGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#2ECC71" stopOpacity="0.5" />
-                          <stop offset="50%" stopColor="#F1C40F" stopOpacity="0.3" />
-                          <stop offset="100%" stopColor="#E74C3C" stopOpacity="0.1" />
-                        </linearGradient>
-                        <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#2ECC71" stopOpacity="0.35" />
-                          <stop offset="100%" stopColor="#2ECC71" stopOpacity="0.02" />
-                        </linearGradient>
-                      </defs>
-
-                      {/* Phase zone bands */}
-                      <rect x="0" y="0" width="100" height="12.5" fill="#2ECC71" opacity="0.06" />
-                      <rect x="0" y="12.5" width="100" height="12.5" fill="#F1C40F" opacity="0.06" />
-                      <rect x="0" y="25" width="100" height="12.5" fill="#E67E22" opacity="0.06" />
-                      <rect x="0" y="37.5" width="100" height="12.5" fill="#E74C3C" opacity="0.06" />
-
-                      {/* Phase zone labels */}
-                      <text x="1" y="7" fill="#2ECC71" opacity="0.4" fontSize="2.5" fontWeight="bold">PEAK</text>
-                      <text x="1" y="19.5" fill="#F1C40F" opacity="0.4" fontSize="2.5" fontWeight="bold">FLOW</text>
-                      <text x="1" y="32" fill="#E67E22" opacity="0.4" fontSize="2.5" fontWeight="bold">TRANSITION</text>
-                      <text x="1" y="44.5" fill="#E74C3C" opacity="0.4" fontSize="2.5" fontWeight="bold">DEARTH</text>
-
-                      {/* Horizontal grid lines */}
-                      <line x1="0" y1="12.5" x2="100" y2="12.5" stroke="#ffffff" strokeOpacity="0.04" strokeWidth="0.3" />
-                      <line x1="0" y1="25" x2="100" y2="25" stroke="#ffffff" strokeOpacity="0.06" strokeWidth="0.3" strokeDasharray="1,1" />
-                      <line x1="0" y1="37.5" x2="100" y2="37.5" stroke="#ffffff" strokeOpacity="0.04" strokeWidth="0.3" />
-
-                      {/* Area fill under curve */}
-                      {(() => {
-                        const points = validForageHistory.map((val: number, idx: number) => {
-                          const x = (idx / (validForageHistory.length - 1)) * 100;
-                          const y = 50 - (val * 50);
-                          return `${x},${y}`;
-                        }).join(' ');
-
-                        // Build colored line segments
-                        const segments: React.ReactNode[] = [];
-                        if (recentHistory.length > 1) {
-                          for (let i = 0; i < recentHistory.length - 1; i++) {
-                            const x1 = (i / (recentHistory.length - 1)) * 100;
-                            const y1 = 50 - ((recentHistory[i].forage_index_smoothed ?? 0) * 50);
-                            const x2 = ((i + 1) / (recentHistory.length - 1)) * 100;
-                            const y2 = 50 - ((recentHistory[i + 1].forage_index_smoothed ?? 0) * 50);
-                            const color = getPhaseColor(recentHistory[i].phase);
-                            segments.push(
-                              <line
-                                key={i}
-                                x1={x1} y1={y1} x2={x2} y2={y2}
-                                stroke={color}
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                              />
-                            );
-                          }
-                        }
-
-                        // Current position dot
-                        const lastVal = validForageHistory[validForageHistory.length - 1];
-                        const lastX = 100;
-                        const lastY = 50 - (lastVal * 50);
-                        const lastPhase = recentHistory.length > 0 ? recentHistory[recentHistory.length - 1].phase : 'TRANSITION';
-                        const dotColor = getPhaseColor(lastPhase);
-
-                        return (
-                          <>
-                            {/* Gradient area fill */}
-                            <path
-                              d={`M 0,50 L ${points} L 100,50 Z`}
-                              fill="url(#areaFill)"
-                            />
-                            {/* Phase-colored line segments */}
-                            {segments}
-                            {/* Current position indicator */}
-                            <circle cx={lastX} cy={lastY} r="2" fill={dotColor} stroke="#0f0f20" strokeWidth="0.8" />
-                            <circle cx={lastX} cy={lastY} r="3.5" fill={dotColor} opacity="0.2">
-                              <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite" />
-                              <animate attributeName="opacity" values="0.3;0.1;0.3" dur="2s" repeatCount="indefinite" />
-                            </circle>
-
-                            {/* Hover Interactive Cursor */}
-                            {hoveredIndex !== null && recentHistory[hoveredIndex] && (() => {
-                              const hoveredX = (hoveredIndex / (recentHistory.length - 1)) * 100;
-                              const val = recentHistory[hoveredIndex].forage_index_smoothed ?? 0;
-                              const hoveredY = 50 - (val * 50);
-                              const hoverColor = getPhaseColor(recentHistory[hoveredIndex].phase);
-                              return (
-                                <>
-                                  <line
-                                    x1={hoveredX}
-                                    y1={0}
-                                    x2={hoveredX}
-                                    y2={50}
-                                    stroke="#555577"
-                                    strokeWidth="0.5"
-                                    strokeDasharray="1,1"
-                                  />
-                                  <circle
-                                    cx={hoveredX}
-                                    cy={hoveredY}
-                                    r="2.2"
-                                    fill={hoverColor}
-                                    stroke="#ffffff"
-                                    strokeWidth="0.6"
-                                  />
-                                </>
-                              );
-                            })()}
-                          </>
-                        );
-                      })()}
-                    </svg>
+                      <Maximize2 size={14} />
+                    </button>
                   </div>
-                  {/* X-axis date labels */}
-                  <div className="flex justify-between w-full text-[9px] text-slate-500 font-bold border-t border-[#222240]/40 pt-1.5 pl-10 pr-0.5 mt-1">
-                    <span>{startMonth}</span>
-                    <span>{midMonth}</span>
-                    <span>{endMonth}</span>
-                  </div>
+                  {renderChartSvg(containerWidth, 160)}
                 </div>
               ) : (
                 <p className="text-xs text-slate-500">Insufficient history for trend line</p>
               )}
             </div>
 
-            {/* Labels below sparkline */}
-            <div className="flex items-center justify-between mt-3 text-xs bg-[#121226] border border-[#222240] rounded-xl p-3 min-h-[52px]">
+            {/* Detailed Labels below Chart */}
+            <div className="mt-3 bg-[#121226] border border-[#222240] rounded-xl p-4">
               {hoveredIndex !== null && recentHistory[hoveredIndex] ? (
-                <>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Date</span>
-                    <span className="font-extrabold text-white mt-0.5">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center border-b border-[#222240]/60 pb-2">
+                    <span className="text-xs font-bold text-slate-400">Date</span>
+                    <span className="text-sm font-extrabold text-white">
                       {new Date(recentHistory[hoveredIndex].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                   </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Forage Index</span>
-                    <span className="font-black text-amber-500 mt-0.5">
-                      {recentHistory[hoveredIndex].forage_index_smoothed !== null 
-                        ? `${(recentHistory[hoveredIndex].forage_index_smoothed * 100).toFixed(0)}%` 
-                        : 'N/A'}
-                    </span>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="flex items-center justify-between bg-[#1b1b36]/40 p-2 rounded-lg border border-[#2b2b54]/40">
+                      <span className="text-slate-400">Nectar Index</span>
+                      <span className="font-black text-amber-500">
+                        {recentHistory[hoveredIndex].forage_index_smoothed !== null 
+                          ? `${(recentHistory[hoveredIndex].forage_index_smoothed * 100).toFixed(0)}%` 
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between bg-[#1b1b36]/40 p-2 rounded-lg border border-[#2b2b54]/40">
+                      <span className="text-slate-400">NDVI Vigor</span>
+                      <span className="font-black text-emerald-400">
+                        {recentHistory[hoveredIndex].ndvi_normalized !== null 
+                          ? `${(recentHistory[hoveredIndex].ndvi_normalized * 100).toFixed(0)}%` 
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between bg-[#1b1b36]/40 p-2 rounded-lg border border-[#2b2b54]/40">
+                      <span className="text-slate-400">Bloom Factor</span>
+                      <span className="font-black text-pink-400">
+                        {recentHistory[hoveredIndex].bloom_factor !== null 
+                          ? `${(recentHistory[hoveredIndex].bloom_factor * 100).toFixed(0)}%` 
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between bg-[#1b1b36]/40 p-2 rounded-lg border border-[#2b2b54]/40">
+                      <span className="text-slate-400">Weather Suit.</span>
+                      <span className="font-black text-sky-400">
+                        {recentHistory[hoveredIndex].weather_suitability !== null 
+                          ? `${(recentHistory[hoveredIndex].weather_suitability * 100).toFixed(0)}%` 
+                          : 'N/A'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col text-right">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Phase</span>
-                    <span className={`font-extrabold px-2 py-0.5 rounded-full text-[10px] mt-0.5 ${getPhaseColors(recentHistory[hoveredIndex].phase).bg} ${getPhaseColors(recentHistory[hoveredIndex].phase).text}`}>
+                  <div className="flex justify-between items-center bg-[#1b1b36]/60 p-2 rounded-lg border border-[#2b2b54]/60">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 text-left">Phase</span>
+                    <span className={`font-extrabold px-2.5 py-0.5 rounded-full text-[10px] ${getPhaseColors(recentHistory[hoveredIndex].phase).bg} ${getPhaseColors(recentHistory[hoveredIndex].phase).text}`}>
                       {getPhaseColors(recentHistory[hoveredIndex].phase).emoji} {getPhaseColors(recentHistory[hoveredIndex].phase).label}
                     </span>
                   </div>
-                </>
+                </div>
               ) : (
-                <>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Trend Direction</span>
-                    <span className="font-extrabold text-white capitalize mt-0.5 flex items-center gap-1">
-                      {resolvedTrendDirection === 'rising' ? <TrendingUp size={12} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={12} className="text-red-400" /> : <Minus size={12} className="text-slate-400" />}
-                      {resolvedTrendDirection || 'Flat'}
-                    </span>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs border-b border-[#222240]/60 pb-2">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 text-left">Trend Direction</span>
+                      <span className="font-extrabold text-white capitalize mt-0.5 flex items-center gap-1">
+                        {resolvedTrendDirection === 'rising' ? <TrendingUp size={12} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={12} className="text-red-400" /> : <Minus size={12} className="text-slate-400" />}
+                        {resolvedTrendDirection ? `${resolvedTrendDirection} trend` : 'Flat trend'}
+                      </span>
+                    </div>
+                    <div className="flex flex-col text-right">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 text-right">Current Phase</span>
+                      <span className={`font-extrabold px-2 py-0.5 rounded-full text-[10px] mt-0.5 ${colors.bg} ${colors.text}`}>
+                        {colors.emoji} {colors.label}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col text-right">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Current Phase</span>
-                    <span className={`font-extrabold px-2 py-0.5 rounded-full text-[10px] mt-0.5 ${colors.bg} ${colors.text}`}>
-                      {colors.emoji} {colors.label}
-                    </span>
+                  {/* Latest readings grid */}
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="flex justify-between text-slate-400">
+                      <span>Latest Nectar:</span>
+                      <span className="font-bold text-amber-500">{forageIndexVal === 'N/A' ? 'N/A' : `${forageIndexVal}%`}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-400">
+                      <span>Latest NDVI Vigor:</span>
+                      <span className="font-bold text-emerald-400">{ndviDisp === 'N/A' ? 'N/A' : `${ndviDisp}%`}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-400">
+                      <span>Latest Bloom:</span>
+                      <span className="font-bold text-pink-400">{bloomDisp === 'N/A' ? 'N/A' : `${bloomDisp}%`}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-400">
+                      <span>Latest Weather:</span>
+                      <span className="font-bold text-sky-400">{weatherDisp === 'N/A' ? 'N/A' : `${weatherDisp}%`}</span>
+                    </div>
                   </div>
-                </>
+                </div>
               )}
             </div>
 
             {/* Expand list of numeric values */}
             {expandTrends && (
               <div className="mt-5 pt-4 border-t border-[#2b2b4d] space-y-2 text-xs text-slate-300 animate-in slide-in-from-top-2 duration-200">
-                <span className="font-extrabold text-white block mb-2">Weekly Smoothed History</span>
+                <span className="font-extrabold text-white block mb-2">Weekly Smoothed Nectar Index</span>
                 {recentHistory.filter((_: any, idx: number) => idx % 7 === 0 || idx === recentHistory.length - 1).map((h: any, i: number) => (
                   <div key={i} className="flex justify-between border-b border-[#20203a] pb-1.5">
                     <span>{new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
@@ -961,6 +1075,120 @@ export const NectarFlowView: React.FC = () => {
         </button>
 
       </div>
+
+      {isEnlarged && (
+        <div className="fixed inset-0 z-50 bg-[#07070d] flex flex-col justify-between overflow-hidden">
+          {/* Rotated wrapper for portrait, normal for landscape */}
+          <div 
+            className="portrait:w-[100vh] portrait:h-[100vw] portrait:absolute portrait:top-0 portrait:left-full portrait:origin-top-left portrait:rotate-90 landscape:w-full landscape:h-full flex flex-col p-6 justify-between"
+          >
+            {/* Header: Title and Close button */}
+            <div className="flex items-center justify-between w-full border-b border-[#2b2b4d] pb-2.5 mb-2 select-none">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="text-amber-500" size={18} />
+                <h3 className="text-sm font-black text-amber-500 tracking-wider uppercase">
+                  {useAppStore.getState().selectedApiaryName} — Nectar Index Trend
+                </h3>
+              </div>
+              <button 
+                onClick={() => {
+                  setIsEnlarged(false);
+                  setHoveredIndex(null);
+                }}
+                className="p-2 bg-[#1b1b36] border border-[#2b2b54] rounded-full hover:bg-[#2b2b54] active:scale-95 transition-all text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Enlarged Chart Area */}
+            <div className="flex-1 flex items-center justify-center bg-[#0d0d1a] border border-[#20203c] rounded-2xl p-4 my-2">
+              {(() => {
+                const isPortrait = window.innerHeight > window.innerWidth;
+                const chartW = isPortrait ? window.innerHeight - 48 : window.innerWidth - 48;
+                const chartH = isPortrait ? window.innerWidth * 0.60 : window.innerHeight * 0.60;
+                return renderChartSvg(Math.max(300, chartW), Math.max(120, chartH), true);
+              })()}
+            </div>
+
+            {/* Hover details grid in Fullscreen */}
+            <div className="bg-[#121226] border border-[#222240] rounded-xl p-3 min-h-[50px] select-none">
+              {hoveredIndex !== null && recentHistory[hoveredIndex] ? (
+                <div className="flex items-center justify-between text-xs w-full gap-4">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase font-bold text-slate-500">Date</span>
+                    <span className="font-extrabold text-white text-[11px] mt-0.5">
+                      {new Date(recentHistory[hoveredIndex].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </div>
+                  <div className="flex-1 grid grid-cols-4 gap-2.5">
+                    <div className="flex justify-between items-center bg-[#1b1b36]/40 px-2 py-1 rounded border border-[#2b2b54]/40">
+                      <span className="text-slate-400 text-[10px]">Nectar Index:</span>
+                      <span className="font-black text-amber-500 text-[11px] ml-1">
+                        {recentHistory[hoveredIndex].forage_index_smoothed !== null 
+                          ? `${(recentHistory[hoveredIndex].forage_index_smoothed * 100).toFixed(0)}%` 
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center bg-[#1b1b36]/40 px-2 py-1 rounded border border-[#2b2b54]/40">
+                      <span className="text-slate-400 text-[10px]">NDVI Vigor:</span>
+                      <span className="font-black text-emerald-400 text-[11px] ml-1">
+                        {recentHistory[hoveredIndex].ndvi_normalized !== null 
+                          ? `${(recentHistory[hoveredIndex].ndvi_normalized * 100).toFixed(0)}%` 
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center bg-[#1b1b36]/40 px-2 py-1 rounded border border-[#2b2b54]/40">
+                      <span className="text-slate-400 text-[10px]">Bloom Factor:</span>
+                      <span className="font-black text-pink-400 text-[11px] ml-1">
+                        {recentHistory[hoveredIndex].bloom_factor !== null 
+                          ? `${(recentHistory[hoveredIndex].bloom_factor * 100).toFixed(0)}%` 
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center bg-[#1b1b36]/40 px-2 py-1 rounded border border-[#2b2b54]/40">
+                      <span className="text-slate-400 text-[10px]">Weather Suit.:</span>
+                      <span className="font-black text-sky-400 text-[11px] ml-1">
+                        {recentHistory[hoveredIndex].weather_suitability !== null 
+                          ? `${(recentHistory[hoveredIndex].weather_suitability * 100).toFixed(0)}%` 
+                          : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col text-right">
+                    <span className="text-[9px] uppercase font-bold text-slate-500">Phase</span>
+                    <span className={`font-extrabold px-2 py-0.5 rounded-full text-[9px] mt-0.5 ${getPhaseColors(recentHistory[hoveredIndex].phase).bg} ${getPhaseColors(recentHistory[hoveredIndex].phase).text}`}>
+                      {getPhaseColors(recentHistory[hoveredIndex].phase).emoji} {getPhaseColors(recentHistory[hoveredIndex].phase).label}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-xs w-full">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase font-bold text-slate-500 font-bold">Latest Status</span>
+                    <span className="font-extrabold text-white text-[11px] mt-0.5 flex items-center gap-1">
+                      {resolvedTrendDirection === 'rising' ? <TrendingUp size={12} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={12} className="text-red-400" /> : <Minus size={12} className="text-slate-400" />}
+                      {resolvedTrendDirection ? `${resolvedTrendDirection} trend` : 'Flat trend'}
+                    </span>
+                  </div>
+                  <div className="flex gap-4 text-[10px] text-slate-400">
+                    <div>Nectar: <span className="font-bold text-amber-500">{forageIndexVal}%</span></div>
+                    <div>NDVI: <span className="font-bold text-emerald-400">{ndviDisp}%</span></div>
+                    <div>Bloom: <span className="font-bold text-pink-400">{bloomDisp}%</span></div>
+                    <div>Weather: <span className="font-bold text-sky-400">{weatherDisp}%</span></div>
+                  </div>
+                  <div className="flex flex-col text-right">
+                    <span className="text-[9px] uppercase font-bold text-slate-500 font-bold">Current Phase</span>
+                    <span className={`font-extrabold px-2 py-0.5 rounded-full text-[9px] mt-0.5 ${colors.bg} ${colors.text}`}>
+                      {colors.emoji} {colors.label}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
