@@ -36,11 +36,6 @@ export interface NFIBreakdown {
   transitionAdvice: string;
 }
 
-const FLOW_ENTER_THRESHOLD = 0.30;
-const FLOW_EXIT_THRESHOLD  = 0.20;
-const DELTA_UP   = 0.02;
-const DELTA_DOWN = -0.02;
-
 /**
  * Deterministic pipeline to calculate daily nectar flow status for an apiary over time.
  * @param apiary Apiary information
@@ -114,8 +109,8 @@ export function computeNectarStatus(
     };
   });
 
-  // 2. Compute 7-day moving average and delta
-  return history.map((item, idx) => {
+  // 2. First pass: Compute 7-day moving average and delta
+  const computedList = history.map((item, idx) => {
     // 7-day moving average of forage_raw
     let smoothed: number | null = null;
     let delta: number | null = null;
@@ -155,8 +150,30 @@ export function computeNectarStatus(
       }
     }
 
-    // Phase classification logic
+    return {
+      date: item.date,
+      forage_index_raw: rawForageList[idx].forage_raw,
+      forage_index_smoothed: smoothed,
+      delta_forage: delta,
+      ndvi: item.ndvi
+    };
+  });
+
+  // Find the annual peak smoothed value (representing last year's high)
+  const validSmoothed = computedList.map(c => c.forage_index_smoothed).filter(v => v !== null && !isNaN(v)) as number[];
+  const maxSmoothed = validSmoothed.length > 0 ? Math.max(...validSmoothed) : 0.20;
+
+  // Calculate dynamic classification thresholds relative to maxSmoothed
+  const FLOW_ENTER_THRESHOLD = Math.min(0.30, Math.max(0.12, maxSmoothed * 0.60));
+  const FLOW_EXIT_THRESHOLD  = Math.min(0.20, Math.max(0.08, maxSmoothed * 0.40));
+  const DELTA_UP   = Math.min(0.02, Math.max(0.005, maxSmoothed * 0.04));
+  const DELTA_DOWN = Math.max(-0.02, Math.min(-0.005, maxSmoothed * -0.04));
+
+  // 3. Second pass: Classify phase for each day using dynamic thresholds
+  return computedList.map((item) => {
     let phase: 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING' | 'TRANSITION' = 'TRANSITION';
+    const smoothed = item.forage_index_smoothed;
+    const delta = item.delta_forage;
 
     if (item.ndvi === undefined || item.ndvi === null || isNaN(item.ndvi)) {
       phase = 'TRANSITION';
@@ -178,7 +195,7 @@ export function computeNectarStatus(
 
     return {
       date: item.date,
-      forage_index_raw: rawForageList[idx].forage_raw,
+      forage_index_raw: item.forage_index_raw,
       forage_index_smoothed: smoothed,
       delta_forage: delta,
       phase
