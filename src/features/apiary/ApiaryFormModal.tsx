@@ -50,12 +50,44 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
     setSaving(true);
     setError(null);
 
+    // Location validation
+    if (locationMode === 'zip') {
+      if (!zipCode.trim()) {
+        setError('Postal code is required.');
+        setSaving(false);
+        return;
+      }
+    } else {
+      if (!latitude.trim() || !longitude.trim()) {
+        setError('Both Latitude and Longitude are required when using Coordinates.');
+        setSaving(false);
+        return;
+      }
+      const latVal = parseFloat(latitude);
+      const lngVal = parseFloat(longitude);
+      if (isNaN(latVal) || isNaN(lngVal)) {
+        setError('Coordinates must be valid numbers.');
+        setSaving(false);
+        return;
+      }
+      if (latVal < -90 || latVal > 90) {
+        setError('Latitude must be between -90 and 90 degrees.');
+        setSaving(false);
+        return;
+      }
+      if (lngVal < -180 || lngVal > 180) {
+        setError('Longitude must be between -180 and 180 degrees.');
+        setSaving(false);
+        return;
+      }
+    }
+
     try {
       const apiaryData = {
         name: name.trim(),
         zip_code: locationMode === 'zip' ? zipCode.trim() : '',
-        latitude: locationMode === 'coords' && latitude ? parseFloat(latitude) : null,
-        longitude: locationMode === 'coords' && longitude ? parseFloat(longitude) : null,
+        latitude: locationMode === 'coords' ? parseFloat(latitude) : null,
+        longitude: locationMode === 'coords' ? parseFloat(longitude) : null,
         notes: notes.trim(),
         user_id: user.id
       };
