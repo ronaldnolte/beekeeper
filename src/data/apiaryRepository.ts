@@ -74,6 +74,7 @@ export async function deleteApiaryWithCascade(
       supabase.from('interventions').delete().in('hive_id', hiveIds),
       supabase.from('hive_snapshots').delete().in('hive_id', hiveIds),
       supabase.from('inspections').delete().in('hive_id', hiveIds),
+      supabase.from('varroa_tests').delete().in('hive_id', hiveIds),
     ]);
 
     const childError = results.find((r) => r.error)?.error;
@@ -109,4 +110,17 @@ export async function deleteApiaryWithCascade(
     .eq('user_id', userId);
 
   if (deleteError) throw deleteError;
+
+  // 5. Verify the apiary was actually deleted (RLS can silently block deletes)
+  const { data: verifyApiary } = await supabase
+    .from('apiaries')
+    .select('id')
+    .eq('id', apiaryId)
+    .maybeSingle();
+
+  if (verifyApiary) {
+    throw new Error(
+      "Failed to delete apiary. The delete request completed, but the record still exists. This usually happens if your user account does not have deletion permissions (Row Level Security policy) on this apiary."
+    );
+  }
 }
