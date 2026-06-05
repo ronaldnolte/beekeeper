@@ -313,9 +313,6 @@ export const NectarFlowView: React.FC = () => {
   const recentHistory = data.full_history ? data.full_history.slice(-90) : [];
   const validForageHistory = recentHistory.map((h: any) => h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed) ? h.forage_index_smoothed : 0);
 
-  // Extract full year history (365 days) for baseline annual scaling
-  const fullYearHistory = data.full_history || [];
-  const validYearlyHistory = fullYearHistory.map((h: any) => h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed) ? h.forage_index_smoothed : 0);
 
   // Format timeline labels for 3-month history
   let startMonth = '';
@@ -347,9 +344,9 @@ export const NectarFlowView: React.FC = () => {
       );
     }
 
-    // Y-axis Dynamic Auto-Scaling (110% of Yearly Maximum with discrete grid-friendly steps)
-    const maxYearlyVal = validYearlyHistory.length > 0 ? Math.max(...validYearlyHistory) : 0.20;
-    const targetYMax = maxYearlyVal * 1.10;
+    // Y-axis Dynamic Auto-Scaling (110% of 90-day Maximum with discrete grid-friendly steps)
+    const maxHistoryVal = validForageHistory.length > 0 ? Math.max(...validForageHistory) : 0.20;
+    const targetYMax = maxHistoryVal * 1.10;
     
     let yMax = 1.0;
     let yGridValues = [1.0, 0.75, 0.50, 0.25, 0.0];

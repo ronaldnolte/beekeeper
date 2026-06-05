@@ -159,8 +159,9 @@ export function computeNectarStatus(
     };
   });
 
-  // Find the annual peak smoothed value (representing last year's high)
-  const validSmoothed = computedList.map(c => c.forage_index_smoothed).filter(v => v !== null && !isNaN(v)) as number[];
+  // Find the peak smoothed value in the last 90 days (representing the current season's high)
+  const recentList = computedList.slice(-90);
+  const validSmoothed = recentList.map(c => c.forage_index_smoothed).filter(v => v !== null && !isNaN(v)) as number[];
   const maxSmoothed = validSmoothed.length > 0 ? Math.max(...validSmoothed) : 0.20;
 
   // Calculate dynamic classification thresholds relative to maxSmoothed
