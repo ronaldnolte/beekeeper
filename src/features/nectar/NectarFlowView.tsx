@@ -309,18 +309,28 @@ export const NectarFlowView: React.FC = () => {
     ? (isFlatTrend ? '0.0%' : (deltaVal > 0 ? '+' : '') + (deltaVal * 100).toFixed(1) + '%')
     : 'N/A';
 
-  // Extract recent 90 days (3 months) from full history for sparkline
-  const recentHistory = data.full_history ? data.full_history.slice(-90) : [];
+  // Group full 12-month history into weekly data points (~52 points)
+  const recentHistory: any[] = [];
+  if (data.full_history && data.full_history.length > 0) {
+    for (let i = 0; i < data.full_history.length; i += 7) {
+      recentHistory.push(data.full_history[i]);
+    }
+    // Make sure we include the latest day to show today's status
+    if ((data.full_history.length - 1) % 7 !== 0) {
+      recentHistory.push(data.full_history[data.full_history.length - 1]);
+    }
+  }
+
   const validForageHistory = recentHistory.map((h: any) => h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed) ? h.forage_index_smoothed : 0);
 
 
-  // Format timeline labels for 3-month history
+  // Format timeline labels for 12-month history
   let startMonth = '';
   let midMonth = '';
   let endMonth = '';
   if (recentHistory.length > 0) {
     const getMonthName = (dateStr: string) => {
-      return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
     startMonth = getMonthName(recentHistory[0].date);
     midMonth = getMonthName(recentHistory[Math.floor(recentHistory.length / 2)].date);
@@ -840,7 +850,7 @@ export const NectarFlowView: React.FC = () => {
               className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4 cursor-pointer"
             >
               <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider flex items-center gap-2">
-                <TrendingUp size={16} /> 3-Month Nectar Trend
+                <TrendingUp size={16} /> 12-Month Nectar Trend
               </h3>
               <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
             </div>
