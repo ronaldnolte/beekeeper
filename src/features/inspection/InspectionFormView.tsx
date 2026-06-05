@@ -130,15 +130,15 @@ export const InspectionFormView: React.FC = () => {
 
   const renderPills = (title: string, icon: string, options: any[], value: string, setter: (val: string) => void) => (
     <div>
-      <h3 className="text-sm font-bold text-[var(--color-text)] mb-2 flex items-center gap-2">
+      <h3 className="text-xs font-black text-[var(--color-text-muted)] mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
         <span>{icon}</span> {title}
       </h3>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {options.map((opt) => (
           <button 
             key={opt.value}
             onClick={() => setter(opt.value)}
-            className={`px-4 py-3 rounded-xl border-2 font-bold text-sm transition-all flex-grow text-center min-h-[48px] ${
+            className={`px-3 py-2 rounded-xl border-2 font-bold text-xs transition-all flex-grow text-center min-h-[38px] ${
               value === opt.value 
                 ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/15 text-[var(--color-primary)]' 
                 : 'border-[var(--color-card-border)] bg-[var(--color-input-bg)] text-[var(--color-text-muted)] hover:border-[var(--color-text-muted)]'
@@ -188,43 +188,47 @@ export const InspectionFormView: React.FC = () => {
     <div className="w-full h-full flex flex-col overflow-hidden">
       
       {/* Scrollable Form Body */}
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-3 sm:p-4 space-y-4 pb-28">
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-2.5 sm:p-4 space-y-3 pb-24">
         <SubTabBar activeView="INSPECTION_FORM" />
-        {/* Date card */}
-        <div className="w-full max-w-2xl card p-4">
-          <h3 className="text-sm font-bold text-[var(--color-text)] mb-2 flex items-center gap-2">
-            <span>📅</span> Date
-          </h3>
-          <input
-            type="date"
-            value={date}
-            onChange={e => setDate(e.target.value)}
-            className="w-full h-12 px-4 py-0 block rounded-xl bg-[var(--color-input-bg)] text-[var(--color-primary)] font-bold text-base border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none"
-          />
-        </div>
+        
+        {/* Date & Notes Card (Combined & Responsive Grid) */}
+        <div className="w-full max-w-2xl card p-3 sm:p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-1">
+              <h3 className="text-xs font-black text-[var(--color-text-muted)] mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
+                <span>📅</span> Date
+              </h3>
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                className="w-full h-10 px-3 py-0 block rounded-xl bg-[var(--color-input-bg)] text-[var(--color-primary)] font-bold text-sm border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none"
+              />
+            </div>
 
-        {/* Notes card */}
-        <div className="w-full max-w-2xl card p-4">
-          <h3 className="text-sm font-bold text-[var(--color-text)] mb-2 flex items-center gap-2">
-            <span>📝</span> Notes
-          </h3>
-          <textarea
-            value={observations}
-            onChange={(e) => setObservations(e.target.value)}
-            placeholder="Tap here to add field notes..."
-            className="w-full h-24 p-3.5 rounded-xl bg-[var(--color-input-bg)] border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none resize-none font-medium text-[var(--color-text)] placeholder-[var(--color-text-muted)]"
-          />
+            <div className="sm:col-span-2">
+              <h3 className="text-xs font-black text-[var(--color-text-muted)] mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
+                <span>📝</span> Notes
+              </h3>
+              <textarea
+                value={observations}
+                onChange={(e) => setObservations(e.target.value)}
+                placeholder="Tap here to add field notes..."
+                className="w-full h-10 sm:h-20 p-2.5 px-3 rounded-xl bg-[var(--color-input-bg)] border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none resize-none font-medium text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] custom-scrollbar"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Queen & Brood card */}
-        <div className="w-full max-w-2xl card p-4 space-y-5">
+        <div className="w-full max-w-2xl card p-3 sm:p-4 space-y-3">
           {renderPills('Queen Status', '👑', QUEEN_STATUS_OPTIONS, queenStatus, setQueenStatus)}
           {renderPills('Brood Pattern', '🐝', BROOD_PATTERN_OPTIONS, broodPattern, setBroodPattern)}
           {renderPills('Temperament', '🌡️', TEMPERAMENT_OPTIONS, temperament, setTemperament)}
         </div>
 
         {/* Stores card */}
-        <div className="w-full max-w-2xl card p-4 space-y-5">
+        <div className="w-full max-w-2xl card p-3 sm:p-4 space-y-3">
           <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Stores</h3>
           {renderPills('Honey', '🍯', STORES_OPTIONS, honeyStores, setHoneyStores)}
           {renderPills('Pollen', '🌼', STORES_OPTIONS, pollenStores, setPollenStores)}
