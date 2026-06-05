@@ -27,6 +27,9 @@ export interface NectarIndexResponse {
   isPolygonCreated: boolean;
   isMock: boolean;
   history?: { date: string; nfi: number }[];
+  usda_zone?: number;
+  min_temp_of_year?: number;
+  plant_profile_info?: { name: string; bloom_start: string; bloom_peak: string; bloom_end: string }[];
 }
 
 /**

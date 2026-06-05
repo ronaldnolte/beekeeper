@@ -237,6 +237,36 @@ async function fetchOpenMeteoWeather(
   return weatherMap;
 }
 
+// Shifts an "MM-DD" date string by a given number of days, wrapping calendar year boundaries
+function shiftMonthDay(mdStr: string, offsetDays: number): string {
+  if (offsetDays === 0) return mdStr;
+  const parts = mdStr.split('-');
+  const month = parseInt(parts[0], 10);
+  const day = parseInt(parts[1], 10);
+  
+  // Use a fixed non-leap year (e.g. 2026) to perform date arithmetic in local time
+  const date = new Date(2026, month - 1, day);
+  date.setDate(date.getDate() + offsetDays);
+  
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${m}-${d}`;
+}
+
+// Adjusts all bloom windows in a profile by a given day offset
+function getAdjustedProfileForZone(
+  profile: PlantProfileEntry[],
+  offsetDays: number
+): PlantProfileEntry[] {
+  if (offsetDays === 0) return profile;
+  return profile.map(plant => ({
+    ...plant,
+    bloom_start: shiftMonthDay(plant.bloom_start, offsetDays),
+    bloom_peak: shiftMonthDay(plant.bloom_peak, offsetDays),
+    bloom_end: shiftMonthDay(plant.bloom_end, offsetDays)
+  }));
+}
+
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -287,6 +317,54 @@ export default async function handler(req: any, res: any) {
     // 1. Fetch Weather from Open-Meteo
     const weatherMap = await fetchOpenMeteoWeather(lat, lng, startDateStr, endDateStr);
 
+    // Calculate USDA Zone from extreme minimum temperature in weather history
+    const allTemps = Object.values(weatherMap)
+      .map(w => w.temp_min)
+      .filter(t => t !== null && t !== undefined && !isNaN(t)) as number[];
+    const minTempOfYear = allTemps.length > 0 ? Math.min(...allTemps) : 10.0; // Default to 10°F (Zone 8a boundary) if no records
+
+    let usdaZone = 7; // Default baseline (Tennessee / Mid-South)
+    if (minTempOfYear < -40) usdaZone = 2;
+    else if (minTempOfYear < -30) usdaZone = 3;
+    else if (minTempOfYear < -20) usdaZone = 4;
+    else if (minTempOfYear < -10) usdaZone = 5;
+    else if (minTempOfYear < 0) usdaZone = 6;
+    else if (minTempOfYear < 10) usdaZone = 7;
+    else if (minTempOfYear < 20) usdaZone = 8;
+    else if (minTempOfYear < 30) usdaZone = 9;
+    else if (minTempOfYear < 40) usdaZone = 10;
+    else usdaZone = 11;
+
+    // West-East Species Swapping: check if in Southwest Arid Desert
+    // (West of -100° longitude and South of 38° latitude)
+    const isSouthwestArid = lng < -100 && lat < 38;
+    const basePlantProfile: PlantProfileEntry[] = isSouthwestArid 
+      ? [
+          {
+            name: 'Southwest Spring Desert Bloom',
+            bloom_start: '03-01',
+            bloom_peak: '04-15',
+            bloom_end: '05-30'
+          },
+          {
+            name: 'Desert Summer Bloom',
+            bloom_start: '05-15',
+            bloom_peak: '06-15',
+            bloom_end: '07-31'
+          },
+          {
+            name: 'Southwest Monsoon & Fall Bloom',
+            bloom_start: '08-01',
+            bloom_peak: '09-10',
+            bloom_end: '10-31'
+          }
+        ]
+      : defaultPlantProfile;
+
+    // Adjust dates based on USDA zone offset (10 days per zone shift relative to Zone 7)
+    const zoneOffsetDays = (7 - usdaZone) * 10;
+    const adjustedPlantProfile = getAdjustedProfileForZone(basePlantProfile, zoneOffsetDays);
+
     // 2. Fetch NDVI from Earth Engine (or use climate model mock fallback if it fails/empty)
     let ndviRecords: NDVIRecord[] = [];
     let isMock = false;
@@ -327,7 +405,7 @@ export default async function handler(req: any, res: any) {
         date: dateStr,
         lat,
         lon: lng,
-        plant_profile: defaultPlantProfile
+        plant_profile: adjustedPlantProfile
       });
 
       // Calculate rain in the past 7 days (rolling sum)
@@ -481,6 +559,16 @@ export default async function handler(req: any, res: any) {
       isPolygonCreated: false,
       isMock,
       history: weeklyHistory,
+
+      // USDA Zone & Plant Profile Info
+      usda_zone: usdaZone,
+      min_temp_of_year: minTempOfYear,
+      plant_profile_info: adjustedPlantProfile.map(p => ({
+        name: p.name,
+        bloom_start: p.bloom_start,
+        bloom_peak: p.bloom_peak,
+        bloom_end: p.bloom_end
+      })),
 
       // New UI Data Binding fields
       phase: latestStatus.phase,

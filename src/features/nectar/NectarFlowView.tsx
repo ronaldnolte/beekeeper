@@ -1095,6 +1095,14 @@ export const NectarFlowView: React.FC = () => {
                   <span>Coordinates</span>
                   <span>{data.ndviRawLatest ? 'Loaded' : 'N/A'}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span>USDA Hardiness Zone</span>
+                  <span className="text-amber-500 font-bold">{data.usda_zone ? `Zone ${data.usda_zone}` : 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Extreme Min Temp</span>
+                  <span>{data.min_temp_of_year !== undefined && data.min_temp_of_year !== null ? `${data.min_temp_of_year.toFixed(1)}°F` : 'N/A'}</span>
+                </div>
               </div>
             </div>
           </div>
