@@ -316,8 +316,8 @@ export default async function handler(req: any, res: any) {
       start = new Date('2022-06-04');
       end = new Date('2023-02-09');
     } else {
-      console.log('Using comparative date range: 2025-01-01 to today');
-      start = new Date('2025-01-01');
+      console.log('Using comparative date range: 2023-01-01 to today');
+      start = new Date('2023-01-01');
       end = new Date();
     }
     const startDateStr = start.toISOString().slice(0, 10);

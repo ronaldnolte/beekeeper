@@ -309,15 +309,6 @@ export const NectarFlowView: React.FC = () => {
     ? (isFlatTrend ? '0.0%' : (deltaVal > 0 ? '+' : '') + (deltaVal * 100).toFixed(1) + '%')
     : 'N/A';
 
-  // Split full history into base year (last year, e.g. 2025) and current year (e.g. 2026)
-  const years = Array.from(new Set((data.full_history || []).map((h: any) => parseInt(h.date.split('-')[0], 10)))).sort() as number[];
-  
-  const baseYear = years[0] || new Date().getFullYear() - 1;
-  const currentYear = years[1] || new Date().getFullYear();
-
-  const historyBase = (data.full_history || []).filter((h: any) => parseInt(h.date.split('-')[0], 10) === baseYear);
-  const historyCurrent = (data.full_history || []).filter((h: any) => parseInt(h.date.split('-')[0], 10) === currentYear);
-
   // Helper functions for horizontal alignment on fixed calendar year axis
   const getDayOfYear = (dateStr: string) => {
     const parts = dateStr.split('-');
@@ -334,6 +325,67 @@ export const NectarFlowView: React.FC = () => {
   const getDayOfYearFraction = (dateStr: string) => {
     return getDayOfYear(dateStr) / 365;
   };
+
+  // Split full history into base year (last year, e.g. 2025) and current year (e.g. 2026)
+  const years = Array.from(new Set((data.full_history || []).map((h: any) => parseInt(h.date.split('-')[0], 10)))).sort() as number[];
+  
+  const currentYear = years[years.length - 1] || new Date().getFullYear();
+  const historicalYears = years.filter(y => y < currentYear);
+  const baseYear = years[0] || currentYear - 1;
+  const baseYearLabel = historicalYears.length > 1
+    ? `${historicalYears[0]}-${historicalYears[historicalYears.length - 1]} Avg`
+    : `${baseYear}`;
+
+  const historyCurrent = (data.full_history || []).filter((h: any) => parseInt(h.date.split('-')[0], 10) === currentYear);
+
+  // Group historical data by day-of-year index (0-364) to construct a multi-year average
+  const historyBaseMap: Record<number, { sum: number; count: number; sumNdvi: number; sumBloom: number; sumWeather: number; weatherCount: number }> = {};
+  for (let i = 0; i < 365; i++) {
+    historyBaseMap[i] = { sum: 0, count: 0, sumNdvi: 0, sumBloom: 0, sumWeather: 0, weatherCount: 0 };
+  }
+  
+  (data.full_history || []).forEach((h: any) => {
+    const year = parseInt(h.date.split('-')[0], 10);
+    if (year < currentYear) {
+      const dayIdx = getDayOfYear(h.date);
+      if (h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed)) {
+        historyBaseMap[dayIdx].sum += h.forage_index_smoothed;
+        historyBaseMap[dayIdx].count += 1;
+      }
+      if (h.ndvi_normalized !== null && !isNaN(h.ndvi_normalized)) {
+        historyBaseMap[dayIdx].sumNdvi += h.ndvi_normalized;
+      }
+      if (h.bloom_factor !== null && !isNaN(h.bloom_factor)) {
+        historyBaseMap[dayIdx].sumBloom += h.bloom_factor;
+      }
+      if (h.weather_suitability !== null && !isNaN(h.weather_suitability)) {
+        historyBaseMap[dayIdx].sumWeather += h.weather_suitability;
+        historyBaseMap[dayIdx].weatherCount += 1;
+      }
+    }
+  });
+
+  const historyBase = Array.from({ length: 365 }, (_, dayIdx) => {
+    const cell = historyBaseMap[dayIdx];
+    const nfiAvg = cell.count > 0 ? cell.sum / cell.count : null;
+    const ndviAvg = cell.count > 0 ? cell.sumNdvi / cell.count : null;
+    const bloomAvg = cell.count > 0 ? cell.sumBloom / cell.count : null;
+    const weatherAvg = cell.weatherCount > 0 ? cell.sumWeather / cell.weatherCount : null;
+    
+    const date = new Date(2025, 0, 1 + dayIdx);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    
+    return {
+      date: dateStr,
+      forage_index_smoothed: nfiAvg,
+      ndvi_normalized: ndviAvg,
+      bloom_factor: bloomAvg,
+      weather_suitability: weatherAvg
+    };
+  }).filter(h => h.forage_index_smoothed !== null) as any[];
 
   const getHoveredDateLabel = (day: number) => {
     const date = new Date(2025, 0, 1 + day);
@@ -969,7 +1021,7 @@ export const NectarFlowView: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div className="flex items-center justify-between bg-[#1b1b36]/40 p-2 rounded-lg border border-[#2b2b54]/40">
-                      <span className="text-slate-400 font-bold">{baseYear} (Last Year)</span>
+                      <span className="text-slate-400 font-bold">{baseYearLabel}</span>
                       <span className="font-black text-blue-400">
                         {historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== undefined &&
                         historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== null
@@ -991,7 +1043,7 @@ export const NectarFlowView: React.FC = () => {
                       const curr = historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
                       const base = historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
                       const active = curr || base;
-                      const activeYear = curr ? currentYear : baseYear;
+                      const activeYear = curr ? currentYear : baseYearLabel;
                       if (!active) return null;
                       return (
                         <>
@@ -1305,7 +1357,7 @@ export const NectarFlowView: React.FC = () => {
                   </div>
                   <div className="flex-1 grid grid-cols-5 gap-2">
                     <div className="flex justify-between items-center bg-[#1b1b36]/40 px-2 py-1 rounded border border-[#2b2b54]/40">
-                      <span className="text-slate-400 text-[9px] font-bold">{baseYear} NFI:</span>
+                      <span className="text-slate-400 text-[9px] font-bold">{baseYearLabel} NFI:</span>
                       <span className="font-black text-blue-400 text-[10px]">
                         {historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== undefined &&
                         historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== null
@@ -1326,7 +1378,7 @@ export const NectarFlowView: React.FC = () => {
                       const curr = historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
                       const base = historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
                       const active = curr || base;
-                      const activeYear = curr ? currentYear : baseYear;
+                      const activeYear = curr ? currentYear : baseYearLabel;
                       if (!active) return null;
                       return (
                         <>
