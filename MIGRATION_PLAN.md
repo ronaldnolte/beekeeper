@@ -25,7 +25,12 @@ Plan created 2026-06-09 in a prior Claude Code session.
   - [x] Copy `android/` (Google Play native wrapper) — done 2026-06-09 via `tar` pipe excluding artifacts. Copied 12 MB (project + signing files) instead of the 178 MB source (left `app/build`, `.gradle`, `local.properties` — regenerable/machine-specific). Release identity preserved: `applicationId com.beektools.beekeeper`, `versionCode 68`, `versionName 1.5.17`. Signing files (`app/@rnolte__tbh-beekeeper.jks`, `keystore.properties`) are on disk but gitignored (like `.env`) — **the .jks is the irreplaceable Play upload key; back it up separately.** `local.properties` (Android SDK path) must be regenerated per machine before a Gradle build.
   - [x] Do NOT copy `node_modules/` or `dist/` — run `npm install` fresh (910 pkgs, clean) — done 2026-06-09
   - [x] Verify continuously: `tsc -b` ✓, `vite build` ✓ (1978 modules), `npm run test` ✓ (13/13) — all green 2026-06-09
-  - [ ] Final reconciliation: list never-copied files for Ron to confirm as dead — **candidates recorded below**, awaiting Ron's confirmation
+  - [x] Final reconciliation — DONE 2026-06-09 via the git graft. Compared working tree against
+    `origin/main`; Ron confirmed the drops. Net delta committed: +3 (CLAUDE.md, MIGRATION_PLAN.md,
+    .claude/settings.json), -9 (App.css, 3 src/assets template leftovers, nectar/geo.ts,
+    ndviHistory.json, .cursorrules, schema.json, test_db.js), 1 modified (package-lock.json regen).
+    Operational files the import-trace had skipped were re-copied and kept (README.md,
+    docs/google-analytics.md, build-local-aab.ps1, assets/icon.png + splash.png, eas.json, .easignore).
 
   ### Dead-code candidates (never copied — confirm before deleting from source)
 
@@ -45,8 +50,12 @@ Plan created 2026-06-09 in a prior Claude Code session.
     - No-BS communication style
     - Never guess column names — always check schema
     - Shared Supabase DB between Beekeeper and TBH Beekeeper
+- [x] **Git connection — DONE 2026-06-09.** Working copy now has `origin →
+  github.com/ronaldnolte/beekeeper.git`, branch `main` grafted onto `origin/main` and pushed
+  (`96eba54..414fff5`, clean fast-forward). Old fresh-init scaffolding commits are orphaned (reflog only).
 - [ ] **Phase 3 — Restore auto-push behavior**
-  - Antigravity auto-pushed after every change; add a PostToolUse hook (`Edit|Write` matcher → `git add . && git commit && git push`) in `.claude/settings.json`, or use `/update-config`
+  - Antigravity auto-pushed after every change; add a PostToolUse hook (`Edit|Write` matcher → `git add . && git commit && git push`) in `.claude/settings.json`, or use `/update-config`.
+  - Remote now exists, so this is feasible. NOTE the tension with the permission allowlist / careful-commit habit — decide whether full auto-push is desirable vs. auto-commit-only or staying manual.
 - [x] **Phase 4 — Verify environment variables** ✅ done 2026-06-09
   - `.env` confirmed intact: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, GOOGLE_GENERATIVE_AI_API_KEY,
     AGRO_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_GROUP_EMAIL, GOOGLE_ADMIN_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY.
