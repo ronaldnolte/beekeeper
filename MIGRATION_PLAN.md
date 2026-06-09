@@ -53,9 +53,10 @@ Plan created 2026-06-09 in a prior Claude Code session.
 - [x] **Git connection — DONE 2026-06-09.** Working copy now has `origin →
   github.com/ronaldnolte/beekeeper.git`, branch `main` grafted onto `origin/main` and pushed
   (`96eba54..414fff5`, clean fast-forward). Old fresh-init scaffolding commits are orphaned (reflog only).
-- [ ] **Phase 3 — Restore auto-push behavior**
-  - Antigravity auto-pushed after every change; add a PostToolUse hook (`Edit|Write` matcher → `git add . && git commit && git push`) in `.claude/settings.json`, or use `/update-config`.
-  - Remote now exists, so this is feasible. NOTE the tension with the permission allowlist / careful-commit habit — decide whether full auto-push is desirable vs. auto-commit-only or staying manual.
+- [x] **Phase 3 — Commit/push workflow — DECIDED 2026-06-09.** Ron chose manual commits with
+  his approval (NOT a hook). Claude commits + pushes at meaningful milestones with descriptive
+  messages, but asks Ron before each commit/push. No PostToolUse auto-push hook. Rationale:
+  preserves clean, meaningful history and control vs. Antigravity's noisy auto-push.
 - [x] **Phase 4 — Verify environment variables** ✅ done 2026-06-09
   - `.env` confirmed intact: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, GOOGLE_GENERATIVE_AI_API_KEY,
     AGRO_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_GROUP_EMAIL, GOOGLE_ADMIN_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY.
@@ -73,8 +74,23 @@ Plan created 2026-06-09 in a prior Claude Code session.
   - Other Google vars present in `.env` for the beta/notify flows: `GOOGLE_GENERATIVE_AI_API_KEY`,
     `GOOGLE_CLIENT_ID`, `GOOGLE_GROUP_EMAIL`, `GOOGLE_ADMIN_EMAIL`, plus `AGRO_API_KEY`,
     `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
-- [ ] **Phase 6 — Validate**
-  - `npm run dev` (Vite dev server), `npm run test` (Jest), `npm run build` (tsc + Vite)
+- [x] **Phase 6 — Validate — DONE 2026-06-09.** `tsc -b` ✓, `vite build` (1978 modules) ✓,
+  `npm run test` (jest 13/13) ✓, `npm run dev` ✓ (login works, SPA serves), live GEE auth ✓,
+  full Nectar Flow pipeline ✓ (local + production). **Production deploy verified**: push to
+  GitHub `main` auto-deployed via Vercel; `https://beekeeper.beektools.com/` returns 200 serving
+  the migrated SPA, and prod `/api/nectar-index` returns real GEE data (deployed serverless + EE auth OK).
+
+## ✅ MIGRATION COMPLETE (2026-06-09)
+
+All phases done. The Beekeeper app is fully migrated from Google Antigravity to Claude Code:
+working copy at `E:\claude\beeks`, connected to `github.com/ronaldnolte/beekeeper.git` (branch
+`main`), verified build/test/dev/GEE/nectar, and confirmed live in production via Vercel.
+`E:\Antigravity\Beeks\Beekeeper\` remains the untouched read-only backup.
+
+Possible follow-ups (separate projects, not part of this migration): Capacitor 6→8 upgrade
+(fixes the high-sev `tar` advisory), migrate the deprecated `@google/generative-ai` SDK to
+`@google/genai`, `npm audit fix`, and optionally add `tsx` + a `dev:api` npm script for the
+local nectar server.
 
 ## Design constraints (stated by Ron 2026-06-09)
 
