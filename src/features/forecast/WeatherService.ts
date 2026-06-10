@@ -314,8 +314,9 @@ export class WeatherService {
                     let skyPts = 0;
                     let windPts = 0;
 
-                    if (temp >= 68 && temp <= 85) tempPts = 3;
-                    else if ((temp >= 58 && temp <= 67) || (temp >= 86 && temp <= 91)) tempPts = 1;
+                    const tempRounded = Math.round(temp);
+                    if (tempRounded >= 68 && tempRounded <= 85) tempPts = 3;
+                    else if ((tempRounded >= 58 && tempRounded <= 67) || (tempRounded >= 86 && tempRounded <= 91)) tempPts = 1;
                     
                     if (isSafeBeforeSunset && temp1HourAgo >= 55) {
                         timePts = 2;
