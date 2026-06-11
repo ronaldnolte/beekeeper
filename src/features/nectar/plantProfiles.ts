@@ -1,4 +1,4 @@
-import { PlantProfileEntry } from './bloomFactor.js';
+import type { PlantProfileEntry } from './bloomFactor';
 
 export interface RegionalProfile {
   name: string;

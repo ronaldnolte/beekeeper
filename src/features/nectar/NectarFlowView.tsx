@@ -2,14 +2,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { fetchNectarIndex } from '../../data/nectarRepository';
-import { 
-  Home as HomeIcon, 
-  MapPin, 
-  TrendingUp, 
+import {
+  Home as HomeIcon,
+  MapPin,
+  TrendingUp,
   Settings as SettingsIcon,
-  ChevronDown, 
-  Activity, 
-  AlertTriangle, 
+  ChevronDown,
+  Activity,
+  AlertTriangle,
   RefreshCw,
   TrendingDown,
   Minus,
@@ -19,7 +19,8 @@ import {
   Thermometer,
   ShieldAlert,
   Maximize2,
-  X
+  X,
+  Leaf
 } from 'lucide-react';
 
 export const NectarFlowView: React.FC = () => {
@@ -36,6 +37,7 @@ export const NectarFlowView: React.FC = () => {
   const [expandToday, setExpandToday] = useState(false);
   const [expandDrivers, setExpandDrivers] = useState(false);
   const [expandTrends, setExpandTrends] = useState(false);
+  const [expandSeasonCalendar, setExpandSeasonCalendar] = useState(false);
 
   // Hover cursor state for trends chart
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -325,6 +327,69 @@ export const NectarFlowView: React.FC = () => {
   const getDayOfYearFraction = (dateStr: string) => {
     return getDayOfYear(dateStr) / 365;
   };
+
+  // Bloom calendar helpers
+  type PlantInfo = { name: string; bloom_start: string; bloom_peak: string; bloom_end: string };
+  type BloomStatus = { active: boolean; intensity: number; phase: 'rising' | 'peak' | 'falling' };
+
+  const mmddToDoYThisYear = (mmdd: string): number => {
+    const [m, d] = mmdd.split('-').map(Number);
+    const year = new Date().getFullYear();
+    const date = new Date(year, m - 1, d);
+    const startOfYear = new Date(year, 0, 1);
+    return Math.floor((date.getTime() - startOfYear.getTime()) / 86400000);
+  };
+
+  const mmddToFraction = (mmdd: string): number =>
+    Math.max(0, Math.min(1, mmddToDoYThisYear(mmdd) / 365));
+
+  const getPlantBloomStatus = (plant: PlantInfo): BloomStatus => {
+    const today = new Date();
+    const startOfYear = new Date(today.getFullYear(), 0, 1);
+    const todayDoY = Math.floor((today.getTime() - startOfYear.getTime()) / 86400000);
+    const startDoY = mmddToDoYThisYear(plant.bloom_start);
+    const peakDoY  = mmddToDoYThisYear(plant.bloom_peak);
+    const endDoY   = mmddToDoYThisYear(plant.bloom_end);
+
+    const inWindow = startDoY <= endDoY
+      ? todayDoY >= startDoY && todayDoY <= endDoY
+      : todayDoY >= startDoY || todayDoY <= endDoY;
+
+    if (!inWindow) return { active: false, intensity: 0, phase: 'rising' };
+
+    let adjToday = todayDoY, adjPeak = peakDoY, adjEnd = endDoY;
+    if (startDoY > endDoY) {
+      if (adjToday < startDoY) adjToday += 366;
+      if (adjPeak  < startDoY) adjPeak  += 366;
+      adjEnd += 366;
+    }
+
+    let intensity: number;
+    let phase: 'rising' | 'peak' | 'falling';
+    if (adjToday <= adjPeak) {
+      const denom = adjPeak - startDoY;
+      intensity = denom > 0 ? (adjToday - startDoY) / denom : 1;
+      phase = intensity >= 0.75 ? 'peak' : 'rising';
+    } else {
+      const denom = adjEnd - adjPeak;
+      intensity = denom > 0 ? (adjEnd - adjToday) / denom : 0;
+      phase = intensity >= 0.75 ? 'peak' : 'falling';
+    }
+
+    return { active: true, intensity: Math.max(0, Math.min(1, intensity)), phase };
+  };
+
+  const todayFraction = (() => {
+    const today = new Date();
+    const startOfYear = new Date(today.getFullYear(), 0, 1);
+    return Math.floor((today.getTime() - startOfYear.getTime()) / 86400000) / 365;
+  })();
+
+  const plantProfile: PlantInfo[] = data.plant_profile_info || [];
+  const currentlyBlooming = plantProfile
+    .map(p => ({ ...p, ...getPlantBloomStatus(p) }))
+    .filter(p => p.active)
+    .sort((a, b) => b.intensity - a.intensity);
 
   // Split full history into base year (last year, e.g. 2025) and current year (e.g. 2026)
   const years = Array.from(new Set((data.full_history || []).map((h: any) => parseInt(h.date.split('-')[0], 10)))).sort() as number[];
@@ -919,9 +984,16 @@ export const NectarFlowView: React.FC = () => {
                   <div>
                     <span className="font-extrabold text-white block mb-1">Plant Groups Bloom Status</span>
                     <ul className="list-disc list-inside space-y-1 text-slate-400 text-[10px]">
-                      <li>Spring Dandelion Profile (April-May)</li>
-                      <li>Summer Clover & Alfalfa Profile (June-August)</li>
-                      <li>Fall Goldenrod & Aster Profile (August-October)</li>
+                      {plantProfile.length > 0
+                        ? plantProfile.map((p, i) => (
+                            <li key={i}>{p.name} ({p.bloom_start} – {p.bloom_end})</li>
+                          ))
+                        : <>
+                            <li>Spring Dandelion Profile (April-May)</li>
+                            <li>Summer Clover &amp; Alfalfa Profile (June-August)</li>
+                            <li>Fall Goldenrod &amp; Aster Profile (August-October)</li>
+                          </>
+                      }
                     </ul>
                   </div>
                   <div>
@@ -949,6 +1021,101 @@ export const NectarFlowView: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Bloom Calendar Panel */}
+            <div className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg select-none">
+              <div className="border-b border-[#2b2b4d] pb-3 mb-4">
+                <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider flex items-center gap-2">
+                  <Leaf size={16} /> Bloom Calendar
+                </h3>
+              </div>
+
+              {/* Currently Blooming */}
+              <div className="mb-4">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-2.5">Currently Blooming</span>
+                {currentlyBlooming.length > 0 ? (
+                  <div className="space-y-2">
+                    {currentlyBlooming.map((plant, i) => {
+                      const dotColor = plant.phase === 'peak' ? '#2ECC71' : plant.phase === 'rising' ? '#F1C40F' : '#E67E22';
+                      const label = plant.phase === 'peak' ? 'Peak' : plant.phase === 'rising' ? '↑ Rising' : '↓ Fading';
+                      return (
+                        <div key={i} className="flex items-center gap-2.5">
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
+                          <span className="text-xs font-semibold text-white flex-1 truncate">{plant.name}</span>
+                          <div className="w-16 bg-[#1b1b36] h-1.5 rounded-full overflow-hidden border border-[#2d2d54]">
+                            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${plant.intensity * 100}%`, backgroundColor: dotColor }} />
+                          </div>
+                          <span className="text-[10px] font-bold w-14 text-right" style={{ color: dotColor }}>{label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-slate-500 italic">No plants in active bloom window today.</p>
+                )}
+              </div>
+
+              {/* Season Calendar — collapsible */}
+              <div
+                className="border-t border-[#2b2b4d] pt-3 cursor-pointer"
+                onClick={() => setExpandSeasonCalendar(!expandSeasonCalendar)}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Full Season Calendar</span>
+                  <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${expandSeasonCalendar ? 'rotate-180' : ''}`} />
+                </div>
+
+                {expandSeasonCalendar && plantProfile.length > 0 && (
+                  <div className="mt-3 animate-in slide-in-from-top-2 duration-200" onClick={e => e.stopPropagation()}>
+                    {/* Month labels */}
+                    <div className="flex text-[7px] text-slate-500 font-bold mb-1" style={{ paddingLeft: '88px' }}>
+                      {['J','F','M','A','M','J','J','A','S','O','N','D'].map((m, i) => (
+                        <span key={i} className="flex-1 text-center">{m}</span>
+                      ))}
+                    </div>
+                    {/* Plant rows */}
+                    <div className="space-y-1.5">
+                      {plantProfile.map((plant, i) => {
+                        const startFrac = mmddToFraction(plant.bloom_start);
+                        const endFrac   = mmddToFraction(plant.bloom_end);
+                        const peakFrac  = mmddToFraction(plant.bloom_peak);
+                        const status    = getPlantBloomStatus(plant);
+                        const barColor  = status.active ? '#F1C40F' : '#374151';
+                        const peakColor = status.active ? '#2ECC71' : '#4B5563';
+                        return (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className="text-[8px] text-slate-400 flex-shrink-0 truncate text-right" style={{ width: '84px' }}>{plant.name}</span>
+                            <div className="flex-1 relative h-2.5 bg-[#1b1b36] rounded-full overflow-hidden border border-[#2d2d54]/50">
+                              <div
+                                className="absolute h-full rounded-full opacity-80"
+                                style={{ left: `${startFrac * 100}%`, width: `${Math.max(0.5, endFrac - startFrac) * 100}%`, backgroundColor: barColor }}
+                              />
+                              <div
+                                className="absolute h-full rounded-full opacity-90"
+                                style={{ left: `${(peakFrac - 0.01) * 100}%`, width: '2%', backgroundColor: peakColor }}
+                              />
+                              <div
+                                className="absolute h-full w-px bg-white/70 z-10"
+                                style={{ left: `${todayFraction * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Today marker label */}
+                    <div className="relative mt-0.5" style={{ paddingLeft: '88px' }}>
+                      <span
+                        className="absolute text-[7px] text-white/40 font-bold -translate-x-1/2"
+                        style={{ left: `${todayFraction * 100}%` }}
+                      >
+                        ▲ Today
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* 7. SWIPE PANEL 5 - Recommended Actions */}
