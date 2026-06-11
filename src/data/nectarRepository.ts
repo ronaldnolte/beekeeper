@@ -76,7 +76,7 @@ export async function fetchNectarIndex(
     console.log(`NFI cache version bumped to ${NFI_CACHE_VERSION}, cleared ${keysToRemove.length} stale entries.`);
   }
 
-  // 1. Check client-side full response cache (1 hour lifetime)
+  // 1. Check client-side full response cache (same calendar day)
   const cachedResponseStr = localStorage.getItem(responseCacheKey);
   const cachedResponseTimeStr = localStorage.getItem(responseTimeCacheKey);
 
@@ -84,7 +84,9 @@ export async function fetchNectarIndex(
   if (cachedResponseStr && cachedResponseTimeStr && !import.meta.env.DEV) {
     const cachedTime = parseInt(cachedResponseTimeStr, 10);
     const now = Date.now();
-    if (now - cachedTime < 3600000) { // 1 hour
+    const cachedDate = new Date(cachedTime).toDateString();
+    const today = new Date(now).toDateString();
+    if (cachedDate === today) { // same calendar day
       try {
         const cachedData = JSON.parse(cachedResponseStr) as NectarIndexResponse;
         // Validate the cache contains the new schema fields to prevent UI crashes
