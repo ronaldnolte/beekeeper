@@ -67,7 +67,6 @@ export function computeNectarStatus(
     const ndvi = Math.min(1.0, Math.max(0.0, item.ndvi));
     const ndvi_min = item.ndvi_min !== null && item.ndvi_min !== undefined ? Math.min(1.0, Math.max(0.0, item.ndvi_min)) : 0.0;
     const ndvi_max = item.ndvi_max !== null && item.ndvi_max !== undefined ? Math.min(1.0, Math.max(0.0, item.ndvi_max)) : 1.0;
-    const bloom = item.bloom_factor !== null && item.bloom_factor !== undefined ? Math.min(1.0, Math.max(0.0, item.bloom_factor)) : 0.0;
 
     // Vigor = (ndvi - ndvi_min) / (ndvi_max - ndvi_min)
     let vigor = 0.0;
@@ -81,22 +80,8 @@ export function computeNectarStatus(
     }
     vigor = Math.min(1.0, Math.max(0.0, vigor));
 
-    // Weather suitability (propagate nulls)
-    let weather: number | null = null;
-    const hasWeather = item.temp_suitability !== undefined && item.temp_suitability !== null &&
-                      item.rain_suitability !== undefined && item.rain_suitability !== null &&
-                      item.wind_suitability !== undefined && item.wind_suitability !== null;
-
-    if (hasWeather) {
-      const temp = Math.min(1.0, Math.max(0.0, item.temp_suitability!));
-      const rain = Math.min(1.0, Math.max(0.0, item.rain_suitability!));
-      const wind = Math.min(1.0, Math.max(0.0, item.wind_suitability!));
-      weather = temp * rain * wind;
-      weather = Math.min(1.0, Math.max(0.0, weather));
-    }
-
-    // forage_raw: pure NDVI vigor — bloom and weather are not in the formula
-    const forage_raw = Math.min(1.0, Math.max(0.0, vigor));
+    // forage_raw: pure NDVI vigor — bloom and weather captured implicitly via NDVI
+    const forage_raw = vigor;
 
     return {
       date: item.date,
