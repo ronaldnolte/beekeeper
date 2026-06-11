@@ -37,5 +37,5 @@ Set-Location ..
 
 Write-Host "`n=============================================" -ForegroundColor Green
 Write-Host "SUCCESS! Your local AAB is ready at:" -ForegroundColor Green
-Write-Host "e:\Antigravity\Beeks\Beekeeper\android\app\build\outputs\bundle\release\app-release.aab" -ForegroundColor White
+Write-Host "E:\claude\beeks\android\app\build\outputs\bundle\release\app-release.aab" -ForegroundColor White
 Write-Host "=============================================" -ForegroundColor Green

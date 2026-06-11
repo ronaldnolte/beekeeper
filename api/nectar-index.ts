@@ -2,6 +2,7 @@ import { fetchNDVI, NDVIRecord } from './ndvi-fetcher.js';
 import { computeBloomFactor, PlantProfileEntry } from '../src/features/nectar/bloomFactor.js';
 import { computeWeatherSuitability, WeatherSuitabilityInput } from '../src/features/nectar/weatherSuitability.js';
 import { computeNectarStatus, Apiary, DailyEnvironment } from '../src/features/nectar/engine.js';
+import { getRegionalProfile } from '../src/features/nectar/plantProfiles.js';
 
 // Helper to filter out sudden spikes in NDVI (cloud shadow / sensor anomaly)
 function filterNDVIOutliers(records: NDVIRecord[]): NDVIRecord[] {
@@ -112,28 +113,6 @@ function getInterpolatedNDVI(date: Date, lat: number = 39, lng: number = -98): n
 
   return 0.5;
 }
-
-// Default regional plant profile
-const defaultPlantProfile: PlantProfileEntry[] = [
-  {
-    name: 'Spring Wildflowers & Dandelion',
-    bloom_start: '03-15',
-    bloom_peak: '04-30',
-    bloom_end: '06-15'
-  },
-  {
-    name: 'Clover & Alfalfa',
-    bloom_start: '05-01',
-    bloom_peak: '06-30',
-    bloom_end: '09-15'
-  },
-  {
-    name: 'Goldenrod & Aster',
-    bloom_start: '08-01',
-    bloom_peak: '09-15',
-    bloom_end: '11-15'
-  }
-];
 
 // Open-Meteo Weather Interfaces
 interface OpenMeteoDaily {
@@ -344,35 +323,10 @@ export default async function handler(req: any, res: any) {
     else if (minTempOfYear < 40) usdaZone = 10;
     else usdaZone = 11;
 
-    // West-East Species Swapping: check if in Southwest Arid Desert
-    // (West of -100° longitude and South of 38° latitude)
-    const isSouthwestArid = lng < -100 && lat < 38;
-    const basePlantProfile: PlantProfileEntry[] = isSouthwestArid 
-      ? [
-          {
-            name: 'Southwest Spring Desert Bloom',
-            bloom_start: '03-01',
-            bloom_peak: '04-15',
-            bloom_end: '05-30'
-          },
-          {
-            name: 'Desert Summer Bloom',
-            bloom_start: '05-15',
-            bloom_peak: '06-15',
-            bloom_end: '07-31'
-          },
-          {
-            name: 'Southwest Monsoon & Fall Bloom',
-            bloom_start: '08-01',
-            bloom_peak: '09-10',
-            bloom_end: '10-31'
-          }
-        ]
-      : defaultPlantProfile;
-
-    // Adjust dates based on USDA zone offset (10 days per zone shift relative to Zone 7)
-    const zoneOffsetDays = (7 - usdaZone) * 10;
-    const adjustedPlantProfile = getAdjustedProfileForZone(basePlantProfile, zoneOffsetDays);
+    // Select regional plant profile based on lat/lng, then shift dates for local USDA zone
+    const regionalProfile = getRegionalProfile(lat, lng);
+    const zoneOffsetDays = (regionalProfile.baseZone - usdaZone) * 10;
+    const adjustedPlantProfile = getAdjustedProfileForZone(regionalProfile.plants, zoneOffsetDays);
 
     // 2. Fetch NDVI from Earth Engine (or use climate model mock fallback if it fails/empty)
     let ndviRecords: NDVIRecord[] = [];
