@@ -1,8 +1,6 @@
-const CACHE_NAME = 'beekeeper-shell-v1';
+const CACHE_NAME = 'beekeeper-shell-v2';
 
-const SHELL_ASSETS = [
-  '/',
-  '/index.html',
+const STATIC_ASSETS = [
   '/manifest.webmanifest',
   '/icons/icon-192.webp',
   '/icons/icon-512.webp',
@@ -10,7 +8,7 @@ const SHELL_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
@@ -27,7 +25,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Let API calls go straight to network — never cache them
+  // API calls: network only, never cache
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() =>
@@ -40,15 +38,35 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For navigation requests, serve the cached shell (SPA fallback)
+  // Navigation requests: network first so deployments always serve fresh HTML.
+  // Only fall back to cache when genuinely offline.
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      caches.match('/index.html').then((cached) => cached || fetch(event.request))
+      fetch(event.request).catch(() =>
+        caches.match('/index.html').then((cached) =>
+          cached || new Response('Offline', { status: 503 })
+        )
+      )
     );
     return;
   }
 
-  // For everything else: network first, fall back to cache
+  // Hashed static assets (/assets/*): cache first — hash guarantees content never changes.
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // Everything else (icons, manifest, etc.): network first, cache fallback
   event.respondWith(
     fetch(event.request)
       .then((response) => {
