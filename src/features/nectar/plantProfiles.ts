@@ -141,98 +141,9 @@ const PROFILES: Record<string, RegionalProfile> = {
       { name: 'Aster',                   bloom_start: '08-15', bloom_peak: '09-15', bloom_end: '10-31' },
     ],
   },
-
-  northernEurope: {
-    name: 'Northern Europe',
-    baseZone: 8,
-    plants: [
-      { name: 'Willow (Salix)',               bloom_start: '02-15', bloom_peak: '03-10', bloom_end: '04-01' },
-      { name: 'Fruit Trees',                  bloom_start: '04-01', bloom_peak: '04-20', bloom_end: '05-10' },
-      { name: 'Oilseed Rape / Canola',        bloom_start: '04-15', bloom_peak: '05-05', bloom_end: '06-01' },
-      { name: 'Phacelia',                     bloom_start: '05-15', bloom_peak: '06-10', bloom_end: '07-01' },
-      { name: 'White Clover',                 bloom_start: '06-01', bloom_peak: '07-01', bloom_end: '08-31' },
-      { name: 'Linden / Lime Tree (Tilia)',   bloom_start: '06-20', bloom_peak: '07-07', bloom_end: '07-25' },
-      { name: 'Heather (Calluna vulgaris)',   bloom_start: '08-01', bloom_peak: '08-20', bloom_end: '09-20' },
-      { name: 'Ivy (Hedera)',                 bloom_start: '09-15', bloom_peak: '10-01', bloom_end: '10-31' },
-    ],
-  },
-
-  centralEurope: {
-    name: 'Central Europe',
-    baseZone: 6,
-    plants: [
-      { name: 'Willow / Sallow',              bloom_start: '03-01', bloom_peak: '03-20', bloom_end: '04-15' },
-      { name: 'Fruit Trees (apple, cherry, plum)', bloom_start: '03-20', bloom_peak: '04-10', bloom_end: '05-01' },
-      { name: 'Oilseed Rape / Canola',        bloom_start: '04-15', bloom_peak: '05-10', bloom_end: '06-01' },
-      { name: 'Black Locust / Acacia',        bloom_start: '05-01', bloom_peak: '05-25', bloom_end: '06-15' },
-      { name: 'White Clover',                 bloom_start: '06-01', bloom_peak: '07-01', bloom_end: '08-31' },
-      { name: 'Linden (Tilia)',               bloom_start: '06-20', bloom_peak: '07-07', bloom_end: '07-25' },
-      { name: 'Sunflower',                    bloom_start: '07-01', bloom_peak: '08-01', bloom_end: '09-01' },
-      { name: 'Goldenrod & Aster',            bloom_start: '08-15', bloom_peak: '09-10', bloom_end: '10-01' },
-    ],
-  },
-
-  mediterranean: {
-    name: 'Mediterranean Europe',
-    baseZone: 9,
-    plants: [
-      { name: 'Rosemary & Winter Heather',    bloom_start: '01-01', bloom_peak: '02-15', bloom_end: '04-01' },
-      { name: 'Citrus Blossom',               bloom_start: '02-15', bloom_peak: '03-20', bloom_end: '04-15' },
-      { name: 'Fruit Trees',                  bloom_start: '02-01', bloom_peak: '03-10', bloom_end: '04-01' },
-      { name: 'Chestnut',                     bloom_start: '05-15', bloom_peak: '06-10', bloom_end: '06-30' },
-      { name: 'Lavender & Thyme',             bloom_start: '05-15', bloom_peak: '06-20', bloom_end: '08-01' },
-      { name: 'Sunflower',                    bloom_start: '06-15', bloom_peak: '07-20', bloom_end: '08-31' },
-      { name: 'Summer Heather & Savory',      bloom_start: '07-15', bloom_peak: '08-20', bloom_end: '10-01' },
-    ],
-  },
-
-  easternAustralia: {
-    name: 'Eastern Australia',
-    baseZone: 9,
-    plants: [
-      { name: 'Coastal Banksia',              bloom_start: '06-01', bloom_peak: '08-15', bloom_end: '11-01' },
-      { name: 'Ironbark & Box Eucalypts',     bloom_start: '06-01', bloom_peak: '07-20', bloom_end: '09-15' },
-      { name: 'Canola (southern areas)',      bloom_start: '08-01', bloom_peak: '09-10', bloom_end: '10-15' },
-      { name: 'Spring Eucalypts (Stringybark)', bloom_start: '09-01', bloom_peak: '10-15', bloom_end: '11-30' },
-      { name: 'Tea Tree & Paperbark',         bloom_start: '10-01', bloom_peak: '11-10', bloom_end: '12-31' },
-      { name: 'Lucerne / Alfalfa',            bloom_start: '11-01', bloom_peak: '12-15', bloom_end: '12-31' },
-    ],
-  },
-
-  westernAustralia: {
-    name: 'Western Australia',
-    baseZone: 10,
-    plants: [
-      { name: 'Banksia (various)',            bloom_start: '05-15', bloom_peak: '08-01', bloom_end: '11-01' },
-      { name: 'Canola (wheat belt)',          bloom_start: '05-15', bloom_peak: '06-20', bloom_end: '08-01' },
-      { name: 'Wandoo Eucalyptus',            bloom_start: '07-01', bloom_peak: '08-20', bloom_end: '10-15' },
-      { name: 'Jarrah',                       bloom_start: '10-01', bloom_peak: '11-15', bloom_end: '12-31' },
-      { name: 'Marri',                        bloom_start: '11-15', bloom_peak: '12-20', bloom_end: '12-31' },
-      { name: 'Summer Wildflowers',           bloom_start: '07-01', bloom_peak: '09-01', bloom_end: '11-30' },
-    ],
-  },
 };
 
 export function getRegionalProfile(lat: number, lng: number): RegionalProfile {
-  // Australia: lat -10 to -45, lng 112-155
-  if (lat < -10 && lat > -46 && lng > 112 && lng < 155) {
-    if (lng < 130) return PROFILES.westernAustralia;
-    return PROFILES.easternAustralia;
-  }
-
-  // New Zealand: lat -34 to -47, lng 165-179
-  if (lat < -34 && lat > -48 && lng > 165) return PROFILES.easternAustralia;
-
-  // Europe: lat 35-72, lng -11 to 42
-  if (lat > 35 && lat < 72 && lng > -11 && lng < 42) {
-    // Mediterranean (Spain, Portugal, S France, Italy, Greece, W Turkey)
-    if (lat < 44) return PROFILES.mediterranean;
-    // Northern Europe (UK, NL, Belgium, W France, Denmark, Scandinavia)
-    if (lng < 10 || lat >= 55) return PROFILES.northernEurope;
-    // Central/Eastern Europe (Germany, Poland, Czech, Austria, Hungary, Romania)
-    return PROFILES.centralEurope;
-  }
-
   // Florida subtropical
   if (lat < 29.5 && lng > -87.5) return PROFILES.florida;
 
