@@ -19,6 +19,12 @@ if (gaId && typeof window !== 'undefined') {
   (gtag as any)('config', gaId);
 }
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js');
+  });
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

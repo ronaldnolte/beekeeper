@@ -25,6 +25,7 @@ dist-ssr
 *.jks
 android/keystore.properties
 *.js
+!public/sw.js
 *.code-workspace
 
 # Environment secrets
