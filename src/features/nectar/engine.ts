@@ -95,10 +95,10 @@ export function computeNectarStatus(
       weather = Math.min(1.0, Math.max(0.0, weather));
     }
 
-    // forage_raw: NDVI/vigor is primary (60%), bloom modifies up to +25%, weather up to +15%
+    // forage_raw: NDVI/vigor is primary (80%), weather modifies up to +15%, bloom up to +5%
     let forage_raw: number | null = null;
     if (weather !== null) {
-      forage_raw = vigor * (0.60 + 0.25 * bloom + 0.15 * weather);
+      forage_raw = vigor * (0.80 + 0.15 * weather + 0.05 * bloom);
       forage_raw = Math.min(1.0, Math.max(0.0, forage_raw));
     }
 
