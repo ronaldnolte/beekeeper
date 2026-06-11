@@ -7,6 +7,22 @@
   "background_color": "#FFFDF9",
   "theme_color": "#E67E22",
   "orientation": "portrait",
+  "screenshots": [
+    {
+      "src": "/screenshots/Wide Screenshot.png",
+      "type": "image/png",
+      "sizes": "1910x909",
+      "form_factor": "wide",
+      "label": "BeekTools Beekeeper dashboard"
+    },
+    {
+      "src": "/screenshots/Narrow Screenshot.png",
+      "type": "image/png",
+      "sizes": "454x610",
+      "form_factor": "narrow",
+      "label": "BeekTools Beekeeper on mobile"
+    }
+  ],
   "icons": [
     {
       "src": "/icons/icon-48.webp",
