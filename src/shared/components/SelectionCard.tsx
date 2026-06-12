@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronRight, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 
+
 export interface SelectionItem {
   id: string;
   title: string;
@@ -57,8 +58,21 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
           <ChevronRight size={20} className="text-[var(--color-text-muted)] flex-shrink-0" />
         </button>
 
-        {/* More button */}
-        {(onEdit || item.onDelete) && (
+        {/* Direct Edit button — when edit is the only action */}
+        {onEdit && !item.onDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(item.id);
+            }}
+            className="w-11 h-11 flex-shrink-0 rounded-xl border border-[var(--color-card-border)] bg-[var(--color-card-bg)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors active:scale-95"
+          >
+            <Pencil size={18} />
+          </button>
+        )}
+
+        {/* Three-dot menu — when multiple actions exist */}
+        {(onEdit && item.onDelete) || (!onEdit && item.onDelete) ? (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -68,10 +82,10 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
           >
             <MoreVertical size={18} />
           </button>
-        )}
+        ) : null}
       </div>
 
-      {/* Expandable action row */}
+      {/* Expandable action row — only for three-dot menu case */}
       {showActions && (onEdit || item.onDelete) && (
         <div className="flex items-center gap-2 mt-2 animate-in slide-in-from-top-2 duration-200">
           {onEdit && (
