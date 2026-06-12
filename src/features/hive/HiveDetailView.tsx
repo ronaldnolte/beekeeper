@@ -58,7 +58,15 @@ export const HiveDetailView: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. Interactive Hive Config */}
+        {/* 2. Notes */}
+        {hive.notes ? (
+          <div className="w-full max-w-2xl card p-4">
+            <p className="text-xs font-black text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Notes</p>
+            <p className="text-sm font-medium text-[var(--color-text)] whitespace-pre-wrap">{hive.notes}</p>
+          </div>
+        ) : null}
+
+        {/* 3. Interactive Hive Config */}
         <div className="w-full max-w-2xl">
           <HiveConfigWrapper 
             hive={hive} 
