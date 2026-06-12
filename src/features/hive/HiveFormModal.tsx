@@ -16,6 +16,8 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
   const [apiaries, setApiaries] = useState<{ id: string, name: string }[]>([]);
   const [selectedApiary, setSelectedApiary] = useState(selectedApiaryId || '');
 
+  const [notes, setNotes] = useState('');
+
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -48,12 +50,14 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
         // Load existing bar count if available
         const existingBars = editingHive.raw?.bars;
         setBarCount(Array.isArray(existingBars) ? existingBars.length : 30);
+        setNotes(editingHive.raw?.notes || '');
       } else {
         setName('');
         setHiveType('Top Bar');
         setBarCount(30);
         setSelectedApiary(selectedApiaryId || '');
         setInstalledOn(new Date().toISOString().split('T')[0]);
+        setNotes('');
       }
       setError(null);
       setConfirmDelete(false);
@@ -72,7 +76,8 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
       const hiveData: any = {
         name: name.trim(),
         apiary_id: selectedApiary,
-        type: hiveType
+        type: hiveType,
+        notes: notes
       };
 
       // For Top Bar hives, generate the initial bars array
@@ -233,6 +238,17 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
               </div>
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-black text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Any notes about this hive..."
+              rows={4}
+              className="w-full p-4 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/20 outline-none transition-all resize-none"
+            />
+          </div>
 
           <div>
             <label className="block text-sm font-black text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Installation Date</label>

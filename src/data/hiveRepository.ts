@@ -32,7 +32,7 @@ export async function createHive(data: {
 
 export async function updateHive(
   id: string,
-  data: { name: string; apiary_id: string; type: string }
+  data: { name: string; apiary_id: string; type: string; notes?: string }
 ) {
   const { error } = await supabase.from('hives').update(data).eq('id', id);
   if (error) throw error;
