@@ -33,26 +33,33 @@ const PHASE_COLORS: Record<Phase, { bg: string; text: string; bar: string; label
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+// V2 phase thresholds (must match nectar-v2-engine defaults)
+const THRESH = { flow: 0.40, exit: 0.30, dearth: 0.15 };
+
 function NectarTrendChart({ history }: { history: V2Response['full_history'] }) {
-  // Last 12 months
+  // Last 13 months so we always see a full calendar year
   const cutoff = new Date();
-  cutoff.setFullYear(cutoff.getFullYear() - 1);
+  cutoff.setMonth(cutoff.getMonth() - 13);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
   const pts = history.filter(p => p.date >= cutoffStr);
   if (pts.length < 2) return <p className="text-slate-600 text-xs text-center py-4">Not enough history</p>;
 
-  const VB_W = 400, VB_H = 120;
-  const PL = 26, PR = 8, PT = 6, PB = 20;
+  const VB_W = 400, VB_H = 160;
+  // Left padding wide enough for "TRANSITION" label
+  const PL = 54, PR = 8, PT = 10, PB = 22;
   const cW = VB_W - PL - PR, cH = VB_H - PT - PB;
+
+  // Y axis: 0–50 displayed as 0%–50% so thresholds use the chart well
+  const Y_MAX = 0.50;
 
   const t0 = new Date(pts[0].date + 'T00:00').getTime();
   const t1 = new Date(pts[pts.length - 1].date + 'T00:00').getTime();
   const tSpan = t1 - t0 || 1;
 
   const toX = (d: string) => PL + ((new Date(d + 'T00:00').getTime() - t0) / tSpan) * cW;
-  const toY = (v: number) => PT + (1 - v) * cH;
+  const toY = (v: number) => PT + (1 - Math.min(v, Y_MAX) / Y_MAX) * cH;
 
-  // Split into phase-colored segments — each run of same phase = one <path>
+  // Phase-colored line segments
   type Seg = { d: string; color: string };
   const segments: Seg[] = [];
   let i = 0;
@@ -61,7 +68,6 @@ function NectarTrendChart({ history }: { history: V2Response['full_history'] }) 
     const color = PHASE_COLORS[phase].bar;
     let j = i;
     while (j < pts.length && pts[j].phase === phase) j++;
-    // Include one overlap point so segments connect visually
     const slice = pts.slice(i, Math.min(j + 1, pts.length));
     const d = slice.map((p, k) =>
       `${k === 0 ? 'M' : 'L'}${toX(p.date).toFixed(1)},${toY(p.forage_index_smoothed).toFixed(1)}`
@@ -70,7 +76,7 @@ function NectarTrendChart({ history }: { history: V2Response['full_history'] }) 
     i = j;
   }
 
-  // One label per month that falls in range
+  // One label per month in range
   const seen = new Set<string>();
   const monthLabels: { x: number; label: string }[] = [];
   for (const p of pts) {
@@ -81,23 +87,49 @@ function NectarTrendChart({ history }: { history: V2Response['full_history'] }) 
     }
   }
 
+  // Threshold lines + region labels
+  const threshLines = [
+    { v: THRESH.flow,   label: 'FLOW',       labelY: (THRESH.flow + Y_MAX) / 2 },
+    { v: THRESH.exit,   label: 'TRANSITION', labelY: (THRESH.dearth + THRESH.exit) / 2 + (THRESH.exit - THRESH.dearth) * 0.15 },
+    { v: THRESH.dearth, label: 'DEARTH',     labelY: THRESH.dearth / 2 },
+  ];
+
+  // Y tick marks at 10% intervals
+  const yTicks = [0, 0.10, 0.20, 0.30, 0.40, 0.50];
+
   return (
     <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="w-full" style={{ display: 'block' }}>
-      {/* Gridlines */}
-      {[0, 0.25, 0.5, 0.75, 1].map(v => (
+      {/* Y tick gridlines */}
+      {yTicks.map(v => (
         <g key={v}>
-          <line x1={PL} y1={toY(v)} x2={VB_W - PR} y2={toY(v)} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
-          <text x={PL - 3} y={toY(v) + 3} fontSize="8" fill="#475569" textAnchor="end">{Math.round(v * 100)}</text>
+          <line x1={PL} y1={toY(v)} x2={VB_W - PR} y2={toY(v)}
+            stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+          <text x={PL - 4} y={toY(v) + 3} fontSize="7.5" fill="#334155" textAnchor="end">
+            {Math.round(v * 100)}%
+          </text>
         </g>
       ))}
-      {/* Phase-colored line segments */}
+      {/* Phase threshold dashed lines */}
+      {threshLines.map(({ v, label, labelY }) => (
+        <g key={label}>
+          <line x1={PL} y1={toY(v)} x2={VB_W - PR} y2={toY(v)}
+            stroke="rgba(255,255,255,0.12)" strokeWidth="1" strokeDasharray="4 3" />
+          <text x={4} y={toY(labelY) + 3} fontSize="7" fill="#475569" textAnchor="start"
+            fontWeight="700" letterSpacing="0.5">
+            {label}
+          </text>
+        </g>
+      ))}
+      {/* Phase-colored line */}
       {segments.map((seg, idx) => (
-        <path key={idx} d={seg.d} stroke={seg.color} strokeWidth="2.5" fill="none"
+        <path key={idx} d={seg.d} stroke={seg.color} strokeWidth="2" fill="none"
           strokeLinejoin="round" strokeLinecap="round" />
       ))}
       {/* Month labels */}
       {monthLabels.map(({ x, label }) => (
-        <text key={label + x} x={x} y={VB_H - 4} fontSize="8" fill="#475569" textAnchor="middle">{label}</text>
+        <text key={label + x} x={x} y={VB_H - 5} fontSize="8" fill="#475569" textAnchor="middle">
+          {label}
+        </text>
       ))}
     </svg>
   );
