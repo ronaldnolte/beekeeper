@@ -110,7 +110,7 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'GET') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
-  const { lat: latRaw, lng: lngRaw } = req.query;
+  const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw } = req.query;
   if (!latRaw || !lngRaw) {
     res.status(400).json({ error: 'lat and lng are required' });
     return;
@@ -121,6 +121,12 @@ export default async function handler(req: any, res: any) {
     res.status(400).json({ error: 'lat and lng must be valid numbers' });
     return;
   }
+
+  // Optional param overrides for tester experimentation
+  const paramOverrides: Record<string, number> = {};
+  if (alphaRaw)   { const v = parseFloat(alphaRaw);   if (!isNaN(v) && v > 0 && v < 1)  paramOverrides.alpha   = v; }
+  if (rateLagRaw) { const v = parseInt(rateLagRaw);   if (!isNaN(v) && v > 0 && v <= 90) paramOverrides.rateLag = v; }
+  const hasOverrides = Object.keys(paramOverrides).length > 0;
 
   try {
     const startDate = '2023-01-01';
@@ -135,7 +141,7 @@ export default async function handler(req: any, res: any) {
       throw new Error('Earth Engine returned no vegetation data for this location.');
     }
 
-    const result = runV2Pipeline(bands, weatherMap, lat);
+    const result = runV2Pipeline(bands, weatherMap, lat, paramOverrides);
 
     const N = result.dates.length;
     if (N === 0) throw new Error('V2 pipeline produced no output.');
@@ -148,7 +154,8 @@ export default async function handler(req: any, res: any) {
     const trend_direction: 'rising' | 'falling' | 'flat' =
       latestSlope > 0.002 ? 'rising' : latestSlope < -0.002 ? 'falling' : 'flat';
 
-    if (req.method === 'GET') {
+    // Skip CDN cache when params are being tuned so each combination is fresh
+    if (req.method === 'GET' && !hasOverrides) {
       res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600');
     }
 
@@ -161,7 +168,7 @@ export default async function handler(req: any, res: any) {
       slope: latestSlope,
       v2: result.latest,
       full_history: result.history,
-      _debug: { satellite_observations: bands.length, daily_points: N },
+      _debug: { satellite_observations: bands.length, daily_points: N, params: hasOverrides ? paramOverrides : undefined },
     });
   } catch (error: any) {
     console.error('Nectar V2 error:', error);

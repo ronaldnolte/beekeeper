@@ -90,6 +90,10 @@ export const NectarFlowV2View: React.FC = () => {
     }
   }, [selectedApiaryId, apiariesList]);
 
+  // Tester param controls
+  const [tuneAlpha,   setTuneAlpha]   = useState('0.18');
+  const [tuneRateLag, setTuneRateLag] = useState('24');
+
   const loadData = useCallback(async () => {
     if (!selectedApiaryId) return;
     setLoading(true);
@@ -104,10 +108,11 @@ export const NectarFlowV2View: React.FC = () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60_000);
       try {
-        const res = await fetch(
-          `/api/nectar-index-v2?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}`,
-          { signal: controller.signal }
-        );
+        const params = new URLSearchParams({
+          lat: lat.toFixed(4), lng: lng.toFixed(4),
+          alpha: tuneAlpha, rateLag: tuneRateLag,
+        });
+        const res = await fetch(`/api/nectar-index-v2?${params}`, { signal: controller.signal });
         if (!res.ok) {
           const t = await res.text();
           throw new Error(t || `API error ${res.status}`);
@@ -121,7 +126,7 @@ export const NectarFlowV2View: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedApiaryId]);
+  }, [selectedApiaryId, tuneAlpha, tuneRateLag]);
 
   useEffect(() => {
     setData(null);
@@ -831,6 +836,42 @@ export const NectarFlowV2View: React.FC = () => {
                 <TrendingUp size={16} /> 12-Month Nectar Trend
               </h3>
               <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
+            </div>
+
+            {/* Tester param controls */}
+            <div className="flex gap-3 mb-3" onClick={e => e.stopPropagation()}>
+              <div className="flex-1 flex flex-col gap-1">
+                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Smoothing (alpha)</label>
+                <select
+                  value={tuneAlpha}
+                  onChange={e => { setTuneAlpha(e.target.value); }}
+                  className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
+                >
+                  {[['0.05','0.05 — Very smooth'],['0.10','0.10 — Smooth'],['0.18','0.18 — Default'],['0.25','0.25 — Responsive'],['0.40','0.40 — Fast'],['0.60','0.60 — Raw']].map(([v,l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 flex flex-col gap-1">
+                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Rate lag (days)</label>
+                <select
+                  value={tuneRateLag}
+                  onChange={e => { setTuneRateLag(e.target.value); }}
+                  className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
+                >
+                  {[['7','7 days'],['14','14 days'],['24','24 days — Default'],['30','30 days'],['45','45 days'],['60','60 days']].map(([v,l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={loadData}
+                  className="bg-amber-500 hover:bg-amber-400 text-black text-xs font-black px-3 py-1.5 rounded-lg transition-all active:scale-95"
+                >
+                  Run
+                </button>
+              </div>
             </div>
 
             <div
