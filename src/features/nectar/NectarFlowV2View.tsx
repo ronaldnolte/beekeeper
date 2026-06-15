@@ -94,14 +94,10 @@ export const NectarFlowV2View: React.FC = () => {
       const { lat, lng } = apiary;
       if (lat == null || lng == null) throw new Error('Apiary coordinates are missing. Please edit the apiary first.');
 
-      const apiUrl = import.meta.env.DEV
-        ? '/api/nectar-index-v2'
-        : 'https://beekeeper.beektools.com/api/nectar-index-v2';
-
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60_000); // GEE can take ~30s
       try {
-        const res = await fetch(`${apiUrl}?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}`, {
+        const res = await fetch(`/api/nectar-index-v2?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}`, {
           signal: controller.signal,
         });
         clearTimeout(timeout);
