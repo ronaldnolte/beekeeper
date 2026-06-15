@@ -163,10 +163,14 @@ export function runV2Pipeline(
   };
   if (records.length === 0) return empty;
 
-  // Daily timeline from first to last observed scene
+  // Daily timeline from first observed scene to today.
+  // Extends past the last satellite observation so EWMA carries forward to the current date
+  // (interpBand forward-fills the last known value for days with no new scene).
   const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
   const startT = new Date(sorted[0].date + 'T00:00').getTime();
-  const endT   = new Date(sorted[sorted.length - 1].date + 'T00:00').getTime();
+  const lastObsT = new Date(sorted[sorted.length - 1].date + 'T00:00').getTime();
+  const todayT  = new Date(new Date().toISOString().slice(0, 10) + 'T00:00').getTime();
+  const endT    = Math.max(lastObsT, todayT);
   const dailyTs: number[] = [];
   for (let t = startT; t <= endT; t += DAY_MS) dailyTs.push(t);
   const N = dailyTs.length;
