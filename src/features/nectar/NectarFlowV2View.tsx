@@ -33,24 +33,74 @@ const PHASE_COLORS: Record<Phase, { bg: string; text: string; bar: string; label
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-function monthlyAvg(history: V2Response['full_history']): { month: string; avg: number; phase: Phase }[] {
-  const sums: number[] = new Array(12).fill(0);
-  const counts: number[] = new Array(12).fill(0);
-  const phases: Phase[][] = Array.from({ length: 12 }, () => []);
-  for (const pt of history) {
-    const m = parseInt(pt.date.slice(5, 7), 10) - 1;
-    sums[m] += pt.forage_index_smoothed;
-    counts[m]++;
-    phases[m].push(pt.phase);
+function NectarTrendChart({ history }: { history: V2Response['full_history'] }) {
+  // Last 12 months
+  const cutoff = new Date();
+  cutoff.setFullYear(cutoff.getFullYear() - 1);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const pts = history.filter(p => p.date >= cutoffStr);
+  if (pts.length < 2) return <p className="text-slate-600 text-xs text-center py-4">Not enough history</p>;
+
+  const VB_W = 400, VB_H = 120;
+  const PL = 26, PR = 8, PT = 6, PB = 20;
+  const cW = VB_W - PL - PR, cH = VB_H - PT - PB;
+
+  const t0 = new Date(pts[0].date + 'T00:00').getTime();
+  const t1 = new Date(pts[pts.length - 1].date + 'T00:00').getTime();
+  const tSpan = t1 - t0 || 1;
+
+  const toX = (d: string) => PL + ((new Date(d + 'T00:00').getTime() - t0) / tSpan) * cW;
+  const toY = (v: number) => PT + (1 - v) * cH;
+
+  // Split into phase-colored segments — each run of same phase = one <path>
+  type Seg = { d: string; color: string };
+  const segments: Seg[] = [];
+  let i = 0;
+  while (i < pts.length) {
+    const phase = pts[i].phase;
+    const color = PHASE_COLORS[phase].bar;
+    let j = i;
+    while (j < pts.length && pts[j].phase === phase) j++;
+    // Include one overlap point so segments connect visually
+    const slice = pts.slice(i, Math.min(j + 1, pts.length));
+    const d = slice.map((p, k) =>
+      `${k === 0 ? 'M' : 'L'}${toX(p.date).toFixed(1)},${toY(p.forage_index_smoothed).toFixed(1)}`
+    ).join(' ');
+    segments.push({ d, color });
+    i = j;
   }
-  return MONTHS.map((month, i) => {
-    const avg = counts[i] ? sums[i] / counts[i] : 0;
-    // majority phase
-    const freq: Partial<Record<Phase, number>> = {};
-    for (const p of phases[i]) freq[p] = (freq[p] ?? 0) + 1;
-    const majorityPhase = (Object.entries(freq).sort((a, b) => (b[1] as number) - (a[1] as number))[0]?.[0] ?? 'TRANSITION') as Phase;
-    return { month, avg, phase: majorityPhase };
-  });
+
+  // One label per month that falls in range
+  const seen = new Set<string>();
+  const monthLabels: { x: number; label: string }[] = [];
+  for (const p of pts) {
+    const ym = p.date.slice(0, 7);
+    if (!seen.has(ym)) {
+      seen.add(ym);
+      monthLabels.push({ x: toX(p.date), label: MONTHS[parseInt(p.date.slice(5, 7), 10) - 1] });
+    }
+  }
+
+  return (
+    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="w-full" style={{ display: 'block' }}>
+      {/* Gridlines */}
+      {[0, 0.25, 0.5, 0.75, 1].map(v => (
+        <g key={v}>
+          <line x1={PL} y1={toY(v)} x2={VB_W - PR} y2={toY(v)} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+          <text x={PL - 3} y={toY(v) + 3} fontSize="8" fill="#475569" textAnchor="end">{Math.round(v * 100)}</text>
+        </g>
+      ))}
+      {/* Phase-colored line segments */}
+      {segments.map((seg, idx) => (
+        <path key={idx} d={seg.d} stroke={seg.color} strokeWidth="2.5" fill="none"
+          strokeLinejoin="round" strokeLinecap="round" />
+      ))}
+      {/* Month labels */}
+      {monthLabels.map(({ x, label }) => (
+        <text key={label + x} x={x} y={VB_H - 4} fontSize="8" fill="#475569" textAnchor="middle">{label}</text>
+      ))}
+    </svg>
+  );
 }
 
 function ApiarySelector() {
@@ -163,8 +213,6 @@ export const NectarFlowV2View: React.FC = () => {
 
   const colors = PHASE_COLORS[data.phase];
   const pct = (v: number) => `${Math.round(v * 100)}%`;
-  const monthly = monthlyAvg(data.full_history);
-  const maxMonthly = Math.max(...monthly.map(m => m.avg), 0.01);
 
   const trendIcon = data.trend_direction === 'rising' ? '↑' : data.trend_direction === 'falling' ? '↓' : '→';
   const trendColor = data.trend_direction === 'rising' ? 'text-green-400' : data.trend_direction === 'falling' ? 'text-red-400' : 'text-slate-400';
@@ -203,27 +251,14 @@ export const NectarFlowV2View: React.FC = () => {
         <p className="text-slate-300 text-xs leading-relaxed mt-3">{data.transitionAdvice}</p>
       </div>
 
-      {/* Monthly bar chart */}
+      {/* 12-month NFI trend line */}
       <div className="mx-4 mb-4 bg-[#111128] border border-[#222240] rounded-2xl p-4">
-        <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-3">Season Calendar (monthly avg)</p>
-        <div className="flex items-end gap-1 h-20">
-          {monthly.map(({ month, avg, phase }) => {
-            const barH = maxMonthly > 0 ? Math.max(4, Math.round((avg / maxMonthly) * 72)) : 4;
-            return (
-              <div key={month} className="flex-1 flex flex-col items-center gap-1">
-                <div
-                  className="w-full rounded-sm transition-all"
-                  style={{ height: `${barH}px`, backgroundColor: PHASE_COLORS[phase].bar, opacity: 0.85 }}
-                />
-                <span className="text-[8px] text-slate-500 font-bold">{month}</span>
-              </div>
-            );
-          })}
-        </div>
+        <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-3">12-Month Nectar Trend</p>
+        <NectarTrendChart history={data.full_history} />
         <div className="flex gap-3 mt-3 flex-wrap">
-          {(['IN_FLOW', 'FLOW_STARTING', 'FLOW_ENDING', 'DEARTH'] as Phase[]).map(p => (
+          {(['IN_FLOW', 'FLOW_STARTING', 'FLOW_ENDING', 'DEARTH', 'TRANSITION'] as Phase[]).map(p => (
             <div key={p} className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: PHASE_COLORS[p].bar }} />
+              <div className="w-3 h-1.5 rounded-full" style={{ backgroundColor: PHASE_COLORS[p].bar }} />
               <span className="text-[9px] text-slate-500 font-medium">{PHASE_COLORS[p].label}</span>
             </div>
           ))}
