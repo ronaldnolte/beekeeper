@@ -18,5 +18,7 @@ export async function fetchUserRoles(userId: string): Promise<string[]> {
     console.warn('fetchUserRoles: defaulting to no roles —', error.message);
     return [];
   }
-  return (data ?? []).map((r: { role: string }) => r.role);
+  const roles = (data ?? []).map((r: { role: string }) => r.role);
+  console.log('[roles] userId:', userId, '→', roles);
+  return roles;
 }

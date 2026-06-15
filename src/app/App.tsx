@@ -39,6 +39,7 @@ const ViewLoader = () => (
 function App() {
   const { currentView, setUser, user, userRoles, isAuthLoading, selectedHiveId, selectedApiaryId, selectedRecord } = useAppStore();
   const showNectarV2 = NECTAR_V2_RELEASED || userRoles.includes('tester');
+  console.log('[gate] userRoles:', userRoles, '→ showNectarV2:', showNectarV2);
 
   useEffect(() => {
     // 1. Check initial session
