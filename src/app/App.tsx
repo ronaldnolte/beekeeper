@@ -22,6 +22,9 @@ import { BetaSignupView } from '../features/auth/BetaSignupView';
 // Lazy-loaded leaf features — only fetched when navigated to
 const ForecastView = lazy(() => import('../features/forecast/ForecastView').then(m => ({ default: m.ForecastView })));
 const NectarFlowView = lazy(() => import('../features/nectar/NectarFlowView').then(m => ({ default: m.NectarFlowView })));
+const NectarFlowV2View = lazy(() => import('../features/nectar/NectarFlowV2View').then(m => ({ default: m.NectarFlowV2View })));
+// Feature-release switch: flip to true to ship V2 to everyone (one-line promotion). Until then only `tester` accounts see it.
+const NECTAR_V2_RELEASED = false;
 const AskAIView = lazy(() => import('../features/ai/AskAIView').then(m => ({ default: m.AskAIView })));
 const RoadmapView = lazy(() => import('../features/feedback/RoadmapView').then(m => ({ default: m.RoadmapView })));
 
@@ -34,7 +37,8 @@ const ViewLoader = () => (
 );
 
 function App() {
-  const { currentView, setUser, user, isAuthLoading, selectedHiveId, selectedApiaryId, selectedRecord } = useAppStore();
+  const { currentView, setUser, user, userRoles, isAuthLoading, selectedHiveId, selectedApiaryId, selectedRecord } = useAppStore();
+  const showNectarV2 = NECTAR_V2_RELEASED || userRoles.includes('tester');
 
   useEffect(() => {
     // 1. Check initial session
@@ -185,7 +189,7 @@ function App() {
 
         {currentView === 'NECTAR_FLOW' && (
           <Suspense fallback={<ViewLoader />}>
-            <NectarFlowView />
+            {showNectarV2 ? <NectarFlowV2View /> : <NectarFlowView />}
           </Suspense>
         )}
 

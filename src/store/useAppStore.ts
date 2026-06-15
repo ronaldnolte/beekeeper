@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../data/supabase';
 import { fetchApiaries } from '../data/apiaryRepository';
+import { fetchUserRoles } from '../data/roleRepository';
 
 // The core views of our Single Page Application
 export type AppView = 
@@ -36,6 +37,7 @@ interface AppState {
   selectedHiveId: string | null;
   selectedRecord: SelectedRecord;
   user: User | null;
+  userRoles: string[];
   isAuthLoading: boolean;
   isFeedbackModalOpen: boolean;
   isApiaryFormOpen: boolean;
@@ -68,6 +70,8 @@ interface AppState {
   
   // New Dynamic Actions
   loadNavigationContext: (userId: string) => Promise<void>;
+  loadUserRoles: (userId: string) => Promise<void>;
+  hasRole: (role: string) => boolean;
   navigateToApiariesTab: () => void;
   navigateToHivesTab: () => void;
 }
@@ -78,6 +82,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       selectedHiveId: null,
       selectedRecord: null,
       user: null,
+      userRoles: [],
       isAuthLoading: true,
       isFeedbackModalOpen: false,
       isApiaryFormOpen: false,
@@ -161,6 +166,13 @@ export const useAppStore = create<AppState>()((set, get) => ({
         }
       },
 
+      loadUserRoles: async (userId) => {
+        const roles = await fetchUserRoles(userId);
+        set({ userRoles: roles });
+      },
+
+      hasRole: (role) => get().userRoles.includes(role),
+
       navigateToApiariesTab: () => {
         // Reset sub-selections
         set({ 
@@ -230,11 +242,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
       setUser: (user) => set((state) => {
         if (!user) {
           if (state.currentView === 'UPDATE_PASSWORD' || state.currentView === 'BETA_SIGNUP') {
-            return { user: null, isAuthLoading: false };
+            return { user: null, userRoles: [], isAuthLoading: false };
           }
           // Clear all sensitive state on logout
           return {
             user: null,
+            userRoles: [],
             currentView: 'AUTH',
             isAuthLoading: false,
             selectedApiaryId: null,
@@ -251,9 +264,10 @@ export const useAppStore = create<AppState>()((set, get) => ({
         // Land on DASHBOARD on login
         const nextView = (state.currentView === 'AUTH' || !state.currentView) ? 'DASHBOARD' : state.currentView;
         
-        // Fire loading context in background
+        // Fire loading context + roles in background
         setTimeout(() => {
           get().loadNavigationContext(user.id);
+          get().loadUserRoles(user.id);
         }, 50);
 
         return { 
