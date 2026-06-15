@@ -161,6 +161,7 @@ export default async function handler(req: any, res: any) {
       slope: latestSlope,
       v2: result.latest,
       full_history: result.history,
+      _debug: { satellite_observations: bands.length, daily_points: N },
     });
   } catch (error: any) {
     console.error('Nectar V2 error:', error);
