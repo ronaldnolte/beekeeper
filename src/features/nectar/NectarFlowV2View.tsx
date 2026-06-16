@@ -94,6 +94,7 @@ export const NectarFlowV2View: React.FC = () => {
   const [tuneAlpha,   setTuneAlpha]   = useState('0.18');
   const [tuneRateLag, setTuneRateLag] = useState('24');
   const [tuneDwell,   setTuneDwell]   = useState('3');
+  const [tuneRiseThr, setTuneRiseThr] = useState('0.012');
 
   const loadData = useCallback(async () => {
     if (!selectedApiaryId) return;
@@ -111,7 +112,7 @@ export const NectarFlowV2View: React.FC = () => {
       try {
         const params = new URLSearchParams({
           lat: lat.toFixed(4), lng: lng.toFixed(4),
-          alpha: tuneAlpha, rateLag: tuneRateLag, dwell: tuneDwell,
+          alpha: tuneAlpha, rateLag: tuneRateLag, dwell: tuneDwell, riseThr: tuneRiseThr,
         });
         const res = await fetch(`/api/nectar-index-v2?${params}`, { signal: controller.signal });
         if (!res.ok) {
@@ -127,7 +128,7 @@ export const NectarFlowV2View: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedApiaryId, tuneAlpha, tuneRateLag, tuneDwell]);
+  }, [selectedApiaryId, tuneAlpha, tuneRateLag, tuneDwell, tuneRiseThr]);
 
   useEffect(() => {
     setData(null);
@@ -873,6 +874,18 @@ export const NectarFlowV2View: React.FC = () => {
                   className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
                 >
                   {[['1','1 day'],['2','2 days'],['3','3 days — Default'],['4','4 days'],['5','5 days'],['7','7 days']].map(([v,l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 flex flex-col gap-1">
+                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Transition slope</label>
+                <select
+                  value={tuneRiseThr}
+                  onChange={e => { setTuneRiseThr(e.target.value); }}
+                  className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
+                >
+                  {[['0.002','0.002 — Original'],['0.006','0.006'],['0.012','0.012 — Default'],['0.02','0.02'],['0.03','0.03'],['0.05','0.05 — Wide']].map(([v,l]) => (
                     <option key={v} value={v}>{l}</option>
                   ))}
                 </select>

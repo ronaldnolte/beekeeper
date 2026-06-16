@@ -53,7 +53,7 @@ const DEFAULTS: V2Params = {
   fuseLo: 0.6, fuseHi: 0.9,
   moistFloor: 0.7,
   alpha: 0.18, sgHalf: 5,
-  enter: 0.40, exit: 0.30, dearth: 0.15, riseThr: 0.002, dwell: 3,
+  enter: 0.40, exit: 0.30, dearth: 0.15, riseThr: 0.012, dwell: 3,
   dormLo: 45, dormHi: 55, tWin: 14,
   rateLag: 24,
   wFall: 0.7, dpLo: 45, dpHi: 55, fallWidth: 26,

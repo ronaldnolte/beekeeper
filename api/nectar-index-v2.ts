@@ -110,7 +110,7 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'GET') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
-  const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw } = req.query;
+  const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw, riseThr: riseThrRaw } = req.query;
   if (!latRaw || !lngRaw) {
     res.status(400).json({ error: 'lat and lng are required' });
     return;
@@ -127,6 +127,7 @@ export default async function handler(req: any, res: any) {
   if (alphaRaw)   { const v = parseFloat(alphaRaw);   if (!isNaN(v) && v > 0 && v < 1)  paramOverrides.alpha   = v; }
   if (rateLagRaw) { const v = parseInt(rateLagRaw);   if (!isNaN(v) && v > 0 && v <= 90) paramOverrides.rateLag = v; }
   if (dwellRaw)   { const v = parseInt(dwellRaw);     if (!isNaN(v) && v > 0 && v <= 30) paramOverrides.dwell   = v; }
+  if (riseThrRaw) { const v = parseFloat(riseThrRaw); if (!isNaN(v) && v > 0 && v <= 0.1) paramOverrides.riseThr = v; }
   const hasOverrides = Object.keys(paramOverrides).length > 0;
 
   try {
