@@ -93,6 +93,7 @@ export const NectarFlowV2View: React.FC = () => {
   // Tester param controls
   const [tuneAlpha,   setTuneAlpha]   = useState('0.18');
   const [tuneRateLag, setTuneRateLag] = useState('24');
+  const [tuneDwell,   setTuneDwell]   = useState('3');
 
   const loadData = useCallback(async () => {
     if (!selectedApiaryId) return;
@@ -110,7 +111,7 @@ export const NectarFlowV2View: React.FC = () => {
       try {
         const params = new URLSearchParams({
           lat: lat.toFixed(4), lng: lng.toFixed(4),
-          alpha: tuneAlpha, rateLag: tuneRateLag,
+          alpha: tuneAlpha, rateLag: tuneRateLag, dwell: tuneDwell,
         });
         const res = await fetch(`/api/nectar-index-v2?${params}`, { signal: controller.signal });
         if (!res.ok) {
@@ -126,7 +127,7 @@ export const NectarFlowV2View: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedApiaryId, tuneAlpha, tuneRateLag]);
+  }, [selectedApiaryId, tuneAlpha, tuneRateLag, tuneDwell]);
 
   useEffect(() => {
     setData(null);
@@ -860,6 +861,18 @@ export const NectarFlowV2View: React.FC = () => {
                   className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
                 >
                   {[['7','7 days'],['14','14 days'],['24','24 days — Default'],['30','30 days'],['45','45 days'],['60','60 days']].map(([v,l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 flex flex-col gap-1">
+                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Dwell (days)</label>
+                <select
+                  value={tuneDwell}
+                  onChange={e => { setTuneDwell(e.target.value); }}
+                  className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
+                >
+                  {[['1','1 day'],['2','2 days'],['3','3 days — Default'],['4','4 days'],['5','5 days'],['7','7 days']].map(([v,l]) => (
                     <option key={v} value={v}>{l}</option>
                   ))}
                 </select>
