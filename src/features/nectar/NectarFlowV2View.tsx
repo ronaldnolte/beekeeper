@@ -60,6 +60,7 @@ export const NectarFlowV2View: React.FC = () => {
   // Enlarged Landscape Modal State
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [containerWidth, setContainerWidth] = useState(320);
+  const [containerHeight, setContainerHeight] = useState(300);
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,9 +68,9 @@ export const NectarFlowV2View: React.FC = () => {
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const w = entry.contentRect.width;
-        if (w > 0) {
-          setContainerWidth(w);
-        }
+        const h = entry.contentRect.height;
+        if (w > 0) setContainerWidth(w);
+        if (h > 0) setContainerHeight(h);
       }
     });
     observer.observe(chartContainerRef.current);
@@ -711,7 +712,7 @@ export const NectarFlowV2View: React.FC = () => {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+      <div className="flex-1 overflow-y-auto p-4 pb-24 flex flex-col gap-4">
 
         {/* HOME TAB */}
         {activeTab === 'home' && (
@@ -821,11 +822,11 @@ export const NectarFlowV2View: React.FC = () => {
 
         {/* TRENDS TAB (copied verbatim from NectarFlowView; hover panel shows NFI only — V2 history has no NDVI/Bloom/Weather) */}
         {activeTab === 'trends' && (
-          <div className="space-y-3 select-none">
+          <div className="flex flex-col gap-3 flex-1 min-h-0 select-none">
             {/* Hero chart — the focal point */}
             <div
               ref={chartContainerRef}
-              className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-3 sm:p-4 relative w-full"
+              className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-3 sm:p-4 relative w-full flex-1 min-h-[240px] flex flex-col justify-center"
             >
               {(historyBase.length > 1 || historyCurrent.length > 1) ? (
                 <>
@@ -866,7 +867,7 @@ export const NectarFlowV2View: React.FC = () => {
                       <Maximize2 size={14} />
                     </button>
                   </div>
-                  {renderChartSvg(containerWidth, 300)}
+                  {renderChartSvg(containerWidth, Math.max(220, containerHeight - 28))}
                 </>
               ) : (
                 <p className="text-xs text-slate-500 text-center py-10">Insufficient history for trend line</p>
