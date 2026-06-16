@@ -243,12 +243,14 @@ export function runV2Pipeline(
     const sl = slopeArr[i] ?? 0;
     const rising  = sl >  P.riseThr;
     const falling = sl < -P.riseThr;
-    // High zone: level confirms flow; slope tells direction
-    if (v >= P.enter)  return falling ? 'FLOW_ENDING' : 'IN_FLOW';
-    // Mid/low zone: slope narrates direction; level separates building from recovering
+    // High zone (>= enter): level alone confirms flow — slope doesn't matter here
+    if (v >= P.enter)  return 'IN_FLOW';
+    // Rising from anywhere: slope drives the story
     if (rising)  return v >= P.dearth ? 'FLOW_STARTING' : 'TRANSITION';
-    if (falling) return v >= P.dearth ? 'FLOW_ENDING'   : 'TRANSITION';
-    // Flat: only true dearth at the floor, otherwise neutral transition
+    // Falling: only FLOW_ENDING while passing through the exit zone (exit..enter)
+    // Below exit the flow is over — show TRANSITION heading to dearth
+    if (falling && v >= P.exit)  return 'FLOW_ENDING';
+    // Flat or below exit: dearth at the floor, transition otherwise
     return v < P.dearth ? 'DEARTH' : 'TRANSITION';
   });
   const phases: Phase[] = new Array(N);
