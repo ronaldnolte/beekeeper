@@ -95,6 +95,7 @@ export const NectarFlowV2View: React.FC = () => {
   const [tuneRateLag, setTuneRateLag] = useState('24');
   const [tuneDwell,   setTuneDwell]   = useState('3');
   const [tuneRiseThr, setTuneRiseThr] = useState('0.012');
+  const [tuneWFall,   setTuneWFall]   = useState('0.7');
 
   const loadData = useCallback(async () => {
     if (!selectedApiaryId) return;
@@ -112,7 +113,7 @@ export const NectarFlowV2View: React.FC = () => {
       try {
         const params = new URLSearchParams({
           lat: lat.toFixed(4), lng: lng.toFixed(4),
-          alpha: tuneAlpha, rateLag: tuneRateLag, dwell: tuneDwell, riseThr: tuneRiseThr,
+          alpha: tuneAlpha, rateLag: tuneRateLag, dwell: tuneDwell, riseThr: tuneRiseThr, wFall: tuneWFall,
         });
         const res = await fetch(`/api/nectar-index-v2?${params}`, { signal: controller.signal });
         if (!res.ok) {
@@ -128,7 +129,7 @@ export const NectarFlowV2View: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedApiaryId, tuneAlpha, tuneRateLag, tuneDwell, tuneRiseThr]);
+  }, [selectedApiaryId, tuneAlpha, tuneRateLag, tuneDwell, tuneRiseThr, tuneWFall]);
 
   useEffect(() => {
     setData(null);
@@ -886,6 +887,18 @@ export const NectarFlowV2View: React.FC = () => {
                   className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
                 >
                   {[['0.002','0.002 — Original'],['0.006','0.006'],['0.012','0.012 — Default'],['0.02','0.02'],['0.03','0.03'],['0.05','0.05 — Wide']].map(([v,l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 flex flex-col gap-1">
+                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Fall term weight</label>
+                <select
+                  value={tuneWFall}
+                  onChange={e => { setTuneWFall(e.target.value); }}
+                  className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
+                >
+                  {[['0','0 — Off'],['0.3','0.3'],['0.7','0.7 — Default'],['1.0','1.0'],['1.5','1.5']].map(([v,l]) => (
                     <option key={v} value={v}>{l}</option>
                   ))}
                 </select>
