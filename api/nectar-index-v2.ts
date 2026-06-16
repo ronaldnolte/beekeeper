@@ -129,8 +129,10 @@ export default async function handler(req: any, res: any) {
 
   try {
     const endDate = new Date().toISOString().slice(0, 10);
-    const startDate = new Date(new Date().setFullYear(new Date().getFullYear() - years))
-      .toISOString().slice(0, 10);
+    // Start at Jan 1 of the earliest year so every historical year is a full Jan-Dec
+    // calendar year (a rolling "today - N years" start truncates the earliest year to
+    // only its trailing months).
+    const startDate = `${new Date().getFullYear() - years}-01-01`;
 
     const [bands, weatherMap] = await Promise.all([
       fetchMultiBands(lat, lng, startDate, endDate),
