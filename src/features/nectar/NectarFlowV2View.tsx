@@ -760,7 +760,7 @@ export const NectarFlowV2View: React.FC = () => {
                   <span className="text-lg font-extrabold text-white mt-0.5">{Math.round(data.v2.rate_norm * 100)}%</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Warmth Gate</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Warmth</span>
                   <span className="text-lg font-extrabold text-white mt-0.5">{Math.round(data.v2.warmth * 100)}%</span>
                 </div>
               </div>
@@ -800,7 +800,7 @@ export const NectarFlowV2View: React.FC = () => {
                   { label: 'Moisture',    val: data.v2.moisture,   color: 'bg-sky-500',     tip: 'NDWI canopy water' },
                   { label: 'Rate (core)', val: data.v2.rate_norm,  color: 'bg-amber-500',   tip: 'greening velocity' },
                   { label: 'Fall term',   val: data.v2.fall_term,  color: 'bg-orange-500',  tip: 'photoperiod × dewpoint' },
-                  { label: 'Warmth gate', val: data.v2.warmth,     color: 'bg-red-500',     tip: '14-day mean temp ramp' },
+                  { label: 'Warmth',      val: data.v2.warmth,     color: 'bg-red-500',     tip: '14-day mean temp ramp' },
                 ].map(({ label, val, color, tip }) => (
                   <div key={label} className="space-y-1.5">
                     <div className="flex justify-between text-xs font-bold">
@@ -1109,9 +1109,6 @@ export const NectarFlowV2View: React.FC = () => {
         </div>
       )}
 
-      <div style={{ paddingBottom: '60px' }} className="text-center">
-        <span className="text-[9px] text-slate-700 font-semibold uppercase tracking-widest">Nectar Flow V2 · tester preview</span>
-      </div>
     </div>
   );
 };
