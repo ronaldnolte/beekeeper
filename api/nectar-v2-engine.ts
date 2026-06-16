@@ -54,7 +54,7 @@ const DEFAULTS: V2Params = {
   moistFloor: 0.7,
   alpha: 0.18, sgHalf: 5,
   enter: 0.40, exit: 0.30, dearth: 0.15, riseThr: 0.002, dwell: 3,
-  dormLo: 45, dormHi: 55, tWin: 14,
+  dormLo: 38, dormHi: 58, tWin: 14,
   rateLag: 24,
   wFall: 0.7, dpLo: 45, dpHi: 55, fallWidth: 26,
 };
@@ -222,7 +222,10 @@ export function runV2Pipeline(
   });
   const indexWithFall = rateNorm.map((v, i) => clamp(v + P.wFall * fallTerm[i], 0, 1));
 
-  // Dormancy gate: 14-day mean temperature ramp — gives winter≈0, climate-appropriate
+  // Warmth weighting: 14-day mean temperature ramp scaled 38-58F. A gentle graded
+  // weight (not a hard gate) — it still vetoes deep cold (winter approx 0) so cold-season
+  // green-ups don't read as flows, but the wide band lets the early-spring "toe" through
+  // gradually instead of clipping it flat and forcing a vertical launch when temps cross.
   const tmeanRaw: (number | null)[] = dates.map(d => {
     const w = weatherMap[d];
     return w ? (w.tmax + w.tmin) / 2 : null;
