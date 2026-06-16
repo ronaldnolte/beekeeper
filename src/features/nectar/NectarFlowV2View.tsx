@@ -686,31 +686,28 @@ export const NectarFlowV2View: React.FC = () => {
         </div>
       )}
 
-      {/* Status Banner (copied verbatim from NectarFlowView) */}
-      <div className={`w-full ${colors.bg} ${colors.text} p-5 text-center shadow-lg transition-all duration-300 relative select-none z-10`}>
-        <div className="absolute top-4 right-4">
-          <button
-            onClick={loadData}
-            className="p-2 bg-black/10 border border-white/20 rounded-full hover:bg-black/20 transition-all cursor-pointer"
-            title="Refresh"
-          >
-            <RefreshCw size={14} />
-          </button>
+      {/* Status Banner — slim phase strip (chart-focal redesign) */}
+      <div className={`w-full ${colors.bg} ${colors.text} px-4 py-3 shadow-md relative select-none z-10 flex items-center gap-3`}>
+        <span className="text-2xl leading-none shrink-0">{colors.emoji}</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-lg font-black tracking-wide leading-none">{colors.label}</h1>
+            <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
+              {resolvedTrendDirection === 'rising' ? '↑' : resolvedTrendDirection === 'falling' ? '↓' : '→'} {resolvedTrendDirection}
+            </span>
+          </div>
+          <p className="text-[11px] font-semibold opacity-90 leading-snug mt-0.5 line-clamp-1">{data.transitionAdvice}</p>
         </div>
-        <h1 className="text-3xl font-black tracking-wide flex items-center justify-center gap-2">
-          {colors.emoji} {colors.label}
-        </h1>
-        <p className="text-xs font-semibold opacity-90 mt-1 max-w-[340px] mx-auto leading-normal">
-          {data.transitionAdvice}
-        </p>
-        <div className="flex items-center justify-center gap-2 mt-3 select-none">
-          <span className="bg-black/15 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border border-white/10">
-            NFI: {data.nfi}
-          </span>
-          <span className="bg-black/15 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full border border-white/10">
-            {resolvedTrendDirection === 'rising' ? '↑' : resolvedTrendDirection === 'falling' ? '↓' : '→'} {resolvedTrendDirection}
-          </span>
-        </div>
+        <span className="bg-black/15 text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full border border-white/10 shrink-0">
+          NFI {data.nfi}
+        </span>
+        <button
+          onClick={loadData}
+          className="p-2 bg-black/10 border border-white/20 rounded-full hover:bg-black/20 transition-all cursor-pointer shrink-0"
+          title="Refresh"
+        >
+          <RefreshCw size={14} />
+        </button>
       </div>
 
       {/* Scrollable content */}
@@ -824,25 +821,43 @@ export const NectarFlowV2View: React.FC = () => {
 
         {/* TRENDS TAB (copied verbatim from NectarFlowView; hover panel shows NFI only — V2 history has no NDVI/Bloom/Weather) */}
         {activeTab === 'trends' && (
-          <div className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg select-none">
-            <div
-              onClick={() => setExpandTrends(!expandTrends)}
-              className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4 cursor-pointer"
-            >
-              <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider flex items-center gap-2">
-                <TrendingUp size={16} /> 12-Month Nectar Trend
-              </h3>
-              <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
-            </div>
-
-
+          <div className="space-y-3 select-none">
+            {/* Hero chart — the focal point */}
             <div
               ref={chartContainerRef}
-              className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-4 flex flex-col items-center justify-center relative w-full"
+              className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-3 sm:p-4 relative w-full"
             >
               {(historyBase.length > 1 || historyCurrent.length > 1) ? (
-                <div className="w-full flex flex-col justify-between">
-                  <div className="absolute top-3 right-3 z-10">
+                <>
+                  {/* Inset metrics overlay */}
+                  <div className="absolute top-3 left-3 z-20 bg-[#0a0a16]/80 backdrop-blur-sm border border-[#2b2b54]/60 rounded-xl px-3 py-2 shadow-lg pointer-events-none">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-3xl font-black text-white leading-none">{data.nfi}</span>
+                      <div className="flex flex-col leading-tight">
+                        <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">NFI</span>
+                        <span className="text-[10px] font-bold text-slate-300 flex items-center gap-0.5 capitalize">
+                          {resolvedTrendDirection === 'rising' ? <TrendingUp size={10} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={10} className="text-red-400" /> : <Minus size={10} className="text-slate-400" />}
+                          {resolvedTrendDirection}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 mt-2">
+                      <div className="flex flex-col leading-tight">
+                        <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Rate</span>
+                        <span className="text-[11px] font-black text-emerald-400">{Math.round(data.v2.rate_norm * 100)}%</span>
+                      </div>
+                      <div className="flex flex-col leading-tight">
+                        <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Warmth</span>
+                        <span className="text-[11px] font-black text-sky-400">{Math.round(data.v2.warmth * 100)}%</span>
+                      </div>
+                      <div className="flex flex-col leading-tight">
+                        <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Fall</span>
+                        <span className="text-[11px] font-black text-orange-400">{Math.round(data.v2.fall_term * 100)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Enlarge button */}
+                  <div className="absolute top-3 right-3 z-20">
                     <button
                       onClick={() => setIsEnlarged(true)}
                       className="p-1.5 bg-[#1b1b36]/80 hover:bg-[#2b2b54] border border-[#2b2b54] rounded-lg text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center justify-center"
@@ -851,109 +866,65 @@ export const NectarFlowV2View: React.FC = () => {
                       <Maximize2 size={14} />
                     </button>
                   </div>
-                  {renderChartSvg(containerWidth, 160)}
-                </div>
+                  {renderChartSvg(containerWidth, 300)}
+                </>
               ) : (
-                <p className="text-xs text-slate-500">Insufficient history for trend line</p>
+                <p className="text-xs text-slate-500 text-center py-10">Insufficient history for trend line</p>
               )}
             </div>
 
-            {/* Detailed Labels below Chart (copied verbatim from NectarFlowView) */}
-            <div className="mt-3 bg-[#121226] border border-[#222240] rounded-xl p-4">
-              {hoveredIndex !== null ? (
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center border-b border-[#222240]/60 pb-2">
-                    <span className="text-xs font-bold text-slate-400">Calendar Day</span>
-                    <span className="text-sm font-extrabold text-white">
-                      {getHoveredDateLabel(hoveredIndex)}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div className="flex items-center justify-between bg-[#1b1b36]/40 p-2 rounded-lg border border-[#2b2b54]/40">
-                      <span className="text-slate-400 font-bold">{baseYearLabel}</span>
-                      <span className="font-black text-blue-400">
-                        {historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== undefined &&
-                        historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== null
-                          ? `${(historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)!.forage_index_smoothed * 100).toFixed(0)}%`
-                          : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between bg-[#1b1b36]/40 p-2 rounded-lg border border-[#2b2b54]/40">
-                      <span className="text-slate-400 font-bold">{currentYear} (Current)</span>
-                      <span className="font-black text-amber-500">
-                        {historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== undefined &&
-                        historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== null
-                          ? `${(historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex)!.forage_index_smoothed * 100).toFixed(0)}%`
-                          : 'N/A'}
-                      </span>
-                    </div>
-                  </div>
-                  {(() => {
-                    const curr = historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
-                    if (!curr) return null;
-                    return (
-                      <div className="flex justify-between items-center bg-[#1b1b36]/60 p-2 rounded-lg border border-[#2b2b54]/60">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 text-left">{currentYear} Phase</span>
-                        <span className={`font-extrabold px-2.5 py-0.5 rounded-full text-[10px] ${getPhaseColors(curr.phase).bg} ${getPhaseColors(curr.phase).text}`}>
-                          {getPhaseColors(curr.phase).emoji} {getPhaseColors(curr.phase).label}
+            {/* Compact readout strip — daily values on hover, legend otherwise */}
+            <div className="bg-[#121226] border border-[#222240] rounded-xl px-4 py-2.5">
+              {hoveredIndex !== null ? (() => {
+                const hb = historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
+                const hc = historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
+                return (
+                  <div className="flex items-center justify-between gap-3 text-xs flex-wrap">
+                    <span className="font-extrabold text-white">{getHoveredDateLabel(hoveredIndex)}</span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-slate-400">{baseYearLabel}: <b className="text-blue-400">{hb && hb.forage_index_smoothed != null ? `${(hb.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}</b></span>
+                      <span className="text-slate-400">{currentYear}: <b className="text-amber-500">{hc && hc.forage_index_smoothed != null ? `${(hc.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}</b></span>
+                      {hc && (
+                        <span className={`font-extrabold px-2 py-0.5 rounded-full text-[10px] ${getPhaseColors(hc.phase).bg} ${getPhaseColors(hc.phase).text}`}>
+                          {getPhaseColors(hc.phase).emoji} {getPhaseColors(hc.phase).label}
                         </span>
-                      </div>
-                    );
-                  })()}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs border-b border-[#222240]/60 pb-2">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 text-left">Trend Direction</span>
-                      <span className="font-extrabold text-white capitalize mt-0.5 flex items-center gap-1">
-                        {resolvedTrendDirection === 'rising' ? <TrendingUp size={12} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={12} className="text-red-400" /> : <Minus size={12} className="text-slate-400" />}
-                        {resolvedTrendDirection ? `${resolvedTrendDirection} trend` : 'Flat trend'}
-                      </span>
-                    </div>
-                    <div className="flex flex-col text-right">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 text-right">Current Phase</span>
-                      <span className={`font-extrabold px-2 py-0.5 rounded-full text-[10px] mt-0.5 ${colors.bg} ${colors.text}`}>
-                        {colors.emoji} {colors.label}
-                      </span>
+                      )}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="flex justify-between text-slate-400">
-                      <span>Latest Nectar:</span>
-                      <span className="font-bold text-amber-500">{forageIndexVal}</span>
-                    </div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>Greening Rate:</span>
-                      <span className="font-bold text-emerald-400">{Math.round(data.v2.rate_norm * 100)}%</span>
-                    </div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>Fall Term:</span>
-                      <span className="font-bold text-orange-400">{Math.round(data.v2.fall_term * 100)}%</span>
-                    </div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>Warmth Gate:</span>
-                      <span className="font-bold text-sky-400">{Math.round(data.v2.warmth * 100)}%</span>
-                    </div>
+                );
+              })() : (
+                <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400 flex-wrap">
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-amber-500 inline-block" />{currentYear} (current)</span>
                   </div>
+                  <span className="text-slate-500 italic">Hover for daily values</span>
                 </div>
               )}
             </div>
 
-            {/* Weekly NFI list when expanded (copied verbatim from NectarFlowView) */}
-            {expandTrends && (
-              <div className="mt-5 pt-4 border-t border-[#2b2b4d] space-y-2 text-xs text-slate-300 animate-in slide-in-from-top-2 duration-200">
-                <span className="font-extrabold text-white block mb-2">{currentYear} Weekly Smoothed Nectar Index</span>
-                {historyCurrent.filter((_: any, idx: number) => idx % 7 === 0 || idx === historyCurrent.length - 1).map((h: any, i: number) => (
-                  <div key={i} className="flex justify-between border-b border-[#20203a] pb-1.5">
-                    <span>{new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                    <span className="font-bold text-white">
-                      {h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed) ? `${(h.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Weekly values — collapsible detail */}
+            <div>
+              <button
+                onClick={() => setExpandTrends(!expandTrends)}
+                className="w-full flex items-center justify-between text-[11px] uppercase font-bold text-slate-500 tracking-wider px-1 py-1.5 hover:text-slate-300 cursor-pointer"
+              >
+                <span>{currentYear} Weekly Values</span>
+                <ChevronDown size={14} className={`transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
+              </button>
+              {expandTrends && (
+                <div className="mt-1 bg-[#121226] border border-[#222240] rounded-xl p-3 space-y-1.5 text-xs text-slate-300 animate-in slide-in-from-top-2 duration-200">
+                  {historyCurrent.filter((_: any, idx: number) => idx % 7 === 0 || idx === historyCurrent.length - 1).map((h: any, i: number) => (
+                    <div key={i} className="flex justify-between border-b border-[#20203a] pb-1.5">
+                      <span>{new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      <span className="font-bold text-white">
+                        {h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed) ? `${(h.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
