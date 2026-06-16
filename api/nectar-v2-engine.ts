@@ -25,6 +25,7 @@ export interface V2HistoryPoint {
   date: string;
   forage_index_smoothed: number;
   phase: Phase;
+  ndvi: number;
 }
 
 export interface V2EngineResult {
@@ -277,6 +278,7 @@ export function runV2Pipeline(
     date: d,
     forage_index_smoothed: Math.round(idxEwma[i] * 1000) / 1000,
     phase: phases[i],
+    ndvi: Math.round(ndvi[i] * 1000) / 1000,
   }));
 
   return { dates, idxEwma, phases, slopeArr, latest, history };

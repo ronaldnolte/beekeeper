@@ -37,7 +37,7 @@ interface V2Response {
     fall_term: number;
     rate_norm: number;
   };
-  full_history: { date: string; forage_index_smoothed: number; phase: Phase }[];
+  full_history: { date: string; forage_index_smoothed: number; phase: Phase; ndvi: number }[];
 }
 
 export const NectarFlowV2View: React.FC = () => {
@@ -92,6 +92,7 @@ export const NectarFlowV2View: React.FC = () => {
 
   // Tester param controls
   const [tuneYears, setTuneYears] = useState('3');
+  const [compareYear, setCompareYear] = useState('off');
 
   const loadData = useCallback(async () => {
     if (!selectedApiaryId) return;
@@ -652,6 +653,65 @@ export const NectarFlowV2View: React.FC = () => {
     );
   };
 
+  // Single-year Index-vs-raw-NDVI comparison chart (for diagnosing whether a low index
+  // reflects a real drop in greenness or just a plateau in growth rate)
+  const compareYearData = compareYear !== 'off'
+    ? (data.full_history || []).filter(h => h.date.startsWith(compareYear + '-'))
+    : [];
+
+  const renderCompareChart = (width: number, height: number) => {
+    const paddingLeft = 40;
+    const paddingRight = 15;
+    const paddingTop = 15;
+    const paddingBottom = 20;
+    const chartWidth = width - paddingLeft - paddingRight;
+    const chartHeight = height - paddingTop - paddingBottom;
+
+    const yCoord = (val: number) => height - paddingBottom - clamp01(val) * chartHeight;
+    function clamp01(v: number) { return Math.min(1, Math.max(0, v)); }
+    const getX = (dateStr: string) => paddingLeft + (getDayOfYear(dateStr) / 364) * chartWidth;
+
+    const buildPath = (key: 'forage_index_smoothed' | 'ndvi') => {
+      let path = '';
+      let first = true;
+      for (const h of compareYearData) {
+        const v = (h as any)[key];
+        if (v !== null && v !== undefined && !isNaN(v)) {
+          const x = getX(h.date);
+          const y = yCoord(v);
+          path += first ? `M ${x},${y}` : ` L ${x},${y}`;
+          first = false;
+        }
+      }
+      return path;
+    };
+
+    const indexPath = buildPath('forage_index_smoothed');
+    const ndviPath = buildPath('ndvi');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    return (
+      <div className="w-full flex flex-col justify-between" style={{ height }}>
+        <svg className="w-full select-none" viewBox={`0 0 ${width} ${height}`} style={{ height: `${height}px` }}>
+          {[0, 0.25, 0.5, 0.75, 1.0].map(val => {
+            const y = yCoord(val);
+            return (
+              <g key={val}>
+                <line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y} stroke="#ffffff" strokeOpacity="0.05" strokeWidth="0.8" />
+                <text x={paddingLeft - 8} y={y + 3} fill="#64748b" fontSize="8" fontWeight="bold" textAnchor="end">{(val * 100).toFixed(0)}%</text>
+              </g>
+            );
+          })}
+          {ndviPath && <path d={ndviPath} fill="none" stroke="#22d3ee" strokeWidth="1.5" opacity="0.9" />}
+          {indexPath && <path d={indexPath} fill="none" stroke="#f59e0b" strokeWidth="1.5" opacity="0.9" />}
+        </svg>
+        <div className="flex justify-between w-full text-slate-500 font-bold border-t border-[#222240]/40 pt-1.5 mt-1 select-none" style={{ paddingLeft: `${paddingLeft}px`, paddingRight: `${paddingRight}px`, fontSize: '8px' }}>
+          {months.map(m => <span key={m}>{m}</span>)}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full flex-1 overflow-hidden flex flex-col text-white bg-[#0a0a14] relative">
 
@@ -839,6 +899,19 @@ export const NectarFlowV2View: React.FC = () => {
                   ))}
                 </select>
               </div>
+              <div className="flex-1 flex flex-col gap-1">
+                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Index vs NDVI</label>
+                <select
+                  value={compareYear}
+                  onChange={e => { setCompareYear(e.target.value); }}
+                  className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
+                >
+                  <option value="off">Off</option>
+                  {years.map(yr => (
+                    <option key={yr} value={String(yr)}>{yr}</option>
+                  ))}
+                </select>
+              </div>
               <div className="flex items-end">
                 <button
                   onClick={loadData}
@@ -884,6 +957,30 @@ export const NectarFlowV2View: React.FC = () => {
                 <p className="text-xs text-slate-500">Insufficient history for trend line</p>
               )}
             </div>
+
+            {/* Index vs raw NDVI comparison for a single selected year */}
+            {compareYear !== 'off' && (
+              <div className="mt-3" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center gap-4 mb-2 px-1">
+                  <span className="text-[10px] font-bold text-slate-300">{compareYear}: Index vs raw NDVI</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full inline-block bg-[#f59e0b]" />
+                    <span className="text-[10px] font-bold text-slate-400">Nectar Index</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full inline-block bg-[#22d3ee]" />
+                    <span className="text-[10px] font-bold text-slate-400">Raw NDVI</span>
+                  </div>
+                </div>
+                <div className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-4 w-full">
+                  {compareYearData.length > 1 ? (
+                    renderCompareChart(containerWidth, 160)
+                  ) : (
+                    <p className="text-xs text-slate-500">No data for {compareYear}</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Detailed Labels below Chart (copied verbatim from NectarFlowView) */}
             <div className="mt-3 bg-[#121226] border border-[#222240] rounded-xl p-4">
