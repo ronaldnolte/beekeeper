@@ -210,14 +210,19 @@ export function runV2Pipeline(
 
   // Fall-bloom term: universal photoperiod-proxy × dewpoint moisture gap-fill
   // Fires only where NDVI-rate is flat (1 − |rateMag|) — adds fall flows greenness can't see
+  // rateMag is smoothed over a few days first: a single noisy/cloud-affected satellite scene
+  // can otherwise punch rate toward zero for one day and fully open this gate, producing a
+  // sharp single-day spike in the fall window that has nothing to do with real forage.
   const center = fallCenter(lat);
   const dpRaw: (number | null)[] = dates.map(d => weatherMap[d]?.dew ?? null);
   for (let i = 0; i < N; i++) if (dpRaw[i] == null) dpRaw[i] = i > 0 ? dpRaw[i - 1] : 50;
   const dpSust = trailingMean(dpRaw, 18);
+  const rateMagRaw    = rate.map(r => clamp(Math.abs(r) / ratePeak, 0, 1));
+  const rateMagSmooth = trailingMean(rateMagRaw, 5);
   const fallTerm = dates.map((d, i) => {
     const photo    = Math.exp(-Math.pow((dayOfYear(d) - center) / P.fallWidth, 2));
     const moisture = clamp(((dpSust[i] ?? 50) - P.dpLo) / (P.dpHi - P.dpLo), 0, 1);
-    const rateMag  = clamp(Math.abs(rate[i]) / ratePeak, 0, 1);
+    const rateMag  = rateMagSmooth[i] ?? 0;
     return photo * moisture * (1 - rateMag);
   });
   const indexWithFall = rateNorm.map((v, i) => clamp(v + P.wFall * fallTerm[i], 0, 1));
