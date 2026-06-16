@@ -74,7 +74,9 @@ export const NectarFlowV2View: React.FC = () => {
     });
     observer.observe(chartContainerRef.current);
     return () => observer.disconnect();
-  }, [activeTab]);
+    // Re-run once data loads: the chart container only mounts after the loading
+    // guard clears, so on a Trends-default mount the ref is null on first run.
+  }, [activeTab, loading, data]);
 
   // Auto-select if there is exactly 1 apiary
   useEffect(() => {
