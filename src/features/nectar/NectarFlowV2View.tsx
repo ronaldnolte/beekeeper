@@ -299,48 +299,29 @@ export const NectarFlowV2View: React.FC = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  // Year-split history (copied verbatim from NectarFlowView, V2 has no ndvi/bloom/weather in history)
+  // Year-split history: each historical year rendered as its own line (no averaging)
   const years = Array.from(
     new Set((data.full_history || []).map((h) => parseInt(h.date.split('-')[0], 10)))
   ).sort() as number[];
 
   const currentYear = years[years.length - 1] || new Date().getFullYear();
   const historicalYears = years.filter(y => y < currentYear);
-  const baseYear = years[0] || currentYear - 1;
-  const baseYearLabel = historicalYears.length > 1
-    ? `${historicalYears[0]}-${historicalYears[historicalYears.length - 1]} Avg`
-    : `${baseYear}`;
+
+  const YEAR_LINE_COLORS = ['#2563eb', '#a855f7', '#f97316', '#14b8a6'];
+  const yearColor = (idx: number) => YEAR_LINE_COLORS[idx % YEAR_LINE_COLORS.length];
 
   const historyCurrent = (data.full_history || []).filter(
     (h) => parseInt(h.date.split('-')[0], 10) === currentYear
   );
 
-  const historyBaseMap: Record<number, { sum: number; count: number }> = {};
-  for (let i = 0; i < 365; i++) {
-    historyBaseMap[i] = { sum: 0, count: 0 };
-  }
-
+  const historyByYear: Record<number, { date: string; forage_index_smoothed: number }[]> = {};
+  historicalYears.forEach(y => { historyByYear[y] = []; });
   (data.full_history || []).forEach((h) => {
     const year = parseInt(h.date.split('-')[0], 10);
-    if (year < currentYear) {
-      const dayIdx = getDayOfYear(h.date);
-      if (h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed)) {
-        historyBaseMap[dayIdx].sum += h.forage_index_smoothed;
-        historyBaseMap[dayIdx].count += 1;
-      }
+    if (year < currentYear && h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed)) {
+      historyByYear[year].push(h);
     }
   });
-
-  const historyBase = Array.from({ length: 365 }, (_, dayIdx) => {
-    const cell = historyBaseMap[dayIdx];
-    const nfiAvg = cell.count > 0 ? cell.sum / cell.count : null;
-    const date = new Date(2025, 0, 1 + dayIdx);
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    const dateStr = `${yyyy}-${mm}-${dd}`;
-    return { date: dateStr, forage_index_smoothed: nfiAvg };
-  }).filter(h => h.forage_index_smoothed !== null) as { date: string; forage_index_smoothed: number }[];
 
   // renderChartSvg — copied verbatim from NectarFlowView (lines 460-781)
   const renderChartSvg = (width: number, height: number, isFullscreen: boolean = false) => {
@@ -352,7 +333,8 @@ export const NectarFlowV2View: React.FC = () => {
     const chartWidth = width - paddingLeft - paddingRight;
     const chartHeight = height - paddingTop - paddingBottom;
 
-    if (!historyBase.length && !historyCurrent.length) {
+    const anyHistoricalYear = historicalYears.some(y => (historyByYear[y] || []).length > 0);
+    if (!anyHistoricalYear && !historyCurrent.length) {
       return (
         <div className="flex items-center justify-center text-xs text-slate-500" style={{ height }}>
           Insufficient history for trend line
@@ -361,9 +343,10 @@ export const NectarFlowV2View: React.FC = () => {
     }
 
     // Y-axis Dynamic Auto-Scaling (110% of Maximum value with discrete grid-friendly steps)
-    const baseVals = historyBase.map((h: any) => h.forage_index_smoothed).filter((v: any) => v !== null && !isNaN(v));
+    const yearVals = historicalYears.flatMap(y => (historyByYear[y] || []).map(h => h.forage_index_smoothed))
+      .filter((v: any) => v !== null && !isNaN(v));
     const currVals = historyCurrent.map((h: any) => h.forage_index_smoothed).filter((v: any) => v !== null && !isNaN(v));
-    const maxHistoryVal = Math.max(...baseVals, ...currVals, 0.20);
+    const maxHistoryVal = Math.max(...yearVals, ...currVals, 0.20);
     const targetYMax = maxHistoryVal * 1.10;
 
     let yMax = 1.0;
@@ -418,21 +401,20 @@ export const NectarFlowV2View: React.FC = () => {
       ? `M ${firstAreaX},${yCoord(0)} L ${areaPathPoints} L ${lastAreaX},${yCoord(0)} Z`
       : '';
 
-    // Build baseline path (Solid Blue line)
-    let baselinePathPoints = '';
-    let isFirstBase = true;
-    for (const h of historyBase) {
-      if (h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed)) {
-        const x = getXCoordForDate(h.date);
-        const y = yCoord(h.forage_index_smoothed);
-        if (isFirstBase) {
-          baselinePathPoints += `M ${x},${y}`;
-          isFirstBase = false;
-        } else {
-          baselinePathPoints += ` L ${x},${y}`;
+    // Build one path per historical year (each its own color, no averaging)
+    const yearPaths = historicalYears.map((yr, idx) => {
+      let path = '';
+      let isFirst = true;
+      for (const h of historyByYear[yr] || []) {
+        if (h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed)) {
+          const x = getXCoordForDate(h.date);
+          const y = yCoord(h.forage_index_smoothed);
+          path += isFirst ? `M ${x},${y}` : ` L ${x},${y}`;
+          isFirst = false;
         }
       }
-    }
+      return { year: yr, color: yearColor(idx), path };
+    });
 
     // Build current year segments (Phase-colored)
     const currentSegments: React.ReactNode[] = [];
@@ -485,7 +467,11 @@ export const NectarFlowV2View: React.FC = () => {
     };
 
     // Look up entries for the hovered day
-    const baseHovered = historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
+    const yearHovered = historicalYears.map((yr, idx) => ({
+      year: yr,
+      color: yearColor(idx),
+      point: (historyByYear[yr] || []).find(h => getDayOfYear(h.date) === hoveredIndex),
+    }));
     const currentHovered = historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
 
     // Month labels layout parameters
@@ -587,16 +573,17 @@ export const NectarFlowV2View: React.FC = () => {
           {/* Area fill under current year curve */}
           {areaPath && <path d={areaPath} fill="url(#areaFill)" />}
 
-          {/* Baseline Path (Solid Blue) */}
-          {baselinePathPoints && (
+          {/* One path per historical year, each its own color */}
+          {yearPaths.map(yp => yp.path && (
             <path
-              d={baselinePathPoints}
+              key={yp.year}
+              d={yp.path}
               fill="none"
-              stroke="#2563eb"
+              stroke={yp.color}
               strokeWidth={isFullscreen ? 2.5 : 1.5}
               opacity="0.8"
             />
-          )}
+          ))}
 
           {/* Current year segments */}
           {currentSegments}
@@ -626,16 +613,17 @@ export const NectarFlowV2View: React.FC = () => {
                   strokeWidth="1"
                   strokeDasharray="2,2"
                 />
-                {baseHovered?.forage_index_smoothed !== null && baseHovered?.forage_index_smoothed !== undefined && (
+                {yearHovered.map(yh => yh.point?.forage_index_smoothed !== null && yh.point?.forage_index_smoothed !== undefined && (
                   <circle
+                    key={yh.year}
                     cx={hX}
-                    cy={yCoord(baseHovered.forage_index_smoothed)}
+                    cy={yCoord(yh.point.forage_index_smoothed)}
                     r={isFullscreen ? "3.5" : "2.5"}
-                    fill="#2563eb"
+                    fill={yh.color}
                     stroke="#ffffff"
                     strokeWidth="1"
                   />
-                )}
+                ))}
                 {currentHovered?.forage_index_smoothed !== null && currentHovered?.forage_index_smoothed !== undefined && (
                   <circle
                     cx={hX}
@@ -861,11 +849,25 @@ export const NectarFlowV2View: React.FC = () => {
               </div>
             </div>
 
+            {/* Year color legend */}
+            <div className="flex flex-wrap gap-3 mb-3 px-1" onClick={e => e.stopPropagation()}>
+              {historicalYears.map((yr, idx) => (
+                <div key={yr} className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: yearColor(idx) }} />
+                  <span className="text-[10px] font-bold text-slate-400">{yr}</span>
+                </div>
+              ))}
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full inline-block bg-amber-500" />
+                <span className="text-[10px] font-bold text-slate-400">{currentYear} (current, phase-colored)</span>
+              </div>
+            </div>
+
             <div
               ref={chartContainerRef}
               className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-4 flex flex-col items-center justify-center relative w-full"
             >
-              {(historyBase.length > 1 || historyCurrent.length > 1) ? (
+              {(historicalYears.some(y => (historyByYear[y] || []).length > 1) || historyCurrent.length > 1) ? (
                 <div className="w-full flex flex-col justify-between">
                   <div className="absolute top-3 right-3 z-10">
                     <button
@@ -893,17 +895,21 @@ export const NectarFlowV2View: React.FC = () => {
                       {getHoveredDateLabel(hoveredIndex)}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div className="flex items-center justify-between bg-[#1b1b36]/40 p-2 rounded-lg border border-[#2b2b54]/40">
-                      <span className="text-slate-400 font-bold">{baseYearLabel}</span>
-                      <span className="font-black text-blue-400">
-                        {historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== undefined &&
-                        historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== null
-                          ? `${(historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)!.forage_index_smoothed * 100).toFixed(0)}%`
-                          : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between bg-[#1b1b36]/40 p-2 rounded-lg border border-[#2b2b54]/40">
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {historicalYears.map((yr, idx) => {
+                      const pt = (historyByYear[yr] || []).find(h => getDayOfYear(h.date) === hoveredIndex);
+                      return (
+                        <div key={yr} className="flex items-center justify-between gap-2 bg-[#1b1b36]/40 p-2 rounded-lg border border-[#2b2b54]/40 flex-1 min-w-[80px]">
+                          <span className="font-bold" style={{ color: yearColor(idx) }}>{yr}</span>
+                          <span className="font-black" style={{ color: yearColor(idx) }}>
+                            {pt?.forage_index_smoothed !== undefined && pt?.forage_index_smoothed !== null
+                              ? `${(pt.forage_index_smoothed * 100).toFixed(0)}%`
+                              : 'N/A'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div className="flex items-center justify-between gap-2 bg-[#1b1b36]/40 p-2 rounded-lg border border-[#2b2b54]/40 flex-1 min-w-[80px]">
                       <span className="text-slate-400 font-bold">{currentYear} (Current)</span>
                       <span className="font-black text-amber-500">
                         {historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== undefined &&
@@ -1086,18 +1092,22 @@ export const NectarFlowV2View: React.FC = () => {
                       {getHoveredDateLabel(hoveredIndex)}
                     </span>
                   </div>
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    <div className="flex justify-between items-center bg-[#1b1b36]/40 px-2 py-1 rounded border border-[#2b2b54]/40">
-                      <span className="text-slate-400 text-[9px] font-bold">{baseYearLabel} NFI:</span>
-                      <span className="font-black text-blue-400 text-[10px]">
-                        {historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== undefined &&
-                        historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== null
-                          ? `${(historyBase.find((h: any) => getDayOfYear(h.date) === hoveredIndex)!.forage_index_smoothed * 100).toFixed(0)}%`
-                          : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center bg-[#1b1b36]/40 px-2 py-1 rounded border border-[#2b2b54]/40">
-                      <span className="text-slate-400 text-[9px] font-bold">{currentYear} NFI:</span>
+                  <div className="flex-1 flex flex-wrap gap-2">
+                    {historicalYears.map((yr, idx) => {
+                      const pt = (historyByYear[yr] || []).find(h => getDayOfYear(h.date) === hoveredIndex);
+                      return (
+                        <div key={yr} className="flex justify-between items-center gap-2 bg-[#1b1b36]/40 px-2 py-1 rounded border border-[#2b2b54]/40 flex-1 min-w-[70px]">
+                          <span className="text-[9px] font-bold" style={{ color: yearColor(idx) }}>{yr}:</span>
+                          <span className="font-black text-[10px]" style={{ color: yearColor(idx) }}>
+                            {pt?.forage_index_smoothed !== undefined && pt?.forage_index_smoothed !== null
+                              ? `${(pt.forage_index_smoothed * 100).toFixed(0)}%`
+                              : 'N/A'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div className="flex justify-between items-center gap-2 bg-[#1b1b36]/40 px-2 py-1 rounded border border-[#2b2b54]/40 flex-1 min-w-[70px]">
+                      <span className="text-slate-400 text-[9px] font-bold">{currentYear}:</span>
                       <span className="font-black text-amber-500 text-[10px]">
                         {historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== undefined &&
                         historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== null
