@@ -20,6 +20,8 @@ import {
   X,
 } from 'lucide-react';
 
+declare const __BUILD_TIME__: string;
+
 type Phase = 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING' | 'TRANSITION';
 
 interface V2Response {
@@ -60,17 +62,30 @@ export const NectarFlowV2View: React.FC = () => {
   // Enlarged Landscape Modal State
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [containerWidth, setContainerWidth] = useState(320);
-  const [containerHeight, setContainerHeight] = useState(300);
+  const [chartHeight, setChartHeight] = useState(300);
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Size the chart explicitly from the scroll-area height (flex-1 fill did not
+  // propagate reliably here). Fills the space down to the readout strip / nav.
+  useEffect(() => {
+    const compute = () => {
+      const el = contentRef.current;
+      if (!el) return;
+      // reserve = content padding + readout strip + weekly toggle + nav clearance + chart chrome
+      setChartHeight(Math.max(220, el.clientHeight - 255));
+    };
+    compute();
+    window.addEventListener('resize', compute);
+    return () => window.removeEventListener('resize', compute);
+  }, [activeTab, loading, data]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const w = entry.contentRect.width;
-        const h = entry.contentRect.height;
         if (w > 0) setContainerWidth(w);
-        if (h > 0) setContainerHeight(h);
       }
     });
     observer.observe(chartContainerRef.current);
@@ -712,7 +727,7 @@ export const NectarFlowV2View: React.FC = () => {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto p-4 pb-24 flex flex-col gap-4">
+      <div ref={contentRef} className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
 
         {/* HOME TAB */}
         {activeTab === 'home' && (
@@ -822,11 +837,11 @@ export const NectarFlowV2View: React.FC = () => {
 
         {/* TRENDS TAB (copied verbatim from NectarFlowView; hover panel shows NFI only — V2 history has no NDVI/Bloom/Weather) */}
         {activeTab === 'trends' && (
-          <div className="flex flex-col gap-3 flex-1 min-h-0 select-none">
+          <div className="space-y-3 select-none">
             {/* Hero chart — the focal point */}
             <div
               ref={chartContainerRef}
-              className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-3 sm:p-4 relative w-full flex-1 min-h-[240px] flex flex-col justify-center"
+              className="bg-[#0f0f20] border border-[#222240] rounded-2xl p-3 sm:p-4 relative w-full"
             >
               {(historyBase.length > 1 || historyCurrent.length > 1) ? (
                 <>
@@ -867,7 +882,7 @@ export const NectarFlowV2View: React.FC = () => {
                       <Maximize2 size={14} />
                     </button>
                   </div>
-                  {renderChartSvg(containerWidth, Math.max(220, containerHeight - 28))}
+                  {renderChartSvg(containerWidth, chartHeight)}
                 </>
               ) : (
                 <p className="text-xs text-slate-500 text-center py-10">Insufficient history for trend line</p>
@@ -896,6 +911,7 @@ export const NectarFlowV2View: React.FC = () => {
               })() : (
                 <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400 flex-wrap">
                   <div className="flex items-center gap-4">
+                    <span className="text-[9px] font-mono text-slate-600" title="Build timestamp">⏱ {__BUILD_TIME__}</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-amber-500 inline-block" />{currentYear} (current)</span>
                   </div>
