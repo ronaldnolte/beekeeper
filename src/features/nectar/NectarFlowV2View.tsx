@@ -91,11 +91,7 @@ export const NectarFlowV2View: React.FC = () => {
   }, [selectedApiaryId, apiariesList]);
 
   // Tester param controls
-  const [tuneAlpha,   setTuneAlpha]   = useState('0.18');
-  const [tuneRateLag, setTuneRateLag] = useState('24');
-  const [tuneDwell,   setTuneDwell]   = useState('3');
-  const [tuneRiseThr, setTuneRiseThr] = useState('0.012');
-  const [tuneWFall,   setTuneWFall]   = useState('0.7');
+  const [tuneYears, setTuneYears] = useState('3');
 
   const loadData = useCallback(async () => {
     if (!selectedApiaryId) return;
@@ -113,7 +109,7 @@ export const NectarFlowV2View: React.FC = () => {
       try {
         const params = new URLSearchParams({
           lat: lat.toFixed(4), lng: lng.toFixed(4),
-          alpha: tuneAlpha, rateLag: tuneRateLag, dwell: tuneDwell, riseThr: tuneRiseThr, wFall: tuneWFall,
+          years: tuneYears,
         });
         const res = await fetch(`/api/nectar-index-v2?${params}`, { signal: controller.signal });
         if (!res.ok) {
@@ -129,7 +125,7 @@ export const NectarFlowV2View: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedApiaryId, tuneAlpha, tuneRateLag, tuneDwell, tuneRiseThr, tuneWFall]);
+  }, [selectedApiaryId, tuneYears]);
 
   useEffect(() => {
     setData(null);
@@ -844,61 +840,13 @@ export const NectarFlowV2View: React.FC = () => {
             {/* Tester param controls */}
             <div className="flex gap-3 mb-3" onClick={e => e.stopPropagation()}>
               <div className="flex-1 flex flex-col gap-1">
-                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Smoothing (alpha)</label>
+                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Years of history</label>
                 <select
-                  value={tuneAlpha}
-                  onChange={e => { setTuneAlpha(e.target.value); }}
+                  value={tuneYears}
+                  onChange={e => { setTuneYears(e.target.value); }}
                   className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
                 >
-                  {[['0.05','0.05 — Very smooth'],['0.10','0.10 — Smooth'],['0.18','0.18 — Default'],['0.25','0.25 — Responsive'],['0.40','0.40 — Fast'],['0.60','0.60 — Raw']].map(([v,l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1 flex flex-col gap-1">
-                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Rate lag (days)</label>
-                <select
-                  value={tuneRateLag}
-                  onChange={e => { setTuneRateLag(e.target.value); }}
-                  className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
-                >
-                  {[['7','7 days'],['14','14 days'],['24','24 days — Default'],['30','30 days'],['45','45 days'],['60','60 days']].map(([v,l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1 flex flex-col gap-1">
-                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Dwell (days)</label>
-                <select
-                  value={tuneDwell}
-                  onChange={e => { setTuneDwell(e.target.value); }}
-                  className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
-                >
-                  {[['1','1 day'],['2','2 days'],['3','3 days — Default'],['4','4 days'],['5','5 days'],['7','7 days']].map(([v,l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1 flex flex-col gap-1">
-                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Transition slope</label>
-                <select
-                  value={tuneRiseThr}
-                  onChange={e => { setTuneRiseThr(e.target.value); }}
-                  className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
-                >
-                  {[['0.002','0.002 — Original'],['0.006','0.006'],['0.012','0.012 — Default'],['0.02','0.02'],['0.03','0.03'],['0.05','0.05 — Wide']].map(([v,l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1 flex flex-col gap-1">
-                <label className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Fall term weight</label>
-                <select
-                  value={tuneWFall}
-                  onChange={e => { setTuneWFall(e.target.value); }}
-                  className="bg-[#1b1b36] border border-[#2b2b54] text-white text-xs font-bold rounded-lg px-2 py-1.5 outline-none cursor-pointer"
-                >
-                  {[['0','0 — Off'],['0.3','0.3'],['0.7','0.7 — Default'],['1.0','1.0'],['1.5','1.5']].map(([v,l]) => (
+                  {[['1','1 year'],['2','2 years'],['3','3 years — Default'],['4','4 years'],['5','5 years']].map(([v,l]) => (
                     <option key={v} value={v}>{l}</option>
                   ))}
                 </select>
