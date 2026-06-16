@@ -25,7 +25,6 @@ export interface V2HistoryPoint {
   date: string;
   forage_index_smoothed: number;
   phase: Phase;
-  ndvi: number;
 }
 
 export interface V2EngineResult {
@@ -54,7 +53,7 @@ const DEFAULTS: V2Params = {
   fuseLo: 0.6, fuseHi: 0.9,
   moistFloor: 0.7,
   alpha: 0.18, sgHalf: 5,
-  enter: 0.40, exit: 0.30, dearth: 0.15, riseThr: 0.012, dwell: 3,
+  enter: 0.40, exit: 0.30, dearth: 0.15, riseThr: 0.002, dwell: 3,
   dormLo: 45, dormHi: 55, tWin: 14,
   rateLag: 24,
   wFall: 0.7, dpLo: 45, dpHi: 55, fallWidth: 26,
@@ -211,19 +210,14 @@ export function runV2Pipeline(
 
   // Fall-bloom term: universal photoperiod-proxy × dewpoint moisture gap-fill
   // Fires only where NDVI-rate is flat (1 − |rateMag|) — adds fall flows greenness can't see
-  // rateMag is smoothed over a few days first: a single noisy/cloud-affected satellite scene
-  // can otherwise punch rate toward zero for one day and fully open this gate, producing a
-  // sharp single-day spike in the fall window that has nothing to do with real forage.
   const center = fallCenter(lat);
   const dpRaw: (number | null)[] = dates.map(d => weatherMap[d]?.dew ?? null);
   for (let i = 0; i < N; i++) if (dpRaw[i] == null) dpRaw[i] = i > 0 ? dpRaw[i - 1] : 50;
   const dpSust = trailingMean(dpRaw, 18);
-  const rateMagRaw    = rate.map(r => clamp(Math.abs(r) / ratePeak, 0, 1));
-  const rateMagSmooth = trailingMean(rateMagRaw, 5);
   const fallTerm = dates.map((d, i) => {
     const photo    = Math.exp(-Math.pow((dayOfYear(d) - center) / P.fallWidth, 2));
     const moisture = clamp(((dpSust[i] ?? 50) - P.dpLo) / (P.dpHi - P.dpLo), 0, 1);
-    const rateMag  = rateMagSmooth[i] ?? 0;
+    const rateMag  = clamp(Math.abs(rate[i]) / ratePeak, 0, 1);
     return photo * moisture * (1 - rateMag);
   });
   const indexWithFall = rateNorm.map((v, i) => clamp(v + P.wFall * fallTerm[i], 0, 1));
@@ -278,7 +272,6 @@ export function runV2Pipeline(
     date: d,
     forage_index_smoothed: Math.round(idxEwma[i] * 1000) / 1000,
     phase: phases[i],
-    ndvi: Math.round(ndvi[i] * 1000) / 1000,
   }));
 
   return { dates, idxEwma, phases, slopeArr, latest, history };

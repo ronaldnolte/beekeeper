@@ -110,7 +110,7 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'GET') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
-  const { lat: latRaw, lng: lngRaw, years: yearsRaw } = req.query;
+  const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw } = req.query;
   if (!latRaw || !lngRaw) {
     res.status(400).json({ error: 'lat and lng are required' });
     return;
@@ -122,17 +122,16 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  // Years-of-history override for tester experimentation
-  let years = 3;
-  if (yearsRaw) { const v = parseInt(yearsRaw); if (!isNaN(v) && v >= 1 && v <= 5) years = v; }
-  const hasOverrides = years !== 3;
+  // Optional param overrides for tester experimentation
+  const paramOverrides: Record<string, number> = {};
+  if (alphaRaw)   { const v = parseFloat(alphaRaw);   if (!isNaN(v) && v > 0 && v < 1)  paramOverrides.alpha   = v; }
+  if (rateLagRaw) { const v = parseInt(rateLagRaw);   if (!isNaN(v) && v > 0 && v <= 90) paramOverrides.rateLag = v; }
+  if (dwellRaw)   { const v = parseInt(dwellRaw);     if (!isNaN(v) && v > 0 && v <= 30) paramOverrides.dwell   = v; }
+  const hasOverrides = Object.keys(paramOverrides).length > 0;
 
   try {
+    const startDate = '2023-01-01';
     const endDate = new Date().toISOString().slice(0, 10);
-    // Start at Jan 1 of the earliest year so every historical year is a full Jan-Dec
-    // calendar year (a rolling "today - N years" start truncates the earliest year to
-    // only its trailing months).
-    const startDate = `${new Date().getFullYear() - years}-01-01`;
 
     const [bands, weatherMap] = await Promise.all([
       fetchMultiBands(lat, lng, startDate, endDate),
@@ -143,7 +142,7 @@ export default async function handler(req: any, res: any) {
       throw new Error('Earth Engine returned no vegetation data for this location.');
     }
 
-    const result = runV2Pipeline(bands, weatherMap, lat);
+    const result = runV2Pipeline(bands, weatherMap, lat, paramOverrides);
 
     const N = result.dates.length;
     if (N === 0) throw new Error('V2 pipeline produced no output.');
@@ -170,7 +169,7 @@ export default async function handler(req: any, res: any) {
       slope: latestSlope,
       v2: result.latest,
       full_history: result.history,
-      _debug: { satellite_observations: bands.length, daily_points: N, years },
+      _debug: { satellite_observations: bands.length, daily_points: N, params: hasOverrides ? paramOverrides : undefined },
     });
   } catch (error: any) {
     console.error('Nectar V2 error:', error);
