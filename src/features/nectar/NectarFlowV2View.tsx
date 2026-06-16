@@ -1,7 +1,6 @@
-// Nectar Flow V2 — tester preview.
-// UI structure and chart copied verbatim from NectarFlowView.
-// Only differences: API endpoint, data shape (v2.*), and "Nectar Drivers"
-// panel replaced with "V2 Index Components".
+// Nectar Flow — satellite-driven nectar index (formerly "V2").
+// Pipeline: Sentinel-2 greenness fusion → rate-of-change core → fall-bloom term →
+// warmth weighting → EWMA smooth → phase classification. Served by /api/nectar-index-v2.
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
@@ -125,7 +124,12 @@ export const NectarFlowV2View: React.FC = () => {
         const params = new URLSearchParams({
           lat: lat.toFixed(4), lng: lng.toFixed(4),
         });
-        const res = await fetch(`/api/nectar-index-v2?${params}`, { signal: controller.signal });
+        // Absolute host in production: the packaged Capacitor app loads from
+        // capacitor://localhost, so a relative /api path would not reach the server.
+        const apiBase = import.meta.env.DEV
+          ? '/api/nectar-index-v2'
+          : 'https://beekeeper.beektools.com/api/nectar-index-v2';
+        const res = await fetch(`${apiBase}?${params}`, { signal: controller.signal });
         if (!res.ok) {
           const t = await res.text();
           throw new Error(t || `API error ${res.status}`);
@@ -745,7 +749,7 @@ export const NectarFlowV2View: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Nectar Index (V2)</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Nectar Index</span>
                   <span className="text-2xl font-black text-white">{forageIndexVal}</span>
                 </div>
                 <div className="flex flex-col">
@@ -789,7 +793,7 @@ export const NectarFlowV2View: React.FC = () => {
             >
               <div className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4">
                 <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider flex items-center gap-2">
-                  <Sparkles size={16} /> V2 Index Components
+                  <Sparkles size={16} /> Index Components
                 </h3>
                 <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandComponents ? 'rotate-180' : ''}`} />
               </div>
