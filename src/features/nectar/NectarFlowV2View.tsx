@@ -140,9 +140,9 @@ export const NectarFlowV2View: React.FC = () => {
       case 'IN_FLOW':
         return { bg: 'bg-[#2ECC71]', text: 'text-white', label: 'In Flow', emoji: '🌼' };
       case 'FLOW_STARTING':
-        return { bg: 'bg-[#F1C40F]', text: 'text-black', label: 'Flow Starting', emoji: '🌱' };
+        return { bg: 'bg-[#58D68D]', text: 'text-black', label: 'Flow Starting', emoji: '🌱' };
       case 'FLOW_ENDING':
-        return { bg: 'bg-[#E67E22]', text: 'text-white', label: 'Flow Ending', emoji: '🍂' };
+        return { bg: 'bg-[#1E8449]', text: 'text-white', label: 'Flow Ending', emoji: '🍂' };
       case 'DEARTH':
         return { bg: 'bg-[#E74C3C]', text: 'text-white', label: 'Dearth', emoji: '🏜️' };
       case 'TRANSITION':
@@ -154,8 +154,8 @@ export const NectarFlowV2View: React.FC = () => {
   const getPhaseColor = (phase: string) => {
     switch (phase) {
       case 'IN_FLOW': return '#2ECC71';
-      case 'FLOW_STARTING': return '#F1C40F';
-      case 'FLOW_ENDING': return '#E67E22';
+      case 'FLOW_STARTING': return '#58D68D';
+      case 'FLOW_ENDING': return '#1E8449';
       case 'DEARTH': return '#E74C3C';
       default: return '#95A5A6';
     }

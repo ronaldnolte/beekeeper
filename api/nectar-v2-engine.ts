@@ -241,16 +241,11 @@ export function runV2Pipeline(
   // with dwell hysteresis to prevent daily flipping
   const instPhase = idxEwma.map((v, i): Phase => {
     const sl = slopeArr[i] ?? 0;
-    const rising  = sl >  P.riseThr;
-    const falling = sl < -P.riseThr;
-    // High zone (>= enter): level alone confirms flow — slope doesn't matter here
-    if (v >= P.enter)  return 'IN_FLOW';
-    // Rising from anywhere: slope drives the story
-    if (rising)  return v >= P.dearth ? 'FLOW_STARTING' : 'TRANSITION';
-    // Falling: only FLOW_ENDING while passing through the exit zone (exit..enter)
-    // Below exit the flow is over — show TRANSITION heading to dearth
-    if (falling && v >= P.exit)  return 'FLOW_ENDING';
-    // Flat or below exit: dearth at the floor, transition otherwise
+    // Strong slope = direction-named phase
+    if (sl >  P.riseThr)  return 'FLOW_STARTING';
+    if (sl < -P.riseThr)  return 'FLOW_ENDING';
+    // Gentle or zero slope = transition everywhere, dearth only at the floor
+    // (peak plateau has near-zero slope so it correctly shows as transition)
     return v < P.dearth ? 'DEARTH' : 'TRANSITION';
   });
   const phases: Phase[] = new Array(N);
