@@ -241,11 +241,15 @@ export function runV2Pipeline(
   // with dwell hysteresis to prevent daily flipping
   const instPhase = idxEwma.map((v, i): Phase => {
     const sl = slopeArr[i] ?? 0;
-    if (v < P.dearth)    return 'DEARTH';
-    if (v >= P.enter)    return 'IN_FLOW';
-    if (sl > P.riseThr)  return 'FLOW_STARTING';
-    if (sl < -P.riseThr) return 'FLOW_ENDING';
-    return 'TRANSITION';
+    const rising  = sl >  P.riseThr;
+    const falling = sl < -P.riseThr;
+    // High zone: level confirms flow; slope tells direction
+    if (v >= P.enter)  return falling ? 'FLOW_ENDING' : 'IN_FLOW';
+    // Mid/low zone: slope narrates direction; level separates building from recovering
+    if (rising)  return v >= P.dearth ? 'FLOW_STARTING' : 'TRANSITION';
+    if (falling) return v >= P.dearth ? 'FLOW_ENDING'   : 'TRANSITION';
+    // Flat: only true dearth at the floor, otherwise neutral transition
+    return v < P.dearth ? 'DEARTH' : 'TRANSITION';
   });
   const phases: Phase[] = new Array(N);
   let cur: Phase = 'TRANSITION', cand: Phase | null = null, candN = 0;
