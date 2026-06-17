@@ -51,7 +51,7 @@ export async function fetchMultiBands(
   lon: number,
   startDate: string,
   endDate: string,
-  radiusKm = 1.6
+  radiusKm = 4.83 // ~3 mile bee forage radius (was 1.6km); averages the colony's true foraging range
 ): Promise<MultiBandRecord[]> {
   await initEarthEngine();
 
@@ -80,7 +80,7 @@ export async function fetchMultiBands(
 
     const stack = ndvi.addBands(evi).addBands(ndwi);
     const means = stack.reduceRegion({
-      reducer: ee.Reducer.mean(), geometry: geom, scale: 10, maxPixels: 1e9
+      reducer: ee.Reducer.mean(), geometry: geom, scale: 20, maxPixels: 1e9
     });
     return ee.Feature(null, {
       date: dateStr,
