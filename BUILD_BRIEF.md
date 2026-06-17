@@ -9,9 +9,9 @@ Pairs with local Claude memory; this file is the version that travels with the r
 - A GitHub ruleset **`protect-main`** is active: `main` requires a PR merge, blocks
   direct/force pushes. Do not weaken or bypass it.
 - Promotion to production is a deliberate, user-initiated PR merge — never proactive.
-- The prod Supabase DB is **shared between Beekeeper AND TBH Beekeeper** — schema/RLS
-  changes affect BOTH apps. Prove everything on the preview DB first. Always check the
-  schema before assuming column names.
+- Beekeeper is the **sole** app on its Supabase DB (TBH Beekeeper was this app's former
+  name, now retired — no second app shares it). Still prove schema/RLS changes on the
+  preview DB first and check the schema before assuming column names.
 
 ## Build order
 1. Mentorship relationship + RLS (+ age gate)

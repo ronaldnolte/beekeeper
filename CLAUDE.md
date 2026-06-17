@@ -35,5 +35,6 @@ project's real git history. Full plan and status: `MIGRATION_PLAN.md`.
 
 - No-BS communication style — direct, no filler.
 - Never guess column names — always check the schema first.
-- The Supabase database is shared between Beekeeper and TBH Beekeeper.
-  Schema changes affect both apps.
+- Beekeeper is the sole app on its Supabase database. (TBH Beekeeper was an
+  earlier name for this same app — top-bar-hive focused — now retired. There is
+  no second app sharing the DB.) Still check the schema before assuming columns.
