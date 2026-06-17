@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — BeekTools Beekeeper</title>
+  <style>
+    :root { color-scheme: light; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6; color: #1a1a2e; background: #fafafa;
+      max-width: 760px; margin: 0 auto; padding: 32px 20px 80px;
+    }
+    h1 { font-size: 1.7rem; margin-bottom: 4px; }
+    h2 { font-size: 1.15rem; margin-top: 32px; color: #b8860b; }
+    .updated { color: #666; font-size: 0.85rem; margin-bottom: 24px; }
+    a { color: #b8860b; }
+    ul { padding-left: 22px; }
+    li { margin-bottom: 6px; }
+    code { background: #eee; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+    .box { background: #fff; border: 1px solid #e2e2e2; border-radius: 12px; padding: 4px 22px 18px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p class="updated">BeekTools Beekeeper &middot; Last updated: June 17, 2026</p>
+
+  <p>
+    BeekTools Beekeeper ("the App," "we," "us") helps beekeepers track their apiaries,
+    hives, and local nectar-flow conditions. This policy explains what information the App
+    collects, how it is used, and the choices you have. We do not sell your personal
+    information, and we do not use it for advertising.
+  </p>
+
+  <h2>Information We Collect</h2>
+  <div class="box">
+    <ul>
+      <li><strong>Account information:</strong> the email address you use to create an
+        account and sign in. Authentication is handled by our backend provider (Supabase).</li>
+      <li><strong>Apiary information:</strong> the names, locations (latitude/longitude and/or
+        ZIP code), and notes you enter for your apiaries.</li>
+      <li><strong>Beekeeping records:</strong> the hives, inspections, interventions, tasks,
+        varroa tests, and related notes you choose to record in the App.</li>
+    </ul>
+  </div>
+
+  <h2>How We Use Your Information</h2>
+  <ul>
+    <li>To provide and maintain your account and store the records you create.</li>
+    <li>To calculate the Nectar Flow Index and forecasts for your apiary locations.</li>
+    <li>To respond to support and data requests you send us.</li>
+  </ul>
+
+  <h2>How Apiary Locations Are Used</h2>
+  <p>
+    To compute the Nectar Flow Index and weather forecasts, the App sends the
+    <em>coordinates of your apiary</em> (not your identity) to two external data services:
+  </p>
+  <ul>
+    <li><strong>Google Earth Engine</strong> &mdash; to retrieve Sentinel-2 satellite
+      vegetation imagery for the area around your apiary.</li>
+    <li><strong>Open-Meteo</strong> &mdash; to retrieve historical and forecast weather for
+      that location.</li>
+  </ul>
+  <p>These requests contain only location coordinates and date ranges &mdash; no account
+    or personal identifiers are sent to these services.</p>
+
+  <h2>Service Providers</h2>
+  <p>We rely on the following providers to operate the App:</p>
+  <ul>
+    <li><strong>Supabase</strong> &mdash; account authentication and database storage.</li>
+    <li><strong>Vercel</strong> &mdash; application and API hosting.</li>
+    <li><strong>Google Earth Engine</strong> and <strong>Open-Meteo</strong> &mdash;
+      vegetation and weather data, as described above.</li>
+  </ul>
+
+  <h2>Data Retention</h2>
+  <p>
+    We retain your account and the records you create for as long as your account is active.
+    You can request deletion of your account and associated data at any time
+    (see <a href="/delete-account.html">Account Deletion</a>).
+  </p>
+
+  <h2>Your Choices and Rights</h2>
+  <ul>
+    <li>You may view and edit your apiary and hive records within the App at any time.</li>
+    <li>You may request a copy of your data, or its deletion, by contacting us.</li>
+  </ul>
+
+  <h2>Children's Privacy</h2>
+  <p>The App is not directed to children under 13 and we do not knowingly collect their
+    personal information.</p>
+
+  <h2>Changes to This Policy</h2>
+  <p>We may update this policy from time to time. Material changes will be reflected by the
+    "Last updated" date above.</p>
+
+  <h2>Contact Us</h2>
+  <p>
+    For any privacy questions or data requests, contact us at:<br />
+    <a href="mailto:ron.nolte@gmail.com">ron.nolte@gmail.com</a>
+  </p>
+</body>
+</html>
