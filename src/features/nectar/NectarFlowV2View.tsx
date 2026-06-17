@@ -62,6 +62,9 @@ export const NectarFlowV2View: React.FC = () => {
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [containerWidth, setContainerWidth] = useState(320);
   const [chartHeight, setChartHeight] = useState(300);
+  // Resolved lat/lng actually sent to the API (post zip-geocoding). Shown next to
+  // the apiary name so dev/prod runs can be confirmed to use identical coordinates.
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -107,7 +110,7 @@ export const NectarFlowV2View: React.FC = () => {
     }
   }, [selectedApiaryId, apiariesList]);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (forceFresh = false) => {
     if (!selectedApiaryId) return;
     setLoading(true);
     setError(null);
@@ -118,12 +121,21 @@ export const NectarFlowV2View: React.FC = () => {
       if (lat === null || lng === null || lat === undefined || lng === undefined) {
         throw new Error('This apiary coordinates are missing. Please edit apiary first.');
       }
+      setCoords({ lat, lng });
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60_000);
       try {
         const params = new URLSearchParams({
           lat: lat.toFixed(4), lng: lng.toFixed(4),
         });
+        // Cache control: the refresh button forces a fresh fetch that bypasses the
+        // Vercel CDN + browser cache (unique URL); normal loads use a per-day key so
+        // repeat visits within a day stay fast but data still refreshes daily.
+        if (forceFresh) {
+          params.set('nocache', Date.now().toString());
+        } else {
+          params.set('_d', new Date().toISOString().slice(0, 10));
+        }
         // Absolute host in production: the packaged Capacitor app loads from
         // capacitor://localhost, so a relative /api path would not reach the server.
         const apiBase = import.meta.env.DEV
@@ -272,7 +284,7 @@ export const NectarFlowV2View: React.FC = () => {
           <p className="text-red-400 font-black text-lg mb-2">Fetch failed</p>
           <p className="text-xs text-red-300/80 font-medium leading-relaxed mb-6">{error}</p>
           <button
-            onClick={loadData}
+            onClick={() => loadData(true)}
             className="w-full py-3 bg-red-900/40 text-red-200 border border-red-800/40 hover:bg-red-900/60 rounded-2xl text-sm font-bold transition-all"
           >
             Retry Connection
@@ -702,6 +714,11 @@ export const NectarFlowV2View: React.FC = () => {
               <option key={a.id} value={a.id} className="bg-[#1a1a2e] text-white">{a.name}</option>
             ))}
           </select>
+          {coords && (
+            <span className="text-[10px] font-mono text-slate-400 flex-shrink-0 tabular-nums" title="Resolved coordinates sent to the index API">
+              {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+            </span>
+          )}
           <ChevronDown size={14} className="text-slate-400 flex-shrink-0 pointer-events-none" />
         </div>
       )}
@@ -722,9 +739,9 @@ export const NectarFlowV2View: React.FC = () => {
           NFI {data.nfi}
         </span>
         <button
-          onClick={loadData}
+          onClick={() => loadData(true)}
           className="p-2 bg-black/10 border border-white/20 rounded-full hover:bg-black/20 transition-all cursor-pointer shrink-0"
-          title="Refresh"
+          title="Refresh (forces a fresh fetch, bypassing cache)"
         >
           <RefreshCw size={14} />
         </button>
