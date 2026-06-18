@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createInspection, updateInspection, deleteInspection } from '../../data/inspectionRepository';
 import { useAppStore } from '../../store/useAppStore';
-import { Save, Trash2, Hexagon } from 'lucide-react';
+import { Save, Trash2, Hexagon, Camera } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
 import { SubTabBar } from '../../shared/components/SubTabBar';
 
@@ -37,7 +37,7 @@ const STORES_OPTIONS = [
 ];
 
 export const InspectionFormView: React.FC = () => {
-  const { selectedHiveId, selectedRecord, goBack, selectInspection } = useAppStore();
+  const { selectedHiveId, selectedRecord, goBack, selectInspection, navigateTo } = useAppStore();
   const [loading, setLoading] = useState(false);
   
   const [date, setDate] = useState(() => {
@@ -219,6 +219,17 @@ export const InspectionFormView: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Photos & voice — available once the inspection exists (has an id) */}
+        {selectedRecord && (
+          <button
+            type="button"
+            onClick={() => navigateTo('INSPECTION_PLUS')}
+            className="w-full max-w-2xl card p-3.5 flex items-center justify-center gap-2 font-black text-sm text-[var(--color-primary)] border-2 border-dashed border-[var(--color-primary)]/40 active:scale-[0.99] transition-transform"
+          >
+            <Camera size={20} /> Photos &amp; Voice
+          </button>
+        )}
 
         {/* Queen & Brood card */}
         <div className="w-full max-w-2xl card p-3 sm:p-4 space-y-3">
