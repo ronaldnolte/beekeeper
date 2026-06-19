@@ -16,6 +16,16 @@ import {
 /** Soft cap on photos per inspection (raise later if users push back). */
 const PHOTO_CAP = 12;
 
+/**
+ * Whether an <input capture> will actually open a camera. True on phones/tablets;
+ * false on desktop, where browsers ignore `capture` and just show a file picker
+ * (even with a webcam). Used to gray out "Take" on PCs.
+ */
+const CAN_CAPTURE =
+  typeof navigator !== 'undefined' &&
+  (/android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 1 && window.matchMedia('(pointer: coarse)').matches));
+
 type RecordTarget = { kind: 'standalone' } | { kind: 'caption'; parentId: string } | null;
 
 export const InspectionAttachmentsView: React.FC = () => {
@@ -382,10 +392,14 @@ export const InspectionAttachmentsView: React.FC = () => {
         </button>
         <button
           onClick={() => cameraInputRef.current?.click()}
-          disabled={busy || atCap}
-          className="flex-1 bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
+          disabled={busy || atCap || !CAN_CAPTURE}
+          title={CAN_CAPTURE ? undefined : 'Camera capture works on phones and tablets'}
+          className="flex-1 bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-black text-sm flex flex-col items-center justify-center gap-0.5 active:scale-95 disabled:opacity-50"
         >
-          <Camera size={19} /> Take
+          <span className="flex items-center gap-1.5">
+            <Camera size={19} /> Take
+          </span>
+          {!CAN_CAPTURE && <span className="text-[9px] font-bold leading-none">Mobile Only</span>}
         </button>
         <button
           onClick={() => libraryInputRef.current?.click()}
