@@ -11,11 +11,14 @@ We use exactly **three (3)** active Google Analytics properties to isolate traff
 | Site / Application | Target Production Domain | GA4 Stream Name | Measurement ID | Property ID |
 | :--- | :--- | :--- | :--- | :--- |
 | **Marketing Web** | `https://www.beektools.com` | `www.beektools.com` | **`G-9JW6ZWQSE3`** | `519251456` |
-| **Beekeeper App** | `https://beekeeper.beektools.com` | `Beektools App` | **`G-4WLKRJRNHY`** | `522287436` |
+| **Beekeeper App** | `https://beekeeper.beektools.com` | `Beekeeper application` | **`G-V3F9W1WQT0`** | `15007881652` |
 | **Hive Forecast** | `https://forecast.beektools.com` | `forecast.beektools.com` | **`G-H60164WT45`** | `51996128` |
 
 > [!WARNING]
 > Do not mix these up. In the past, the core app and the forecast tool overlapped on `G-H60164WT45`. Keep them separated to keep user metrics clean.
+
+> [!NOTE]
+> An earlier version of this doc listed the Beekeeper App as `G-4WLKRJRNHY` ("Beektools App"). That was a leftover from the TBH Beekeeper era — the live Vite app has always used `G-V3F9W1WQT0` (stream "Beekeeper application", ID `15007881652`), confirmed active in GA and matching the fallback in `src/main.tsx`. Corrected 2026-06-19.
 
 ---
 
@@ -45,7 +48,7 @@ Each codebase utilizes a specific environment variable or a hardcoded fallback f
 *   **Configuration File:** [src/main.tsx](file:///e:/Antigravity/Beeks/Beekeeper/src/main.tsx)
 *   **Code:**
     ```typescript
-    const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-4WLKRJRNHY';
+    const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-V3F9W1WQT0';
     ```
 *   **Vercel Env Var:** `VITE_GA_MEASUREMENT_ID`
 
