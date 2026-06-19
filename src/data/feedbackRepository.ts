@@ -17,8 +17,6 @@ export async function fetchHistoryFeed(
         .from('inspections')
         .select('*')
         .eq('hive_id', hiveId)
-        // Drafts live in the "waiting for review" list, not the normal history.
-        .neq('review_status', 'draft')
         .order('timestamp', { ascending: false })
         .limit(limitCount)
         .then((res) => ({ type: 'inspection', data: res.data }))

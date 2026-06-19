@@ -48,9 +48,9 @@ export const InspectionPlusFactsView: React.FC = () => {
     setSaving(true);
     try {
       await updateInspection(draftId, payload);
-      // Keep the in-memory record in sync for screen 2. Drop the _isNewDraft flag —
-      // once the user has saved/advanced, Cancel must no longer discard the draft.
-      const { _isNewDraft, ...rest } = (selectedRecord ?? {}) as Record<string, any>;
+      // Keep the in-memory record in sync for screen 2. Drop the _isFresh flag —
+      // once the user has saved/advanced, Cancel must no longer discard the inspection.
+      const { _isFresh, ...rest } = (selectedRecord ?? {}) as Record<string, any>;
       selectInspection({ _model_type: 'inspection', ...rest, ...payload, id: draftId });
       return true;
     } catch (e: any) {
@@ -69,11 +69,11 @@ export const InspectionPlusFactsView: React.FC = () => {
     if (await persist()) goBack();
   };
 
-  // Cancel: if this is a brand-new, untouched draft, discard it so backing out of
-  // Plus doesn't leave an empty draft behind. Otherwise just go back.
+  // Cancel: if this is a brand-new, untouched inspection, discard it so backing out
+  // of Plus doesn't leave an empty record behind. Otherwise just go back.
   const handleCancel = async () => {
-    if ((selectedRecord as Record<string, any>)?._isNewDraft && draftId) {
-      if (!confirm('Discard this draft? Nothing will be saved.')) return;
+    if ((selectedRecord as Record<string, any>)?._isFresh && draftId) {
+      if (!confirm('Discard this inspection? Nothing will be saved.')) return;
       setSaving(true);
       try {
         await discardInspection(draftId);
@@ -130,7 +130,7 @@ export const InspectionPlusFactsView: React.FC = () => {
     <div className="w-full h-full flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-3 sm:p-4 space-y-3 pb-24">
         <div className="w-full max-w-2xl flex items-center gap-2 text-[var(--color-primary)] font-black">
-          <Sparkles size={20} /> <span>Plus inspection · draft</span>
+          <Sparkles size={20} /> <span>Plus inspection</span>
         </div>
 
         <div className="w-full max-w-2xl card p-3 sm:p-4">
