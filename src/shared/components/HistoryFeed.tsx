@@ -179,11 +179,6 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
                    item._model_type === 'task' ? `Task: ${item.title}` :
                    item._model_type === 'varroa_test' ? `Mite Test: ${Number(item.mite_pct).toFixed(1)}% Load` :
                    'Inspection'}
-                  {item._model_type === 'inspection' && item.review_status === 'draft' && (
-                    <span className="ml-2 align-middle text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-black uppercase tracking-wide">
-                      Draft
-                    </span>
-                  )}
                 </h4>
               )}
               <p className="text-[11px] sm:text-xs text-[var(--color-text-muted)] font-bold uppercase tracking-wide">

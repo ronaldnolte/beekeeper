@@ -237,6 +237,27 @@ export async function updateTranscript(
   if (error) throw error;
 }
 
+/**
+ * Remove the Storage objects for every attachment of an inspection. The DB rows
+ * are left to the inspection's `on delete cascade` — call this right before
+ * deleting the inspection so the bucket doesn't keep orphaned files.
+ */
+export async function deleteAttachmentStorageForInspection(inspectionId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from('inspection_attachments')
+    .select('storage_path, thumb_path, audio_path')
+    .eq('inspection_id', inspectionId);
+  if (error) throw error;
+
+  const paths = (data ?? [])
+    .flatMap((r: any) => [r.storage_path, r.thumb_path, r.audio_path])
+    .filter((p): p is string => !!p);
+  if (paths.length === 0) return;
+
+  const { error: storageErr } = await supabase.storage.from(BUCKET).remove(paths);
+  if (storageErr) throw storageErr;
+}
+
 /** Delete one attachment: its storage objects (any kind) then the row (children cascade). */
 export async function deleteAttachment(att: InspectionAttachment): Promise<void> {
   const paths = [att.storage_path, att.thumb_path, att.audio_path].filter(

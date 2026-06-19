@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { deleteAttachmentStorageForInspection } from './inspectionAttachmentRepository';
 
 export async function createInspection(payload: {
   hive_id: string;
@@ -43,4 +44,35 @@ export async function deleteInspection(id: string) {
     .delete()
     .eq('id', id);
   if (error) throw error;
+}
+
+/** Draft (Plus) inspections for a hive, newest first — the "waiting for review" list. */
+export async function fetchDraftInspections(hiveId: string) {
+  const { data, error } = await supabase
+    .from('inspections')
+    .select('*')
+    .eq('hive_id', hiveId)
+    .eq('review_status', 'draft')
+    .order('timestamp', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Finalize a draft: flip review_status to 'approved' so it joins the normal history. */
+export async function approveInspection(id: string) {
+  const { error } = await supabase
+    .from('inspections')
+    .update({ review_status: 'approved' })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+/**
+ * Discard an inspection and everything hanging off it. Used for abandoned Plus
+ * drafts. Storage objects are removed first; the attachment rows cascade with
+ * the inspection delete.
+ */
+export async function discardInspection(id: string) {
+  await deleteAttachmentStorageForInspection(id);
+  await deleteInspection(id);
 }

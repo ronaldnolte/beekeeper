@@ -4,6 +4,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, Hexagon, Camera, ClipboardList, Sparkles, X } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
 import { SubTabBar } from '../../shared/components/SubTabBar';
+import { DraftReviewSection } from './DraftReviewSection';
 
 import {
   QUEEN_STATUS_OPTIONS,
@@ -17,6 +18,7 @@ export const InspectionFormView: React.FC = () => {
   const { selectedHiveId, selectedRecord, goBack, selectInspection, navigateTo } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [showChooser, setShowChooser] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Plus path: create the inspection as a draft up front, then walk the two-screen
   // Plus flow (quick facts → photos & voice). The record exists immediately so
@@ -39,6 +41,9 @@ export const InspectionFormView: React.FC = () => {
         hive_id: selectedHiveId,
         timestamp,
         review_status: 'draft',
+        // Marks a brand-new draft so the facts screen's Cancel can discard it if
+        // the user backs out immediately. Cleared once they engage (see persist()).
+        _isNewDraft: true,
         ...INSPECTION_DEFAULTS,
       });
       navigateTo('INSPECTION_PLUS_FACTS');
@@ -175,8 +180,14 @@ export const InspectionFormView: React.FC = () => {
             </button>
           </div>
 
+          <DraftReviewSection
+            hiveId={selectedHiveId!}
+            refreshTrigger={refreshKey}
+            onChange={() => setRefreshKey((k) => k + 1)}
+          />
+
           <div className="w-full max-w-2xl">
-            <HistoryFeed hiveId={selectedHiveId!} filter="inspections" />
+            <HistoryFeed hiveId={selectedHiveId!} filter="inspections" refreshTrigger={refreshKey} />
           </div>
         </div>
 

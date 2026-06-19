@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Camera, Check, Sparkles } from 'lucide-react';
+import { Camera, Check, Sparkles, X } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { updateInspection } from '../../data/inspectionRepository';
+import { updateInspection, discardInspection } from '../../data/inspectionRepository';
 import {
   QUEEN_STATUS_OPTIONS,
   BROOD_PATTERN_OPTIONS,
@@ -48,8 +48,10 @@ export const InspectionPlusFactsView: React.FC = () => {
     setSaving(true);
     try {
       await updateInspection(draftId, payload);
-      // Keep the in-memory record in sync for screen 2.
-      selectInspection({ _model_type: 'inspection', ...selectedRecord, ...payload, id: draftId });
+      // Keep the in-memory record in sync for screen 2. Drop the _isNewDraft flag —
+      // once the user has saved/advanced, Cancel must no longer discard the draft.
+      const { _isNewDraft, ...rest } = (selectedRecord ?? {}) as Record<string, any>;
+      selectInspection({ _model_type: 'inspection', ...rest, ...payload, id: draftId });
       return true;
     } catch (e: any) {
       alert('Could not save: ' + (e?.message ?? e));
@@ -65,6 +67,23 @@ export const InspectionPlusFactsView: React.FC = () => {
 
   const handleDone = async () => {
     if (await persist()) goBack();
+  };
+
+  // Cancel: if this is a brand-new, untouched draft, discard it so backing out of
+  // Plus doesn't leave an empty draft behind. Otherwise just go back.
+  const handleCancel = async () => {
+    if ((selectedRecord as Record<string, any>)?._isNewDraft && draftId) {
+      if (!confirm('Discard this draft? Nothing will be saved.')) return;
+      setSaving(true);
+      try {
+        await discardInspection(draftId);
+      } catch (e: any) {
+        alert('Could not discard: ' + (e?.message ?? e));
+        setSaving(false);
+        return;
+      }
+    }
+    goBack();
   };
 
   const renderPills = (
@@ -140,6 +159,15 @@ export const InspectionPlusFactsView: React.FC = () => {
 
       {/* Bottom actions */}
       <div className="w-full flex-shrink-0 flex justify-center gap-2.5 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <button
+          onClick={handleCancel}
+          disabled={saving}
+          aria-label="Cancel"
+          className="w-16 flex-shrink-0 bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-0.5 active:scale-95 dark:bg-black/30 dark:border-white/10 dark:text-white disabled:opacity-50"
+        >
+          <X size={20} />
+          <span className="text-[10px]">Cancel</span>
+        </button>
         <button
           onClick={handlePhotos}
           disabled={saving}
