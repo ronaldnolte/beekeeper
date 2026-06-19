@@ -1,44 +1,53 @@
 import React, { useState } from 'react';
 import { createInspection, updateInspection, deleteInspection } from '../../data/inspectionRepository';
 import { useAppStore } from '../../store/useAppStore';
-import { Save, Trash2, Hexagon, Camera } from 'lucide-react';
+import { Save, Trash2, Hexagon, Camera, ClipboardList, Sparkles, X } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
 import { SubTabBar } from '../../shared/components/SubTabBar';
 
-const QUEEN_STATUS_OPTIONS = [
-  { value: 'seen', label: 'Seen' },
-  { value: 'eggs_present', label: 'Eggs' },
-  { value: 'larvae_present', label: 'Larvae' },
-  { value: 'capped_brood', label: 'Capped' },
-  { value: 'virgin', label: 'Virgin' },
-  { value: 'no_queen', label: 'NO QUEEN' },
-  { value: 'queen_cells', label: 'Q. Cells' },
-];
-
-const BROOD_PATTERN_OPTIONS = [
-  { value: 'excellent', label: 'Solid' },
-  { value: 'good', label: 'Good' },
-  { value: 'spotty', label: 'Spotty' },
-  { value: 'poor', label: 'Poor' },
-];
-
-const TEMPERAMENT_OPTIONS = [
-  { value: 'calm', label: 'Calm' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'defensive', label: 'Defensive' },
-  { value: 'aggressive', label: 'Aggressive' },
-];
-
-const STORES_OPTIONS = [
-  { value: 'none', label: 'None' },
-  { value: 'low', label: 'Some' },
-  { value: 'adequate', label: 'Half' },
-  { value: 'abundant', label: 'Full' },
-];
+import {
+  QUEEN_STATUS_OPTIONS,
+  BROOD_PATTERN_OPTIONS,
+  TEMPERAMENT_OPTIONS,
+  STORES_OPTIONS,
+  INSPECTION_DEFAULTS,
+} from './inspectionOptions';
 
 export const InspectionFormView: React.FC = () => {
   const { selectedHiveId, selectedRecord, goBack, selectInspection, navigateTo } = useAppStore();
   const [loading, setLoading] = useState(false);
+  const [showChooser, setShowChooser] = useState(false);
+
+  // Plus path: create the inspection as a draft up front, then walk the two-screen
+  // Plus flow (quick facts → photos & voice). The record exists immediately so
+  // attachments can hang off it during capture.
+  const handleStartPlus = async () => {
+    if (!selectedHiveId) return;
+    setShowChooser(false);
+    setLoading(true);
+    const timestamp = new Date().toISOString();
+    try {
+      const { id } = await createInspection({
+        hive_id: selectedHiveId,
+        timestamp,
+        ...INSPECTION_DEFAULTS,
+        review_status: 'draft',
+      });
+      selectInspection({
+        _model_type: 'inspection',
+        id,
+        hive_id: selectedHiveId,
+        timestamp,
+        review_status: 'draft',
+        ...INSPECTION_DEFAULTS,
+      });
+      navigateTo('INSPECTION_PLUS_FACTS');
+    } catch (e: any) {
+      alert('Could not start inspection: ' + (e?.message ?? e));
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const [date, setDate] = useState(() => {
     if (selectedRecord?.timestamp) {
@@ -158,8 +167,9 @@ export const InspectionFormView: React.FC = () => {
           <SubTabBar activeView="INSPECTION_FORM" />
           <div className="w-full max-w-2xl mb-2">
             <button
-              onClick={() => setIsFormOpen(true)}
-              className="w-full bg-[var(--color-primary)] text-white py-4 rounded-2xl font-black text-lg transition-colors shadow-lg shadow-[var(--color-primary)]/20 flex items-center justify-center gap-2 active:scale-95"
+              onClick={() => setShowChooser(true)}
+              disabled={loading}
+              className="w-full bg-[var(--color-primary)] text-white py-4 rounded-2xl font-black text-lg transition-colors shadow-lg shadow-[var(--color-primary)]/20 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
             >
               + Add Inspection
             </button>
@@ -169,6 +179,58 @@ export const InspectionFormView: React.FC = () => {
             <HistoryFeed hiveId={selectedHiveId!} filter="inspections" />
           </div>
         </div>
+
+        {/* Standard / Plus chooser — the single doorway to a new inspection */}
+        {showChooser && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 flex items-end sm:items-center justify-center p-4"
+            onClick={() => setShowChooser(false)}
+          >
+            <div
+              className="w-full max-w-md bg-[var(--color-bg)] rounded-3xl p-5 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-black text-[var(--color-text)]">New inspection</h2>
+                <button
+                  onClick={() => setShowChooser(false)}
+                  className="w-9 h-9 rounded-full bg-[var(--color-input-bg)] flex items-center justify-center text-[var(--color-text-muted)]"
+                  aria-label="Close"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <button
+                onClick={handleStartPlus}
+                className="w-full text-left mb-3 p-4 rounded-2xl border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/10 active:scale-[0.99] transition-transform"
+              >
+                <div className="flex items-center gap-2 font-black text-[var(--color-primary)] mb-1">
+                  <Sparkles size={20} /> Plus
+                </div>
+                <p className="text-sm text-[var(--color-text-muted)]">
+                  Guided capture with photos &amp; voice notes — great at the hive. Saves as a
+                  draft to review later.
+                </p>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowChooser(false);
+                  setIsFormOpen(true);
+                }}
+                className="w-full text-left p-4 rounded-2xl border-2 border-[var(--color-card-border)] bg-[var(--color-input-bg)] active:scale-[0.99] transition-transform"
+              >
+                <div className="flex items-center gap-2 font-black text-[var(--color-text)] mb-1">
+                  <ClipboardList size={20} /> Standard
+                </div>
+                <p className="text-sm text-[var(--color-text-muted)]">
+                  Just the facts — the quick form, saved straight away.
+                </p>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Segregated Bottom Action Bar — Return to Hive */}
         <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">

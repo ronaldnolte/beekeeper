@@ -11,8 +11,9 @@ export type AppView =
   | 'SELECT_APIARY'     // Root Tab 2: Geographical Yard selection
   | 'SELECT_HIVE'       // Root Tab 3/Overlay: Choosing a hive (Dynamic Unified/Flat View)
   | 'HIVE_DETAIL'       // Detail View: Viewing hive history & charts
-  | 'INSPECTION_FORM'   // Form: Inspection overlay
-  | 'INSPECTION_PLUS'   // Inspection Plus: photos & voice attachments (screen 2)
+  | 'INSPECTION_FORM'      // Form: Inspection overlay
+  | 'INSPECTION_PLUS_FACTS'// Inspection Plus: quick-facts (screen 1)
+  | 'INSPECTION_PLUS'      // Inspection Plus: photos & voice attachments (screen 2)
   | 'INTERVENTION_FORM' // Form: Intervention overlay
   | 'VARROA_FORM'       // Form: Varroa testing overlay
   | 'TASK_FORM'         // Form: Task overlay
@@ -296,7 +297,10 @@ export const useAppStore = create<AppState>()((set, get) => ({
           prevView = 'SELECT_HIVE';
           hiveName = null;
         } else if (state.currentView === 'INSPECTION_PLUS') {
-          // Plus attachments screen returns to the inspection form it opened from
+          // Photos & voice (screen 2) returns to quick-facts (screen 1)
+          prevView = 'INSPECTION_PLUS_FACTS';
+        } else if (state.currentView === 'INSPECTION_PLUS_FACTS') {
+          // Quick-facts (screen 1) returns to the inspection list
           prevView = 'INSPECTION_FORM';
         } else if (
           ['INSPECTION_FORM', 'INTERVENTION_FORM', 'VARROA_FORM', 'TASK_FORM', 'STATUS_UPDATE_FORM'].includes(state.currentView)
