@@ -200,9 +200,18 @@ export async function requestTranscription(
 ): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
   const audioBase64 = await blobToBase64(audio);
+
+  // In dev, the relative path is proxied to the local API server. In the built
+  // web app and especially the native phone app, the app's own origin has no
+  // backend, so call the deployed function by its full address. (Mirrors the
+  // feedback API call in feedbackRepository.)
+  const apiUrl = import.meta.env.DEV
+    ? '/api/transcribe'
+    : 'https://beekeeper.beektools.com/api/transcribe';
+
   let res: Response;
   try {
-    res = await fetch('/api/transcribe', {
+    res = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
