@@ -59,7 +59,15 @@ create index if not exists inspection_attachments_owner_idx
 create index if not exists inspection_attachments_parent_id_idx
   on public.inspection_attachments (parent_id);
 
--- 3. Row Level Security — owner-only ----------------------------------------
+-- 3. Table-level grants -----------------------------------------------------
+-- Raw-SQL-created tables don't always inherit the anon/authenticated grants
+-- that Supabase's dashboard adds, so grant them explicitly. RLS (below) still
+-- governs which rows each user can touch.
+grant select, insert, update, delete
+  on table public.inspection_attachments
+  to anon, authenticated;
+
+-- 4. Row Level Security — owner-only ----------------------------------------
 alter table public.inspection_attachments enable row level security;
 
 create policy "owner reads own attachments"

@@ -175,6 +175,50 @@ export async function fetchAttachments(inspectionId: string): Promise<Attachment
   }));
 }
 
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      // Strip the "data:<mime>;base64," prefix — the API wants raw base64.
+      resolve(result.slice(result.indexOf(',') + 1));
+    };
+    reader.onerror = () => reject(new Error('Could not read the recording.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Send a voice note's audio to the Gemini transcription endpoint, which writes
+ * the text back to the row. On failure, marks the row 'failed' (audio is kept
+ * so the user can still play it). Pass the same blob that was uploaded.
+ */
+export async function requestTranscription(attachmentId: string, audio: Blob): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const audioBase64 = await blobToBase64(audio);
+  let res: Response;
+  try {
+    res = await fetch('/api/transcribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        attachmentId,
+        audioBase64,
+        mimeType: audio.type,
+        sessionToken: session?.access_token,
+      }),
+    });
+  } catch (e) {
+    await updateTranscript(attachmentId, null, 'failed');
+    throw new Error('Could not reach the transcription service.');
+  }
+  if (!res.ok) {
+    await updateTranscript(attachmentId, null, 'failed');
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Transcription failed.');
+  }
+}
+
 /** Record the result of AI transcription on a voice note. */
 export async function updateTranscript(
   id: string,

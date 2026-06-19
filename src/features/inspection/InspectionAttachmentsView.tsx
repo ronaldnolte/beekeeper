@@ -1,16 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, ImagePlus, Mic, Trash2, Hexagon, X } from 'lucide-react';
+import { Camera, ImagePlus, Mic, Trash2, Hexagon, X, Loader2, MessageSquarePlus } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { SubTabBar } from '../../shared/components/SubTabBar';
+import { RecordOverlay } from './RecordOverlay';
 import {
   fetchAttachments,
   uploadPhoto,
+  uploadVoiceNote,
+  requestTranscription,
   deleteAttachment,
   type AttachmentWithUrls,
 } from '../../data/inspectionAttachmentRepository';
 
 /** Soft cap on photos per inspection (raise later if users push back). */
 const PHOTO_CAP = 12;
+
+type RecordTarget = { kind: 'standalone' } | { kind: 'caption'; parentId: string } | null;
 
 export const InspectionAttachmentsView: React.FC = () => {
   const { selectedRecord, goBack } = useAppStore();
@@ -21,6 +26,7 @@ export const InspectionAttachmentsView: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [recordTarget, setRecordTarget] = useState<RecordTarget>(null);
 
   const feedEndRef = useRef<HTMLDivElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -54,7 +60,6 @@ export const InspectionAttachmentsView: React.FC = () => {
     setBusy(true);
     setError(null);
     try {
-      // Upload sequentially so sort_order stays stable and we respect the cap.
       let nextOrder = items.length;
       for (const file of Array.from(files)) {
         if (photoCount + (nextOrder - items.length) >= PHOTO_CAP) break;
@@ -69,8 +74,34 @@ export const InspectionAttachmentsView: React.FC = () => {
     }
   };
 
-  const handleDelete = async (item: AttachmentWithUrls) => {
-    if (!confirm('Delete this photo?')) return;
+  const handleVoiceDone = async (audio: Blob) => {
+    const target = recordTarget;
+    setRecordTarget(null);
+    if (!inspectionId || !target) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await uploadVoiceNote(inspectionId, audio, {
+        parentId: target.kind === 'caption' ? target.parentId : undefined,
+        sortOrder: items.length,
+      });
+      await load();
+      // Transcribe in the background; the feed shows "converting…" until done.
+      requestTranscription(created.id, audio)
+        .then(() => load())
+        .catch((e) => {
+          console.warn('Transcription failed:', e?.message);
+          load();
+        });
+    } catch (e: any) {
+      setError(e.message ?? 'Could not save that voice note.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDelete = async (item: AttachmentWithUrls, label: string) => {
+    if (!confirm(`Delete this ${label}?`)) return;
     setBusy(true);
     try {
       await deleteAttachment(item);
@@ -87,7 +118,7 @@ export const InspectionAttachmentsView: React.FC = () => {
       <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
         <p className="font-bold text-[var(--color-text)] mb-2">No inspection selected</p>
         <p className="text-sm text-[var(--color-text-muted)] mb-4">
-          Save the inspection first, then add photos and voice notes to it.
+          Start a Plus inspection first, then add photos and voice notes to it.
         </p>
         <button onClick={goBack} className="bg-[var(--color-primary)] text-white px-5 py-3 rounded-2xl font-bold">
           Back
@@ -95,6 +126,33 @@ export const InspectionAttachmentsView: React.FC = () => {
       </div>
     );
   }
+
+  // Top-level feed = photos + standalone notes (already ordered); captions nest under photos.
+  const topLevel = items.filter((i) => i.kind === 'photo' || !i.parent_id);
+  const captionFor = (photoId: string) =>
+    items.find((i) => i.kind === 'voice_note' && i.parent_id === photoId);
+
+  const renderVoiceBody = (v: AttachmentWithUrls) => (
+    <>
+      {v.audioUrl && <audio controls src={v.audioUrl} className="w-full h-9 mt-1" />}
+      {v.transcript_status === 'pending' && (
+        <p className="mt-1.5 text-xs text-[var(--color-text-muted)] flex items-center gap-1.5">
+          <Loader2 size={13} className="animate-spin" /> Converting voice to text…
+        </p>
+      )}
+      {v.transcript_status === 'done' && v.transcript && (
+        <p className="mt-1.5 text-sm text-[var(--color-text)] whitespace-pre-wrap">{v.transcript}</p>
+      )}
+      {v.transcript_status === 'done' && !v.transcript && (
+        <p className="mt-1.5 text-xs italic text-[var(--color-text-muted)]">No speech detected.</p>
+      )}
+      {v.transcript_status === 'failed' && (
+        <p className="mt-1.5 text-xs italic text-[var(--color-text-muted)]">
+          Couldn’t transcribe — the audio is saved above.
+        </p>
+      )}
+    </>
+  );
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
@@ -121,48 +179,105 @@ export const InspectionAttachmentsView: React.FC = () => {
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center opacity-50 py-10">
-            <div className="w-8 h-8 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
+            <Loader2 size={28} className="animate-spin text-[var(--color-primary)]" />
           </div>
-        ) : items.length === 0 ? (
+        ) : topLevel.length === 0 ? (
           <div className="w-full max-w-2xl text-center py-10 text-[var(--color-text-muted)]">
             <ImagePlus size={40} className="mx-auto mb-3 opacity-40" />
             <p className="font-bold">No attachments yet</p>
-            <p className="text-sm">Use the buttons below to take or choose a photo.</p>
+            <p className="text-sm">Take a photo, choose one, or record a voice note below.</p>
           </div>
         ) : (
           <div className="w-full max-w-2xl space-y-3">
-            {items
-              .filter((i) => i.kind === 'photo')
-              .map((item) => (
-                <div key={item.id} className="card p-2.5 flex gap-3 items-center">
-                  <button
-                    onClick={() => item.fullUrl && setLightbox(item.fullUrl)}
-                    className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-[var(--color-input-bg)]"
-                  >
-                    {item.thumbUrl ? (
-                      <img src={item.thumbUrl} alt="inspection" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[var(--color-text-muted)]">
-                        <ImagePlus size={20} />
+            {topLevel.map((item) => {
+              if (item.kind === 'photo') {
+                const caption = captionFor(item.id);
+                return (
+                  <div key={item.id} className="card p-2.5">
+                    <div className="flex gap-3 items-center">
+                      <button
+                        onClick={() => item.fullUrl && setLightbox(item.fullUrl)}
+                        className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-[var(--color-input-bg)]"
+                      >
+                        {item.thumbUrl ? (
+                          <img src={item.thumbUrl} alt="inspection" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[var(--color-text-muted)]">
+                            <ImagePlus size={20} />
+                          </div>
+                        )}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-[var(--color-text-muted)] font-medium">
+                          {item.width && item.height ? `${item.width}×${item.height}` : 'Photo'}
+                          {item.byte_size ? ` · ${Math.round(item.byte_size / 1024)} KB` : ''}
+                        </p>
+                        {!caption && (
+                          <button
+                            onClick={() => setRecordTarget({ kind: 'caption', parentId: item.id })}
+                            disabled={busy}
+                            className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-primary)] disabled:opacity-50"
+                          >
+                            <MessageSquarePlus size={15} /> Add caption
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleDelete(item, 'photo')}
+                        disabled={busy}
+                        className="flex-shrink-0 w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center active:scale-95 disabled:opacity-50"
+                        aria-label="Delete photo"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+
+                    {caption && (
+                      <div className="mt-2 pl-3 border-l-2 border-[var(--color-primary)]/30">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-wide text-[var(--color-primary)] flex items-center gap-1">
+                              <Mic size={12} /> Caption
+                            </p>
+                            {renderVoiceBody(caption)}
+                          </div>
+                          <button
+                            onClick={() => handleDelete(caption, 'caption')}
+                            disabled={busy}
+                            className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center active:scale-95 disabled:opacity-50"
+                            aria-label="Delete caption"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       </div>
                     )}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-[var(--color-text-muted)] font-medium">
-                      {item.width && item.height ? `${item.width}×${item.height}` : 'Photo'}
-                      {item.byte_size ? ` · ${Math.round(item.byte_size / 1024)} KB` : ''}
-                    </p>
                   </div>
-                  <button
-                    onClick={() => handleDelete(item)}
-                    disabled={busy}
-                    className="flex-shrink-0 w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center active:scale-95 disabled:opacity-50"
-                    aria-label="Delete photo"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                );
+              }
+
+              // Standalone voice note
+              return (
+                <div key={item.id} className="card p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-black uppercase tracking-wide text-[var(--color-primary)] flex items-center gap-1">
+                        <Mic size={12} /> Voice note
+                      </p>
+                      {renderVoiceBody(item)}
+                    </div>
+                    <button
+                      onClick={() => handleDelete(item, 'voice note')}
+                      disabled={busy}
+                      className="flex-shrink-0 w-9 h-9 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center active:scale-95 disabled:opacity-50"
+                      aria-label="Delete voice note"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-              ))}
+              );
+            })}
             <div ref={feedEndRef} />
           </div>
         )}
@@ -196,7 +311,7 @@ export const InspectionAttachmentsView: React.FC = () => {
       <div className="w-full flex-shrink-0 flex justify-center gap-2.5 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <button
           onClick={goBack}
-          className="w-14 flex-shrink-0 bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-2xl font-bold flex items-center justify-center active:scale-95 dark:bg-black/30 dark:border-white/10 dark:text-white"
+          className="w-12 flex-shrink-0 bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-2xl font-bold flex items-center justify-center active:scale-95 dark:bg-black/30 dark:border-white/10 dark:text-white"
           aria-label="Back to inspection"
         >
           <Hexagon size={20} />
@@ -204,34 +319,41 @@ export const InspectionAttachmentsView: React.FC = () => {
         <button
           onClick={() => cameraInputRef.current?.click()}
           disabled={busy || atCap}
-          className="flex-1 max-w-[180px] bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+          className="flex-1 bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
         >
-          <Camera size={20} /> Take
+          <Camera size={19} /> Take
         </button>
         <button
           onClick={() => libraryInputRef.current?.click()}
           disabled={busy || atCap}
-          className="flex-1 max-w-[180px] bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+          className="flex-1 bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
         >
-          <ImagePlus size={20} /> Choose
+          <ImagePlus size={19} /> Choose
         </button>
         <button
-          disabled
-          title="Voice notes — coming next"
-          className="w-14 flex-shrink-0 bg-[var(--color-input-bg)] text-[var(--color-text-muted)] py-3.5 rounded-2xl flex items-center justify-center opacity-50"
-          aria-label="Record voice note (coming soon)"
+          onClick={() => setRecordTarget({ kind: 'standalone' })}
+          disabled={busy}
+          className="flex-1 bg-[var(--color-primary)] text-white py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
         >
-          <Mic size={20} />
+          <Mic size={19} /> Voice
         </button>
       </div>
 
       {busy && (
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-20">
           <div className="bg-white dark:bg-zinc-800 rounded-2xl px-5 py-4 flex items-center gap-3 shadow-xl">
-            <div className="w-5 h-5 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
+            <Loader2 size={18} className="animate-spin text-[var(--color-primary)]" />
             <span className="font-bold text-sm text-[var(--color-text)]">Working…</span>
           </div>
         </div>
+      )}
+
+      {recordTarget && (
+        <RecordOverlay
+          title={recordTarget.kind === 'caption' ? 'Record caption' : 'Record voice note'}
+          onCancel={() => setRecordTarget(null)}
+          onDone={handleVoiceDone}
+        />
       )}
 
       {/* Full-res lightbox */}
