@@ -90,7 +90,7 @@ export const InspectionAttachmentsView: React.FC = () => {
       });
       await load();
       // Transcribe in the background; the feed shows "converting…" until done.
-      requestTranscription(created.id, audio)
+      requestTranscription(created.id, audio, created.audio_path)
         .then(() => load())
         .catch((e) => {
           console.warn('Transcription failed:', e?.message);

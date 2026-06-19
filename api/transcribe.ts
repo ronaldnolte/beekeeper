@@ -29,7 +29,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { attachmentId, audioBase64, mimeType, sessionToken } = req.body;
+    const { attachmentId, audioBase64, mimeType, audioPath, sessionToken } = req.body;
 
     if (!attachmentId || !audioBase64) {
       res.status(400).json({ error: 'Missing attachmentId or audio.' });
@@ -71,15 +71,23 @@ export default async function handler(req: any, res: any) {
 
     const transcript = (result.response.text() || '').trim();
 
-    // Write back (RLS: only the owner's own row updates)
+    // Transcript is now the record of truth — drop the audio immediately.
+    // (Decision 2026-06-18: don't keep audio for review; users edit text inline,
+    // and transcription is fast. Audio is only kept when transcription FAILS.)
+    if (audioPath) {
+      const { error: rmErr } = await supabase.storage.from('inspection-images').remove([audioPath]);
+      if (rmErr) console.warn('Transcribe: could not remove audio object', rmErr.message);
+    }
+
+    // Write back (RLS: only the owner's own row updates). audio_path cleared.
     const { error: updErr } = await supabase
       .from('inspection_attachments')
-      .update({ transcript, transcript_status: 'done' })
+      .update({ transcript, transcript_status: 'done', audio_path: null })
       .eq('id', attachmentId);
 
     if (updErr) {
       console.error('Transcribe: row update failed', updErr);
-      res.status(500).json({ error: 'Saved audio but could not store the transcript.' });
+      res.status(500).json({ error: 'Transcribed, but could not store the transcript.' });
       return;
     }
 

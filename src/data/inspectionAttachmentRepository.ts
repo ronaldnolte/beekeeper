@@ -193,7 +193,11 @@ function blobToBase64(blob: Blob): Promise<string> {
  * the text back to the row. On failure, marks the row 'failed' (audio is kept
  * so the user can still play it). Pass the same blob that was uploaded.
  */
-export async function requestTranscription(attachmentId: string, audio: Blob): Promise<void> {
+export async function requestTranscription(
+  attachmentId: string,
+  audio: Blob,
+  audioPath: string | null
+): Promise<void> {
   const { data: { session } } = await supabase.auth.getSession();
   const audioBase64 = await blobToBase64(audio);
   let res: Response;
@@ -205,6 +209,7 @@ export async function requestTranscription(attachmentId: string, audio: Blob): P
         attachmentId,
         audioBase64,
         mimeType: audio.type,
+        audioPath,
         sessionToken: session?.access_token,
       }),
     });
