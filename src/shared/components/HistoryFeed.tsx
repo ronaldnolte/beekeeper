@@ -175,7 +175,7 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
                      'text-green-400') :
                   'text-[var(--color-text)]'
                 }`}>
-                  {item._model_type === 'intervention' ? `Intervention: ${item.type || 'Other'}` : 
+                  {item._model_type === 'intervention' ? `Intervention: ${item.type || 'Other'}` :
                    item._model_type === 'task' ? `Task: ${item.title}` :
                    item._model_type === 'varroa_test' ? `Mite Test: ${Number(item.mite_pct).toFixed(1)}% Load` :
                    'Inspection'}
