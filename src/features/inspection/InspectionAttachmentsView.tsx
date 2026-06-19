@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, ImagePlus, Mic, Trash2, Hexagon, X, Loader2, MessageSquarePlus } from 'lucide-react';
+import { Camera, ImagePlus, Mic, Trash2, Hexagon, X, Loader2, MessageSquarePlus, Pencil, Check } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { SubTabBar } from '../../shared/components/SubTabBar';
 import { RecordOverlay } from './RecordOverlay';
@@ -8,6 +8,7 @@ import {
   uploadPhoto,
   uploadVoiceNote,
   requestTranscription,
+  updateTranscript,
   deleteAttachment,
   type AttachmentWithUrls,
 } from '../../data/inspectionAttachmentRepository';
@@ -27,6 +28,8 @@ export const InspectionAttachmentsView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [recordTarget, setRecordTarget] = useState<RecordTarget>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
 
   const feedEndRef = useRef<HTMLDivElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -100,6 +103,24 @@ export const InspectionAttachmentsView: React.FC = () => {
     }
   };
 
+  const startEdit = (v: AttachmentWithUrls) => {
+    setEditingId(v.id);
+    setEditText(v.transcript ?? '');
+  };
+
+  const saveEdit = async (id: string) => {
+    setBusy(true);
+    try {
+      await updateTranscript(id, editText.trim(), 'done');
+      setEditingId(null);
+      await load();
+    } catch (e: any) {
+      setError(e.message ?? 'Could not save the text.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleDelete = async (item: AttachmentWithUrls, label: string) => {
     if (!confirm(`Delete this ${label}?`)) return;
     setBusy(true);
@@ -132,27 +153,70 @@ export const InspectionAttachmentsView: React.FC = () => {
   const captionFor = (photoId: string) =>
     items.find((i) => i.kind === 'voice_note' && i.parent_id === photoId);
 
-  const renderVoiceBody = (v: AttachmentWithUrls) => (
-    <>
-      {v.audioUrl && <audio controls src={v.audioUrl} className="w-full h-9 mt-1" />}
-      {v.transcript_status === 'pending' && (
-        <p className="mt-1.5 text-xs text-[var(--color-text-muted)] flex items-center gap-1.5">
-          <Loader2 size={13} className="animate-spin" /> Converting voice to text…
-        </p>
-      )}
-      {v.transcript_status === 'done' && v.transcript && (
-        <p className="mt-1.5 text-sm text-[var(--color-text)] whitespace-pre-wrap">{v.transcript}</p>
-      )}
-      {v.transcript_status === 'done' && !v.transcript && (
-        <p className="mt-1.5 text-xs italic text-[var(--color-text-muted)]">No speech detected.</p>
-      )}
-      {v.transcript_status === 'failed' && (
-        <p className="mt-1.5 text-xs italic text-[var(--color-text-muted)]">
-          Couldn’t transcribe — the audio is saved above.
-        </p>
-      )}
-    </>
-  );
+  const renderVoiceBody = (v: AttachmentWithUrls) => {
+    const isEditing = editingId === v.id;
+    const canEdit = v.transcript_status === 'done' || v.transcript_status === 'failed';
+    return (
+      <>
+        {v.audioUrl && <audio controls src={v.audioUrl} className="w-full h-9 mt-1" />}
+
+        {v.transcript_status === 'pending' && (
+          <p className="mt-1.5 text-xs text-[var(--color-text-muted)] flex items-center gap-1.5">
+            <Loader2 size={13} className="animate-spin" /> Converting voice to text…
+          </p>
+        )}
+
+        {isEditing ? (
+          <div className="mt-1.5">
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={3}
+              autoFocus
+              className="w-full p-2.5 rounded-xl bg-[var(--color-input-bg)] border border-[var(--color-primary)] text-sm text-[var(--color-text)] outline-none resize-none"
+              placeholder="Type the correct text…"
+            />
+            <div className="flex gap-2 mt-1.5">
+              <button
+                onClick={() => saveEdit(v.id)}
+                disabled={busy}
+                className="flex items-center gap-1.5 text-xs font-bold text-white bg-[var(--color-primary)] px-3 py-1.5 rounded-lg active:scale-95 disabled:opacity-50"
+              >
+                <Check size={14} /> Save
+              </button>
+              <button
+                onClick={() => setEditingId(null)}
+                className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-text-muted)] bg-[var(--color-input-bg)] px-3 py-1.5 rounded-lg active:scale-95"
+              >
+                <X size={14} /> Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          canEdit && (
+            <div className="mt-1.5 flex items-start justify-between gap-2">
+              {v.transcript ? (
+                <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap flex-1">{v.transcript}</p>
+              ) : (
+                <p className="text-xs italic text-[var(--color-text-muted)] flex-1">
+                  {v.transcript_status === 'failed'
+                    ? 'Couldn’t transcribe — play the audio, or type the text.'
+                    : 'No speech detected — tap edit to type the text.'}
+                </p>
+              )}
+              <button
+                onClick={() => startEdit(v)}
+                className="flex-shrink-0 inline-flex items-center gap-1 text-xs font-bold text-[var(--color-primary)] active:scale-95"
+                aria-label="Edit text"
+              >
+                <Pencil size={14} /> Edit
+              </button>
+            </div>
+          )
+        )}
+      </>
+    );
+  };
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
