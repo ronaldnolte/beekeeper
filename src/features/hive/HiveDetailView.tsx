@@ -74,13 +74,23 @@ export const HiveDetailView: React.FC = () => {
           />
         </div>
 
+        {/* Tasks for this hive */}
+        <div className="w-full max-w-2xl">
+          <HistoryFeed
+            hiveId={hive.id}
+            filter="tasks"
+            refreshTrigger={refreshKey}
+            title="Tasks"
+          />
+        </div>
+
         {/* 3. Complete Hive History */}
         <div className="w-full max-w-2xl">
-          <HistoryFeed 
-            hiveId={hive.id} 
-            filter="snapshots" 
-            refreshTrigger={refreshKey} 
-            title="Hive Configuration History" 
+          <HistoryFeed
+            hiveId={hive.id}
+            filter="snapshots"
+            refreshTrigger={refreshKey}
+            title="Hive Configuration History"
           />
         </div>
       </div>

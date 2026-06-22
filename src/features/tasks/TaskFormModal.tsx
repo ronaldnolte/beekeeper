@@ -75,16 +75,23 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       }
 
       const hiveId = isEditing ? initialData.hive_id : (defaultHiveId || null);
+      const apiaryId = isEditing ? initialData.apiary_id : (defaultApiaryId || null);
+      // Scope must stay consistent with which location is set, or the database's
+      // tasks_scope_check rejects the row. The old code recomputed it from hive_id
+      // alone, so editing an apiary-level task set scope='general' while keeping
+      // the apiary_id -> constraint violation. On edit, preserve the task's
+      // existing (already-valid) scope; only derive it for brand-new tasks.
+      const derivedScope = hiveId ? 'hive' : apiaryId ? 'apiary' : 'general';
       const payload = {
         hive_id: hiveId,
-        apiary_id: isEditing ? initialData.apiary_id : (defaultApiaryId || null),
+        apiary_id: apiaryId,
         assigned_user_id: user?.id,
         title,
         description,
         priority,
         due_date: parsedDueDate,
         status,
-        scope: hiveId ? 'hive' : 'general'
+        scope: isEditing ? (initialData.scope ?? derivedScope) : derivedScope
       };
 
       if (isEditing) {
