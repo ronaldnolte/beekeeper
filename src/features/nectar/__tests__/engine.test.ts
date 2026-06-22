@@ -76,16 +76,15 @@ describe('Bloom Factor Calculation Module', () => {
     expect(calculateTriangularValue(15, 349, 365, 15)).toBe(0.0);
   });
 
-  test('computeBloomFactor processes plant profiles and averages active sources', () => {
+  test('computeBloomFactor takes the strongest active bloom', () => {
     const plants = [
       { name: 'A', bloom_start: '04-01', bloom_peak: '05-01', bloom_end: '06-01' },
       { name: 'B', bloom_start: '05-01', bloom_peak: '06-01', bloom_end: '07-01' }
     ];
 
-    // On 2026-05-01 (Day 121)
-    // Plant A: Peak (1.0)
-    // Plant B: Start (0.0)
-    // Expected average = 0.5
+    // On 2026-05-01 (Day 121): Plant A is at peak (1.0), Plant B just starting (0.0).
+    // The factor is the STRONGEST active bloom, so 1.0 — a plant at ~0 can't drag
+    // it down (that averaging behavior caused single-day cliffs).
     const result = computeBloomFactor({
       date: '2026-05-01',
       lat: 39,
@@ -93,7 +92,7 @@ describe('Bloom Factor Calculation Module', () => {
       plant_profile: plants
     });
 
-    expect(result.bloom_factor).toBeCloseTo(0.5);
+    expect(result.bloom_factor).toBeCloseTo(1.0);
   });
 });
 
@@ -191,9 +190,10 @@ describe('Nectar Flow Detection Module (computeNectarStatus)', () => {
     expect(statuses[0].delta_forage).toBeNull();
     expect(statuses[1].delta_forage).not.toBeNull();
 
-    // Rising greenness under perfect weather -> index climbs and ends building flow.
-    expect(statuses[14].forage_index_smoothed!).toBeGreaterThan(statuses[2].forage_index_smoothed!);
-    expect(statuses[14].delta_forage!).toBeGreaterThan(0);
+    // Index climbs during the ramp (it later plateaus once vigor saturates)...
+    expect(statuses[3].delta_forage!).toBeGreaterThan(0);
+    expect(statuses[14].forage_index_smoothed!).toBeGreaterThan(statuses[0].forage_index_smoothed!);
+    // ...and ends in a flow-building phase.
     expect(['FLOW_STARTING', 'IN_FLOW']).toContain(statuses[14].phase);
   });
 
@@ -217,24 +217,25 @@ describe('Nectar Flow Detection Module (computeNectarStatus)', () => {
     expect(aLatest.forage_index_smoothed!).toBeGreaterThan(bLatest.forage_index_smoothed!);
   });
 
-  test('correctly triggers phase transitions on hysteresis rules', () => {
-    // Mock days where smoothed index rises and falls
-    // We mock the status computations using the backward compatibility wrapper test to check rules
-    
-    // 1. FLOW_STARTING (smoothed > 0.40 and delta > +0.02)
-    // currentNDVI = 0.70, previousNDVI = 0.50, historicalNDVI = 0.30
-    const resultStarting = calculateNFI(0.70, 0.30, 0.50);
-    expect(resultStarting.status).toBe('Pre-Flow'); // Pre-Flow = FLOW_STARTING
+  test('classifies flow building, peak flow, and dearth', () => {
+    // Rising greenness above baseline -> flow building (Pre-Flow).
+    expect(calculateNFI(0.70, 0.30, 0.50).status).toBe('Pre-Flow');
 
-    // 2. IN_FLOW (smoothed > 0.40 and delta <= +0.02)
-    // currentNDVI = 0.70, previousNDVI = 0.69, historicalNDVI = 0.30
-    const resultInFlow = calculateNFI(0.70, 0.30, 0.69);
-    expect(resultInFlow.status).toBe('Peak Flow'); // Peak Flow = IN_FLOW
+    // High and steady -> peak flow.
+    expect(calculateNFI(0.70, 0.30, 0.69).status).toBe('Peak Flow');
 
-    // 3. DEARTH (smoothed < 0.30)
-    // currentNDVI = 0.32, previousNDVI = 0.32, historicalNDVI = 0.30
-    const resultDearth = calculateNFI(0.32, 0.30, 0.32);
-    expect(resultDearth.status).toBe('Dearth'); // Dearth = DEARTH
+    // Dearth now means greenness well BELOW the typical-year norm: a browner-than-
+    // usual landscape with nothing blooming.
+    const dearth: DailyEnvironment[] = [];
+    const base = new Date('2026-07-01');
+    for (let i = 0; i < 10; i++) {
+      const d = new Date(base.getTime() + i * 86400000).toISOString().slice(0, 10);
+      dearth.push({
+        date: d, ndvi: 0.30, ndvi_min: 0.3, ndvi_max: 0.8, typical_ndvi: 0.62,
+        bloom_factor: 0.0, temp_suitability: 0.5, rain_suitability: 0.5, wind_suitability: 1.0
+      });
+    }
+    expect(computeNectarStatus(apiary, dearth).slice(-1)[0].phase).toBe('DEARTH');
   });
 });
 

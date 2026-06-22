@@ -136,8 +136,10 @@ export function computeBloomFactor(input: BloomFactorInput): BloomFactorResult {
   const year = parsedDate.getFullYear();
   const targetDoY = getDayOfYear(parsedDate);
 
-  let totalIntensity = 0;
-  let activePlantsCount = 0;
+  // Use the STRONGEST active bloom, not the average of active plants. Averaging
+  // caused a cliff: when a plant fading to ~0 dropped out of the "active" set,
+  // dividing by fewer plants made the factor jump in a single day.
+  let maxIntensity = 0;
 
   for (const plant of plant_profile) {
     try {
@@ -175,8 +177,7 @@ export function computeBloomFactor(input: BloomFactorInput): BloomFactorResult {
         // Clamp individual plant bloom
         bloomFinal = Math.min(1.0, Math.max(0.0, bloomFinal));
 
-        totalIntensity += bloomFinal;
-        activePlantsCount++;
+        maxIntensity = Math.max(maxIntensity, bloomFinal);
       }
     } catch (err: any) {
       // Malformed date/GDD format -> log and skip that plant
@@ -184,8 +185,7 @@ export function computeBloomFactor(input: BloomFactorInput): BloomFactorResult {
     }
   }
 
-  const bloomFactor = activePlantsCount > 0 ? totalIntensity / activePlantsCount : 0.0;
-  const clampedBloomFactor = Math.min(1.0, Math.max(0.0, bloomFactor));
+  const clampedBloomFactor = Math.min(1.0, Math.max(0.0, maxIntensity));
 
   return {
     date,
