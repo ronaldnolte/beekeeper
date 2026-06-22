@@ -2,7 +2,7 @@ import { describe, test, expect } from '@jest/globals';
 import { interpolateDailyNDVI, smoothNDVISeries, type NDVIRecord } from '../../../../api/ndvi-fetcher';
 import { computeBloomFactor, calculateTriangularValue, parseMonthDayToDoY, getDayOfYear } from '../bloomFactor';
 import { computeWeatherSuitability } from '../weatherSuitability';
-import { computeNectarStatus, calculateNFI, type Apiary, type DailyEnvironment } from '../engine';
+import { computeNectarStatus, calculateNFI, emaSeries, type Apiary, type DailyEnvironment } from '../engine';
 
 describe('NDVI Fetcher Utility Helpers', () => {
   test('interpolateDailyNDVI handles gaps and linear interpolation', () => {
@@ -163,18 +163,13 @@ describe('Nectar Flow Detection Module (computeNectarStatus)', () => {
     forage_radius_km: 1.6
   };
 
-  test('computes phases and moving averages over chronological sequence', () => {
-    // Generate 10 days of perfect weather and high vegetation
+  test('exponentially smooths a rising series and flags flow building', () => {
     const history: DailyEnvironment[] = [];
     const baseDate = new Date('2026-06-01');
 
     for (let i = 0; i < 15; i++) {
       const d = new Date(baseDate.getTime() + i * 24 * 60 * 60 * 1000);
-      
-      // Let NDVI grow to create delta rise
-      // Vigor will be 0.5 to 0.75
-      const ndvi = 0.50 + (i * 0.02);
-
+      const ndvi = 0.50 + (i * 0.02); // steadily greening
       history.push({
         date: d.toISOString().slice(0, 10),
         ndvi,
@@ -190,19 +185,36 @@ describe('Nectar Flow Detection Module (computeNectarStatus)', () => {
     const statuses = computeNectarStatus(apiary, history);
     expect(statuses).toHaveLength(15);
 
-    // First 6 days must be TRANSITION due to insufficient MA history (7-day window)
-    expect(statuses[0].phase).toBe('TRANSITION');
-    expect(statuses[5].phase).toBe('TRANSITION');
-    expect(statuses[0].forage_index_smoothed).toBeNull();
+    // Exponential averaging seeds immediately — the smoothed index exists from
+    // day one (no 7-day warmup), but the first day has no prior to diff against.
+    expect(statuses[0].forage_index_smoothed).not.toBeNull();
+    expect(statuses[0].delta_forage).toBeNull();
+    expect(statuses[1].delta_forage).not.toBeNull();
 
-    // On day 7, moving average is computed, but delta_forage is null (requires yesterday's MA which requires i-7)
-    expect(statuses[6].phase).toBe('TRANSITION');
-    expect(statuses[6].forage_index_smoothed).not.toBeNull();
-    expect(statuses[6].delta_forage).toBeNull();
+    // Rising greenness under perfect weather -> index climbs and ends building flow.
+    expect(statuses[14].forage_index_smoothed!).toBeGreaterThan(statuses[2].forage_index_smoothed!);
+    expect(statuses[14].delta_forage!).toBeGreaterThan(0);
+    expect(['FLOW_STARTING', 'IN_FLOW']).toContain(statuses[14].phase);
+  });
 
-    // On day 8, both moving average and delta are computed
-    expect(statuses[7].forage_index_smoothed).not.toBeNull();
-    expect(statuses[7].delta_forage).not.toBeNull();
+  test('scores current greenness relative to the typical-year baseline', () => {
+    const mk = (ndvi: number, typical: number, date: string): DailyEnvironment => ({
+      date, ndvi, ndvi_min: 0.3, ndvi_max: 0.8, typical_ndvi: typical,
+      bloom_factor: 1.0, temp_suitability: 1.0, rain_suitability: 1.0, wind_suitability: 1.0
+    });
+
+    const above: DailyEnvironment[] = [];
+    const below: DailyEnvironment[] = [];
+    const base = new Date('2026-05-01');
+    for (let i = 0; i < 10; i++) {
+      const d = new Date(base.getTime() + i * 86400000).toISOString().slice(0, 10);
+      above.push(mk(0.75, 0.55, d)); // well above the typical 0.55
+      below.push(mk(0.45, 0.55, d)); // below the typical 0.55
+    }
+
+    const aLatest = computeNectarStatus(apiary, above).slice(-1)[0];
+    const bLatest = computeNectarStatus(apiary, below).slice(-1)[0];
+    expect(aLatest.forage_index_smoothed!).toBeGreaterThan(bLatest.forage_index_smoothed!);
   });
 
   test('correctly triggers phase transitions on hysteresis rules', () => {
@@ -223,5 +235,18 @@ describe('Nectar Flow Detection Module (computeNectarStatus)', () => {
     // currentNDVI = 0.32, previousNDVI = 0.32, historicalNDVI = 0.30
     const resultDearth = calculateNFI(0.32, 0.30, 0.32);
     expect(resultDearth.status).toBe('Dearth'); // Dearth = DEARTH
+  });
+});
+
+describe('Exponential Moving Average helper', () => {
+  test('weights the latest point most and holds through gaps', () => {
+    // span 7 -> alpha = 2/8 = 0.25
+    const s = emaSeries([0.2, 0.2, 0.2, 1.0], 7);
+    expect(s[0]).toBeCloseTo(0.2);
+    expect(s[3]).toBeCloseTo(0.4); // 0.25*1.0 + 0.75*0.2
+
+    // Nulls hold the previous smoothed value rather than resetting.
+    const withGap = emaSeries([0.5, null, 0.5], 7);
+    expect(withGap[1]).toBeCloseTo(0.5);
   });
 });

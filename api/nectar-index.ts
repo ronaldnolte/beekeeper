@@ -363,6 +363,31 @@ export default async function handler(req: any, res: any) {
     const baselineNDVI = cachedBaseline ?? (ndviVals.length > 0 ? Math.min(...ndviVals) : 0.35);
     const maxNDVI = ndviVals.length > 0 ? Math.max(...ndviVals) : 0.85;
 
+    // Build the "typical year" curve: average NDVI per calendar day (MM-DD) over
+    // the prior complete years (everything before the current year). This is the
+    // 3-year baseline the engine compares the current year against.
+    const currentYr = new Date().getFullYear();
+    const typicalSums: Record<string, { sum: number; n: number }> = {};
+    for (const rec of ndviRecords) {
+      const yr = parseInt(rec.date.slice(0, 4), 10);
+      if (yr < currentYr) {
+        const md = rec.date.slice(5); // MM-DD
+        (typicalSums[md] ??= { sum: 0, n: 0 });
+        typicalSums[md].sum += rec.ndvi;
+        typicalSums[md].n += 1;
+      }
+    }
+    const typicalByMonthDay: Record<string, number> = {};
+    for (const md of Object.keys(typicalSums)) {
+      typicalByMonthDay[md] = typicalSums[md].sum / typicalSums[md].n;
+    }
+    const typicalFor = (dateStr: string): number | null => {
+      const md = dateStr.slice(5);
+      if (typicalByMonthDay[md] !== undefined) return typicalByMonthDay[md];
+      if (md === '02-29' && typicalByMonthDay['02-28'] !== undefined) return typicalByMonthDay['02-28'];
+      return null;
+    };
+
     // 3. Compile daily environments list
     const dailyEnvironmentHistory: DailyEnvironment[] = ndviRecords.map((ndviRec, idx) => {
       const dateStr = ndviRec.date;
@@ -413,6 +438,7 @@ export default async function handler(req: any, res: any) {
         ndvi: ndviRec.ndvi,
         ndvi_min: baselineNDVI,
         ndvi_max: maxNDVI,
+        typical_ndvi: typicalFor(dateStr),
         bloom_factor: bloomResult.bloom_factor,
         temp_suitability: suitResult.temp_suitability,
         rain_suitability: suitResult.rain_suitability,

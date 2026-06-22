@@ -41,7 +41,8 @@ export interface NectarIndexResponse {
  * @param lng Longitude in degrees
  */
 // Bump this version to invalidate all client-side NFI caches (e.g. after fixing API bugs)
-const NFI_CACHE_VERSION = 3;
+// v4: exponential averaging + 3-year typical-baseline scoring.
+const NFI_CACHE_VERSION = 4;
 
 export async function fetchNectarIndex(
   apiaryId: string,
