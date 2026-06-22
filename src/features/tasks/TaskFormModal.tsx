@@ -81,7 +81,10 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       // alone, so editing an apiary-level task set scope='general' while keeping
       // the apiary_id -> constraint violation. On edit, preserve the task's
       // existing (already-valid) scope; only derive it for brand-new tasks.
-      const derivedScope = hiveId ? 'hive' : apiaryId ? 'apiary' : 'general';
+      // Allowed scopes are 'hive' | 'apiary' | 'user' (per the DB tasks_scope_check).
+      // A task with no hive/apiary is personal -> 'user' (the old code used the
+      // invalid value 'general').
+      const derivedScope = hiveId ? 'hive' : apiaryId ? 'apiary' : 'user';
       const payload = {
         hive_id: hiveId,
         apiary_id: apiaryId,
