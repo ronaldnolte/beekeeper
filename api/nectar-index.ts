@@ -295,9 +295,14 @@ export default async function handler(req: any, res: any) {
       start = new Date('2022-06-04');
       end = new Date('2023-02-09');
     } else {
-      console.log('Using comparative date range: 2023-01-01 to today');
-      start = new Date('2023-01-01');
+      // Rolling 3-year baseline window: January 1 of three years prior, through
+      // today. (e.g. in 2026 -> 2023-01-01..today; in 2027 -> 2024-01-01..today.)
+      // Previously this start was hardcoded to '2023-01-01', so the window grew
+      // without bound every year.
+      const currentYear = new Date().getFullYear();
+      start = new Date(`${currentYear - 3}-01-01`);
       end = new Date();
+      console.log(`Using rolling comparative date range: ${currentYear - 3}-01-01 to today`);
     }
     const startDateStr = start.toISOString().slice(0, 10);
     const endDateStr = end.toISOString().slice(0, 10);
