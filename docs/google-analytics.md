@@ -36,7 +36,7 @@ Each codebase utilizes a specific environment variable or a hardcoded fallback f
 
 ### A. Marketing Site (Next.js)
 *   **Repository:** `TBH Beekeeper`
-*   **Configuration File:** [apps/web/app/layout.tsx](file:///e:/Antigravity/Beeks/TBH%20Beekeeper/apps/web/app/layout.tsx)
+*   **Configuration File:** `apps/web/app/layout.tsx` (in the separate **TBH Beekeeper** repo — not part of this project)
 *   **Code:**
     ```tsx
     <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || "G-9JW6ZWQSE3"} />
@@ -45,7 +45,7 @@ Each codebase utilizes a specific environment variable or a hardcoded fallback f
 
 ### B. Core App (Vite + Capacitor)
 *   **Repository:** `Beekeeper`
-*   **Configuration File:** [src/main.tsx](file:///e:/Antigravity/Beeks/Beekeeper/src/main.tsx)
+*   **Configuration File:** [src/main.tsx](../src/main.tsx) (this repo)
 *   **Code:**
     ```typescript
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-V3F9W1WQT0';
@@ -54,7 +54,7 @@ Each codebase utilizes a specific environment variable or a hardcoded fallback f
 
 ### C. Hive Forecast App (Next.js)
 *   **Repository:** `Hive-forecast`
-*   **Configuration File:** [app/layout.tsx](file:///e:/Antigravity/Beeks/Hive-forecast/app/layout.tsx)
+*   **Configuration File:** `app/layout.tsx` (in the separate **Hive-forecast** repo — not part of this project)
 *   **Code:**
     ```tsx
     <GoogleAnalytics gaId="G-H60164WT45" />
