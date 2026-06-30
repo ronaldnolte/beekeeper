@@ -34,27 +34,55 @@ demand**, and handed off. No new DB tables, buckets, or server functions.
   successful transcription anyway. Failed-transcription case → print a
   `[voice recording — transcript unavailable]` placeholder.
 
-## PDF header layout
+## PDF layout — mirrors the on-screen experience
+
+The report reads top-to-bottom the way the user built the inspection:
+**(1) the filled-in inspection form**, then **(2) the same chat-style feed of
+attachments** they scrolled through while adding photos and voice text. It should
+feel like a printed copy of the inspection, not a generic data dump.
 
 ```
 ┌─────────────────────────────────────────────┐
-│  [logo]   Inspection Report                  │
+│  [logo]   Inspection Report                  │   ← header
 │           June 28, 2026                       │
 │           Apiary: Back Field · Hive: Hive 3   │
 ├─────────────────────────────────────────────┤
+│  THE FORM (selected answers, form's order):  │   ← section 1: the form itself
 │  Queen status: Eggs                           │
 │  Brood pattern: Good                          │
 │  Temperament: Calm                            │
 │  Honey stores: Half     Pollen stores: Full   │
 │  Observations: <text / voice transcript>      │
 ├─────────────────────────────────────────────┤
-│  Photos                                       │
-│   [ image ]  caption: "<transcript>"          │
-│   [ image ]  caption: "..."                   │
-│  Voice notes                                  │
-│   "<standalone transcript text>"              │
+│  THE FEED (attachment order, top→bottom):    │   ← section 2: the scroll feed
+│   ┌───────────────────────┐                   │
+│   │      large image      │   ~120–150mm wide │
+│   └───────────────────────┘                   │
+│   caption: "<transcript>"                     │
+│                                               │
+│   ┌───────────────────────┐                   │
+│   │      large image      │                   │
+│   └───────────────────────┘                   │
+│   caption: "..."                              │
+│                                               │
+│   voice note: "<standalone transcript text>"  │
+│   ... flows across pages ...                  │
 └─────────────────────────────────────────────┘
 ```
+
+- **Section 1 = the form itself.** Same fields in the same order the form
+  presents them, rendered as the *selected* answer (label from
+  `inspectionOptions.ts`), plus observations + date/weather. Looks like a
+  filled-in copy of the form, not a table.
+- **Section 2 = the feed, in screen order** (`sort_order` then `created_at`).
+  Each photo is followed by its caption transcript inline; standalone voice notes
+  appear as their transcript text. Same top-to-bottom order the user saw.
+- **Image size:** inline in the feed at **~120–150 mm wide** (roughly the text
+  column) — significantly larger than the on-screen thumbnail so comb/brood
+  detail is legible, but **NOT** one-image-per-page. Two–three photos per page as
+  the feed flows. Keep a photo and its caption together across page breaks.
+- **Full resolution** is intentionally NOT the goal here — anyone who wants the
+  original taps "Save photo" (the separate export). The PDF is for review/sharing.
 
 Data sources (all already available, no new queries):
 - Logo: `public/logo.png` (PNG embeds directly in jsPDF).
@@ -81,7 +109,8 @@ Pipeline (canvas is built-in, no dependency):
 ```
 fetch(WebP signed URL) → blob
   → createImageBitmap(blob)
-  → draw to <canvas>            (optionally downscale to ~1000–1200px for the PDF)
+  → draw to <canvas>            (PDF embeds at ~1300–1400px for legible detail;
+                                 photo-export keeps the full 1600px)
   → canvas.toDataURL('image/jpeg', ~0.85)
   → JPEG dataURL / blob
 ```
@@ -119,10 +148,12 @@ No new DB tables, buckets, schema changes, or server functions.
   ~250 GB/mo Pro allowance.
 - **Device memory — the only thing to watch:** decoding a dozen 1600px bitmaps
   at once + building a multi-MB PDF can spike memory on low-end Android.
-  Mitigations (both cheap): (a) process images **sequentially**, decode→embed→
-  release one at a time; (b) **downscale on embed** to ~1000–1200px — a report
-  photo doesn't need 1600px; roughly halves PDF size and memory peak. Expect a
-  final PDF around 1–4 MB.
+  Mitigation: process images **sequentially** (decode→embed→release one at a
+  time) — keeps the peak to roughly one image at a time regardless of count.
+  Images are embedded at ~1300–1400px (large enough for legible detail at the
+  ~120–150 mm print width, see layout), so a 10–12 photo report lands around
+  **3–6 MB** — still trivial to email/message; full-res original stays available
+  via "Save photo".
 - **Permissions:** none on web. None on native either, because the share sheet
   avoids the Android scoped-storage / MediaStore permission story entirely.
 
