@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, Hexagon, Camera } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
 import { SubTabBar } from '../../shared/components/SubTabBar';
+import { ExportInspectionSheet } from './ExportInspectionSheet';
 
 import {
   QUEEN_STATUS_OPTIONS,
@@ -281,6 +282,23 @@ export const InspectionFormView: React.FC = () => {
               </span>
             )}
           </button>
+        )}
+
+        {/* Export / Share — available once the inspection has been saved (has an id) */}
+        {inspectionId && (
+          <ExportInspectionSheet
+            hiveId={selectedHiveId ?? undefined}
+            inspection={{
+              id: inspectionId,
+              timestamp: new Date(date + 'T12:00:00').toISOString(),
+              queen_status: queenStatus,
+              brood_pattern: broodPattern,
+              temperament,
+              honey_stores: honeyStores,
+              pollen_stores: pollenStores,
+              observations,
+            }}
+          />
         )}
 
         {/* Queen & Brood card */}

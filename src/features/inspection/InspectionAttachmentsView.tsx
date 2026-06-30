@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, ImagePlus, Mic, Trash2, ChevronLeft, X, Loader2, MessageSquarePlus, Pencil, Check } from 'lucide-react';
+import { Camera, ImagePlus, Mic, Trash2, ChevronLeft, X, Loader2, MessageSquarePlus, Pencil, Check, Download } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { SubTabBar } from '../../shared/components/SubTabBar';
 import { RecordOverlay } from './RecordOverlay';
@@ -12,6 +12,7 @@ import {
   deleteAttachment,
   type AttachmentWithUrls,
 } from '../../data/inspectionAttachmentRepository';
+import { exportSinglePhoto } from './exportPhotos';
 
 /** Soft cap on photos per inspection (raise later if users push back). */
 const PHOTO_CAP = 12;
@@ -29,7 +30,7 @@ const CAN_CAPTURE =
 type RecordTarget = { kind: 'standalone' } | { kind: 'caption'; parentId: string } | null;
 
 export const InspectionAttachmentsView: React.FC = () => {
-  const { selectedRecord, setCurrentView } = useAppStore();
+  const { selectedRecord, setCurrentView, selectedHiveName } = useAppStore();
   const goBackToForm = () => setCurrentView('INSPECTION_FORM');
   const inspectionId = selectedRecord?.id as string | undefined;
 
@@ -38,6 +39,7 @@ export const InspectionAttachmentsView: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [savingPhoto, setSavingPhoto] = useState(false);
   const [recordTarget, setRecordTarget] = useState<RecordTarget>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
@@ -142,6 +144,22 @@ export const InspectionAttachmentsView: React.FC = () => {
       setError(e.message ?? 'Could not delete that item.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleSavePhoto = async (url: string) => {
+    setSavingPhoto(true);
+    setError(null);
+    try {
+      const hivePart = (selectedHiveName ?? 'hive').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+      const datePart = selectedRecord?.timestamp
+        ? new Date(selectedRecord.timestamp).toISOString().split('T')[0]
+        : 'photo';
+      await exportSinglePhoto(url, `photo-${hivePart}-${datePart}.jpg`);
+    } catch (e: any) {
+      setError(e?.message ?? 'Could not save that photo.');
+    } finally {
+      setSavingPhoto(false);
     }
   };
 
@@ -443,12 +461,24 @@ export const InspectionAttachmentsView: React.FC = () => {
           onClick={() => setLightbox(null)}
         >
           <button
+            onClick={() => setLightbox(null)}
             className="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/15 text-white flex items-center justify-center"
             aria-label="Close"
           >
             <X size={24} />
           </button>
           <img src={lightbox} alt="full size" className="max-w-full max-h-full object-contain rounded-lg" />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSavePhoto(lightbox);
+            }}
+            disabled={savingPhoto}
+            className="absolute bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 bg-white/15 text-white px-5 py-3 rounded-full font-bold text-sm flex items-center gap-2 active:scale-95 disabled:opacity-60 backdrop-blur-sm"
+          >
+            {savingPhoto ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+            Save photo
+          </button>
         </div>
       )}
     </div>
