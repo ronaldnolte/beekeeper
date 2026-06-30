@@ -174,6 +174,31 @@ No new DB tables, buckets, schema changes, or server functions.
 - **Permissions:** none on web. None on native either, because the share sheet
   avoids the Android scoped-storage / MediaStore permission story entirely.
 
+## Build status (2026-06-30, on `develop`)
+
+BUILT — first implementation pushed to `develop` (web-first, fully testable on
+the preview). Files:
+- `src/shared/image/toJpeg.ts` — WebP→JPEG canvas converter (`imageForPdf` ~1400px/q0.85,
+  `imageForExport` full-size/q0.92).
+- `src/features/inspection/exportInspectionPdf.ts` — jsPDF report builder (lazy
+  `import('jspdf')`, named `{ jsPDF }`). Header + form fields + photo/voice feed.
+- `src/shared/share/shareFile.ts` — Web Share API (files) with `<a download>` fallback.
+- `src/features/inspection/exportPhotos.ts` — save-all + single-photo export.
+- `src/features/inspection/ExportInspectionSheet.tsx` — Export/Share trigger + action sheet.
+- Wired into `InspectionFormView` (review screen) + per-photo save in the
+  `InspectionAttachmentsView` lightbox.
+
+Verified: `tsc -b`, `vite build` (jspdf code-split into its own chunk, ~130 KB
+gzip, off the startup path), `jest` 15/15, and a Node jsPDF API smoke test
+(text/line/splitTextToSize/addImage('JPEG')/addPage/output → valid PDF blob).
+
+NOT yet verified (browser/native only — test on preview/phone): live canvas
+re-encode, signed-URL + logo fetch, `navigator.share` behavior, Android WebView.
+
+Deferred per design: native `@capacitor/share`/`@capacitor/filesystem` — only add
+if real-device testing shows Web Share gaps inside the Android wrapper. Slot into
+`shareFiles` behind `Capacitor.isNativePlatform()` without touching callers.
+
 ## Open / later
 
 - Multi-inspection "season summary" PDF (template already compatible).
