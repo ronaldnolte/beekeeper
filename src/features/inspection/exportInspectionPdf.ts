@@ -74,13 +74,13 @@ export async function buildInspectionPdf(
   inspection: InspectionForPdf,
   ctx: PdfContext = {}
 ): Promise<{ blob: Blob; filename: string }> {
-  const [{ default: JsPDF }, attachments, logo] = await Promise.all([
+  const [{ jsPDF }, attachments, logo] = await Promise.all([
     import('jspdf'),
     fetchAttachments(inspection.id),
     loadLogo(),
   ]);
 
-  const doc = new JsPDF({ unit: 'mm', format: 'letter' });
+  const doc = new jsPDF({ unit: 'mm', format: 'letter' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 15;
