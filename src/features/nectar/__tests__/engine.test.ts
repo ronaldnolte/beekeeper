@@ -2,7 +2,7 @@ import { describe, test, expect } from '@jest/globals';
 import { interpolateDailyNDVI, smoothNDVISeries, type NDVIRecord } from '../../../../api/ndvi-fetcher';
 import { computeBloomFactor, calculateTriangularValue, parseMonthDayToDoY, getDayOfYear } from '../bloomFactor';
 import { computeWeatherSuitability } from '../weatherSuitability';
-import { computeNectarStatus, calculateNFI, type Apiary, type DailyEnvironment } from '../engine';
+import { computeNectarStatus, calculateNFI, emaSeries, type Apiary, type DailyEnvironment } from '../engine';
 
 describe('NDVI Fetcher Utility Helpers', () => {
   test('interpolateDailyNDVI handles gaps and linear interpolation', () => {
@@ -76,16 +76,15 @@ describe('Bloom Factor Calculation Module', () => {
     expect(calculateTriangularValue(15, 349, 365, 15)).toBe(0.0);
   });
 
-  test('computeBloomFactor processes plant profiles and averages active sources', () => {
+  test('computeBloomFactor takes the strongest active bloom', () => {
     const plants = [
       { name: 'A', bloom_start: '04-01', bloom_peak: '05-01', bloom_end: '06-01' },
       { name: 'B', bloom_start: '05-01', bloom_peak: '06-01', bloom_end: '07-01' }
     ];
 
-    // On 2026-05-01 (Day 121)
-    // Plant A: Peak (1.0)
-    // Plant B: Start (0.0)
-    // Expected average = 0.5
+    // On 2026-05-01 (Day 121): Plant A is at peak (1.0), Plant B just starting (0.0).
+    // The factor is the STRONGEST active bloom, so 1.0 — a plant at ~0 can't drag
+    // it down (that averaging behavior caused single-day cliffs).
     const result = computeBloomFactor({
       date: '2026-05-01',
       lat: 39,
@@ -93,7 +92,7 @@ describe('Bloom Factor Calculation Module', () => {
       plant_profile: plants
     });
 
-    expect(result.bloom_factor).toBeCloseTo(0.5);
+    expect(result.bloom_factor).toBeCloseTo(1.0);
   });
 });
 
@@ -163,18 +162,13 @@ describe('Nectar Flow Detection Module (computeNectarStatus)', () => {
     forage_radius_km: 1.6
   };
 
-  test('computes phases and moving averages over chronological sequence', () => {
-    // Generate 10 days of perfect weather and high vegetation
+  test('exponentially smooths a rising series and flags flow building', () => {
     const history: DailyEnvironment[] = [];
     const baseDate = new Date('2026-06-01');
 
     for (let i = 0; i < 15; i++) {
       const d = new Date(baseDate.getTime() + i * 24 * 60 * 60 * 1000);
-      
-      // Let NDVI grow to create delta rise
-      // Vigor will be 0.5 to 0.75
-      const ndvi = 0.50 + (i * 0.02);
-
+      const ndvi = 0.50 + (i * 0.02); // steadily greening
       history.push({
         date: d.toISOString().slice(0, 10),
         ndvi,
@@ -190,38 +184,70 @@ describe('Nectar Flow Detection Module (computeNectarStatus)', () => {
     const statuses = computeNectarStatus(apiary, history);
     expect(statuses).toHaveLength(15);
 
-    // First 6 days must be TRANSITION due to insufficient MA history (7-day window)
-    expect(statuses[0].phase).toBe('TRANSITION');
-    expect(statuses[5].phase).toBe('TRANSITION');
-    expect(statuses[0].forage_index_smoothed).toBeNull();
+    // Exponential averaging seeds immediately — the smoothed index exists from
+    // day one (no 7-day warmup), but the first day has no prior to diff against.
+    expect(statuses[0].forage_index_smoothed).not.toBeNull();
+    expect(statuses[0].delta_forage).toBeNull();
+    expect(statuses[1].delta_forage).not.toBeNull();
 
-    // On day 7, moving average is computed, but delta_forage is null (requires yesterday's MA which requires i-7)
-    expect(statuses[6].phase).toBe('TRANSITION');
-    expect(statuses[6].forage_index_smoothed).not.toBeNull();
-    expect(statuses[6].delta_forage).toBeNull();
-
-    // On day 8, both moving average and delta are computed
-    expect(statuses[7].forage_index_smoothed).not.toBeNull();
-    expect(statuses[7].delta_forage).not.toBeNull();
+    // Index climbs during the ramp (it later plateaus once vigor saturates)...
+    expect(statuses[3].delta_forage!).toBeGreaterThan(0);
+    expect(statuses[14].forage_index_smoothed!).toBeGreaterThan(statuses[0].forage_index_smoothed!);
+    // ...and ends in a flow-building phase.
+    expect(['FLOW_STARTING', 'IN_FLOW']).toContain(statuses[14].phase);
   });
 
-  test('correctly triggers phase transitions on hysteresis rules', () => {
-    // Mock days where smoothed index rises and falls
-    // We mock the status computations using the backward compatibility wrapper test to check rules
-    
-    // 1. FLOW_STARTING (smoothed > 0.40 and delta > +0.02)
-    // currentNDVI = 0.70, previousNDVI = 0.50, historicalNDVI = 0.30
-    const resultStarting = calculateNFI(0.70, 0.30, 0.50);
-    expect(resultStarting.status).toBe('Pre-Flow'); // Pre-Flow = FLOW_STARTING
+  test('scores current greenness relative to the typical-year baseline', () => {
+    const mk = (ndvi: number, typical: number, date: string): DailyEnvironment => ({
+      date, ndvi, ndvi_min: 0.3, ndvi_max: 0.8, typical_ndvi: typical,
+      bloom_factor: 1.0, temp_suitability: 1.0, rain_suitability: 1.0, wind_suitability: 1.0
+    });
 
-    // 2. IN_FLOW (smoothed > 0.40 and delta <= +0.02)
-    // currentNDVI = 0.70, previousNDVI = 0.69, historicalNDVI = 0.30
-    const resultInFlow = calculateNFI(0.70, 0.30, 0.69);
-    expect(resultInFlow.status).toBe('Peak Flow'); // Peak Flow = IN_FLOW
+    const above: DailyEnvironment[] = [];
+    const below: DailyEnvironment[] = [];
+    const base = new Date('2026-05-01');
+    for (let i = 0; i < 10; i++) {
+      const d = new Date(base.getTime() + i * 86400000).toISOString().slice(0, 10);
+      above.push(mk(0.75, 0.55, d)); // well above the typical 0.55
+      below.push(mk(0.45, 0.55, d)); // below the typical 0.55
+    }
 
-    // 3. DEARTH (smoothed < 0.30)
-    // currentNDVI = 0.32, previousNDVI = 0.32, historicalNDVI = 0.30
-    const resultDearth = calculateNFI(0.32, 0.30, 0.32);
-    expect(resultDearth.status).toBe('Dearth'); // Dearth = DEARTH
+    const aLatest = computeNectarStatus(apiary, above).slice(-1)[0];
+    const bLatest = computeNectarStatus(apiary, below).slice(-1)[0];
+    expect(aLatest.forage_index_smoothed!).toBeGreaterThan(bLatest.forage_index_smoothed!);
+  });
+
+  test('classifies flow building, peak flow, and dearth', () => {
+    // Rising greenness above baseline -> flow building (Pre-Flow).
+    expect(calculateNFI(0.70, 0.30, 0.50).status).toBe('Pre-Flow');
+
+    // High and steady -> peak flow.
+    expect(calculateNFI(0.70, 0.30, 0.69).status).toBe('Peak Flow');
+
+    // Dearth now means greenness well BELOW the typical-year norm: a browner-than-
+    // usual landscape with nothing blooming.
+    const dearth: DailyEnvironment[] = [];
+    const base = new Date('2026-07-01');
+    for (let i = 0; i < 10; i++) {
+      const d = new Date(base.getTime() + i * 86400000).toISOString().slice(0, 10);
+      dearth.push({
+        date: d, ndvi: 0.30, ndvi_min: 0.3, ndvi_max: 0.8, typical_ndvi: 0.62,
+        bloom_factor: 0.0, temp_suitability: 0.5, rain_suitability: 0.5, wind_suitability: 1.0
+      });
+    }
+    expect(computeNectarStatus(apiary, dearth).slice(-1)[0].phase).toBe('DEARTH');
+  });
+});
+
+describe('Exponential Moving Average helper', () => {
+  test('weights the latest point most and holds through gaps', () => {
+    // span 7 -> alpha = 2/8 = 0.25
+    const s = emaSeries([0.2, 0.2, 0.2, 1.0], 7);
+    expect(s[0]).toBeCloseTo(0.2);
+    expect(s[3]).toBeCloseTo(0.4); // 0.25*1.0 + 0.75*0.2
+
+    // Nulls hold the previous smoothed value rather than resetting.
+    const withGap = emaSeries([0.5, null, 0.5], 7);
+    expect(withGap[1]).toBeCloseTo(0.5);
   });
 });

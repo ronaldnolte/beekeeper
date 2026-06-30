@@ -11,10 +11,34 @@ export interface DailyEnvironment {
   ndvi: number | null;
   ndvi_min: number | null;
   ndvi_max: number | null;
+  /** Typical NDVI for this calendar day, averaged over the prior 3 years. */
+  typical_ndvi?: number | null;
   bloom_factor: number | null;
   temp_suitability?: number | null;
   rain_suitability?: number | null;
   wind_suitability?: number | null;
+}
+
+const clamp01 = (x: number): number => Math.min(1.0, Math.max(0.0, x));
+
+/**
+ * Exponential moving average over a series. The newest point carries the most
+ * weight (alpha = 2/(span+1); span 7 -> ~25% on the latest day). Nulls hold the
+ * previous smoothed value. Seeds on the first valid value.
+ */
+export function emaSeries(values: (number | null | undefined)[], span: number): (number | null)[] {
+  const alpha = 2 / (span + 1);
+  const out: (number | null)[] = [];
+  let prev: number | null = null;
+  for (const v of values) {
+    if (v === null || v === undefined || isNaN(v)) {
+      out.push(prev);
+      continue;
+    }
+    prev = prev === null ? v : alpha * v + (1 - alpha) * prev;
+    out.push(prev);
+  }
+  return out;
 }
 
 export interface NectarStatus {
@@ -57,102 +81,79 @@ export function computeNectarStatus(
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
-  // 1. Calculate raw forage index for each day
-  const rawForageList = history.map(item => {
-    // If NDVI is missing, we cannot compute
-    if (item.ndvi === undefined || item.ndvi === null || isNaN(item.ndvi)) {
-      return { date: item.date, forage_raw: null, vigor: null };
+  // Each ingredient is smoothed with the SAME span-7 exponential average so the
+  // final trend behaves like one, then combined as a WEIGHTED BLEND (not a
+  // product). Vigor (measured vegetation) is the trusted, steady signal; bloom
+  // is a calendar approximation; weather leads the effect (rain today, nectar
+  // tomorrow) so it's only a light nudge.
+  const EMA_SPAN = 7;
+  const W_VIGOR = 0.70;
+  const W_BLOOM = 0.20;
+  const W_WEATHER = 0.10;
+
+  const ndviEma = emaSeries(history.map(h => h.ndvi), EMA_SPAN);
+  const typicalEma = emaSeries(history.map(h => h.typical_ndvi), EMA_SPAN);
+
+  // Vigor: how the smoothed current greenness compares to the typical (3-year
+  // average) greenness for this same calendar day. ratio 1.0 (normal) -> 0.5;
+  // ~+50% -> 1.0; ~-50% -> 0.0. Falls back to the site's own min/max range when
+  // no typical baseline is available. (NDVI is already exponentially smoothed.)
+  const vigorList: (number | null)[] = history.map((item, idx) => {
+    const ndvi = ndviEma[idx];
+    if (ndvi === null || isNaN(ndvi)) return null;
+    const typical = typicalEma[idx];
+    if (typical !== null && typical > 0.05) {
+      return clamp01(ndvi / typical - 0.5);
     }
-
-    const ndvi = Math.min(1.0, Math.max(0.0, item.ndvi));
-    const ndvi_min = item.ndvi_min !== null && item.ndvi_min !== undefined ? Math.min(1.0, Math.max(0.0, item.ndvi_min)) : 0.0;
-    const ndvi_max = item.ndvi_max !== null && item.ndvi_max !== undefined ? Math.min(1.0, Math.max(0.0, item.ndvi_max)) : 1.0;
-    const bloom = item.bloom_factor !== null && item.bloom_factor !== undefined ? Math.min(1.0, Math.max(0.0, item.bloom_factor)) : 0.0;
-
-    // Vigor = (ndvi - ndvi_min) / (ndvi_max - ndvi_min)
-    let vigor = 0.0;
+    const ndvi_min = item.ndvi_min !== null && item.ndvi_min !== undefined ? clamp01(item.ndvi_min) : 0.0;
+    const ndvi_max = item.ndvi_max !== null && item.ndvi_max !== undefined ? clamp01(item.ndvi_max) : 1.0;
     const ndviRange = ndvi_max - ndvi_min;
-    if (ndviRange > 0.05) {
-      vigor = (ndvi - ndvi_min) / ndviRange;
-      vigor = Math.min(1.0, vigor / 0.6); // Reaches 1.0 at 60% of max green-up
-    } else {
-      // Robust fallback for extremely flat NDVI ranges (constant greenness or desert)
-      vigor = Math.min(1.0, Math.max(0.0, (ndvi - 0.2) / 0.4));
-    }
-    vigor = Math.min(1.0, Math.max(0.0, vigor));
-
-    // Weather suitability (propagate nulls)
-    let weather: number | null = null;
-    const hasWeather = item.temp_suitability !== undefined && item.temp_suitability !== null &&
-                      item.rain_suitability !== undefined && item.rain_suitability !== null &&
-                      item.wind_suitability !== undefined && item.wind_suitability !== null;
-
-    if (hasWeather) {
-      const temp = Math.min(1.0, Math.max(0.0, item.temp_suitability!));
-      const rain = Math.min(1.0, Math.max(0.0, item.rain_suitability!));
-      const wind = Math.min(1.0, Math.max(0.0, item.wind_suitability!));
-      weather = temp * rain * wind;
-      weather = Math.min(1.0, Math.max(0.0, weather));
-    }
-
-    // forage_raw = vigor * bloom_factor * weather
-    let forage_raw: number | null = null;
-    if (weather !== null) {
-      forage_raw = vigor * bloom * weather;
-      forage_raw = Math.min(1.0, Math.max(0.0, forage_raw));
-    }
-
-    return {
-      date: item.date,
-      forage_raw,
-      vigor
-    };
+    return ndviRange > 0.05
+      ? clamp01((ndvi - ndvi_min) / ndviRange / 0.6)
+      : clamp01((ndvi - 0.2) / 0.4);
   });
 
-  // 2. First pass: Compute 7-day moving average and delta
+  // Smooth bloom and weather the same way as vegetation, so all three ingredients
+  // are on equal smoothing footing before blending.
+  const bloomEma = emaSeries(
+    history.map(h => h.bloom_factor !== null && h.bloom_factor !== undefined ? clamp01(h.bloom_factor) : null),
+    EMA_SPAN
+  );
+  const weatherEma = emaSeries(
+    history.map(h => {
+      if (h.temp_suitability !== undefined && h.temp_suitability !== null &&
+          h.rain_suitability !== undefined && h.rain_suitability !== null &&
+          h.wind_suitability !== undefined && h.wind_suitability !== null) {
+        return clamp01(clamp01(h.temp_suitability) * clamp01(h.rain_suitability) * clamp01(h.wind_suitability));
+      }
+      return null;
+    }),
+    EMA_SPAN
+  );
+
+  // 1. Weighted blend of the smoothed ingredients.
+  const rawForageList = history.map((item, idx) => {
+    const v = vigorList[idx];
+    if (v === null) return { date: item.date, forage_raw: null, vigor: null };
+    const b = bloomEma[idx] ?? 0;
+    const w = weatherEma[idx];
+    // If weather isn't available yet, re-normalize across the remaining weights.
+    const forage = w === null
+      ? clamp01((W_VIGOR * v + W_BLOOM * b) / (W_VIGOR + W_BLOOM))
+      : clamp01(W_VIGOR * v + W_BLOOM * b + W_WEATHER * w);
+    return { date: item.date, forage_raw: forage, vigor: v };
+  });
+
+  // 2. The blended ingredients are already smoothed, so this IS the smoothed
+  //    index; the delta is the day-over-day change.
   const computedList = history.map((item, idx) => {
-    // 7-day moving average of forage_raw
-    let smoothed: number | null = null;
-    let delta: number | null = null;
-
-    // Check if we have enough history (need at least 7 days for today's average)
-    if (idx >= 6) {
-      let isWindowValid = true;
-      let sum = 0;
-      for (let i = idx - 6; i <= idx; i++) {
-        const val = rawForageList[i].forage_raw;
-        if (val === null || val === undefined) {
-          isWindowValid = false;
-          break;
-        }
-        sum += val;
-      }
-      if (isWindowValid) {
-        smoothed = sum / 7;
-      }
-    }
-
-    // delta_forage = smoothed_today - smoothed_yesterday
-    if (smoothed !== null && idx >= 7) {
-      let isPrevWindowValid = true;
-      let prevSum = 0;
-      for (let i = idx - 7; i <= idx - 1; i++) {
-        const val = rawForageList[i].forage_raw;
-        if (val === null || val === undefined) {
-          isPrevWindowValid = false;
-          break;
-        }
-        prevSum += val;
-      }
-      if (isPrevWindowValid) {
-        const prevSmoothed = prevSum / 7;
-        delta = smoothed - prevSmoothed;
-      }
-    }
+    const smoothed = rawForageList[idx].forage_raw;
+    const prevSmoothed = idx > 0 ? rawForageList[idx - 1].forage_raw : null;
+    const delta = smoothed !== null && prevSmoothed !== null ? smoothed - prevSmoothed : null;
 
     return {
       date: item.date,
-      forage_index_raw: rawForageList[idx].forage_raw,
+      forage_index_raw: smoothed,
       forage_index_smoothed: smoothed,
       delta_forage: delta,
       ndvi: item.ndvi
@@ -164,11 +165,14 @@ export function computeNectarStatus(
   const validSmoothed = recentList.map(c => c.forage_index_smoothed).filter(v => v !== null && !isNaN(v)) as number[];
   const maxSmoothed = validSmoothed.length > 0 ? Math.max(...validSmoothed) : 0.20;
 
-  // Calculate dynamic classification thresholds relative to maxSmoothed
-  const FLOW_ENTER_THRESHOLD = Math.min(0.30, Math.max(0.12, maxSmoothed * 0.60));
-  const FLOW_EXIT_THRESHOLD  = Math.min(0.20, Math.max(0.08, maxSmoothed * 0.40));
-  const DELTA_UP   = Math.min(0.02, Math.max(0.005, maxSmoothed * 0.04));
-  const DELTA_DOWN = Math.max(-0.02, Math.min(-0.005, maxSmoothed * -0.04));
+  // Dynamic classification thresholds relative to maxSmoothed. The weighted blend
+  // runs higher than the old product, so these floors are higher too. PROVISIONAL
+  // — calibrate against real locations (e.g. Murfreesboro) before relying on the
+  // phase labels.
+  const FLOW_ENTER_THRESHOLD = Math.max(0.50, maxSmoothed * 0.75);
+  const FLOW_EXIT_THRESHOLD  = Math.max(0.32, maxSmoothed * 0.50);
+  const DELTA_UP   = Math.max(0.004, maxSmoothed * 0.03);
+  const DELTA_DOWN = Math.min(-0.004, maxSmoothed * -0.03);
 
   // 3. Second pass: Classify phase for each day using dynamic thresholds
   return computedList.map((item) => {

@@ -12,8 +12,7 @@ export type AppView =
   | 'SELECT_HIVE'       // Root Tab 3/Overlay: Choosing a hive (Dynamic Unified/Flat View)
   | 'HIVE_DETAIL'       // Detail View: Viewing hive history & charts
   | 'INSPECTION_FORM'      // Form: Inspection overlay
-  | 'INSPECTION_PLUS_FACTS'// Inspection Plus: quick-facts (screen 1)
-  | 'INSPECTION_PLUS'      // Inspection Plus: photos & voice attachments (screen 2)
+  | 'INSPECTION_PLUS'      // Inspection: photos & voice attachments
   | 'INTERVENTION_FORM' // Form: Intervention overlay
   | 'VARROA_FORM'       // Form: Varroa testing overlay
   | 'TASK_FORM'         // Form: Task overlay
@@ -100,10 +99,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
       selectedHiveName: null,
       isUnifiedHiveView: false,
 
-      // Centralized navigation — always pushes history state
+      // Centralized navigation — pushes history state including current record ID
       navigateTo: (view) => {
         if (typeof window !== 'undefined') {
-          window.history.pushState({ view }, '');
+          const recordId = useAppStore.getState().selectedRecord?.id ?? null;
+          window.history.pushState({ view, recordId }, '');
         }
         set({ currentView: view });
       },
@@ -297,11 +297,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
           prevView = 'SELECT_HIVE';
           hiveName = null;
         } else if (state.currentView === 'INSPECTION_PLUS') {
-          // Photos & voice (screen 2) returns to quick-facts (screen 1)
-          prevView = 'INSPECTION_PLUS_FACTS';
-        } else if (state.currentView === 'INSPECTION_PLUS_FACTS') {
-          // Quick-facts (screen 1) returns to the inspection list
-          prevView = 'INSPECTION_FORM';
+          // Return to the inspection form with the record still selected so the form stays open
+          return {
+            currentView: 'INSPECTION_FORM',
+            selectedApiaryName: apiaryName,
+            selectedHiveName: hiveName,
+          };
         } else if (
           ['INSPECTION_FORM', 'INTERVENTION_FORM', 'VARROA_FORM', 'TASK_FORM', 'STATUS_UPDATE_FORM'].includes(state.currentView)
         ) {
@@ -311,9 +312,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
         ) {
           prevView = 'DASHBOARD';
         }
-        
-        return { 
-          currentView: prevView, 
+
+        return {
+          currentView: prevView,
           selectedRecord: null,
           selectedApiaryName: apiaryName,
           selectedHiveName: hiveName

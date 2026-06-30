@@ -10,7 +10,6 @@ import { HiveSelectionView } from '../features/hive/HiveSelectionView';
 import { HiveDetailView } from '../features/hive/HiveDetailView';
 import { InspectionFormView } from '../features/inspection/InspectionFormView';
 import { InspectionAttachmentsView } from '../features/inspection/InspectionAttachmentsView';
-import { InspectionPlusFactsView } from '../features/inspection/InspectionPlusFactsView';
 import { InterventionFormView } from '../features/inspection/InterventionFormView';
 import { VarroaFormView } from '../features/varroa/VarroaFormView';
 import { StatusUpdateView } from '../features/inspection/StatusUpdateView';
@@ -77,10 +76,20 @@ function App() {
     // 3. BROWSER BACK BUTTON — read the view from history state
     const handlePopState = (event: PopStateEvent) => {
       const view = event.state?.view;
+      const recordId: string | null = event.state?.recordId ?? null;
       if (view) {
-        // Sync the store to whatever history entry the browser navigated to
         useAppStore.getState().setCurrentView(view);
-        useAppStore.getState().selectRecord(null);
+        // Preserve the record if the history entry carried its ID and it matches
+        // what's currently in the store — this keeps forms open when going back.
+        // Only clear when the history entry explicitly had no record.
+        const currentRecord = useAppStore.getState().selectedRecord;
+        if (!recordId) {
+          useAppStore.getState().selectRecord(null);
+        } else if (currentRecord?.id !== recordId) {
+          // Record mismatch — clear and let the view re-fetch if needed
+          useAppStore.getState().selectRecord(null);
+        }
+        // If recordId matches currentRecord.id, leave the record alone
       } else {
         // No state means we've gone back before any pushState — go to dashboard
         const user = useAppStore.getState().user;
@@ -161,9 +170,7 @@ function App() {
 
         {currentView === 'INSPECTION_FORM' && <InspectionFormView />}
 
-        {currentView === 'INSPECTION_PLUS_FACTS' && <InspectionPlusFactsView />}
-
-        {currentView === 'INSPECTION_PLUS' && <InspectionAttachmentsView />}
+{currentView === 'INSPECTION_PLUS' && <InspectionAttachmentsView />}
 
         {currentView === 'INTERVENTION_FORM' && <InterventionFormView />}
 

@@ -29,7 +29,8 @@ const CAN_CAPTURE =
 type RecordTarget = { kind: 'standalone' } | { kind: 'caption'; parentId: string } | null;
 
 export const InspectionAttachmentsView: React.FC = () => {
-  const { selectedRecord, goBack } = useAppStore();
+  const { selectedRecord, setCurrentView } = useAppStore();
+  const goBackToForm = () => setCurrentView('INSPECTION_FORM');
   const inspectionId = selectedRecord?.id as string | undefined;
 
   const [items, setItems] = useState<AttachmentWithUrls[]>([]);
@@ -151,7 +152,7 @@ export const InspectionAttachmentsView: React.FC = () => {
         <p className="text-sm text-[var(--color-text-muted)] mb-4">
           Start a Plus inspection first, then add photos and voice notes to it.
         </p>
-        <button onClick={goBack} className="bg-[var(--color-primary)] text-white px-5 py-3 rounded-2xl font-bold">
+        <button onClick={goBackToForm} className="bg-[var(--color-primary)] text-white px-5 py-3 rounded-2xl font-bold">
           Back
         </button>
       </div>
@@ -384,7 +385,7 @@ export const InspectionAttachmentsView: React.FC = () => {
       {/* Bottom action buttons */}
       <div className="w-full flex-shrink-0 flex justify-center gap-2.5 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <button
-          onClick={goBack}
+          onClick={goBackToForm}
           className="w-12 flex-shrink-0 bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-2xl font-bold flex items-center justify-center active:scale-95 dark:bg-black/30 dark:border-white/10 dark:text-white"
           aria-label="Back to inspection"
         >
