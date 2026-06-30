@@ -300,18 +300,6 @@ export const InspectionFormView: React.FC = () => {
 
       {/* Segregated Bottom Save Bar */}
       <div className="w-full flex-shrink-0 flex justify-center gap-2.5 px-4 py-3 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-        <button
-          type="button"
-          onClick={() => {
-            selectInspection(null);
-            setInspectionId(undefined);
-            setIsFormOpen(false);
-          }}
-          disabled={loading}
-          className="flex-1 max-w-[110px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
-        >
-          Cancel
-        </button>
 
         {selectedRecord && (
           <button
