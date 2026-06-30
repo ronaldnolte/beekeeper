@@ -125,6 +125,23 @@ the share sheet.
   multiple where supported, per-file `<a download>` fallback otherwise.
 - **Secondary: per-photo save** in the lightbox for a single image.
 
+### Export resolution (decided)
+
+Exported images go out at the **stored resolution — longest side 1600px**, the
+same as held in the bucket. That is the ceiling: the app only ever keeps the
+1600px/q70 compressed version (the original full-size camera photo is discarded
+at capture), so there is nothing larger to export and no upscaling is attempted.
+
+The only transformation is **format, not size**: stored WebP → JPEG at the same
+pixel dimensions, encoded at **high quality (~0.9)** so the conversion is
+visually lossless. Caveats: it's a generational re-encode (WebP→JPEG, not
+byte-identical, but visually indistinguishable at q0.9), and JPEG drops
+transparency (irrelevant for photos).
+
+This is deliberately distinct from the **PDF**, which embeds images smaller
+(~1300–1400px) to stay shareable. The photo-export is the path that hands over
+the full stored image; the PDF is for review/sharing.
+
 ## Tools to add
 
 | Tool | Purpose | Notes |
