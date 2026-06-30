@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createInspection, updateInspection, deleteInspection } from '../../data/inspectionRepository';
+import { createInspection, updateInspection, discardInspection } from '../../data/inspectionRepository';
 import { fetchAttachments } from '../../data/inspectionAttachmentRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, Hexagon, Camera } from 'lucide-react';
@@ -164,7 +164,7 @@ export const InspectionFormView: React.FC = () => {
     
     setLoading(true);
     try {
-      await deleteInspection(selectedRecord.id);
+      await discardInspection(selectedRecord.id);
       setLoading(false);
       selectInspection(null);
       goBack();
