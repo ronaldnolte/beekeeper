@@ -78,18 +78,18 @@ function App() {
       const view = event.state?.view;
       const recordId: string | null = event.state?.recordId ?? null;
       if (view) {
-        useAppStore.getState().setCurrentView(view);
-        // Preserve the record if the history entry carried its ID and it matches
-        // what's currently in the store — this keeps forms open when going back.
-        // Only clear when the history entry explicitly had no record.
+        const currentView = useAppStore.getState().currentView;
         const currentRecord = useAppStore.getState().selectedRecord;
-        if (!recordId) {
-          useAppStore.getState().selectRecord(null);
-        } else if (currentRecord?.id !== recordId) {
-          // Record mismatch — clear and let the view re-fetch if needed
+        useAppStore.getState().setCurrentView(view);
+        // Only preserve the record when crossing back FROM a different view
+        // (e.g. back from INSPECTION_PLUS → INSPECTION_FORM keeps the form open).
+        // If we're already on the destination view, back should close the form.
+        const crossViewBack = currentView !== view;
+        if (crossViewBack && recordId && currentRecord?.id === recordId) {
+          // Returning from a child view with the same record — keep it
+        } else {
           useAppStore.getState().selectRecord(null);
         }
-        // If recordId matches currentRecord.id, leave the record alone
       } else {
         // No state means we've gone back before any pushState — go to dashboard
         const user = useAppStore.getState().user;

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, ImagePlus, Mic, Trash2, Hexagon, X, Loader2, MessageSquarePlus, Pencil, Check } from 'lucide-react';
+import { Camera, ImagePlus, Mic, Trash2, ChevronLeft, X, Loader2, MessageSquarePlus, Pencil, Check } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { SubTabBar } from '../../shared/components/SubTabBar';
 import { RecordOverlay } from './RecordOverlay';
@@ -386,10 +386,11 @@ export const InspectionAttachmentsView: React.FC = () => {
       <div className="w-full flex-shrink-0 flex justify-center gap-2.5 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <button
           onClick={goBackToForm}
-          className="w-12 flex-shrink-0 bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-2xl font-bold flex items-center justify-center active:scale-95 dark:bg-black/30 dark:border-white/10 dark:text-white"
+          className="flex-shrink-0 bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] px-4 py-3.5 rounded-2xl font-bold text-sm flex items-center gap-2 active:scale-95 dark:bg-black/30 dark:border-white/10 dark:text-white"
           aria-label="Back to inspection"
         >
-          <Hexagon size={20} />
+          <ChevronLeft size={16} />
+          Back to Form
         </button>
         <button
           onClick={() => cameraInputRef.current?.click()}
