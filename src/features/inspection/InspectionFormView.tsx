@@ -139,8 +139,15 @@ export const InspectionFormView: React.FC = () => {
 
     let error;
     try {
-      if (selectedRecord) {
-        await updateInspection(selectedRecord.id, payload);
+      // Decide update-vs-create off inspectionId (durable local state), NOT
+      // selectedRecord — a navigation/popstate (e.g. bouncing to Photos & Voice
+      // and back) can clear selectedRecord in the global store. Every new
+      // inspection is already created up front by handleAddNew, so Save & Exit
+      // must UPDATE that record. Keying off selectedRecord meant a cleared
+      // record sent us down createInspection, spawning an empty duplicate and
+      // orphaning the photos/voice attached to the original inspection.
+      if (inspectionId) {
+        await updateInspection(inspectionId, payload);
       } else {
         await createInspection(payload);
       }
