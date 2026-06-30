@@ -99,10 +99,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
       selectedHiveName: null,
       isUnifiedHiveView: false,
 
-      // Centralized navigation — always pushes history state
+      // Centralized navigation — pushes history state including current record ID
       navigateTo: (view) => {
         if (typeof window !== 'undefined') {
-          window.history.pushState({ view }, '');
+          const recordId = useAppStore.getState().selectedRecord?.id ?? null;
+          window.history.pushState({ view, recordId }, '');
         }
         set({ currentView: view });
       },

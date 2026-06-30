@@ -76,10 +76,20 @@ function App() {
     // 3. BROWSER BACK BUTTON — read the view from history state
     const handlePopState = (event: PopStateEvent) => {
       const view = event.state?.view;
+      const recordId: string | null = event.state?.recordId ?? null;
       if (view) {
-        // Sync the store to whatever history entry the browser navigated to
         useAppStore.getState().setCurrentView(view);
-        useAppStore.getState().selectRecord(null);
+        // Preserve the record if the history entry carried its ID and it matches
+        // what's currently in the store — this keeps forms open when going back.
+        // Only clear when the history entry explicitly had no record.
+        const currentRecord = useAppStore.getState().selectedRecord;
+        if (!recordId) {
+          useAppStore.getState().selectRecord(null);
+        } else if (currentRecord?.id !== recordId) {
+          // Record mismatch — clear and let the view re-fetch if needed
+          useAppStore.getState().selectRecord(null);
+        }
+        // If recordId matches currentRecord.id, leave the record alone
       } else {
         // No state means we've gone back before any pushState — go to dashboard
         const user = useAppStore.getState().user;

@@ -90,9 +90,15 @@ export const InspectionFormView: React.FC = () => {
   const [observations, setObservations] = useState(selectedRecord?.observations || '');
   const [isFormOpen, setIsFormOpen] = useState(!!selectedRecord);
 
-  // Keep form in sync if the user taps a different history item while the form is already open
+  // Keep form in sync if the user taps a different history item while the form is already open.
+  // Also push a history entry when the form opens so browser back returns to the list, not the hive.
+  // And close the form if the browser back button clears selectedRecord while we're editing.
   React.useEffect(() => {
     if (selectedRecord) {
+      // Push a history entry so browser back closes the form rather than leaving the view
+      if (typeof window !== 'undefined') {
+        window.history.pushState({ view: 'INSPECTION_FORM', recordId: selectedRecord.id }, '');
+      }
       setIsFormOpen(true);
       setDate(new Date(selectedRecord.timestamp).toISOString().split('T')[0]);
       setQueenStatus(selectedRecord.queen_status || 'seen');
@@ -102,6 +108,9 @@ export const InspectionFormView: React.FC = () => {
       setPollenStores(selectedRecord.pollen_stores || 'adequate');
       setObservations(selectedRecord.observations || '');
     } else {
+      // selectedRecord cleared (e.g. browser back) — close the form back to the list
+      setIsFormOpen(false);
+      setInspectionId(undefined);
       setDate(new Date().toISOString().split('T')[0]);
       setQueenStatus('seen');
       setBroodPattern('good');
