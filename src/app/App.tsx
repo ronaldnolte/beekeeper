@@ -10,7 +10,6 @@ import { HiveSelectionView } from '../features/hive/HiveSelectionView';
 import { HiveDetailView } from '../features/hive/HiveDetailView';
 import { InspectionFormView } from '../features/inspection/InspectionFormView';
 import { InspectionAttachmentsView } from '../features/inspection/InspectionAttachmentsView';
-import { InspectionPlusFactsView } from '../features/inspection/InspectionPlusFactsView';
 import { InterventionFormView } from '../features/inspection/InterventionFormView';
 import { VarroaFormView } from '../features/varroa/VarroaFormView';
 import { StatusUpdateView } from '../features/inspection/StatusUpdateView';
@@ -161,9 +160,7 @@ function App() {
 
         {currentView === 'INSPECTION_FORM' && <InspectionFormView />}
 
-        {currentView === 'INSPECTION_PLUS_FACTS' && <InspectionPlusFactsView />}
-
-        {currentView === 'INSPECTION_PLUS' && <InspectionAttachmentsView />}
+{currentView === 'INSPECTION_PLUS' && <InspectionAttachmentsView />}
 
         {currentView === 'INTERVENTION_FORM' && <InterventionFormView />}
 
