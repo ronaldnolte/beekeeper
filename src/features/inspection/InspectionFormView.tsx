@@ -18,13 +18,20 @@ export const InspectionFormView: React.FC = () => {
   const { selectedHiveId, selectedRecord, goBack, selectInspection, navigateTo } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [attachmentCount, setAttachmentCount] = useState(0);
+  // Local copy of the inspection ID — survives browser-back clearing selectedRecord
+  const [inspectionId, setInspectionId] = useState<string | undefined>(selectedRecord?.id);
 
-  // Load attachment count whenever the selected record changes
+  // Load attachment count using the local ID so it survives selectedRecord being cleared
   React.useEffect(() => {
-    if (!selectedRecord?.id) { setAttachmentCount(0); return; }
-    fetchAttachments(selectedRecord.id)
+    if (!inspectionId) { setAttachmentCount(0); return; }
+    fetchAttachments(inspectionId)
       .then((items) => setAttachmentCount(items.length))
       .catch(() => setAttachmentCount(0));
+  }, [inspectionId]);
+
+  // Keep inspectionId in sync when selectedRecord changes (e.g. tapping a history item)
+  React.useEffect(() => {
+    if (selectedRecord?.id) setInspectionId(selectedRecord.id);
   }, [selectedRecord?.id]);
 
   // Create a new inspection immediately so attachments can be added right away
@@ -38,19 +45,35 @@ export const InspectionFormView: React.FC = () => {
         timestamp,
         ...INSPECTION_DEFAULTS,
       });
-      selectInspection({
-        _model_type: 'inspection',
-        id,
-        hive_id: selectedHiveId,
-        timestamp,
-        ...INSPECTION_DEFAULTS,
-      });
+      const record = { _model_type: 'inspection', id, hive_id: selectedHiveId, timestamp, ...INSPECTION_DEFAULTS };
+      selectInspection(record);
+      setInspectionId(id);
       setIsFormOpen(true);
     } catch (e: any) {
       alert('Could not start inspection: ' + (e?.message ?? e));
     } finally {
       setLoading(false);
     }
+  };
+
+  // Navigate to attachments, re-selecting the record if browser-back cleared it
+  const handleOpenAttachments = () => {
+    if (!inspectionId) return;
+    if (!selectedRecord) {
+      selectInspection({
+        _model_type: 'inspection',
+        id: inspectionId,
+        hive_id: selectedHiveId!,
+        timestamp: new Date(date + 'T12:00:00').toISOString(),
+        queen_status: queenStatus,
+        brood_pattern: broodPattern,
+        temperament,
+        honey_stores: honeyStores,
+        pollen_stores: pollenStores,
+        observations,
+      });
+    }
+    navigateTo('INSPECTION_PLUS');
   };
 
   const [date, setDate] = useState(() => {
@@ -121,6 +144,7 @@ export const InspectionFormView: React.FC = () => {
       alert('Failed to save inspection: ' + error.message);
     } else {
       selectInspection(null);
+      setInspectionId(undefined);
       setIsFormOpen(false);
     }
   };
@@ -234,11 +258,11 @@ export const InspectionFormView: React.FC = () => {
           </div>
         </div>
 
-        {/* Photos & voice — available once the inspection exists (has an id) */}
-        {selectedRecord && (
+        {/* Photos & voice — available once the inspection has been saved (has an id) */}
+        {inspectionId && (
           <button
             type="button"
-            onClick={() => navigateTo('INSPECTION_PLUS')}
+            onClick={handleOpenAttachments}
             className="w-full max-w-2xl card p-2.5 flex items-center justify-center gap-2 font-black text-sm text-[var(--color-primary)] border-2 border-dashed border-[var(--color-primary)]/40 active:scale-[0.99] transition-transform"
           >
             <Camera size={18} /> Photos &amp; Voice
@@ -271,6 +295,7 @@ export const InspectionFormView: React.FC = () => {
           type="button"
           onClick={() => {
             selectInspection(null);
+            setInspectionId(undefined);
             setIsFormOpen(false);
           }}
           disabled={loading}
