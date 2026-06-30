@@ -121,7 +121,7 @@ export const InspectionFormView: React.FC = () => {
       alert('Failed to save inspection: ' + error.message);
     } else {
       selectInspection(null);
-      goBack();
+      setIsFormOpen(false);
     }
   };
 
@@ -298,7 +298,7 @@ export const InspectionFormView: React.FC = () => {
           ) : (
             <>
               <Save size={22} />
-              {selectedRecord ? 'Update' : 'Save'}
+              Save &amp; Exit
             </>
           )}
         </button>
