@@ -39,18 +39,18 @@ export function downloadFile(file: ShareableFile): void {
 }
 
 /**
- * Only route through the share sheet on phones/tablets, where the sheet includes
- * a local-save action ("Save to Files" / "Save Image") and — on iOS PWAs — is the
- * only reliable way to hand over a file. On desktop the OS share sheet has NO save
- * option (Windows shows only app targets), so we download directly instead.
+ * Route through the share sheet ONLY on iOS, where "Save to Files" lives in the
+ * sheet and a direct download is unreliable in a standalone PWA. Everywhere else
+ * — desktop AND Android — a direct <a download> saves straight to the device's
+ * Downloads folder, so we skip the sheet. (Desktop and Android share sheets show
+ * cloud/app targets like Google Drive but no clean "save to this device".)
  */
-function isMobile(): boolean {
+function isIOS(): boolean {
   if (typeof navigator === 'undefined') return false;
   return (
-    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-    (navigator.maxTouchPoints > 1 &&
-      typeof matchMedia === 'function' &&
-      matchMedia('(pointer: coarse)').matches)
+    /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    // iPadOS 13+ reports a desktop Mac UA; detect it via touch support.
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
   );
 }
 
@@ -74,7 +74,7 @@ export async function shareFiles(
     (f) => new File([f.blob], f.filename, { type: f.blob.type || 'application/octet-stream' })
   );
 
-  if (isMobile() && canShareFiles(fileObjects)) {
+  if (isIOS() && canShareFiles(fileObjects)) {
     try {
       await navigator.share({ files: fileObjects, title: opts.title, text: opts.text });
       return 'shared';
