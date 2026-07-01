@@ -2,6 +2,7 @@
  * Data Access Repository for the Nectar Flow Index (NFI).
  * Manages fetching from the Vercel API and client-side localStorage caching.
  */
+import { Capacitor } from '@capacitor/core';
 
 export interface NectarIndexResponse {
   polygonId: string;
@@ -124,10 +125,11 @@ export async function fetchNectarIndex(
     localStorage.removeItem(baselineYearKey);
   }
 
-  // Setup API URL matching other features
-  const apiUrl = import.meta.env.DEV
-    ? '/api/nectar-index'
-    : 'https://beekeeper.beektools.com/api/nectar-index';
+  // Setup API URL matching other features: web is same-origin, only the
+  // packaged native app needs the absolute production host.
+  const apiUrl = Capacitor.isNativePlatform()
+    ? 'https://beekeeper.beektools.com/api/nectar-index'
+    : '/api/nectar-index';
 
   // Format coordinates to 4 decimal places (~11m precision) to maximize CDN cache hit rate
   const roundedLat = lat.toFixed(4);

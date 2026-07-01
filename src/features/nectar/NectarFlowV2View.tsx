@@ -2,6 +2,7 @@
 // Pipeline: Sentinel-2 greenness fusion → rate-of-change core → fall-bloom term →
 // warmth weighting → EWMA smooth → phase classification. Served by /api/nectar-index-v2.
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import {
@@ -136,11 +137,12 @@ export const NectarFlowV2View: React.FC = () => {
         } else {
           params.set('_d', new Date().toISOString().slice(0, 10));
         }
-        // Absolute host in production: the packaged Capacitor app loads from
-        // capacitor://localhost, so a relative /api path would not reach the server.
-        const apiBase = import.meta.env.DEV
-          ? '/api/nectar-index-v2'
-          : 'https://beekeeper.beektools.com/api/nectar-index-v2';
+        // Absolute host only in the packaged Capacitor app (it loads from a
+        // localhost scheme, so a relative /api path would not reach the server).
+        // Web — prod, preview, and dev via the Vite proxy — stays same-origin.
+        const apiBase = Capacitor.isNativePlatform()
+          ? 'https://beekeeper.beektools.com/api/nectar-index-v2'
+          : '/api/nectar-index-v2';
         const res = await fetch(`${apiBase}?${params}`, { signal: controller.signal });
         if (!res.ok) {
           const t = await res.text();

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../data/supabase';
 import { Send, Sparkles, ChevronDown } from 'lucide-react';
@@ -53,10 +54,12 @@ export const AskAIView: React.FC = () => {
       // 1. Get the current user's session token to pass to the secure backend
       const { data: { session } } = await supabase.auth.getSession();
       
-      // 2. We use window.location.origin to hit the Vercel API route if deployed, 
-      // or we can fallback to a local URL if running a local proxy.
-      // For Vite development, we might need a proxy, but for Vercel deployment this works perfectly.
-      const apiUrl = import.meta.env.DEV ? '/api/chat' : 'https://beekeeper.beektools.com/api/chat';
+      // 2. Web (prod, preview, and dev via the Vite proxy) calls its own
+      // same-origin function; only the packaged native app — which loads from
+      // a localhost scheme with no backend — needs the absolute production URL.
+      const apiUrl = Capacitor.isNativePlatform()
+        ? 'https://beekeeper.beektools.com/api/chat'
+        : '/api/chat';
       
       const response = await fetch(apiUrl, {
         method: 'POST',

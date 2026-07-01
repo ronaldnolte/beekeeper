@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createClient } from '@supabase/supabase-js';
+import { applyCors, getAuthedUser } from './_lib.js';
 
 // Transcribe an inspection voice note with Gemini, then write the text back to
 // the attachment row (user-scoped, so RLS still applies). Mirrors api/chat.ts.
@@ -11,18 +11,8 @@ function normalizeMime(mime: string): string {
 }
 
 export default async function handler(req: any, res: any) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-  );
+  if (applyCors(req, res)) return;
 
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
@@ -36,24 +26,21 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
+    // Require a real signed-in user before doing any paid AI work. The returned
+    // client is scoped to their token, so RLS still gates the write-back below.
+    const auth = await getAuthedUser(sessionToken);
+    if (!auth) {
+      res.status(401).json({ error: 'You must be signed in to transcribe voice notes.' });
+      return;
+    }
+    const { supabase } = auth;
+
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     if (!apiKey) {
       console.error('Missing GOOGLE_GENERATIVE_AI_API_KEY');
       res.status(500).json({ error: 'Transcription service unavailable (configuration error).' });
       return;
     }
-
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Missing Supabase configuration');
-    }
-
-    const options: any = {};
-    if (sessionToken) {
-      options.global = { headers: { Authorization: `Bearer ${sessionToken}` } };
-    }
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, options);
 
     // Transcribe
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -98,6 +85,6 @@ export default async function handler(req: any, res: any) {
       res.status(429).json({ error: 'Busy (rate limit). Try again shortly.' });
       return;
     }
-    res.status(500).json({ error: 'Transcription failed: ' + (error.message || 'Unknown error') });
+    res.status(500).json({ error: 'Transcription failed. Please try again.' });
   }
 }

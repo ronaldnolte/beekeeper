@@ -1,3 +1,4 @@
+import { applyCors } from './_lib.js';
 import { fetchMultiBands } from './bands-fetcher.js';
 import { runV2Pipeline, Phase, WeatherDay } from './nectar-v2-engine.js';
 
@@ -101,13 +102,7 @@ function phaseToAdvice(phase: Phase): string {
 }
 
 export default async function handler(req: any, res: any) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+  if (applyCors(req, res)) return;
   if (req.method !== 'GET') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
   const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw } = req.query;

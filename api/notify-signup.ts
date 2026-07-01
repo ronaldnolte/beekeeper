@@ -1,18 +1,12 @@
+import { applyCors, escapeHtml, getResendKey } from './_lib.js';
+
+// Called by a Supabase trigger when a new user registers. This endpoint fails
+// closed: if WEBHOOK_SECRET is not configured, it refuses every request rather
+// than running wide open.
+
 // Vercel Serverless Function signature:
 export default async function handler(req: any, res: any) {
-  // 1. CORS headers (in case of local testing / cross-origin)
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-  );
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  if (applyCors(req, res)) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -20,11 +14,14 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    // 2. Optional: Webhook Secret signature authorization
-    const authHeader = req.headers.authorization;
+    // Webhook secret is REQUIRED — the Supabase trigger must send it.
     const webhookSecret = process.env.WEBHOOK_SECRET;
-
-    if (webhookSecret && authHeader !== `Bearer ${webhookSecret}`) {
+    if (!webhookSecret) {
+      console.error('WEBHOOK_SECRET is not configured; rejecting webhook call.');
+      res.status(500).json({ error: 'Webhook not configured.' });
+      return;
+    }
+    if (req.headers.authorization !== `Bearer ${webhookSecret}`) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
@@ -37,11 +34,15 @@ export default async function handler(req: any, res: any) {
 
     // Extract newly registered user email and created time from Supabase trigger payload
     const record = payload.record || payload;
-    const userEmail = record.email || 'Unknown email';
+    const userEmail = escapeHtml(record.email || 'Unknown email');
     const createdAt = record.created_at || new Date().toISOString();
 
-    // Pull the active Resend API Key
-    const apiKey = process.env.RESEND_API_KEY || 're_RRkAoNA9_KZQBPSR9MRexZ8T2EBNybUpA';
+    const apiKey = getResendKey();
+    if (!apiKey) {
+      console.error('Missing RESEND_API_KEY');
+      res.status(500).json({ error: 'Notification service unavailable (configuration error).' });
+      return;
+    }
 
     console.log(`Sending signup notification for user: ${userEmail}...`);
     const response = await fetch('https://api.resend.com/emails', {
@@ -68,11 +69,10 @@ export default async function handler(req: any, res: any) {
       }),
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
       console.error('Resend Webhook API Error:', data);
-      res.status(response.status).json({ error: 'Failed to send signup email via Resend', details: data });
+      res.status(502).json({ error: 'Failed to send signup notification.' });
       return;
     }
 
@@ -80,6 +80,6 @@ export default async function handler(req: any, res: any) {
     res.status(200).json({ success: true });
   } catch (error: any) {
     console.error('Signup Webhook Serverless Error:', error.message || error);
-    res.status(500).json({ error: 'Failed to process signup webhook', details: error.message || error });
+    res.status(500).json({ error: 'Failed to process signup webhook.' });
   }
 }

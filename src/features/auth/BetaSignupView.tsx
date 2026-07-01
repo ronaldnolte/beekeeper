@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -16,7 +17,9 @@ export const BetaSignupView: React.FC = () => {
     setError(null);
 
     try {
-      const apiUrl = import.meta.env.DEV ? '/api/beta' : 'https://beekeeper.beektools.com/api/beta';
+      const apiUrl = Capacitor.isNativePlatform()
+        ? 'https://beekeeper.beektools.com/api/beta'
+        : '/api/beta';
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {

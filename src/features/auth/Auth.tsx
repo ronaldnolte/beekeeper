@@ -46,8 +46,8 @@ export const Auth: React.FC = () => {
         setMessage('Check your email for the password reset link.');
       }
     } else if (mode === 'signup') {
-      if (password.length < 6) {
-        setError('Password must be at least 6 characters.');
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters.');
         setLoading(false);
         return;
       }

@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { supabase } from './supabase';
 
 /**
@@ -107,13 +108,18 @@ export async function submitFeedback(message: string, email?: string) {
 
   // 2. Call our Vercel serverless function to trigger the Gmail notification in real time
   try {
-    const apiUrl = import.meta.env.DEV ? '/api/feedback' : 'https://beekeeper.beektools.com/api/feedback';
+    // The endpoint now requires a signed-in session (it refuses anonymous
+    // callers), so pass the access token along.
+    const { data: { session } } = await supabase.auth.getSession();
+    const apiUrl = Capacitor.isNativePlatform()
+      ? 'https://beekeeper.beektools.com/api/feedback'
+      : '/api/feedback';
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message, email }),
+      body: JSON.stringify({ message, email, sessionToken: session?.access_token }),
     });
     if (!response.ok) {
       const data = await response.json();
