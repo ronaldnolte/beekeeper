@@ -38,6 +38,22 @@ export function downloadFile(file: ShareableFile): void {
   triggerDownload(file);
 }
 
+/**
+ * Only route through the share sheet on phones/tablets, where the sheet includes
+ * a local-save action ("Save to Files" / "Save Image") and — on iOS PWAs — is the
+ * only reliable way to hand over a file. On desktop the OS share sheet has NO save
+ * option (Windows shows only app targets), so we download directly instead.
+ */
+function isMobile(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return (
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 1 &&
+      typeof matchMedia === 'function' &&
+      matchMedia('(pointer: coarse)').matches)
+  );
+}
+
 function canShareFiles(files: File[]): boolean {
   return (
     typeof navigator !== 'undefined' &&
@@ -58,7 +74,7 @@ export async function shareFiles(
     (f) => new File([f.blob], f.filename, { type: f.blob.type || 'application/octet-stream' })
   );
 
-  if (canShareFiles(fileObjects)) {
+  if (isMobile() && canShareFiles(fileObjects)) {
     try {
       await navigator.share({ files: fileObjects, title: opts.title, text: opts.text });
       return 'shared';
