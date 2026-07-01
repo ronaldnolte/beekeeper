@@ -3,7 +3,7 @@ import { Share2, FileText, ImageDown, X, Loader2, Check } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { buildInspectionPdf, type InspectionForPdf } from './exportInspectionPdf';
 import { exportInspectionPhotos } from './exportPhotos';
-import { shareFile } from '../../shared/share/shareFile';
+import { downloadFile } from '../../shared/share/shareFile';
 
 /**
  * Export / Share entry point for a saved inspection. Renders a trigger button
@@ -39,8 +39,8 @@ export const ExportInspectionSheet: React.FC<{ inspection: InspectionForPdf; hiv
     setNote(null);
     try {
       const { blob, filename } = await buildInspectionPdf(inspection, { hiveName, apiaryName });
-      const outcome = await shareFile({ blob, filename }, { title: 'Inspection Report' });
-      setNote(outcome === 'downloaded' ? 'Report downloaded.' : outcome === 'shared' ? 'Report ready to send.' : null);
+      downloadFile({ blob, filename });
+      setNote('Report saved to your Downloads.');
     } catch (e: any) {
       setError(e?.message ?? 'Could not create the report.');
     } finally {

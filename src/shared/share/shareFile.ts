@@ -33,6 +33,11 @@ function triggerDownload(file: ShareableFile) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
+/** Save a file straight to the browser's Downloads — no share sheet. */
+export function downloadFile(file: ShareableFile): void {
+  triggerDownload(file);
+}
+
 function canShareFiles(files: File[]): boolean {
   return (
     typeof navigator !== 'undefined' &&
