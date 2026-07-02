@@ -125,7 +125,12 @@ export default async function handler(req: any, res: any) {
   const hasOverrides = Object.keys(paramOverrides).length > 0;
 
   try {
-    const startDate = '2023-01-01';
+    // Rolling 3-year comparative window: Jan 1 of three years ago through today.
+    // Previously hardcoded to '2023-01-01', which made the window — and thus the
+    // Earth Engine query and the response payload — grow without bound every year.
+    // Mirrors the same fix already applied to the V1 endpoint (api/nectar-index.ts).
+    const currentYear = new Date().getFullYear();
+    const startDate = `${currentYear - 3}-01-01`;
     const endDate = new Date().toISOString().slice(0, 10);
 
     const [bands, weatherMap] = await Promise.all([

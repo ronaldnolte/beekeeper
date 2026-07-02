@@ -111,12 +111,15 @@ export const NectarFlowV2View: React.FC = () => {
     }
   }, [selectedApiaryId, apiariesList]);
 
-  const loadData = useCallback(async (forceFresh = false) => {
+  const loadData = useCallback(async (forceFresh = false, externalSignal?: AbortSignal) => {
     if (!selectedApiaryId) return;
     setLoading(true);
     setError(null);
     try {
       const apiary = await fetchApiaryWithCoords(selectedApiaryId);
+      // Superseded while we were resolving coordinates (apiary switch / unmount /
+      // StrictMode's dev double-invoke) — bail before kicking off the slow fetch.
+      if (externalSignal?.aborted) return;
       const lat = apiary.lat;
       const lng = apiary.lng;
       if (lat === null || lng === null || lat === undefined || lng === undefined) {
@@ -125,6 +128,13 @@ export const NectarFlowV2View: React.FC = () => {
       setCoords({ lat, lng });
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60_000);
+      // Propagate an outer cancel into this request so we never leave a stale Earth
+      // Engine call running or let an abandoned load overwrite fresher data.
+      const onOuterAbort = () => controller.abort();
+      if (externalSignal) {
+        if (externalSignal.aborted) controller.abort();
+        else externalSignal.addEventListener('abort', onOuterAbort, { once: true });
+      }
       try {
         const params = new URLSearchParams({
           lat: lat.toFixed(4), lng: lng.toFixed(4),
@@ -148,21 +158,31 @@ export const NectarFlowV2View: React.FC = () => {
           const t = await res.text();
           throw new Error(t || `API error ${res.status}`);
         }
-        setData(await res.json());
+        const json = await res.json();
+        if (externalSignal?.aborted) return; // superseded — don't clobber newer data
+        setData(json);
       } finally {
         clearTimeout(timeout);
+        if (externalSignal) externalSignal.removeEventListener('abort', onOuterAbort);
       }
     } catch (err: any) {
+      // An intentional outer cancel is not an error worth showing the user.
+      if (externalSignal?.aborted) return;
       setError(err.name === 'AbortError' ? 'Request timed out. Earth Engine can take up to 60s.' : err.message || 'Failed to load nectar flow index');
     } finally {
-      setLoading(false);
+      // Skip on an intentional cancel so we don't stomp the superseding load's state.
+      if (!externalSignal?.aborted) setLoading(false);
     }
   }, [selectedApiaryId]);
 
   useEffect(() => {
+    const controller = new AbortController();
     setData(null);
     setError(null);
-    loadData();
+    loadData(false, controller.signal);
+    // Cancel the in-flight request if the apiary changes or the view unmounts —
+    // and, in dev, cancels StrictMode's first invocation so only one fetch runs.
+    return () => controller.abort();
   }, [selectedApiaryId, loadData]);
 
   // Phase color mapping (copied verbatim from NectarFlowView)
