@@ -809,6 +809,30 @@ export const NectarFlowV2View: React.FC = () => {
         </button>
       </div>
 
+      {/* Load-timing diagnostic bar — always visible after a load, on every tab,
+          and NOT swapped out by chart hover. Use the Refresh button for a true
+          fresh measurement (a cached response returns near-instantly). */}
+      {timing && (
+        <div className="w-full bg-[#0f0f20] border-b border-[#222240] px-4 py-1.5 flex items-center gap-3 text-[10px] font-mono text-slate-300 overflow-x-auto whitespace-nowrap z-10 select-none">
+          <span className="text-amber-500 font-bold uppercase tracking-wider shrink-0">Load</span>
+          {timing.server ? (
+            <>
+              <span title="Earth Engine satellite fetch">satellite <b className="text-white">{(timing.server.earth_engine_ms / 1000).toFixed(1)}s</b></span>
+              <span title="Open-Meteo weather fetch">weather <b className="text-white">{(timing.server.weather_ms / 1000).toFixed(1)}s</b></span>
+              <span title="Index computation on the server">compute <b className="text-white">{timing.server.pipeline_ms}ms</b></span>
+              <span title="Network + browser (round trip minus server compute)">network <b className="text-white">{Math.max(0, (timing.roundTripMs - timing.server.server_total_ms) / 1000).toFixed(1)}s</b></span>
+            </>
+          ) : (
+            <span title="Per-phase split only on the preview deploy; production has no timing yet">
+              api <b className="text-white">{(timing.roundTripMs / 1000).toFixed(1)}s</b>
+              <span className="text-slate-500"> (no server split — test on preview)</span>
+            </span>
+          )}
+          <span title="Apiary coordinate lookup (database)">coords <b className="text-white">{timing.coordMs}ms</b></span>
+          <span className="text-amber-400 shrink-0" title="Total from tap to chart">total <b>{((timing.coordMs + timing.roundTripMs) / 1000).toFixed(1)}s</b></span>
+        </div>
+      )}
+
       {/* Scrollable content */}
       <div ref={contentRef} className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
 
@@ -992,33 +1016,14 @@ export const NectarFlowV2View: React.FC = () => {
                   </div>
                 );
               })() : (
-                <>
-                  <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400 flex-wrap">
-                    <div className="flex items-center gap-4">
-                      <span className="text-[9px] font-mono text-slate-600" title="Build timestamp">⏱ {__BUILD_TIME__}</span>
-                      <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
-                      <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-amber-500 inline-block" />{currentYear} (current)</span>
-                    </div>
-                    <span className="text-slate-500 italic">Hover for daily values</span>
+                <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400 flex-wrap">
+                  <div className="flex items-center gap-4">
+                    <span className="text-[9px] font-mono text-slate-600" title="Build timestamp">⏱ {__BUILD_TIME__}</span>
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-amber-500 inline-block" />{currentYear} (current)</span>
                   </div>
-                  {timing && (
-                    <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t border-[#20203a] text-[9px] font-mono text-slate-500 flex-wrap">
-                      <span className="text-slate-400 font-bold">Load:</span>
-                      {timing.server ? (
-                        <>
-                          <span title="Earth Engine satellite fetch">satellite {(timing.server.earth_engine_ms / 1000).toFixed(1)}s</span>
-                          <span title="Open-Meteo weather fetch">weather {(timing.server.weather_ms / 1000).toFixed(1)}s</span>
-                          <span title="Index computation on the server">compute {timing.server.pipeline_ms}ms</span>
-                          <span title="Network + browser: round trip minus server compute">network {Math.max(0, (timing.roundTripMs - timing.server.server_total_ms) / 1000).toFixed(1)}s</span>
-                        </>
-                      ) : (
-                        <span title="Server didn't report a breakdown (older deploy or a cached response)">api {(timing.roundTripMs / 1000).toFixed(1)}s</span>
-                      )}
-                      <span title="Apiary coordinate lookup (database)">coords {timing.coordMs}ms</span>
-                      <span className="text-slate-400 font-bold" title="Total from tap to chart">total {((timing.coordMs + timing.roundTripMs) / 1000).toFixed(1)}s</span>
-                    </div>
-                  )}
-                </>
+                  <span className="text-slate-500 italic">Hover for daily values</span>
+                </div>
               )}
             </div>
 
