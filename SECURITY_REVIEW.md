@@ -76,20 +76,35 @@ varroa_tests, user_roles) and their RLS policies were hand-created and are
 unauditable from the repo.
 - **Action:** `supabase db pull` (or dump from the SQL editor), commit as a
   baseline migration. All future schema changes go through migration files.
-- **Bonus while doing this:** the old, now-fully-removed mentor feature left
-  dead schema behind in *both* databases — `mentor_profiles`, `apiary_shares`,
-  viewer-read RLS policies on apiaries/hives/hive_snapshots/tasks, and three
-  overloaded `check_hive_access()` functions with divergent logic. Since the
-  mentor feature is gone for good (not paused — see project notes), this is
-  safe to drop as part of the same cleanup pass. Prove removal on preview first.
+- **Mentor schema — decision reversed 2026-07-02: KEEP it, do NOT drop.** The
+  mentor *UI* was removed, but `mentor_profiles`, `apiary_shares`, and the
+  viewer-read RLS policies are the read-only apiary-sharing infrastructure, and
+  Ron is reconsidering a no-messaging sharing revival. Verified there is no
+  comms/chat table anywhere (the youth-safety risk was never built), so it's a
+  lower-risk feature than what was set aside. If revived it needs *finishing*
+  (viewer policies were never added to inspections/interventions/varroa_tests)
+  and the three `check_hive_access` overloads consolidated. Parked, not dropped.
 
-**7. ⬜ Apiary deletion is 11 separate client-side queries with manual verification.**
+**7. 🟡 Apiary deletion is 11 separate client-side queries with manual verification.**
 `apiaryRepository.ts` deletes child records table-by-table, then re-queries to
 confirm the delete actually happened, because "RLS can silently block deletes."
-- **Action:** add `ON DELETE CASCADE` to the hive→children and apiary→hives
-  foreign keys (the newer `inspection_attachments` table already does this
-  correctly). Once cascades exist, the client-side delete collapses to one
-  statement — or wrap it in a single Postgres function for atomicity.
+- **Verified (preview, 2026-07-02):** exactly 4 FKs are `NO ACTION` and need
+  `ON DELETE CASCADE` — `hives→apiaries`, and `inspections`/`interventions`/
+  `hive_snapshots → hives`. (`varroa_tests`, `weather_forecasts`,
+  `inspection_attachments` already cascade.) Written as
+  `supabase/migrations/0005_cascade_deletes.sql` — NOT yet applied anywhere.
+- **`tasks` FK gap CLOSED** — `0006_tasks_cascade.sql` adds
+  `tasks_hive_id_fkey` + `tasks_apiary_id_fkey` (verified preview: text types,
+  0 orphans). Both columns nullable so apiary-level and hive-level tasks work.
+- ✅ **0005 + 0006 applied and verified on the PREVIEW DB (2026-07-02)** — all
+  parent→child links now report `delete_rule = CASCADE`. Migration files are
+  the version-controlled record.
+- **Still open:** (a) apply 0005+0006 to **production** (deliberate step, not
+  yet done); (b) DB cascade does NOT delete Storage objects (inspection
+  photos/audio) — that cleanup stays in app code; (c) simplify
+  `deleteApiaryWithCascade` to lean on the cascades — but that client change
+  must NOT reach prod until prod has the migrations, or deletes would orphan
+  children there.
 
 **8. 🟡 Error responses leaked internal details to callers.**
 Fixed as part of the develop commit — errors are now logged server-side and a
