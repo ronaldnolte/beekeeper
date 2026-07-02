@@ -133,16 +133,30 @@ export default async function handler(req: any, res: any) {
     const startDate = `${currentYear - 3}-01-01`;
     const endDate = new Date().toISOString().slice(0, 10);
 
-    const [bands, weatherMap] = await Promise.all([
-      fetchMultiBands(lat, lng, startDate, endDate),
-      fetchWeatherV2(lat, lng, startDate, endDate),
+    // Per-phase timing so a slow load can be diagnosed. Only meaningful on a
+    // fresh (cache-bypassing) request — a CDN hit returns these numbers from the
+    // original computation, not the current call. Earth Engine and weather run
+    // in parallel, so each is timed independently to see which one dominates.
+    const t0 = Date.now();
+    const timed = async <T>(fn: () => Promise<T>): Promise<[T, number]> => {
+      const s = Date.now();
+      const r = await fn();
+      return [r, Date.now() - s];
+    };
+
+    const [[bands, earthEngineMs], [weatherMap, weatherMs]] = await Promise.all([
+      timed(() => fetchMultiBands(lat, lng, startDate, endDate)),
+      timed(() => fetchWeatherV2(lat, lng, startDate, endDate)),
     ]);
 
     if (bands.length === 0) {
       throw new Error('Earth Engine returned no vegetation data for this location.');
     }
 
+    const pipeStart = Date.now();
     const result = runV2Pipeline(bands, weatherMap, lat, paramOverrides);
+    const pipelineMs = Date.now() - pipeStart;
+    const serverTotalMs = Date.now() - t0;
 
     const N = result.dates.length;
     if (N === 0) throw new Error('V2 pipeline produced no output.');
@@ -169,6 +183,13 @@ export default async function handler(req: any, res: any) {
       slope: latestSlope,
       v2: result.latest,
       full_history: result.history,
+      _timing: {
+        earth_engine_ms: earthEngineMs,
+        weather_ms: weatherMs,
+        pipeline_ms: pipelineMs,
+        server_total_ms: serverTotalMs,
+        satellite_observations: bands.length,
+      },
       _debug: { satellite_observations: bands.length, daily_points: N, params: hasOverrides ? paramOverrides : undefined },
     });
   } catch (error: any) {

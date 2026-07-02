@@ -185,6 +185,57 @@ Inconsistencies found:
 
 ---
 
+## Part 4b: Nectar Index Performance (reviewed 2026-07-02)
+
+Traced the full path: `NectarFlowV2View` → `/api/nectar-index-v2` →
+`fetchMultiBands` (Earth Engine) + `fetchWeatherV2` (Open-Meteo, already
+parallel via `Promise.all`) → `runV2Pipeline` (pure compute) → chart. The
+active path is V2; V1 (`/api/nectar-index`, `NectarFlowView`) is dormant but
+still in the repo.
+
+**DONE on `develop` (commit `a497a46`, pushed — pending Ron's AM confirmation
+on preview + local dev):**
+- ✅ **Dev double-fetch / stale-data race.** The fetch effect had no cleanup,
+  so React StrictMode's dev double-invoke fired *two* concurrent Earth Engine
+  calls per load, and in prod an abandoned load (apiary switch / refresh mid-
+  flight) could overwrite fresher data. Added an `AbortController` that cancels
+  the in-flight request on effect re-run/unmount. Visible win in dev (2→1
+  call); also a real prod correctness fix. Verify: Network tab shows one
+  `nectar-index-v2` call; rapid apiary switch shows the prior as cancelled.
+- ✅ **Growing Earth Engine window.** Replaced the hardcoded `2023-01-01`
+  start with a rolling `(currentYear - 3)` window (mirrors the V1 fix). NOTE:
+  `2026 - 3 = 2023`, so this is a **no-op for 2026** — identical output/perf
+  today; it only starts helping in Jan 2027 by capping the window. Correctness
+  + future-proofing, not a today-speedup. Today's speedup is the abort fix.
+
+**Still open (target the chart *interaction* lag, not load time — deliberately
+held back so the above tests stay isolated):**
+- ⬜ **No memoization.** `years`, `historyCurrent`, the 365-slot
+  `historyBaseMap`, and `historyBase` re-derive by looping the full ~1,280-pt
+  history on *every* render — and `hoveredIndex` changes on every pointer move,
+  so all of it recomputes on every pixel of a chart drag. Wrap in `useMemo`
+  keyed on `data`.
+- ⬜ **Repeated linear `.find()` + Date allocs on hover.** `getDayOfYear`
+  builds two `Date`s per call and is used inside `.find()` predicates run
+  several times per hover (some duplicated 2× in one expression, e.g. the
+  fullscreen panel). Precompute a day-of-year→value map once for O(1) lookups.
+- ⬜ **Static chart geometry redrawn per hover.** Area/baseline/segment paths
+  rebuild every render though only the thin hover cursor changes. Separate the
+  fixed geometry from the moving cursor overlay.
+- ⬜ **Redundant Supabase coord fetch per load.** `fetchApiaryWithCoords`
+  re-queries the DB for `lat/lng/zip` that are already in `apiariesList` in the
+  store. Reading from the store removes a network hop before the slow
+  serverless call — but has a subtle staleness tradeoff (store isn't refreshed
+  after an apiary-location edit), so do it with a fallback. Lower priority.
+- ⬜ **Engine `interpBand` resets its scan pointer per day** (`nectar-v2-
+  engine.ts`), making it ~O(days × scenes), called 3× (NDVI/EVI/NDWI). Hoist
+  the pointer to make it linear. Small today, grows with the window.
+- ⬜ **Payload could pre-aggregate the baseline server-side** (send current-
+  year daily + a day-of-year baseline) instead of all ~1,280 daily points the
+  client then collapses. Bigger refactor; enhancement, not a fix.
+
+---
+
 ## Part 5: Potential Enhancements
 
 Roughly ordered by field value to a beekeeper:

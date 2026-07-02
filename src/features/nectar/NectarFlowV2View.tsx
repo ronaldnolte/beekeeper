@@ -24,6 +24,14 @@ declare const __BUILD_TIME__: string;
 
 type Phase = 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING' | 'TRANSITION';
 
+interface ServerTiming {
+  earth_engine_ms: number;
+  weather_ms: number;
+  pipeline_ms: number;
+  server_total_ms: number;
+  satellite_observations: number;
+}
+
 interface V2Response {
   nfi: number;
   phase: Phase;
@@ -40,6 +48,14 @@ interface V2Response {
     rate_norm: number;
   };
   full_history: { date: string; forage_index_smoothed: number; phase: Phase }[];
+  _timing?: ServerTiming;
+}
+
+// Client-measured phases plus the server's self-reported breakdown.
+interface LoadTiming {
+  coordMs: number;      // Supabase apiary-coordinate lookup
+  roundTripMs: number;  // full API request (server compute + network + any CDN)
+  server: ServerTiming | null;
 }
 
 export const NectarFlowV2View: React.FC = () => {
@@ -66,6 +82,9 @@ export const NectarFlowV2View: React.FC = () => {
   // Resolved lat/lng actually sent to the API (post zip-geocoding). Shown next to
   // the apiary name so dev/prod runs can be confirmed to use identical coordinates.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  // Per-phase load timing (diagnostics) + a live elapsed counter for the spinner.
+  const [timing, setTiming] = useState<LoadTiming | null>(null);
+  const [elapsedSec, setElapsedSec] = useState(0);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -116,7 +135,9 @@ export const NectarFlowV2View: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      const coordStart = performance.now();
       const apiary = await fetchApiaryWithCoords(selectedApiaryId);
+      const coordMs = Math.round(performance.now() - coordStart);
       // Superseded while we were resolving coordinates (apiary switch / unmount /
       // StrictMode's dev double-invoke) — bail before kicking off the slow fetch.
       if (externalSignal?.aborted) return;
@@ -153,13 +174,19 @@ export const NectarFlowV2View: React.FC = () => {
         const apiBase = Capacitor.isNativePlatform()
           ? 'https://beekeeper.beektools.com/api/nectar-index-v2'
           : '/api/nectar-index-v2';
+        const fetchStart = performance.now();
         const res = await fetch(`${apiBase}?${params}`, { signal: controller.signal });
         if (!res.ok) {
           const t = await res.text();
           throw new Error(t || `API error ${res.status}`);
         }
         const json = await res.json();
+        const roundTripMs = Math.round(performance.now() - fetchStart);
         if (externalSignal?.aborted) return; // superseded — don't clobber newer data
+        const loadTiming: LoadTiming = { coordMs, roundTripMs, server: json._timing ?? null };
+        // eslint-disable-next-line no-console
+        console.log('[nectar timing]', loadTiming);
+        setTiming(loadTiming);
         setData(json);
       } finally {
         clearTimeout(timeout);
@@ -184,6 +211,16 @@ export const NectarFlowV2View: React.FC = () => {
     // and, in dev, cancels StrictMode's first invocation so only one fetch runs.
     return () => controller.abort();
   }, [selectedApiaryId, loadData]);
+
+  // Live elapsed-seconds counter for the loading screen so a long wait visibly
+  // progresses instead of sitting on a static spinner.
+  useEffect(() => {
+    if (!loading) return;
+    setElapsedSec(0);
+    const start = Date.now();
+    const id = setInterval(() => setElapsedSec(Math.floor((Date.now() - start) / 1000)), 250);
+    return () => clearInterval(id);
+  }, [loading]);
 
   // Phase color mapping (copied verbatim from NectarFlowView)
   const getPhaseColors = (phase: string) => {
@@ -288,10 +325,13 @@ export const NectarFlowV2View: React.FC = () => {
       <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-white bg-[#0f0f1a]">
         <div className="bg-[#1a1a2e]/80 backdrop-blur-md rounded-3xl p-12 flex flex-col items-center justify-center gap-4 shadow-2xl border border-[#2a2a4a] text-center w-full max-w-md">
           <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="font-bold text-amber-500 text-lg mt-2">Connecting GEE & Open-Meteo...</p>
+          <p className="font-bold text-amber-500 text-lg mt-2">Analyzing satellite imagery…</p>
           <p className="text-xs text-slate-400 leading-relaxed max-w-[280px]">
-            Retrieving Sentinel-2 imagery, computing vegetation indices, and merging weather data.
+            Pulling recent satellite and weather data for your apiary and computing the
+            nectar forecast. This usually takes 10–30 seconds, and a little longer the
+            first time each day.
           </p>
+          <p className="text-2xl font-black text-amber-500/90 tabular-nums mt-1">{elapsedSec}s</p>
         </div>
       </div>
     );
@@ -952,14 +992,33 @@ export const NectarFlowV2View: React.FC = () => {
                   </div>
                 );
               })() : (
-                <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400 flex-wrap">
-                  <div className="flex items-center gap-4">
-                    <span className="text-[9px] font-mono text-slate-600" title="Build timestamp">⏱ {__BUILD_TIME__}</span>
-                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
-                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-amber-500 inline-block" />{currentYear} (current)</span>
+                <>
+                  <div className="flex items-center justify-between gap-3 text-[11px] text-slate-400 flex-wrap">
+                    <div className="flex items-center gap-4">
+                      <span className="text-[9px] font-mono text-slate-600" title="Build timestamp">⏱ {__BUILD_TIME__}</span>
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
+                      <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-amber-500 inline-block" />{currentYear} (current)</span>
+                    </div>
+                    <span className="text-slate-500 italic">Hover for daily values</span>
                   </div>
-                  <span className="text-slate-500 italic">Hover for daily values</span>
-                </div>
+                  {timing && (
+                    <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t border-[#20203a] text-[9px] font-mono text-slate-500 flex-wrap">
+                      <span className="text-slate-400 font-bold">Load:</span>
+                      {timing.server ? (
+                        <>
+                          <span title="Earth Engine satellite fetch">satellite {(timing.server.earth_engine_ms / 1000).toFixed(1)}s</span>
+                          <span title="Open-Meteo weather fetch">weather {(timing.server.weather_ms / 1000).toFixed(1)}s</span>
+                          <span title="Index computation on the server">compute {timing.server.pipeline_ms}ms</span>
+                          <span title="Network + browser: round trip minus server compute">network {Math.max(0, (timing.roundTripMs - timing.server.server_total_ms) / 1000).toFixed(1)}s</span>
+                        </>
+                      ) : (
+                        <span title="Server didn't report a breakdown (older deploy or a cached response)">api {(timing.roundTripMs / 1000).toFixed(1)}s</span>
+                      )}
+                      <span title="Apiary coordinate lookup (database)">coords {timing.coordMs}ms</span>
+                      <span className="text-slate-400 font-bold" title="Total from tap to chart">total {((timing.coordMs + timing.roundTripMs) / 1000).toFixed(1)}s</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
