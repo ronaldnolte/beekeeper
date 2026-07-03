@@ -81,3 +81,30 @@ export function escapeHtml(value: unknown): string {
 export function getResendKey(): string | null {
   return process.env.RESEND_API_KEY || null;
 }
+
+/**
+ * Try each URL in order with a per-attempt timeout; return the first OK
+ * response (and which URL won), or null if every candidate failed. Built for
+ * third-party failover — e.g. Open-Meteo's forecast host going down while its
+ * separately-hosted auxiliary (historical-forecast) API stays up, which is
+ * exactly what happened in the 2026-07-03 outage.
+ */
+export async function fetchFirstOk(
+  urls: string[],
+  timeoutMs = 8000
+): Promise<{ res: Response; url: string } | null> {
+  for (const url of urls) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { signal: ctl.signal });
+      if (res.ok) return { res, url };
+      console.warn(`fetchFirstOk: ${res.status} from ${url.split('?')[0]} — trying next`);
+    } catch (e: any) {
+      console.warn(`fetchFirstOk: ${e?.name || 'error'} from ${url.split('?')[0]} — trying next`);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return null;
+}

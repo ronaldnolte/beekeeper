@@ -1,4 +1,4 @@
-import { applyCors } from './_lib.js';
+import { applyCors, fetchFirstOk } from './_lib.js';
 import { fetchNDVI, NDVIRecord } from './ndvi-fetcher.js';
 import { computeBloomFactor, PlantProfileEntry } from '../src/features/nectar/bloomFactor.js';
 import { computeWeatherSuitability, WeatherSuitabilityInput } from '../src/features/nectar/weatherSuitability.js';
@@ -146,46 +146,39 @@ async function fetchOpenMeteoWeather(
   const archiveEnd = new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000); // 3 days ago
   const archiveEndStr = archiveEnd.toISOString().slice(0, 10);
   
+  const dailyVars = 'daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max';
+  const units = 'temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=auto';
+
   // 1. Fetch Archive
   let archiveData: OpenMeteoDaily | null = null;
-  let archiveErrorMsg = '';
-  try {
-    const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${startDateStr}&end_date=${archiveEndStr}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=auto`;
-    const res = await fetch(archiveUrl);
-    if (res.ok) {
-      const json = await res.json();
-      archiveData = json.daily;
-    } else {
-      archiveErrorMsg = `HTTP status ${res.status}`;
-    }
-  } catch (e: any) {
-    archiveErrorMsg = e.message || 'unknown network error';
+  const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${startDateStr}&end_date=${archiveEndStr}&${dailyVars}&${units}`;
+  const arch = await fetchFirstOk([archiveUrl], 12_000);
+  if (arch) {
+    const json = await arch.res.json();
+    archiveData = json.daily;
   }
 
-  if (!archiveData) {
-    throw new Error(`Open-Meteo Archive API failed to return data: ${archiveErrorMsg}`);
-  }
-
-  // 2. Fetch Forecast
+  // 2. Fetch recent/forecast window — primary Forecast API, then the
+  // separately-hosted auxiliary Historical Forecast API (same shape/data;
+  // stays up when the primary goes down, as in the 2026-07-03 outage).
   let forecastData: OpenMeteoDaily | null = null;
-  let forecastErrorMsg = '';
-  try {
-    const forecastStart = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000); // 6 days ago (overlap)
-    const forecastStartStr = forecastStart.toISOString().slice(0, 10);
-    const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&start_date=${forecastStartStr}&end_date=${endDateStr}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=auto`;
-    const res = await fetch(forecastUrl);
-    if (res.ok) {
-      const json = await res.json();
-      forecastData = json.daily;
-    } else {
-      forecastErrorMsg = `HTTP status ${res.status}`;
-    }
-  } catch (e: any) {
-    forecastErrorMsg = e.message || 'unknown network error';
+  const forecastStart = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000); // 6 days ago (overlap)
+  const forecastStartStr = forecastStart.toISOString().slice(0, 10);
+  const forecastPath = `/v1/forecast?latitude=${lat}&longitude=${lng}&start_date=${forecastStartStr}&end_date=${endDateStr}&${dailyVars}&${units}`;
+  const fc = await fetchFirstOk([
+    `https://api.open-meteo.com${forecastPath}`,
+    `https://historical-forecast-api.open-meteo.com${forecastPath}`,
+  ], 8_000);
+  if (fc) {
+    const json = await fc.res.json();
+    forecastData = json.daily;
   }
 
-  if (!forecastData) {
-    throw new Error(`Open-Meteo Forecast API failed to return data: ${forecastErrorMsg}`);
+  // Degrade instead of dying: either source alone is enough to compute the
+  // index (missing recent days just read slightly stale). Only give up when
+  // BOTH are unreachable.
+  if (!archiveData && !forecastData) {
+    throw new Error('All Open-Meteo weather services are unreachable right now. This is a temporary provider outage — please try again later.');
   }
 
   // Populate map with archive

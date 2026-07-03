@@ -1,6 +1,7 @@
 import { applyCors } from './_lib.js';
 import { fetchMultiBands } from './bands-fetcher.js';
 import { runV2Pipeline, Phase, WeatherDay } from './nectar-v2-engine.js';
+import { fetchFirstOk } from './_lib.js';
 
 // Open-Meteo response shapes
 interface OMDaily {
@@ -13,12 +14,19 @@ interface OMHourly {
   dew_point_2m: (number | null)[];
 }
 
+interface WeatherV2Result {
+  days: Record<string, WeatherDay>;
+  /** Which host supplied the recent/forecast window (outage diagnostics). */
+  forecast_source: 'primary' | 'auxiliary' | 'none';
+  archive_ok: boolean;
+}
+
 async function fetchWeatherV2(
   lat: number,
   lng: number,
   startDate: string,
   endDate: string
-): Promise<Record<string, WeatherDay>> {
+): Promise<WeatherV2Result> {
   const today = new Date();
   const archiveEnd = new Date(today.getTime() - 3 * 86_400_000).toISOString().slice(0, 10);
   const recentStart = new Date(today.getTime() - 10 * 86_400_000).toISOString().slice(0, 10);
@@ -50,16 +58,30 @@ async function fetchWeatherV2(
   }
 
   const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?${base}&start_date=${startDate}&end_date=${archiveEnd}&${dailyVars}&${hourlyVars}`;
-  const forecastUrl = `https://api.open-meteo.com/v1/forecast?${base}&start_date=${recentStart}&end_date=${endDate}&${dailyVars}&${hourlyVars}`;
+  // Recent window: primary Forecast API, then Open-Meteo's separately-hosted
+  // auxiliary Historical Forecast API (same request/response shape, same model
+  // data, hours-stale at worst). Proven necessary 2026-07-03 when the primary
+  // went down while the auxiliary stayed at 100% uptime.
+  const forecastPath = `/v1/forecast?${base}&start_date=${recentStart}&end_date=${endDate}&${dailyVars}&${hourlyVars}`;
+  const forecastCandidates = [
+    `https://api.open-meteo.com${forecastPath}`,
+    `https://historical-forecast-api.open-meteo.com${forecastPath}`,
+  ];
 
-  const [archRes, fcRes] = await Promise.all([fetch(archiveUrl), fetch(forecastUrl)]);
-  if (archRes.ok) {
-    const j = await archRes.json();
+  // fetchFirstOk never rejects — a dead host degrades the data instead of
+  // killing the whole request (the old Promise.all([fetch, fetch]) did).
+  const [arch, fc] = await Promise.all([
+    fetchFirstOk([archiveUrl], 12_000),
+    fetchFirstOk(forecastCandidates, 8_000),
+  ]);
+
+  if (arch) {
+    const j = await arch.res.json();
     absorbDaily(j.daily ?? null);
     absorbHourlyDew(j.hourly ?? null);
   }
-  if (fcRes.ok) {
-    const j = await fcRes.json();
+  if (fc) {
+    const j = await fc.res.json();
     absorbDaily(j.daily ?? null);
     absorbHourlyDew(j.hourly ?? null);
   }
@@ -73,7 +95,11 @@ async function fetchWeatherV2(
       dew:  e._dn ? +(e._ds / e._dn).toFixed(2) : null,
     };
   }
-  return out;
+  return {
+    days: out,
+    forecast_source: fc ? (fc.url.includes('historical-forecast') ? 'auxiliary' : 'primary') : 'none',
+    archive_ok: !!arch,
+  };
 }
 
 function phaseToStatus(phase: Phase): 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low' {
@@ -144,7 +170,7 @@ export default async function handler(req: any, res: any) {
       return [r, Date.now() - s];
     };
 
-    const [[bands, earthEngineMs], [weatherMap, weatherMs]] = await Promise.all([
+    const [[bands, earthEngineMs], [weather, weatherMs]] = await Promise.all([
       timed(() => fetchMultiBands(lat, lng, startDate, endDate)),
       timed(() => fetchWeatherV2(lat, lng, startDate, endDate)),
     ]);
@@ -154,7 +180,7 @@ export default async function handler(req: any, res: any) {
     }
 
     const pipeStart = Date.now();
-    const result = runV2Pipeline(bands, weatherMap, lat, paramOverrides);
+    const result = runV2Pipeline(bands, weather.days, lat, paramOverrides);
     const pipelineMs = Date.now() - pipeStart;
     const serverTotalMs = Date.now() - t0;
 
@@ -189,6 +215,13 @@ export default async function handler(req: any, res: any) {
         pipeline_ms: pipelineMs,
         server_total_ms: serverTotalMs,
         satellite_observations: bands.length,
+      },
+      // Which weather host served the recent window: 'primary' (Forecast API),
+      // 'auxiliary' (Historical Forecast failover), or 'none' (both down —
+      // computed from archive data only).
+      weather_status: {
+        forecast_source: weather.forecast_source,
+        archive_ok: weather.archive_ok,
       },
       _debug: { satellite_observations: bands.length, daily_points: N, params: hasOverrides ? paramOverrides : undefined },
     });
