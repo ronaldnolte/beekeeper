@@ -99,12 +99,18 @@ confirm the delete actually happened, because "RLS can silently block deletes."
 - ✅ **0005 + 0006 applied and verified on the PREVIEW DB (2026-07-02)** — all
   parent→child links now report `delete_rule = CASCADE`. Migration files are
   the version-controlled record.
+- **Prod pre-flight PASSED (2026-07-02):** ran `supabase/db_integrity_audit.sql`
+  (read-only, 25 parent→child links) against production — **0 orphans on every
+  link**, including all unprotected ones. So promoting 0005+0006 to prod is
+  de-risked, and 0006's `tasks` FK add won't fail (tasks: 39 rows, all valid).
 - **Still open:** (a) apply 0005+0006 to **production** (deliberate step, not
   yet done); (b) DB cascade does NOT delete Storage objects (inspection
   photos/audio) — that cleanup stays in app code; (c) simplify
   `deleteApiaryWithCascade` to lean on the cascades — but that client change
   must NOT reach prod until prod has the migrations, or deletes would orphan
   children there.
+- Reusable health check: `supabase/db_integrity_audit.sql` — run in any SQL
+  editor anytime to re-verify integrity.
 
 **8. 🟡 Error responses leaked internal details to callers.**
 Fixed as part of the develop commit — errors are now logged server-side and a
