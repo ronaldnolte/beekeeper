@@ -271,22 +271,14 @@ export default async function handler(req: any, res: any) {
       ? parseFloat(cachedBaselineRaw)
       : null;
 
-    const isVerification = Math.abs(lat - 32.2226) < 0.01 && Math.abs(Math.abs(lng) - 110.9747) < 0.01;
-    let start, end;
-    if (isVerification) {
-      console.log('Verification apiary matched! Using historic date range: 2022-06-04 to 2023-02-09');
-      start = new Date('2022-06-04');
-      end = new Date('2023-02-09');
-    } else {
-      // Rolling 3-year baseline window: January 1 of three years prior, through
-      // today. (e.g. in 2026 -> 2023-01-01..today; in 2027 -> 2024-01-01..today.)
-      // Previously this start was hardcoded to '2023-01-01', so the window grew
-      // without bound every year.
-      const currentYear = new Date().getFullYear();
-      start = new Date(`${currentYear - 3}-01-01`);
-      end = new Date();
-      console.log(`Using rolling comparative date range: ${currentYear - 3}-01-01 to today`);
-    }
+    // Rolling 3-year baseline window: January 1 of three years prior, through
+    // today. (e.g. in 2026 -> 2023-01-01..today; in 2027 -> 2024-01-01..today.)
+    // Previously this start was hardcoded to '2023-01-01', so the window grew
+    // without bound every year.
+    const currentYear = new Date().getFullYear();
+    const start = new Date(`${currentYear - 3}-01-01`);
+    const end = new Date();
+    console.log(`Using rolling comparative date range: ${currentYear - 3}-01-01 to today`);
     const startDateStr = start.toISOString().slice(0, 10);
     const endDateStr = end.toISOString().slice(0, 10);
 
