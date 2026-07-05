@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { supabase } from './supabase';
 import { compressImage } from '../shared/image/compress';
 
@@ -201,13 +202,16 @@ export async function requestTranscription(
   const { data: { session } } = await supabase.auth.getSession();
   const audioBase64 = await blobToBase64(audio);
 
-  // In dev, the relative path is proxied to the local API server. In the built
-  // web app and especially the native phone app, the app's own origin has no
-  // backend, so call the deployed function by its full address. (Mirrors the
-  // feedback API call in feedbackRepository.)
-  const apiUrl = import.meta.env.DEV
-    ? '/api/transcribe'
-    : 'https://beekeeper.beektools.com/api/transcribe';
+  // The transcript is written back to the DB *inside* this function, so the web
+  // app must call its OWN same-origin function: on the deployed preview that's
+  // the Dev-backed function (token + database match → write lands in Dev), and
+  // on production it's the prod function. Only the native phone app — which has
+  // no same-origin backend — calls the deployed production function directly.
+  // (The earlier import.meta.env.DEV check sent BOTH preview and prod to the
+  // production endpoint, so a Dev-session token couldn't save to the prod DB.)
+  const apiUrl = Capacitor.isNativePlatform()
+    ? 'https://beekeeper.beektools.com/api/transcribe'
+    : '/api/transcribe';
 
   let res: Response;
   try {

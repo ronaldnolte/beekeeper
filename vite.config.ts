@@ -15,6 +15,10 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    // Dev-only proxy. Both nectar routes go to the local shim
+    // (local-api-server.js on :3001) — they require a signed-in user, and only
+    // the shim validates tokens against the same dev database the browser
+    // session came from; the deployed prod function would reject dev tokens.
     proxy: {
       '/api/nectar-index': {
         target: 'http://localhost:3001',

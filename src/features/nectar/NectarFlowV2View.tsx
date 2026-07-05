@@ -2,8 +2,10 @@
 // Pipeline: Sentinel-2 greenness fusion → rate-of-change core → fall-bloom term →
 // warmth weighting → EWMA smooth → phase classification. Served by /api/nectar-index-v2.
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
+import { supabase } from '../../data/supabase';
 import {
   MapPin,
   TrendingUp,
@@ -23,6 +25,14 @@ declare const __BUILD_TIME__: string;
 
 type Phase = 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING' | 'TRANSITION';
 
+interface ServerTiming {
+  earth_engine_ms: number;
+  weather_ms: number;
+  pipeline_ms: number;
+  server_total_ms: number;
+  satellite_observations: number;
+}
+
 interface V2Response {
   nfi: number;
   phase: Phase;
@@ -39,6 +49,14 @@ interface V2Response {
     rate_norm: number;
   };
   full_history: { date: string; forage_index_smoothed: number; phase: Phase }[];
+  _timing?: ServerTiming;
+}
+
+// Client-measured phases plus the server's self-reported breakdown.
+interface LoadTiming {
+  coordMs: number;      // Supabase apiary-coordinate lookup
+  roundTripMs: number;  // full API request (server compute + network + any CDN)
+  server: ServerTiming | null;
 }
 
 export const NectarFlowV2View: React.FC = () => {
@@ -65,6 +83,9 @@ export const NectarFlowV2View: React.FC = () => {
   // Resolved lat/lng actually sent to the API (post zip-geocoding). Shown next to
   // the apiary name so dev/prod runs can be confirmed to use identical coordinates.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  // Per-phase load timing (diagnostics) + a live elapsed counter for the spinner.
+  const [timing, setTiming] = useState<LoadTiming | null>(null);
+  const [elapsedSec, setElapsedSec] = useState(0);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -110,12 +131,17 @@ export const NectarFlowV2View: React.FC = () => {
     }
   }, [selectedApiaryId, apiariesList]);
 
-  const loadData = useCallback(async (forceFresh = false) => {
+  const loadData = useCallback(async (forceFresh = false, externalSignal?: AbortSignal) => {
     if (!selectedApiaryId) return;
     setLoading(true);
     setError(null);
     try {
+      const coordStart = performance.now();
       const apiary = await fetchApiaryWithCoords(selectedApiaryId);
+      const coordMs = Math.round(performance.now() - coordStart);
+      // Superseded while we were resolving coordinates (apiary switch / unmount /
+      // StrictMode's dev double-invoke) — bail before kicking off the slow fetch.
+      if (externalSignal?.aborted) return;
       const lat = apiary.lat;
       const lng = apiary.lng;
       if (lat === null || lng === null || lat === undefined || lng === undefined) {
@@ -124,6 +150,13 @@ export const NectarFlowV2View: React.FC = () => {
       setCoords({ lat, lng });
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60_000);
+      // Propagate an outer cancel into this request so we never leave a stale Earth
+      // Engine call running or let an abandoned load overwrite fresher data.
+      const onOuterAbort = () => controller.abort();
+      if (externalSignal) {
+        if (externalSignal.aborted) controller.abort();
+        else externalSignal.addEventListener('abort', onOuterAbort, { once: true });
+      }
       try {
         const params = new URLSearchParams({
           lat: lat.toFixed(4), lng: lng.toFixed(4),
@@ -136,32 +169,67 @@ export const NectarFlowV2View: React.FC = () => {
         } else {
           params.set('_d', new Date().toISOString().slice(0, 10));
         }
-        // Absolute host in production: the packaged Capacitor app loads from
-        // capacitor://localhost, so a relative /api path would not reach the server.
-        const apiBase = import.meta.env.DEV
-          ? '/api/nectar-index-v2'
-          : 'https://beekeeper.beektools.com/api/nectar-index-v2';
-        const res = await fetch(`${apiBase}?${params}`, { signal: controller.signal });
+        // Absolute host only in the packaged Capacitor app (it loads from a
+        // localhost scheme, so a relative /api path would not reach the server).
+        // Web — prod, preview, and dev via the Vite proxy — stays same-origin.
+        const apiBase = Capacitor.isNativePlatform()
+          ? 'https://beekeeper.beektools.com/api/nectar-index-v2'
+          : '/api/nectar-index-v2';
+        // The endpoint requires a signed-in user (it triggers paid Earth
+        // Engine work) — pass the session token in the Authorization header.
+        const { data: { session } } = await supabase.auth.getSession();
+        const fetchStart = performance.now();
+        const res = await fetch(`${apiBase}?${params}`, {
+          signal: controller.signal,
+          headers: session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : undefined,
+        });
         if (!res.ok) {
           const t = await res.text();
           throw new Error(t || `API error ${res.status}`);
         }
-        setData(await res.json());
+        const json = await res.json();
+        const roundTripMs = Math.round(performance.now() - fetchStart);
+        if (externalSignal?.aborted) return; // superseded — don't clobber newer data
+        const loadTiming: LoadTiming = { coordMs, roundTripMs, server: json._timing ?? null };
+        // eslint-disable-next-line no-console
+        console.log('[nectar timing]', loadTiming);
+        setTiming(loadTiming);
+        setData(json);
       } finally {
         clearTimeout(timeout);
+        if (externalSignal) externalSignal.removeEventListener('abort', onOuterAbort);
       }
     } catch (err: any) {
+      // An intentional outer cancel is not an error worth showing the user.
+      if (externalSignal?.aborted) return;
       setError(err.name === 'AbortError' ? 'Request timed out. Earth Engine can take up to 60s.' : err.message || 'Failed to load nectar flow index');
     } finally {
-      setLoading(false);
+      // Skip on an intentional cancel so we don't stomp the superseding load's state.
+      if (!externalSignal?.aborted) setLoading(false);
     }
   }, [selectedApiaryId]);
 
   useEffect(() => {
+    const controller = new AbortController();
     setData(null);
     setError(null);
-    loadData();
+    loadData(false, controller.signal);
+    // Cancel the in-flight request if the apiary changes or the view unmounts —
+    // and, in dev, cancels StrictMode's first invocation so only one fetch runs.
+    return () => controller.abort();
   }, [selectedApiaryId, loadData]);
+
+  // Live elapsed-seconds counter for the loading screen so a long wait visibly
+  // progresses instead of sitting on a static spinner.
+  useEffect(() => {
+    if (!loading) return;
+    setElapsedSec(0);
+    const start = Date.now();
+    const id = setInterval(() => setElapsedSec(Math.floor((Date.now() - start) / 1000)), 250);
+    return () => clearInterval(id);
+  }, [loading]);
 
   // Phase color mapping (copied verbatim from NectarFlowView)
   const getPhaseColors = (phase: string) => {
@@ -266,10 +334,13 @@ export const NectarFlowV2View: React.FC = () => {
       <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-white bg-[#0f0f1a]">
         <div className="bg-[#1a1a2e]/80 backdrop-blur-md rounded-3xl p-12 flex flex-col items-center justify-center gap-4 shadow-2xl border border-[#2a2a4a] text-center w-full max-w-md">
           <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="font-bold text-amber-500 text-lg mt-2">Connecting GEE & Open-Meteo...</p>
+          <p className="font-bold text-amber-500 text-lg mt-2">Analyzing satellite imagery…</p>
           <p className="text-xs text-slate-400 leading-relaxed max-w-[280px]">
-            Retrieving Sentinel-2 imagery, computing vegetation indices, and merging weather data.
+            Pulling recent satellite and weather data for your apiary and computing the
+            nectar forecast. This usually takes 10–30 seconds, and a little longer the
+            first time each day.
           </p>
+          <p className="text-2xl font-black text-amber-500/90 tabular-nums mt-1">{elapsedSec}s</p>
         </div>
       </div>
     );
@@ -746,6 +817,30 @@ export const NectarFlowV2View: React.FC = () => {
           <RefreshCw size={14} />
         </button>
       </div>
+
+      {/* Load-timing diagnostic bar — always visible after a load, on every tab,
+          and NOT swapped out by chart hover. Use the Refresh button for a true
+          fresh measurement (a cached response returns near-instantly). */}
+      {timing && (
+        <div className="w-full bg-[#0f0f20] border-b border-[#222240] px-4 py-1.5 flex items-center gap-3 text-[10px] font-mono text-slate-300 overflow-x-auto whitespace-nowrap z-10 select-none">
+          <span className="text-amber-500 font-bold uppercase tracking-wider shrink-0">Load</span>
+          {timing.server ? (
+            <>
+              <span title="Earth Engine satellite fetch">satellite <b className="text-white">{(timing.server.earth_engine_ms / 1000).toFixed(1)}s</b></span>
+              <span title="Open-Meteo weather fetch">weather <b className="text-white">{(timing.server.weather_ms / 1000).toFixed(1)}s</b></span>
+              <span title="Index computation on the server">compute <b className="text-white">{timing.server.pipeline_ms}ms</b></span>
+              <span title="Network + browser (round trip minus server compute)">network <b className="text-white">{Math.max(0, (timing.roundTripMs - timing.server.server_total_ms) / 1000).toFixed(1)}s</b></span>
+            </>
+          ) : (
+            <span title="Per-phase split only on the preview deploy; production has no timing yet">
+              api <b className="text-white">{(timing.roundTripMs / 1000).toFixed(1)}s</b>
+              <span className="text-slate-500"> (no server split — test on preview)</span>
+            </span>
+          )}
+          <span title="Apiary coordinate lookup (database)">coords <b className="text-white">{timing.coordMs}ms</b></span>
+          <span className="text-amber-400 shrink-0" title="Total from tap to chart">total <b>{((timing.coordMs + timing.roundTripMs) / 1000).toFixed(1)}s</b></span>
+        </div>
+      )}
 
       {/* Scrollable content */}
       <div ref={contentRef} className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">

@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, Hexagon, Camera } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
 import { SubTabBar } from '../../shared/components/SubTabBar';
+import { ExportInspectionSheet } from './ExportInspectionSheet';
 
 import {
   QUEEN_STATUS_OPTIONS,
@@ -138,8 +139,15 @@ export const InspectionFormView: React.FC = () => {
 
     let error;
     try {
-      if (selectedRecord) {
-        await updateInspection(selectedRecord.id, payload);
+      // Decide update-vs-create off inspectionId (durable local state), NOT
+      // selectedRecord — a navigation/popstate (e.g. bouncing to Photos & Voice
+      // and back) can clear selectedRecord in the global store. Every new
+      // inspection is already created up front by handleAddNew, so Save & Exit
+      // must UPDATE that record. Keying off selectedRecord meant a cleared
+      // record sent us down createInspection, spawning an empty duplicate and
+      // orphaning the photos/voice attached to the original inspection.
+      if (inspectionId) {
+        await updateInspection(inspectionId, payload);
       } else {
         await createInspection(payload);
       }
@@ -281,6 +289,23 @@ export const InspectionFormView: React.FC = () => {
               </span>
             )}
           </button>
+        )}
+
+        {/* Export / Share — available once the inspection has been saved (has an id) */}
+        {inspectionId && (
+          <ExportInspectionSheet
+            hiveId={selectedHiveId ?? undefined}
+            inspection={{
+              id: inspectionId,
+              timestamp: new Date(date + 'T12:00:00').toISOString(),
+              queen_status: queenStatus,
+              brood_pattern: broodPattern,
+              temperament,
+              honey_stores: honeyStores,
+              pollen_stores: pollenStores,
+              observations,
+            }}
+          />
         )}
 
         {/* Queen & Brood card */}

@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 
 export const BetaSignupView: React.FC = () => {
   const [email, setEmail] = useState('');
+  // Honeypot — a field real users never see; bots auto-fill it and the
+  // server quietly discards those submissions.
+  const [website, setWebsite] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -16,13 +20,15 @@ export const BetaSignupView: React.FC = () => {
     setError(null);
 
     try {
-      const apiUrl = import.meta.env.DEV ? '/api/beta' : 'https://beekeeper.beektools.com/api/beta';
+      const apiUrl = Capacitor.isNativePlatform()
+        ? 'https://beekeeper.beektools.com/api/beta'
+        : '/api/beta';
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, website }),
       });
 
       const data = await response.json();
@@ -79,6 +85,18 @@ export const BetaSignupView: React.FC = () => {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 relative z-10">
+            {/* Honeypot field — visually hidden and skipped by keyboard/screen
+                readers; anything typed here marks the submission as a bot. */}
+            <input
+              type="text"
+              name="website"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="absolute -left-[9999px] top-0 h-px w-px opacity-0 pointer-events-none"
+            />
             <p className="text-xs text-[var(--color-text-muted)] font-semibold leading-relaxed">
               Enter your Google Account email address. We will add your account to our approved tester list and notify you.
             </p>

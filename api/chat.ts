@@ -1,21 +1,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createClient } from '@supabase/supabase-js';
+import { applyCors, getAuthedUser } from './_lib.js';
 
 // Vercel Serverless Function signature:
 export default async function handler(req: any, res: any) {
-  // 1. CORS headers (in case of local testing / cross-origin)
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-  );
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  if (applyCors(req, res)) return;
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -30,26 +18,20 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
+    // Require a real signed-in user before doing any paid AI work.
+    const auth = await getAuthedUser(sessionToken);
+    if (!auth) {
+      res.status(401).json({ error: 'You must be signed in to use the AI assistant.' });
+      return;
+    }
+    const { supabase } = auth;
+
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     if (!apiKey) {
       console.error('Missing GOOGLE_GENERATIVE_AI_API_KEY');
       res.status(500).json({ error: 'AI Service is currently unavailable (Configuration Error).' });
       return;
     }
-
-    // Initialize user-scoped Supabase client securely using the passed session token
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
-    if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error("Missing Supabase configuration");
-    }
-
-    const options: any = {};
-    if (sessionToken) {
-      options.global = { headers: { Authorization: `Bearer ${sessionToken}` } };
-    }
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, options);
 
     // 1. Fetch Context: Apiary (Location)
     const { data: apiary, error: apiaryError } = await supabase
@@ -131,6 +113,7 @@ RULES:
       res.status(429).json({ error: 'The hive is busy (Rate Limit Reached). Please try again in a minute.' });
       return;
     }
-    res.status(500).json({ error: 'Failed to process request: ' + (error.message || 'Unknown error') });
+    // Details stay in the server logs — don't echo internals to the caller.
+    res.status(500).json({ error: 'Failed to process request. Please try again.' });
   }
 }

@@ -1,8 +1,15 @@
+import { applyCors, fetchFirstOk, getAuthedUser, getBearerToken, createRateLimiter, getClientIp, isNectarAuthGraceActive, sendUpdateRequired } from './_lib.js';
 import { fetchNDVI, NDVIRecord } from './ndvi-fetcher.js';
 import { computeBloomFactor, PlantProfileEntry } from '../src/features/nectar/bloomFactor.js';
 import { computeWeatherSuitability, WeatherSuitabilityInput } from '../src/features/nectar/weatherSuitability.js';
 import { computeNectarStatus, Apiary, DailyEnvironment } from '../src/features/nectar/engine.js';
 import { getRegionalProfile } from '../src/features/nectar/plantProfiles.js';
+
+// Anonymous nectar calls are only possible during the auth grace window (see
+// _lib). Rate-limit them to blunt scripted abuse of the paid Earth Engine /
+// weather work while old app builds age out. Generous: real users load a few
+// times a day, a script hits the cap fast.
+const nectarLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 20 });
 
 // Helper to filter out sudden spikes in NDVI (cloud shadow / sensor anomaly)
 function filterNDVIOutliers(records: NDVIRecord[]): NDVIRecord[] {
@@ -145,46 +152,39 @@ async function fetchOpenMeteoWeather(
   const archiveEnd = new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000); // 3 days ago
   const archiveEndStr = archiveEnd.toISOString().slice(0, 10);
   
+  const dailyVars = 'daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max';
+  const units = 'temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=auto';
+
   // 1. Fetch Archive
   let archiveData: OpenMeteoDaily | null = null;
-  let archiveErrorMsg = '';
-  try {
-    const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${startDateStr}&end_date=${archiveEndStr}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=auto`;
-    const res = await fetch(archiveUrl);
-    if (res.ok) {
-      const json = await res.json();
-      archiveData = json.daily;
-    } else {
-      archiveErrorMsg = `HTTP status ${res.status}`;
-    }
-  } catch (e: any) {
-    archiveErrorMsg = e.message || 'unknown network error';
+  const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${startDateStr}&end_date=${archiveEndStr}&${dailyVars}&${units}`;
+  const arch = await fetchFirstOk([archiveUrl], 12_000);
+  if (arch) {
+    const json = await arch.res.json();
+    archiveData = json.daily;
   }
 
-  if (!archiveData) {
-    throw new Error(`Open-Meteo Archive API failed to return data: ${archiveErrorMsg}`);
-  }
-
-  // 2. Fetch Forecast
+  // 2. Fetch recent/forecast window — primary Forecast API, then the
+  // separately-hosted auxiliary Historical Forecast API (same shape/data;
+  // stays up when the primary goes down, as in the 2026-07-03 outage).
   let forecastData: OpenMeteoDaily | null = null;
-  let forecastErrorMsg = '';
-  try {
-    const forecastStart = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000); // 6 days ago (overlap)
-    const forecastStartStr = forecastStart.toISOString().slice(0, 10);
-    const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&start_date=${forecastStartStr}&end_date=${endDateStr}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&temperature_unit=fahrenheit&precipitation_unit=inch&windspeed_unit=mph&timezone=auto`;
-    const res = await fetch(forecastUrl);
-    if (res.ok) {
-      const json = await res.json();
-      forecastData = json.daily;
-    } else {
-      forecastErrorMsg = `HTTP status ${res.status}`;
-    }
-  } catch (e: any) {
-    forecastErrorMsg = e.message || 'unknown network error';
+  const forecastStart = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000); // 6 days ago (overlap)
+  const forecastStartStr = forecastStart.toISOString().slice(0, 10);
+  const forecastPath = `/v1/forecast?latitude=${lat}&longitude=${lng}&start_date=${forecastStartStr}&end_date=${endDateStr}&${dailyVars}&${units}`;
+  const fc = await fetchFirstOk([
+    `https://api.open-meteo.com${forecastPath}`,
+    `https://historical-forecast-api.open-meteo.com${forecastPath}`,
+  ], 8_000);
+  if (fc) {
+    const json = await fc.res.json();
+    forecastData = json.daily;
   }
 
-  if (!forecastData) {
-    throw new Error(`Open-Meteo Forecast API failed to return data: ${forecastErrorMsg}`);
+  // Degrade instead of dying: either source alone is enough to compute the
+  // index (missing recent days just read slightly stale). Only give up when
+  // BOTH are unreachable.
+  if (!archiveData && !forecastData) {
+    throw new Error('All Open-Meteo weather services are unreachable right now. This is a temporary provider outage — please try again later.');
   }
 
   // Populate map with archive
@@ -247,18 +247,7 @@ function getAdjustedProfileForZone(
 }
 
 export default async function handler(req: any, res: any) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization'
-  );
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  if (applyCors(req, res)) return;
 
   if (req.method !== 'GET' && req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -266,6 +255,23 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    // Every request here triggers paid Earth Engine + weather work, so only
+    // signed-in users may call it. The token rides the Authorization header.
+    const auth = await getAuthedUser(getBearerToken(req));
+    if (!auth) {
+      // During the temporary grace window, let already-installed app builds
+      // (which don't yet send a token) through, but rate-limit those anonymous
+      // calls to blunt abuse. Once the window closes, tell them to update.
+      if (!isNectarAuthGraceActive()) {
+        sendUpdateRequired(res);
+        return;
+      }
+      if (nectarLimiter(getClientIp(req))) {
+        res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' });
+        return;
+      }
+    }
+
     const isGet = req.method === 'GET';
     const latRaw = isGet ? req.query.lat : req.body.lat;
     const lngRaw = isGet ? req.query.lng : req.body.lng;
@@ -288,22 +294,14 @@ export default async function handler(req: any, res: any) {
       ? parseFloat(cachedBaselineRaw)
       : null;
 
-    const isVerification = Math.abs(lat - 32.2226) < 0.01 && Math.abs(Math.abs(lng) - 110.9747) < 0.01;
-    let start, end;
-    if (isVerification) {
-      console.log('Verification apiary matched! Using historic date range: 2022-06-04 to 2023-02-09');
-      start = new Date('2022-06-04');
-      end = new Date('2023-02-09');
-    } else {
-      // Rolling 3-year baseline window: January 1 of three years prior, through
-      // today. (e.g. in 2026 -> 2023-01-01..today; in 2027 -> 2024-01-01..today.)
-      // Previously this start was hardcoded to '2023-01-01', so the window grew
-      // without bound every year.
-      const currentYear = new Date().getFullYear();
-      start = new Date(`${currentYear - 3}-01-01`);
-      end = new Date();
-      console.log(`Using rolling comparative date range: ${currentYear - 3}-01-01 to today`);
-    }
+    // Rolling 3-year baseline window: January 1 of three years prior, through
+    // today. (e.g. in 2026 -> 2023-01-01..today; in 2027 -> 2024-01-01..today.)
+    // Previously this start was hardcoded to '2023-01-01', so the window grew
+    // without bound every year.
+    const currentYear = new Date().getFullYear();
+    const start = new Date(`${currentYear - 3}-01-01`);
+    const end = new Date();
+    console.log(`Using rolling comparative date range: ${currentYear - 3}-01-01 to today`);
     const startDateStr = start.toISOString().slice(0, 10);
     const endDateStr = end.toISOString().slice(0, 10);
 
@@ -534,8 +532,10 @@ export default async function handler(req: any, res: any) {
     }
 
     // 5. Return complete response payload
+    // `private` (browser-only): a shared CDN cache would serve stored responses
+    // without ever seeing the sign-in check above.
     if (req.method === 'GET') {
-      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600');
+      res.setHeader('Cache-Control', 'private, max-age=3600, stale-while-revalidate=600');
     }
 
     res.status(200).json({

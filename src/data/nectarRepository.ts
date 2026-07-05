@@ -2,6 +2,8 @@
  * Data Access Repository for the Nectar Flow Index (NFI).
  * Manages fetching from the Vercel API and client-side localStorage caching.
  */
+import { Capacitor } from '@capacitor/core';
+import { supabase } from './supabase';
 
 export interface NectarIndexResponse {
   polygonId: string;
@@ -124,10 +126,11 @@ export async function fetchNectarIndex(
     localStorage.removeItem(baselineYearKey);
   }
 
-  // Setup API URL matching other features
-  const apiUrl = import.meta.env.DEV
-    ? '/api/nectar-index'
-    : 'https://beekeeper.beektools.com/api/nectar-index';
+  // Setup API URL matching other features: web is same-origin, only the
+  // packaged native app needs the absolute production host.
+  const apiUrl = Capacitor.isNativePlatform()
+    ? 'https://beekeeper.beektools.com/api/nectar-index'
+    : '/api/nectar-index';
 
   // Format coordinates to 4 decimal places (~11m precision) to maximize CDN cache hit rate
   const roundedLat = lat.toFixed(4);
@@ -147,11 +150,18 @@ export async function fetchNectarIndex(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s serverless timeout
 
+  // The endpoint requires a signed-in user (it triggers paid Earth Engine
+  // work) — pass the session token in the Authorization header.
+  const { data: { session } } = await supabase.auth.getSession();
+
   try {
     const response = await fetch(queryUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        ...(session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {}),
       },
       signal: controller.signal,
     });

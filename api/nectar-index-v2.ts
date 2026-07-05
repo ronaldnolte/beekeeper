@@ -1,5 +1,12 @@
+import { applyCors, getAuthedUser, getBearerToken, createRateLimiter, getClientIp, isNectarAuthGraceActive, sendUpdateRequired } from './_lib.js';
 import { fetchMultiBands } from './bands-fetcher.js';
 import { runV2Pipeline, Phase, WeatherDay } from './nectar-v2-engine.js';
+import { fetchFirstOk } from './_lib.js';
+
+// Anonymous nectar calls are only possible during the auth grace window (see
+// _lib). Rate-limit them to blunt scripted abuse of the paid Earth Engine /
+// weather work while old app builds age out.
+const nectarLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 20 });
 
 // Open-Meteo response shapes
 interface OMDaily {
@@ -12,12 +19,19 @@ interface OMHourly {
   dew_point_2m: (number | null)[];
 }
 
+interface WeatherV2Result {
+  days: Record<string, WeatherDay>;
+  /** Which host supplied the recent/forecast window (outage diagnostics). */
+  forecast_source: 'primary' | 'auxiliary' | 'none';
+  archive_ok: boolean;
+}
+
 async function fetchWeatherV2(
   lat: number,
   lng: number,
   startDate: string,
   endDate: string
-): Promise<Record<string, WeatherDay>> {
+): Promise<WeatherV2Result> {
   const today = new Date();
   const archiveEnd = new Date(today.getTime() - 3 * 86_400_000).toISOString().slice(0, 10);
   const recentStart = new Date(today.getTime() - 10 * 86_400_000).toISOString().slice(0, 10);
@@ -49,16 +63,30 @@ async function fetchWeatherV2(
   }
 
   const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?${base}&start_date=${startDate}&end_date=${archiveEnd}&${dailyVars}&${hourlyVars}`;
-  const forecastUrl = `https://api.open-meteo.com/v1/forecast?${base}&start_date=${recentStart}&end_date=${endDate}&${dailyVars}&${hourlyVars}`;
+  // Recent window: primary Forecast API, then Open-Meteo's separately-hosted
+  // auxiliary Historical Forecast API (same request/response shape, same model
+  // data, hours-stale at worst). Proven necessary 2026-07-03 when the primary
+  // went down while the auxiliary stayed at 100% uptime.
+  const forecastPath = `/v1/forecast?${base}&start_date=${recentStart}&end_date=${endDate}&${dailyVars}&${hourlyVars}`;
+  const forecastCandidates = [
+    `https://api.open-meteo.com${forecastPath}`,
+    `https://historical-forecast-api.open-meteo.com${forecastPath}`,
+  ];
 
-  const [archRes, fcRes] = await Promise.all([fetch(archiveUrl), fetch(forecastUrl)]);
-  if (archRes.ok) {
-    const j = await archRes.json();
+  // fetchFirstOk never rejects — a dead host degrades the data instead of
+  // killing the whole request (the old Promise.all([fetch, fetch]) did).
+  const [arch, fc] = await Promise.all([
+    fetchFirstOk([archiveUrl], 12_000),
+    fetchFirstOk(forecastCandidates, 8_000),
+  ]);
+
+  if (arch) {
+    const j = await arch.res.json();
     absorbDaily(j.daily ?? null);
     absorbHourlyDew(j.hourly ?? null);
   }
-  if (fcRes.ok) {
-    const j = await fcRes.json();
+  if (fc) {
+    const j = await fc.res.json();
     absorbDaily(j.daily ?? null);
     absorbHourlyDew(j.hourly ?? null);
   }
@@ -72,7 +100,11 @@ async function fetchWeatherV2(
       dew:  e._dn ? +(e._ds / e._dn).toFixed(2) : null,
     };
   }
-  return out;
+  return {
+    days: out,
+    forecast_source: fc ? (fc.url.includes('historical-forecast') ? 'auxiliary' : 'primary') : 'none',
+    archive_ok: !!arch,
+  };
 }
 
 function phaseToStatus(phase: Phase): 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low' {
@@ -101,14 +133,25 @@ function phaseToAdvice(phase: Phase): string {
 }
 
 export default async function handler(req: any, res: any) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+  if (applyCors(req, res)) return;
   if (req.method !== 'GET') { res.status(405).json({ error: 'Method not allowed' }); return; }
+
+  // Every request here triggers paid Earth Engine + weather work, so only
+  // signed-in users may call it. GET request — the token rides the header.
+  const auth = await getAuthedUser(getBearerToken(req));
+  if (!auth) {
+    // During the temporary grace window, let already-installed app builds
+    // (which don't yet send a token) through, but rate-limit those anonymous
+    // calls to blunt abuse. Once the window closes, tell them to update.
+    if (!isNectarAuthGraceActive()) {
+      sendUpdateRequired(res);
+      return;
+    }
+    if (nectarLimiter(getClientIp(req))) {
+      res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' });
+      return;
+    }
+  }
 
   const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw } = req.query;
   if (!latRaw || !lngRaw) {
@@ -130,19 +173,38 @@ export default async function handler(req: any, res: any) {
   const hasOverrides = Object.keys(paramOverrides).length > 0;
 
   try {
-    const startDate = '2023-01-01';
+    // Rolling 3-year comparative window: Jan 1 of three years ago through today.
+    // Previously hardcoded to '2023-01-01', which made the window — and thus the
+    // Earth Engine query and the response payload — grow without bound every year.
+    // Mirrors the same fix already applied to the V1 endpoint (api/nectar-index.ts).
+    const currentYear = new Date().getFullYear();
+    const startDate = `${currentYear - 3}-01-01`;
     const endDate = new Date().toISOString().slice(0, 10);
 
-    const [bands, weatherMap] = await Promise.all([
-      fetchMultiBands(lat, lng, startDate, endDate),
-      fetchWeatherV2(lat, lng, startDate, endDate),
+    // Per-phase timing so a slow load can be diagnosed. Only meaningful on a
+    // fresh (cache-bypassing) request — a CDN hit returns these numbers from the
+    // original computation, not the current call. Earth Engine and weather run
+    // in parallel, so each is timed independently to see which one dominates.
+    const t0 = Date.now();
+    const timed = async <T>(fn: () => Promise<T>): Promise<[T, number]> => {
+      const s = Date.now();
+      const r = await fn();
+      return [r, Date.now() - s];
+    };
+
+    const [[bands, earthEngineMs], [weather, weatherMs]] = await Promise.all([
+      timed(() => fetchMultiBands(lat, lng, startDate, endDate)),
+      timed(() => fetchWeatherV2(lat, lng, startDate, endDate)),
     ]);
 
     if (bands.length === 0) {
       throw new Error('Earth Engine returned no vegetation data for this location.');
     }
 
-    const result = runV2Pipeline(bands, weatherMap, lat, paramOverrides);
+    const pipeStart = Date.now();
+    const result = runV2Pipeline(bands, weather.days, lat, paramOverrides);
+    const pipelineMs = Date.now() - pipeStart;
+    const serverTotalMs = Date.now() - t0;
 
     const N = result.dates.length;
     if (N === 0) throw new Error('V2 pipeline produced no output.');
@@ -155,9 +217,11 @@ export default async function handler(req: any, res: any) {
     const trend_direction: 'rising' | 'falling' | 'flat' =
       latestSlope > 0.002 ? 'rising' : latestSlope < -0.002 ? 'falling' : 'flat';
 
-    // Skip CDN cache when params are being tuned so each combination is fresh
+    // Skip cache when params are being tuned so each combination is fresh.
+    // `private` (browser-only): a shared CDN cache would serve stored responses
+    // without ever seeing the sign-in check above.
     if (req.method === 'GET' && !hasOverrides) {
-      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600');
+      res.setHeader('Cache-Control', 'private, max-age=3600, stale-while-revalidate=600');
     }
 
     res.status(200).json({
@@ -169,6 +233,20 @@ export default async function handler(req: any, res: any) {
       slope: latestSlope,
       v2: result.latest,
       full_history: result.history,
+      _timing: {
+        earth_engine_ms: earthEngineMs,
+        weather_ms: weatherMs,
+        pipeline_ms: pipelineMs,
+        server_total_ms: serverTotalMs,
+        satellite_observations: bands.length,
+      },
+      // Which weather host served the recent window: 'primary' (Forecast API),
+      // 'auxiliary' (Historical Forecast failover), or 'none' (both down —
+      // computed from archive data only).
+      weather_status: {
+        forecast_source: weather.forecast_source,
+        archive_ok: weather.archive_ok,
+      },
       _debug: { satellite_observations: bands.length, daily_points: N, params: hasOverrides ? paramOverrides : undefined },
     });
   } catch (error: any) {
