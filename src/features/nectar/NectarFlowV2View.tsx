@@ -5,6 +5,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
+import { supabase } from '../../data/supabase';
 import {
   MapPin,
   TrendingUp,
@@ -174,8 +175,16 @@ export const NectarFlowV2View: React.FC = () => {
         const apiBase = Capacitor.isNativePlatform()
           ? 'https://beekeeper.beektools.com/api/nectar-index-v2'
           : '/api/nectar-index-v2';
+        // The endpoint requires a signed-in user (it triggers paid Earth
+        // Engine work) — pass the session token in the Authorization header.
+        const { data: { session } } = await supabase.auth.getSession();
         const fetchStart = performance.now();
-        const res = await fetch(`${apiBase}?${params}`, { signal: controller.signal });
+        const res = await fetch(`${apiBase}?${params}`, {
+          signal: controller.signal,
+          headers: session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : undefined,
+        });
         if (!res.ok) {
           const t = await res.text();
           throw new Error(t || `API error ${res.status}`);

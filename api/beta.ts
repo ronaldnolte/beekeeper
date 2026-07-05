@@ -1,11 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
-import { applyCors, escapeHtml, getResendKey } from './_lib.js';
+import { applyCors, escapeHtml, getResendKey, createRateLimiter, getClientIp } from './_lib.js';
 
 // Public closed-beta signup. Deliberately unauthenticated (it's the signup
 // form), so it must never reveal whether an address is already registered and
 // must never run with baked-in credentials.
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+// Every accepted request sends two real emails, so a burst is the abuse to
+// stop: at most 3 submissions per 10 minutes per IP (best-effort, in-memory).
+const betaLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 3 });
 
 // Vercel Serverless Function signature:
 export default async function handler(req: any, res: any) {
@@ -17,7 +21,19 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { email } = req.body;
+    const { email, website } = req.body;
+
+    // Honeypot: `website` is a hidden field real users never see. Bots that
+    // auto-fill every field give themselves away — claim success, do nothing.
+    if (typeof website === 'string' && website.trim() !== '') {
+      res.status(200).json({ success: true });
+      return;
+    }
+
+    if (betaLimiter(getClientIp(req))) {
+      res.status(429).json({ error: 'Too many signup attempts. Please wait a few minutes and try again.' });
+      return;
+    }
 
     if (!email || typeof email !== 'string' || !EMAIL_RE.test(email.trim()) || email.length > 254) {
       res.status(400).json({ error: 'Valid email address is required' });

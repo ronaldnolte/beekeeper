@@ -3,6 +3,7 @@
  * Manages fetching from the Vercel API and client-side localStorage caching.
  */
 import { Capacitor } from '@capacitor/core';
+import { supabase } from './supabase';
 
 export interface NectarIndexResponse {
   polygonId: string;
@@ -149,11 +150,18 @@ export async function fetchNectarIndex(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s serverless timeout
 
+  // The endpoint requires a signed-in user (it triggers paid Earth Engine
+  // work) — pass the session token in the Authorization header.
+  const { data: { session } } = await supabase.auth.getSession();
+
   try {
     const response = await fetch(queryUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        ...(session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {}),
       },
       signal: controller.signal,
     });

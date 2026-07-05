@@ -15,16 +15,11 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    // Dev-only proxy. Rules match by string prefix, first match wins, so order
-    // matters: '/api/nectar-index-v2' MUST come before '/api/nectar-index' or the
-    // V1 shim rule swallows it (the v2 path starts with the v1 path) and it
-    // ECONNREFUSEs on :3001. V2 has no local shim — it hits the deployed function.
+    // Dev-only proxy. Both nectar routes go to the local shim
+    // (local-api-server.js on :3001) — they require a signed-in user, and only
+    // the shim validates tokens against the same dev database the browser
+    // session came from; the deployed prod function would reject dev tokens.
     proxy: {
-      '/api/nectar-index-v2': {
-        target: 'https://beekeeper.beektools.com',
-        changeOrigin: true,
-        secure: false,
-      },
       '/api/nectar-index': {
         target: 'http://localhost:3001',
         changeOrigin: true,

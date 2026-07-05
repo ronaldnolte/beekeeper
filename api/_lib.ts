@@ -67,6 +67,82 @@ export async function getAuthedUser(
   return { user: data.user, supabase };
 }
 
+/**
+ * Pull the session token out of an `Authorization: Bearer <token>` header.
+ * Used by the GET endpoints (the POST ones carry the token in the body).
+ */
+export function getBearerToken(req: any): string | null {
+  const header = req.headers?.authorization;
+  if (typeof header !== 'string') return null;
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  return match ? match[1] : null;
+}
+
+/** The real client IP from Vercel's forwarding headers (first hop wins). */
+export function getClientIp(req: any): string {
+  return String(req.headers?.['x-forwarded-for'] || req.headers?.['x-real-ip'] || 'unknown')
+    .split(',')[0]
+    .trim();
+}
+
+/**
+ * Simple in-memory sliding-window rate limiter. State lives only in this
+ * serverless instance — it resets on a cold start and isn't shared across
+ * parallel instances, so it blunts burst scripts rather than enforcing a hard
+ * global cap. Deliberate trade-off to avoid a database round-trip. Returns a
+ * function that records a hit for `key` and reports whether it's now limited.
+ */
+export function createRateLimiter(opts: { windowMs: number; max: number }) {
+  const hits = new Map<string, number[]>();
+  return function isRateLimited(key: string): boolean {
+    const now = Date.now();
+    const recent = (hits.get(key) ?? []).filter((t) => t > now - opts.windowMs);
+    if (recent.length >= opts.max) {
+      hits.set(key, recent);
+      return true;
+    }
+    recent.push(now);
+    hits.set(key, recent);
+    // Bound memory if someone rotates through many keys.
+    if (hits.size > 5000) {
+      for (const k of hits.keys()) {
+        if (hits.size <= 2500) break;
+        hits.delete(k);
+      }
+    }
+    return false;
+  };
+}
+
+/**
+ * Temporary grace window for the nectar endpoints' new sign-in requirement.
+ * While active, anonymous (un-authenticated) requests are let through so
+ * already-installed app builds that don't yet send a session token keep
+ * working. Controlled by the NECTAR_AUTH_GRACE_UNTIL env var (an ISO date or
+ * datetime); unset, unparseable, or past ⇒ inactive ⇒ auth strictly required.
+ * Remove this and its callers once old builds have aged out.
+ */
+export function isNectarAuthGraceActive(): boolean {
+  const until = process.env.NECTAR_AUTH_GRACE_UNTIL;
+  if (!until) return false;
+  const deadline = Date.parse(until);
+  if (isNaN(deadline)) return false;
+  return Date.now() < deadline;
+}
+
+// Shown when the nectar auth grace has ended and a caller still has no valid
+// session — almost always an old app build that never sent a token. Kept as
+// plain text (not JSON) because the installed Nectar view renders the raw
+// response body as its on-screen error, so this reads as a clean instruction.
+export const NECTAR_UPDATE_REQUIRED_MSG =
+  'Please update Beekeeper to the latest version (open Google Play and update) to keep using Nectar Flow.';
+
+/** Send the "update required" instruction as plain text (see the note above). */
+export function sendUpdateRequired(res: any): void {
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.status(401).end(NECTAR_UPDATE_REQUIRED_MSG);
+}
+
 /** Escape a string for safe interpolation into email/notification HTML. */
 export function escapeHtml(value: unknown): string {
   return String(value ?? '')

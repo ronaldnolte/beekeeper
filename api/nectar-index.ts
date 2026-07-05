@@ -1,9 +1,15 @@
-import { applyCors, fetchFirstOk } from './_lib.js';
+import { applyCors, fetchFirstOk, getAuthedUser, getBearerToken, createRateLimiter, getClientIp, isNectarAuthGraceActive, sendUpdateRequired } from './_lib.js';
 import { fetchNDVI, NDVIRecord } from './ndvi-fetcher.js';
 import { computeBloomFactor, PlantProfileEntry } from '../src/features/nectar/bloomFactor.js';
 import { computeWeatherSuitability, WeatherSuitabilityInput } from '../src/features/nectar/weatherSuitability.js';
 import { computeNectarStatus, Apiary, DailyEnvironment } from '../src/features/nectar/engine.js';
 import { getRegionalProfile } from '../src/features/nectar/plantProfiles.js';
+
+// Anonymous nectar calls are only possible during the auth grace window (see
+// _lib). Rate-limit them to blunt scripted abuse of the paid Earth Engine /
+// weather work while old app builds age out. Generous: real users load a few
+// times a day, a script hits the cap fast.
+const nectarLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 20 });
 
 // Helper to filter out sudden spikes in NDVI (cloud shadow / sensor anomaly)
 function filterNDVIOutliers(records: NDVIRecord[]): NDVIRecord[] {
@@ -249,6 +255,23 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    // Every request here triggers paid Earth Engine + weather work, so only
+    // signed-in users may call it. The token rides the Authorization header.
+    const auth = await getAuthedUser(getBearerToken(req));
+    if (!auth) {
+      // During the temporary grace window, let already-installed app builds
+      // (which don't yet send a token) through, but rate-limit those anonymous
+      // calls to blunt abuse. Once the window closes, tell them to update.
+      if (!isNectarAuthGraceActive()) {
+        sendUpdateRequired(res);
+        return;
+      }
+      if (nectarLimiter(getClientIp(req))) {
+        res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' });
+        return;
+      }
+    }
+
     const isGet = req.method === 'GET';
     const latRaw = isGet ? req.query.lat : req.body.lat;
     const lngRaw = isGet ? req.query.lng : req.body.lng;
@@ -509,8 +532,10 @@ export default async function handler(req: any, res: any) {
     }
 
     // 5. Return complete response payload
+    // `private` (browser-only): a shared CDN cache would serve stored responses
+    // without ever seeing the sign-in check above.
     if (req.method === 'GET') {
-      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600');
+      res.setHeader('Cache-Control', 'private, max-age=3600, stale-while-revalidate=600');
     }
 
     res.status(200).json({

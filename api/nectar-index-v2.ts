@@ -1,7 +1,12 @@
-import { applyCors } from './_lib.js';
+import { applyCors, getAuthedUser, getBearerToken, createRateLimiter, getClientIp, isNectarAuthGraceActive, sendUpdateRequired } from './_lib.js';
 import { fetchMultiBands } from './bands-fetcher.js';
 import { runV2Pipeline, Phase, WeatherDay } from './nectar-v2-engine.js';
 import { fetchFirstOk } from './_lib.js';
+
+// Anonymous nectar calls are only possible during the auth grace window (see
+// _lib). Rate-limit them to blunt scripted abuse of the paid Earth Engine /
+// weather work while old app builds age out.
+const nectarLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 20 });
 
 // Open-Meteo response shapes
 interface OMDaily {
@@ -131,6 +136,23 @@ export default async function handler(req: any, res: any) {
   if (applyCors(req, res)) return;
   if (req.method !== 'GET') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
+  // Every request here triggers paid Earth Engine + weather work, so only
+  // signed-in users may call it. GET request — the token rides the header.
+  const auth = await getAuthedUser(getBearerToken(req));
+  if (!auth) {
+    // During the temporary grace window, let already-installed app builds
+    // (which don't yet send a token) through, but rate-limit those anonymous
+    // calls to blunt abuse. Once the window closes, tell them to update.
+    if (!isNectarAuthGraceActive()) {
+      sendUpdateRequired(res);
+      return;
+    }
+    if (nectarLimiter(getClientIp(req))) {
+      res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' });
+      return;
+    }
+  }
+
   const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw } = req.query;
   if (!latRaw || !lngRaw) {
     res.status(400).json({ error: 'lat and lng are required' });
@@ -195,9 +217,11 @@ export default async function handler(req: any, res: any) {
     const trend_direction: 'rising' | 'falling' | 'flat' =
       latestSlope > 0.002 ? 'rising' : latestSlope < -0.002 ? 'falling' : 'flat';
 
-    // Skip CDN cache when params are being tuned so each combination is fresh
+    // Skip cache when params are being tuned so each combination is fresh.
+    // `private` (browser-only): a shared CDN cache would serve stored responses
+    // without ever seeing the sign-in check above.
     if (req.method === 'GET' && !hasOverrides) {
-      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600');
+      res.setHeader('Cache-Control', 'private, max-age=3600, stale-while-revalidate=600');
     }
 
     res.status(200).json({
