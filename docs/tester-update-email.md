@@ -16,8 +16,15 @@ I've just shipped a small security update. To keep the **Nectar Flow** screen
 working, please **update the app within the next 2–3 days**:
 
 1. Open the **Google Play** app on your phone.
-2. Search for **Beekeeper** (or open it from *Manage apps & device → Updates*).
-3. Tap **Update**. You should see version **1.5.25**.
+2. Tap your **profile icon** (top-right) → **Manage apps & device** →
+   **Updates available**.
+3. Find **BeekTools Beekeeper** in the list and tap **Update**. You should see
+   version **1.5.25**.
+
+If **BeekTools Beekeeper** isn't in the updates list, it has probably already
+auto-updated — you're all set. (Because this is a testing build, searching for
+it in the Play Store won't reliably find it, so please use the Updates list
+above rather than search.)
 
 Everything else keeps working as normal in the meantime. If you don't update in
 time, the Nectar Flow screen will show a reminder to update — updating fixes it
