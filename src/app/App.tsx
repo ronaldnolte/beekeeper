@@ -15,6 +15,7 @@ import { VarroaFormView } from '../features/varroa/VarroaFormView';
 import { StatusUpdateView } from '../features/inspection/StatusUpdateView';
 import { UpdatePasswordView } from '../features/auth/UpdatePasswordView';
 import { FeedbackModal } from '../features/feedback/FeedbackModal';
+import { WhatsNewModal } from '../features/whatsnew/WhatsNewModal';
 import { TaskFormModal } from '../features/tasks/TaskFormModal';
 import { DashboardView } from '../features/dashboard/DashboardView';
 import { BottomNavBar } from './BottomNavBar';
@@ -224,6 +225,7 @@ function App() {
 
       {/* Global Modals */}
       <FeedbackModal />
+      <WhatsNewModal />
 
       {/* Dark background bar under the system navigation buttons */}
       <div 
