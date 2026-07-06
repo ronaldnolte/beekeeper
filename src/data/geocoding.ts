@@ -56,3 +56,43 @@ export async function resolveApiaryCoords(
 
   throw new Error('Apiary has no location data (no lat/lng or zip code).');
 }
+
+export interface GeocodeResult {
+  lat: number;
+  lng: number;
+  label: string;
+}
+
+/**
+ * Free-text place search (zip code or town/city name) via Open-Meteo's
+ * geocoding API — the same free, no-key service used to resolve apiary zip
+ * codes above. Returns the top match, or null if nothing was found.
+ * Resolves places and postal codes, NOT full street addresses.
+ */
+export async function geocodePlace(query: string): Promise<GeocodeResult | null> {
+  const q = query.trim();
+  if (!q) return null;
+
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en&format=json`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) throw new Error(`Search service returned status ${res.status}`);
+
+    const data = await res.json();
+    const r = data.results?.[0];
+    if (!r) return null;
+
+    const label = [r.name, r.admin1, r.country].filter(Boolean).join(', ');
+    return { lat: r.latitude, lng: r.longitude, label };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Search timed out. Please check your connection.');
+    }
+    throw err;
+  }
+}

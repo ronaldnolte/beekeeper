@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { X, Check, Layers, LocateFixed, MapPin } from 'lucide-react';
+import { X, Check, Layers, LocateFixed, MapPin, Search } from 'lucide-react';
+import { geocodePlace } from '../../data/geocoding';
 
 interface Props {
   initialLat?: number | null;
@@ -36,6 +37,9 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
   const [isSatellite, setIsSatellite] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchMsg, setSearchMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -87,6 +91,26 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
     setIsSatellite((v) => !v);
   };
 
+  const handleSearch = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const q = query.trim();
+    if (!q || searching) return;
+    setSearching(true);
+    setSearchMsg(null);
+    try {
+      const result = await geocodePlace(q);
+      if (!result) {
+        setSearchMsg(`No match for "${q}". Try a zip code or town name.`);
+      } else {
+        mapRef.current?.setView([result.lat, result.lng], PLACE_ZOOM);
+      }
+    } catch (err: any) {
+      setSearchMsg(err.message || 'Search failed. Please try again.');
+    } finally {
+      setSearching(false);
+    }
+  };
+
   const locateMe = () => {
     if (!('geolocation' in navigator)) {
       setLocateError('Location is not available on this device.');
@@ -113,20 +137,43 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
       <div className="relative flex-1 min-h-0">
         <div ref={containerRef} className="absolute inset-0 bg-[var(--color-bg-raised)]" />
 
-        {/* Top bar (floats over the map) */}
-        <div className="absolute top-0 left-0 right-0 p-3 flex items-center gap-2 pointer-events-none z-[1000]">
+        {/* Top bar (floats over the map): close + place search */}
+        <div className="absolute top-0 left-0 right-0 p-3 flex items-center gap-2 z-[1000]">
           <button
             type="button"
             onClick={onClose}
             aria-label="Close map"
-            className="pointer-events-auto w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center active:scale-95 transition-transform"
+            className="shrink-0 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center active:scale-95 transition-transform"
           >
             <X size={20} className="text-[var(--color-text)]" />
           </button>
-          <div className="bg-black/45 text-white text-sm font-bold px-3.5 py-2 rounded-full">
-            Set apiary location
-          </div>
+          <form
+            onSubmit={handleSearch}
+            className="flex-1 flex items-center gap-1.5 bg-white rounded-full shadow-md pl-3.5 pr-1.5 py-1.5"
+          >
+            <Search size={18} className="shrink-0 text-[var(--color-text-muted)]" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Zip code or town"
+              enterKeyHint="search"
+              className="flex-1 min-w-0 bg-transparent outline-none text-sm font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)]"
+            />
+            <button
+              type="submit"
+              disabled={!query.trim() || searching}
+              className="shrink-0 text-sm font-black text-[var(--color-primary)] px-3 py-1.5 rounded-full disabled:opacity-40 active:scale-95 transition-transform"
+            >
+              {searching ? '…' : 'Go'}
+            </button>
+          </form>
         </div>
+
+        {searchMsg && (
+          <div className="absolute top-[68px] left-3 right-3 z-[1000] bg-black/60 text-white text-xs font-medium px-3 py-2 rounded-lg">
+            {searchMsg}
+          </div>
+        )}
 
         {/* Right-side controls */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-2.5 z-[1000]">
