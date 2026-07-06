@@ -3,6 +3,8 @@
  * Resolves an apiary's coordinates from lat/lng or zip code.
  * Deduplicates the pattern previously copy-pasted in 4+ files.
  */
+import { Capacitor } from '@capacitor/core';
+import { supabase } from './supabase';
 
 interface ApiaryLocation {
   latitude?: number | null;
@@ -64,30 +66,35 @@ export interface GeocodeResult {
 }
 
 /**
- * Free-text place search (zip code or town/city name) via Open-Meteo's
- * geocoding API — the same free, no-key service used to resolve apiary zip
- * codes above. Returns the top match, or null if nothing was found.
- * Resolves places and postal codes, NOT full street addresses.
+ * Address / place search for the map picker. Calls our own `/api/geocode`
+ * endpoint, which proxies Google Geocoding server-side (full street addresses)
+ * and falls back to Open-Meteo place/postal search when no Google key is set.
+ * Returns up to 5 matches for the user to pick from. Requires a signed-in
+ * session (the endpoint gates the paid call), so we send the access token.
  */
-export async function geocodePlace(query: string): Promise<GeocodeResult | null> {
+export async function searchPlaces(query: string): Promise<GeocodeResult[]> {
   const q = query.trim();
-  if (!q) return null;
+  if (!q) return [];
 
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en&format=json`;
+  const { data: { session } } = await supabase.auth.getSession();
+  const base = Capacitor.isNativePlatform()
+    ? 'https://beekeeper.beektools.com/api/geocode'
+    : '/api/geocode';
+
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
 
   try {
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(`${base}?q=${encodeURIComponent(q)}`, {
+      signal: controller.signal,
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+    });
     clearTimeout(timeoutId);
-    if (!res.ok) throw new Error(`Search service returned status ${res.status}`);
-
+    if (!res.ok) {
+      throw new Error(res.status === 401 ? 'Please sign in to search.' : `Search failed (${res.status}).`);
+    }
     const data = await res.json();
-    const r = data.results?.[0];
-    if (!r) return null;
-
-    const label = [r.name, r.admin1, r.country].filter(Boolean).join(', ');
-    return { lat: r.latitude, lng: r.longitude, label };
+    return Array.isArray(data.results) ? (data.results as GeocodeResult[]) : [];
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {

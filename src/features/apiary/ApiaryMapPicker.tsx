@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { X, Check, Layers, LocateFixed, MapPin, Search, Plus, Minus } from 'lucide-react';
-import { geocodePlace } from '../../data/geocoding';
+import { searchPlaces, type GeocodeResult } from '../../data/geocoding';
 
 interface Props {
   initialLat?: number | null;
@@ -40,6 +40,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
   const [query, setQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [searchMsg, setSearchMsg] = useState<string | null>(null);
+  const [results, setResults] = useState<GeocodeResult[]>([]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -72,6 +73,8 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
       setCenter([c.lat, c.lng]);
     };
     map.on('move', sync);
+    // Dragging the map means the user is done with the search list.
+    map.on('dragstart', () => setResults([]));
 
     // The modal animates in; make sure Leaflet measures the final size.
     const t = setTimeout(() => map.invalidateSize(), 120);
@@ -103,18 +106,28 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
     if (!q || searching) return;
     setSearching(true);
     setSearchMsg(null);
+    setResults([]);
     try {
-      const result = await geocodePlace(q);
-      if (!result) {
-        setSearchMsg(`No match for "${q}". Try a zip code or town name.`);
+      const found = await searchPlaces(q);
+      if (found.length === 0) {
+        setSearchMsg(`No match for "${q}".`);
+      } else if (found.length === 1) {
+        pickResult(found[0]);
       } else {
-        mapRef.current?.setView([result.lat, result.lng], PLACE_ZOOM);
+        setResults(found);
       }
     } catch (err: any) {
       setSearchMsg(err.message || 'Search failed. Please try again.');
     } finally {
       setSearching(false);
     }
+  };
+
+  const pickResult = (r: GeocodeResult) => {
+    mapRef.current?.setView([r.lat, r.lng], PLACE_ZOOM);
+    setResults([]);
+    setSearchMsg(null);
+    setQuery(r.label);
   };
 
   const zoomIn = () => mapRef.current?.zoomIn();
@@ -164,7 +177,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Zip code or town"
+              placeholder="Address, zip, or place"
               enterKeyHint="search"
               className="flex-1 min-w-0 bg-transparent outline-none text-sm font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)]"
             />
@@ -181,6 +194,22 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
         {searchMsg && (
           <div className="absolute top-[68px] left-3 right-3 z-[1000] bg-black/60 text-white text-xs font-medium px-3 py-2 rounded-lg">
             {searchMsg}
+          </div>
+        )}
+
+        {results.length > 0 && (
+          <div className="absolute top-[68px] left-3 right-3 z-[1001] bg-white rounded-2xl shadow-xl overflow-hidden max-h-[244px] overflow-y-auto custom-scrollbar">
+            {results.map((r, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => pickResult(r)}
+                className="w-full flex items-start gap-2.5 text-left px-4 py-3 border-b border-[var(--color-card-border)] last:border-b-0 active:bg-black/5 transition-colors"
+              >
+                <MapPin size={16} className="shrink-0 mt-0.5 text-[var(--color-primary)]" />
+                <span className="text-sm font-bold text-[var(--color-text)] leading-snug">{r.label}</span>
+              </button>
+            ))}
           </div>
         )}
 
