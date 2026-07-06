@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, X, MapPin } from 'lucide-react';
 import { createApiary, updateApiary, deleteApiaryWithCascade } from '../../data/apiaryRepository';
+
+// Lazy-loaded so Leaflet (and its tiles) only load when the picker is opened.
+const ApiaryMapPicker = lazy(() =>
+  import('./ApiaryMapPicker').then((m) => ({ default: m.ApiaryMapPicker }))
+);
 
 export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
   const { user, isApiaryFormOpen, editingApiary, setApiaryFormOpen } = useAppStore();
@@ -14,6 +19,7 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   useEffect(() => {
     if (isApiaryFormOpen) {
@@ -188,6 +194,14 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
               </button>
             </div>
 
+            <button
+              type="button"
+              onClick={() => setShowMapPicker(true)}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-[var(--color-primary)]/40 text-[var(--color-primary)] font-bold hover:bg-[var(--color-primary)]/5 active:scale-[0.98] transition-all"
+            >
+              <MapPin size={18} /> Pick on map
+            </button>
+
             {locationMode === 'zip' ? (
               <input
                 type="text"
@@ -272,6 +286,22 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
           </div>
         </form>
       </div>
+
+      {showMapPicker && (
+        <Suspense fallback={null}>
+          <ApiaryMapPicker
+            initialLat={latitude ? parseFloat(latitude) : null}
+            initialLng={longitude ? parseFloat(longitude) : null}
+            onClose={() => setShowMapPicker(false)}
+            onConfirm={(lat, lng) => {
+              setLocationMode('coords');
+              setLatitude(String(lat));
+              setLongitude(String(lng));
+              setShowMapPicker(false);
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
