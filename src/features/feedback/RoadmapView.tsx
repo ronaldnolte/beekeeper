@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchFeatureRequests, submitFeatureRequest, voteOnFeature } from '../../data/feedbackRepository';
+import { fetchFeatureRequests, submitFeatureRequest, voteOnFeature, updateFeatureStatus } from '../../data/feedbackRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { Lightbulb, Send, X, Triangle, CheckCircle, Clock, LayoutDashboard } from 'lucide-react';
 
@@ -14,8 +14,11 @@ interface FeatureRequest {
   is_voted_by_me: boolean;
 }
 
+const STATUS_OPTIONS = ['pending', 'planned', 'completed'] as const;
+
 export const RoadmapView: React.FC = () => {
-  const { user, goBack } = useAppStore();
+  const { user, goBack, hasRole } = useAppStore();
+  const isAdmin = hasRole('admin');
   const [features, setFeatures] = useState<FeatureRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitModalOpen, setSubmitModalOpen] = useState(false);
@@ -70,6 +73,19 @@ export const RoadmapView: React.FC = () => {
     } catch (error) {
       console.error('Vote failed:', error);
       fetchFeatures(); // Revert on failure
+    }
+  };
+
+  const handleSetStatus = async (featureId: string, status: string) => {
+    const previous = features;
+    // Optimistic update
+    setFeatures(prev => prev.map(f => (f.id === featureId ? { ...f, status } : f)));
+    try {
+      await updateFeatureStatus(featureId, status);
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      setFeatures(previous); // revert
+      alert('Could not update status — your admin permission may not be set up yet.');
     }
   };
 
@@ -172,6 +188,25 @@ export const RoadmapView: React.FC = () => {
                   <p className="text-[var(--color-text-muted)] text-sm font-medium whitespace-pre-line leading-relaxed">
                     {feature.description}
                   </p>
+
+                  {isAdmin && (
+                    <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text-muted)] mr-1">Admin · set:</span>
+                      {STATUS_OPTIONS.map(s => (
+                        <button
+                          key={s}
+                          onClick={() => handleSetStatus(feature.id, s)}
+                          className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border transition-colors active:scale-95 ${
+                            feature.status === s
+                              ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
+                              : 'bg-[var(--color-bg-raised)] text-[var(--color-text-muted)] border-[var(--color-card-border)] hover:border-[var(--color-primary)]'
+                          }`}
+                        >
+                          {s === 'completed' ? 'Done' : s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
