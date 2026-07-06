@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { X, Camera, Mic, Download, ShieldCheck, Sparkles } from 'lucide-react';
+import { X, Camera, Mic, Download, MapPin, Sparkles } from 'lucide-react';
 
 // Bump this string whenever there's new content worth announcing. Anyone whose
 // stored value doesn't match sees the modal once, then it's marked as read.
 // Kept as a content id (not the app version) so a release with nothing
 // user-facing to say doesn't have to trigger the popup.
-export const WHATS_NEW_VERSION = '2026-07-photos-voice-export';
+export const WHATS_NEW_VERSION = '2026-07-map-location-picker';
 const SEEN_KEY = 'beek_whats_new_seen';
 
 // One-time "What's New" modal. Self-managing: on mount it checks localStorage
@@ -70,6 +70,11 @@ export const WhatsNewModal: React.FC = () => {
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-4 text-sm custom-scrollbar">
           <Feature
+            icon={<MapPin size={20} />}
+            title="Set your apiary location on a map"
+            body="Adding or editing an apiary? You can now drop a pin on a map to set the exact spot — search an address or town, switch to the satellite view to find the tree line, and confirm. No more looking up coordinates."
+          />
+          <Feature
             icon={<><Camera size={20} /><Mic size={20} /></>}
             title="Photos & voice notes on inspections"
             body="You can now attach photos and voice notes to any inspection. Snap a picture of brood, queen cells, or anything you want to remember — or record a quick voice note instead of typing it all out. Look for the camera and microphone on the inspection screen."
@@ -79,12 +84,6 @@ export const WhatsNewModal: React.FC = () => {
             title="Export your records for safe keeping"
             body="Save any inspection as a PDF report, and export your photos to your device. It's a great way to keep your own backup of your records and images — for safe keeping, or to share them."
           />
-          <Feature
-            icon={<ShieldCheck size={20} />}
-            title="Behind the scenes"
-            body="We've also made a round of security and reliability improvements across the app."
-          />
-
           {/* Testers on the packaged Android build — nudge them to stay current.
               Hidden on web/PWA, which is always up to date automatically. */}
           {Capacitor.isNativePlatform() && (
