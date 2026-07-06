@@ -179,6 +179,20 @@ export async function submitFeatureRequest(data: {
   if (error) throw error;
 }
 
+/**
+ * Admin-only: update a feature request's status (e.g. pending → completed).
+ * The UI only exposes this to admins, but the real gate is the RLS policy on
+ * feature_requests that permits UPDATE only when public.is_admin() — a
+ * non-admin call is rejected by the database, so this fails safe.
+ */
+export async function updateFeatureStatus(featureId: string, status: string) {
+  const { error } = await supabase
+    .from('feature_requests')
+    .update({ status })
+    .eq('id', featureId);
+  if (error) throw error;
+}
+
 export async function voteOnFeature(
   featureId: string,
   userId: string,
