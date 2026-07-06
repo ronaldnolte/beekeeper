@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { X, Check, Layers, LocateFixed, MapPin, Search } from 'lucide-react';
+import { X, Check, Layers, LocateFixed, MapPin, Search, Plus, Minus } from 'lucide-react';
 import { geocodePlace } from '../../data/geocoding';
 
 interface Props {
@@ -48,6 +48,12 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
       center: hasInitial ? [initialLat as number, initialLng as number] : DEFAULT_CENTER,
       zoom: hasInitial ? PLACE_ZOOM : DEFAULT_ZOOM,
       zoomControl: false,
+      // Calmer wheel zoom: 'center' keeps the fixed pin's target under the pin
+      // while zooming, and a higher px-per-level stops one notch jumping several
+      // levels (Leaflet's default of 60 over-reacts on many mice/trackpads).
+      scrollWheelZoom: 'center',
+      wheelPxPerZoomLevel: 140,
+      wheelDebounceTime: 60,
     });
     mapRef.current = map;
 
@@ -110,6 +116,9 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
       setSearching(false);
     }
   };
+
+  const zoomIn = () => mapRef.current?.zoomIn();
+  const zoomOut = () => mapRef.current?.zoomOut();
 
   const locateMe = () => {
     if (!('geolocation' in navigator)) {
@@ -177,6 +186,26 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
 
         {/* Right-side controls */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-2.5 z-[1000]">
+          {/* Precise +/- zoom (one level per tap) */}
+          <div className="rounded-xl bg-white shadow-md overflow-hidden flex flex-col">
+            <button
+              type="button"
+              onClick={zoomIn}
+              aria-label="Zoom in"
+              className="w-11 h-11 flex items-center justify-center text-[var(--color-text)] active:bg-black/5 transition-colors"
+            >
+              <Plus size={20} />
+            </button>
+            <div className="h-px bg-[var(--color-card-border)]" />
+            <button
+              type="button"
+              onClick={zoomOut}
+              aria-label="Zoom out"
+              className="w-11 h-11 flex items-center justify-center text-[var(--color-text)] active:bg-black/5 transition-colors"
+            >
+              <Minus size={20} />
+            </button>
+          </div>
           <button
             type="button"
             onClick={toggleSatellite}
