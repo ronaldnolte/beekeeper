@@ -193,6 +193,35 @@ export async function updateFeatureStatus(featureId: string, status: string) {
   if (error) throw error;
 }
 
+/**
+ * Admin-only: fix a request's title/description (typos, inappropriate wording).
+ * Enforced by the same admin UPDATE policy as updateFeatureStatus.
+ */
+export async function updateFeatureText(
+  featureId: string,
+  title: string,
+  description: string
+) {
+  const { error } = await supabase
+    .from('feature_requests')
+    .update({ title, description })
+    .eq('id', featureId);
+  if (error) throw error;
+}
+
+/**
+ * Admin-only: remove a request outright (spam / inappropriate). Its votes are
+ * removed by the ON DELETE CASCADE added in migration 0007. Enforced by the
+ * admin DELETE policy — a non-admin call is rejected by the database.
+ */
+export async function deleteFeatureRequest(featureId: string) {
+  const { error } = await supabase
+    .from('feature_requests')
+    .delete()
+    .eq('id', featureId);
+  if (error) throw error;
+}
+
 export async function voteOnFeature(
   featureId: string,
   userId: string,
