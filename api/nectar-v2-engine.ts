@@ -248,11 +248,13 @@ export function runV2Pipeline(
   // with dwell hysteresis to prevent daily flipping
   const instPhase = idxEwma.map((v, i): Phase => {
     const sl = slopeArr[i] ?? 0;
-    // Strong slope = direction-named phase
+    // Above the enter level you're IN flow regardless of slope (sharp peaks never
+    // have a flat top, so requiring flatness made IN_FLOW unreachable) — unless
+    // it's falling hard, which is the wind-down.
+    if (v >= P.enter)  return sl < -P.riseThr ? 'FLOW_ENDING' : 'IN_FLOW';
+    // Below it, strong slope = direction-named phase
     if (sl >  P.riseThr)  return 'FLOW_STARTING';
     if (sl < -P.riseThr)  return 'FLOW_ENDING';
-    // Gentle or zero slope: high plateau = peak flow, floor = dearth, else transition
-    if (v >= P.enter)  return 'IN_FLOW';
     return v < P.dearth ? 'DEARTH' : 'TRANSITION';
   });
   const phases: Phase[] = new Array(N);
