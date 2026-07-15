@@ -1,7 +1,8 @@
 // Pure V2 nectar-flow pipeline. No I/O — takes bands + weather, returns computed series.
 // Algorithm: Sentinel-2 NDVI/EVI/NDWI → greenness fusion → robust percentile baseline →
 // rate-of-change core (greening velocity) → universal fall-bloom term (photoperiod × dewpoint)
-// → dormancy gate (temperature) → EWMA live smooth → phase classification with dwell hysteresis.
+// → dormancy gate (temperature) × NDWI moisture modifier → EWMA live smooth →
+// phase classification (incl. IN_FLOW plateau) with dwell hysteresis.
 import type { MultiBandRecord } from './bands-fetcher.js';
 
 export type Phase = 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING' | 'TRANSITION';
@@ -41,7 +42,7 @@ interface V2Params {
   fuseLo: number; fuseHi: number;
   moistFloor: number;
   alpha: number; sgHalf: number;
-  enter: number; exit: number; dearth: number;
+  enter: number; dearth: number;
   riseThr: number; dwell: number;
   dormLo: number; dormHi: number; tWin: number;
   rateLag: number;
@@ -53,7 +54,7 @@ const DEFAULTS: V2Params = {
   fuseLo: 0.6, fuseHi: 0.9,
   moistFloor: 0.7,
   alpha: 0.18, sgHalf: 5,
-  enter: 0.40, exit: 0.30, dearth: 0.15, riseThr: 0.002, dwell: 3,
+  enter: 0.40, dearth: 0.15, riseThr: 0.002, dwell: 3,
   dormLo: 38, dormHi: 58, tWin: 14,
   rateLag: 24,
   wFall: 0.7, dpLo: 45, dpHi: 55, fallWidth: 26,
@@ -234,7 +235,10 @@ export function runV2Pipeline(
   const tSm    = trailingMean(tmeanRaw, P.tWin);
   const warmth = tSm.map(t => t == null ? 1 : clamp((t - P.dormLo) / (P.dormHi - P.dormLo), 0, 1));
 
-  const indexRaw = indexWithFall.map((v, i) => v * warmth[i]);
+  // Moisture applied as a gentle multiplier (floor 0.7 caps the penalty at -30% in
+  // bone-dry conditions). NDWI leads NDVI, so this nudges the index earlier/later
+  // than greenness alone would.
+  const indexRaw = indexWithFall.map((v, i) => v * warmth[i] * moist[i]);
 
   // EWMA for live smoothed value; local-poly for slope (SG-equivalent, uses future pts for history)
   const idxEwma         = ewmaArr(indexRaw, P.alpha);
@@ -247,8 +251,8 @@ export function runV2Pipeline(
     // Strong slope = direction-named phase
     if (sl >  P.riseThr)  return 'FLOW_STARTING';
     if (sl < -P.riseThr)  return 'FLOW_ENDING';
-    // Gentle or zero slope = transition everywhere, dearth only at the floor
-    // (peak plateau has near-zero slope so it correctly shows as transition)
+    // Gentle or zero slope: high plateau = peak flow, floor = dearth, else transition
+    if (v >= P.enter)  return 'IN_FLOW';
     return v < P.dearth ? 'DEARTH' : 'TRANSITION';
   });
   const phases: Phase[] = new Array(N);
