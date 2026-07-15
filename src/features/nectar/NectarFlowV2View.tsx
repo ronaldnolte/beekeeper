@@ -235,7 +235,7 @@ export const NectarFlowV2View: React.FC = () => {
   const getPhaseColors = (phase: string) => {
     switch (phase) {
       case 'IN_FLOW':
-        return { bg: 'bg-[#2ECC71]', text: 'text-white', label: 'In Flow', emoji: '🌼' };
+        return { bg: 'bg-[#F5B301]', text: 'text-black', label: 'In Flow', emoji: '🌼' };
       case 'FLOW_STARTING':
         return { bg: 'bg-[#58D68D]', text: 'text-black', label: 'Flow Starting', emoji: '🌱' };
       case 'FLOW_ENDING':
@@ -250,7 +250,7 @@ export const NectarFlowV2View: React.FC = () => {
 
   const getPhaseColor = (phase: string) => {
     switch (phase) {
-      case 'IN_FLOW': return '#2ECC71';
+      case 'IN_FLOW': return '#F5B301';
       case 'FLOW_STARTING': return '#58D68D';
       case 'FLOW_ENDING': return '#1E8449';
       case 'DEARTH': return '#E74C3C';
