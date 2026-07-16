@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { fetchFeatureRequests, submitFeatureRequest, voteOnFeature } from '../../data/feedbackRepository';
+import { fetchFeatureRequests, submitFeatureRequest, voteOnFeature, updateFeatureStatus, updateFeatureText, deleteFeatureRequest } from '../../data/feedbackRepository';
 import { useAppStore } from '../../store/useAppStore';
-import { Lightbulb, Send, X, Triangle, CheckCircle, Clock, LayoutDashboard } from 'lucide-react';
+import { Lightbulb, Send, X, Triangle, CheckCircle, Clock, LayoutDashboard, Pencil, Trash2 } from 'lucide-react';
 
 interface FeatureRequest {
   id: string;
@@ -14,8 +14,11 @@ interface FeatureRequest {
   is_voted_by_me: boolean;
 }
 
+const STATUS_OPTIONS = ['pending', 'planned', 'completed'] as const;
+
 export const RoadmapView: React.FC = () => {
-  const { user, goBack } = useAppStore();
+  const { user, goBack, hasRole } = useAppStore();
+  const isAdmin = hasRole('admin');
   const [features, setFeatures] = useState<FeatureRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitModalOpen, setSubmitModalOpen] = useState(false);
@@ -24,6 +27,12 @@ export const RoadmapView: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Admin edit state
+  const [editingFeature, setEditingFeature] = useState<FeatureRequest | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const fetchFeatures = async () => {
     setLoading(true);
@@ -70,6 +79,60 @@ export const RoadmapView: React.FC = () => {
     } catch (error) {
       console.error('Vote failed:', error);
       fetchFeatures(); // Revert on failure
+    }
+  };
+
+  const handleSetStatus = async (featureId: string, status: string) => {
+    const previous = features;
+    // Optimistic update
+    setFeatures(prev => prev.map(f => (f.id === featureId ? { ...f, status } : f)));
+    try {
+      await updateFeatureStatus(featureId, status);
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      setFeatures(previous); // revert
+      alert('Could not update status — your admin permission may not be set up yet.');
+    }
+  };
+
+  const openEdit = (feature: FeatureRequest) => {
+    setEditingFeature(feature);
+    setEditTitle(feature.title);
+    setEditDescription(feature.description);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFeature || !editTitle.trim() || !editDescription.trim()) return;
+    setSavingEdit(true);
+    const previous = features;
+    // Optimistic update
+    setFeatures(prev => prev.map(f =>
+      f.id === editingFeature.id ? { ...f, title: editTitle, description: editDescription } : f
+    ));
+    try {
+      await updateFeatureText(editingFeature.id, editTitle.trim(), editDescription.trim());
+      setEditingFeature(null);
+    } catch (err) {
+      console.error('Failed to save edit:', err);
+      setFeatures(previous); // revert
+      alert('Could not save the edit — your admin permission may not be set up yet.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDelete = async (feature: FeatureRequest) => {
+    if (!window.confirm(`Delete "${feature.title}" and its ${feature.votes} vote(s)? This cannot be undone.`)) return;
+    const previous = features;
+    // Optimistic removal
+    setFeatures(prev => prev.filter(f => f.id !== feature.id));
+    try {
+      await deleteFeatureRequest(feature.id);
+    } catch (err) {
+      console.error('Failed to delete request:', err);
+      setFeatures(previous); // revert
+      alert('Could not delete — your admin permission may not be set up yet.');
     }
   };
 
@@ -172,6 +235,38 @@ export const RoadmapView: React.FC = () => {
                   <p className="text-[var(--color-text-muted)] text-sm font-medium whitespace-pre-line leading-relaxed">
                     {feature.description}
                   </p>
+
+                  {isAdmin && (
+                    <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text-muted)] mr-1">Admin · set:</span>
+                      {STATUS_OPTIONS.map(s => (
+                        <button
+                          key={s}
+                          onClick={() => handleSetStatus(feature.id, s)}
+                          className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border transition-colors active:scale-95 ${
+                            feature.status === s
+                              ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
+                              : 'bg-[var(--color-bg-raised)] text-[var(--color-text-muted)] border-[var(--color-card-border)] hover:border-[var(--color-primary)]'
+                          }`}
+                        >
+                          {s === 'completed' ? 'Done' : s}
+                        </button>
+                      ))}
+                      <span className="w-px h-4 bg-[var(--color-card-border)] mx-1" />
+                      <button
+                        onClick={() => openEdit(feature)}
+                        className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border bg-[var(--color-bg-raised)] text-[var(--color-text-muted)] border-[var(--color-card-border)] hover:border-[var(--color-primary)] transition-colors active:scale-95 flex items-center gap-1"
+                      >
+                        <Pencil size={10} /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(feature)}
+                        className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border bg-[var(--color-bg-raised)] text-red-500 border-[var(--color-card-border)] hover:border-red-400 transition-colors active:scale-95 flex items-center gap-1"
+                      >
+                        <Trash2 size={10} /> Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -246,6 +341,70 @@ export const RoadmapView: React.FC = () => {
       )}
 
       </div>
+
+      {/* Admin Edit Modal Overlay */}
+      {editingFeature && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[var(--color-input-bg)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
+
+            <div className="bg-[#F5A623] p-4 flex justify-between items-center text-white">
+              <h3 className="font-black text-lg flex items-center gap-2">
+                <Pencil size={20} /> Edit Request
+              </h3>
+              <button
+                onClick={() => setEditingFeature(null)}
+                className="hover:bg-[var(--color-input-bg)]/20 rounded-full p-1 transition-colors active:scale-95"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Title</label>
+                <input
+                  required
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Description</label>
+                <textarea
+                  required
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none resize-none transition-all"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingFeature(null)}
+                  className="flex-1 py-4 text-[var(--color-text-muted)] font-black hover:bg-[var(--color-bg-raised)] rounded-xl transition-colors active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit || !editTitle.trim() || !editDescription.trim()}
+                  className="flex-[2] bg-[#8B4513] text-white py-4 rounded-xl font-black hover:bg-[#723910] transition-colors disabled:opacity-50 active:scale-95 flex items-center justify-center gap-2 shadow-md"
+                >
+                  {savingEdit ? (
+                    <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <>Save Changes <Send size={18} /></>
+                  )}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
 
       {/* Segregated Bottom Action Bar — Return to Dashboard */}
       <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
