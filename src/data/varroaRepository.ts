@@ -20,9 +20,11 @@ export async function fetchVarroaTests(hiveId: string) {
   return data || [];
 }
 
+// mite_pct is a generated column in the database — it is computed from
+// bee_count/mite_count on write. Sending a value for it is rejected with
+// "cannot insert a non-DEFAULT value into column mite_pct".
 export async function createVarroaTest(data: VarroaTestPayload) {
-  const mite_pct = data.bee_count > 0 ? (data.mite_count / data.bee_count) * 100 : 0;
-  const { error } = await supabase.from('varroa_tests').insert([{ ...data, mite_pct }]);
+  const { error } = await supabase.from('varroa_tests').insert([data]);
   if (error) throw error;
 }
 
@@ -36,10 +38,9 @@ export async function updateVarroaTest(
     notes?: string | null;
   }
 ) {
-  const mite_pct = data.bee_count > 0 ? (data.mite_count / data.bee_count) * 100 : 0;
   const { error } = await supabase
     .from('varroa_tests')
-    .update({ ...data, mite_pct })
+    .update(data)
     .eq('id', id);
   if (error) throw error;
 }
