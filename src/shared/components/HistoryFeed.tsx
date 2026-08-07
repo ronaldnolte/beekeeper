@@ -8,13 +8,21 @@ interface HistoryFeedProps {
   filter?: 'inspections' | 'interventions' | 'snapshots' | 'tasks' | 'varroa_tests' | 'all';
   refreshTrigger?: number;
   title?: string;
+  /**
+   * Hide completed tasks behind a "Show Completed" checkbox, matching the
+   * dashboard's task list. Without this the hive page listed finished tasks at
+   * full weight under a heading that says "Tasks", so a task completed months
+   * ago read as outstanding work.
+   */
+  hideCompletedTasks?: boolean;
 }
 
-export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all', refreshTrigger = 0, title }) => {
+export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all', refreshTrigger = 0, title, hideCompletedTasks = false }) => {
   const { navigateTo, selectInspection } = useAppStore();
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -107,25 +115,51 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
   };
   const activeTitle = title || defaultTitles[filter] || 'Recent History';
 
-  const displayedHistory = !showAll 
-    ? history.slice(0, 3) 
+  const visibleHistory = hideCompletedTasks && !showCompleted
+    ? history.filter((item) => !(item._model_type === 'task' && item.status === 'completed'))
     : history;
 
-  console.log(`[HistoryFeed] Rendering ${displayedHistory.length} of ${history.length} items (filter: ${filter}, showAll: ${showAll})`);
+  const completedTaskCount = hideCompletedTasks
+    ? history.filter((item) => item._model_type === 'task' && item.status === 'completed').length
+    : 0;
+
+  const displayedHistory = !showAll
+    ? visibleHistory.slice(0, 3)
+    : visibleHistory;
+
+  console.log(`[HistoryFeed] Rendering ${displayedHistory.length} of ${visibleHistory.length} items (filter: ${filter}, showAll: ${showAll})`);
 
   return (
     <div className="space-y-3">
       {activeTitle && (
-        <div className="flex justify-between items-center mb-3.5 px-1">
-          <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider">{activeTitle}</h3>
-          {history.length > 3 && (
-            <button
-              onClick={() => setShowAll(!showAll)}
-              className="px-3.5 py-1.5 rounded-full bg-white/70 hover:bg-white border border-[var(--color-primary)]/30 hover:border-[var(--color-primary)] text-[var(--color-primary-dark)] hover:text-[var(--color-primary-dark)] font-bold text-xs active:scale-95 transition-all shadow-sm outline-none cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              {showAll ? 'Show Less' : `Show All (${history.length})`}
-            </button>
+        <div className="flex justify-between items-center mb-3.5 px-1 gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider">{activeTitle}</h3>
+            {visibleHistory.length > 3 && (
+              <button
+                onClick={() => setShowAll(!showAll)}
+                className="px-3.5 py-1.5 rounded-full bg-white/70 hover:bg-white border border-[var(--color-primary)]/30 hover:border-[var(--color-primary)] text-[var(--color-primary-dark)] hover:text-[var(--color-primary-dark)] font-bold text-xs active:scale-95 transition-all shadow-sm outline-none cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                {showAll ? 'Show Less' : `Show All (${visibleHistory.length})`}
+              </button>
+            )}
+          </div>
+          {hideCompletedTasks && completedTaskCount > 0 && (
+            <label className="flex items-center gap-2 text-xs text-[var(--color-text-muted)] font-medium cursor-pointer flex-shrink-0">
+              <input
+                type="checkbox"
+                checked={showCompleted}
+                onChange={(e) => setShowCompleted(e.target.checked)}
+                className="rounded text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+              />
+              Show Completed ({completedTaskCount})
+            </label>
           )}
+        </div>
+      )}
+      {displayedHistory.length === 0 && hideCompletedTasks && (
+        <div className="text-center py-8 text-[var(--color-text-muted)] bg-[var(--color-card-bg)]/50 rounded-xl border border-dashed border-[var(--color-card-border)]">
+          <p className="font-medium text-sm">No open tasks for this hive.</p>
         </div>
       )}
       {displayedHistory.map((item) => (
@@ -153,7 +187,9 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
             navigateTo(targetView as any);
           }}
           className={`card p-3 border-l-4 transition-colors ${
-            item._model_type === 'snapshot' ? 'border-blue-500/60 cursor-default' : 
+            item._model_type === 'task' && item.status === 'completed' ? 'opacity-60 ' : ''
+          }${
+            item._model_type === 'snapshot' ? 'border-blue-500/60 cursor-default' :
             item._model_type === 'intervention' ? 'border-purple-500/60 cursor-pointer hover:border-purple-400' : 
             item._model_type === 'task' ? 'border-cyan-500/60 cursor-pointer hover:border-cyan-400' :
             item._model_type === 'varroa_test' ? 
@@ -167,7 +203,9 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
             <div>
               {item._model_type !== 'snapshot' && (
                 <h4 className={`font-bold text-sm ${
-                  item._model_type === 'intervention' ? 'text-purple-400' : 
+                  item._model_type === 'task' && item.status === 'completed' ? 'line-through ' : ''
+                }${
+                  item._model_type === 'intervention' ? 'text-purple-400' :
                   item._model_type === 'task' ? 'text-cyan-400' :
                   item._model_type === 'varroa_test' ? 
                     (Number(item.mite_pct) >= Number(item.threshold) * 1.5 ? 'text-red-400' : 

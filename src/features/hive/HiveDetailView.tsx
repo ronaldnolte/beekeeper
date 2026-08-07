@@ -81,6 +81,7 @@ export const HiveDetailView: React.FC = () => {
             filter="tasks"
             refreshTrigger={refreshKey}
             title="Tasks"
+            hideCompletedTasks
           />
         </div>
 
