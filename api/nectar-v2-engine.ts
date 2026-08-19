@@ -149,6 +149,47 @@ function interpBand(recs: { t: number; v: number }[], dailyTs: number[]): number
   });
 }
 
+// Robust spike rejection (Hampel filter on NDVI). V1 carried `filterNDVIOutliers`;
+// V2 shipped without an equivalent, and a rate-of-change core is MORE spike-sensitive
+// than a level core. Measured at Murfreesboro Aug 2026, consecutive passes read
+// 0.658 / 0.724 / 0.671 / 0.600 / 0.743 / 0.616 inside ten days.
+function rejectSpikes(recs: MultiBandRecord[], halfWin = 3, k = 3, minSigma = 0.02): MultiBandRecord[] {
+  if (recs.length < 2 * halfWin + 1) return recs;
+  const med = (a: number[]) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+  const keep: MultiBandRecord[] = [];
+  for (let i = 0; i < recs.length; i++) {
+    const lo = Math.max(0, i - halfWin), hi = Math.min(recs.length - 1, i + halfWin);
+    const win: number[] = [];
+    for (let j = lo; j <= hi; j++) if (j !== i) win.push(recs[j].ndvi);
+    if (win.length < 3) { keep.push(recs[i]); continue; }
+    const m = med(win);
+    const sigma = Math.max(1.4826 * med(win.map(v => Math.abs(v - m))), minSigma);
+    if (Math.abs(recs[i].ndvi - m) > k * sigma) continue;
+    keep.push(recs[i]);
+  }
+  return keep;
+}
+
+// One-sided linear slope over a trailing window. The centred quadratic fit in
+// localPoly has no future points for the final sgHalf days and extrapolates wildly
+// there — measured at Murfreesboro on 2026-08-18: slope -0.18062, larger in magnitude
+// than the maximum (0.13434) anywhere in 3.6 years of fully-supported fits, and
+// sign-flipped from the day before. That final value is exactly what drives
+// trend_direction and the phase badge, so it gets a stable estimator instead.
+function trailingSlope(arr: number[], i: number, win: number): number {
+  const lo = Math.max(0, i - win + 1);
+  let n = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
+  for (let j = lo; j <= i; j++) {
+    const y = arr[j];
+    if (!isFinite(y)) continue;
+    const x = j - i;
+    n++; sx += x; sy += y; sxx += x * x; sxy += x * y;
+  }
+  if (n < 3) return 0;
+  const den = n * sxx - sx * sx;
+  return Math.abs(den) < 1e-12 ? 0 : (n * sxy - sx * sy) / den;
+}
+
 export function runV2Pipeline(
   records: MultiBandRecord[],
   weatherMap: Record<string, WeatherDay>,
@@ -167,7 +208,7 @@ export function runV2Pipeline(
   // Daily timeline from first observed scene to today.
   // Extends past the last satellite observation so EWMA carries forward to the current date
   // (interpBand forward-fills the last known value for days with no new scene).
-  const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
+  const sorted = rejectSpikes([...records].sort((a, b) => a.date.localeCompare(b.date)));
   const startT = new Date(sorted[0].date + 'T00:00').getTime();
   const lastObsT = new Date(sorted[sorted.length - 1].date + 'T00:00').getTime();
   const todayT  = new Date(new Date().toISOString().slice(0, 10) + 'T00:00').getTime();
@@ -243,6 +284,10 @@ export function runV2Pipeline(
   // EWMA for live smoothed value; local-poly for slope (SG-equivalent, uses future pts for history)
   const idxEwma         = ewmaArr(indexRaw, P.alpha);
   const { slope: slopeArr } = localPoly(indexRaw, P.sgHalf);
+  // Days without a full future window get the one-sided fit (see trailingSlope).
+  for (let i = Math.max(0, N - P.sgHalf); i < N; i++) {
+    slopeArr[i] = trailingSlope(indexRaw, i, 2 * P.sgHalf + 1);
+  }
 
   // Phase classification: intuitive (low=dearth, rising=building, high=peak, falling=winding down)
   // with dwell hysteresis to prevent daily flipping
