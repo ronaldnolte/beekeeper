@@ -137,15 +137,32 @@ function localPoly(arr: number[], half: number): { smooth: number[]; slope: numb
   return { smooth, slope };
 }
 
-function interpBand(recs: { t: number; v: number }[], dailyTs: number[]): number[] {
+// Coverage-weighted temporal kernel. Replaces plain linear interpolation between
+// scenes so that a partially-clouded observation still contributes, but in
+// proportion to how much of the forage disc it actually saw. Weight is
+// coverage x Gaussian(time). Beyond the kernel's reach (a long cloudy gap) it
+// falls back to the nearest observation.
+function kernelBand(
+  recs: { t: number; v: number; w: number }[],
+  dailyTs: number[],
+  hDays = 6
+): number[] {
   const sorted = [...recs].sort((a, b) => a.t - b.t);
+  if (sorted.length === 0) return dailyTs.map(() => 0);
+  const h = hDays * DAY_MS;
+  const reach = 3 * h;
   return dailyTs.map(t => {
-    let j = 0;
-    while (j < sorted.length - 1 && sorted[j + 1].t <= t) j++;
-    const a = sorted[j], b = sorted[Math.min(j + 1, sorted.length - 1)];
-    if (t <= a.t) return a.v;
-    if (t >= b.t) return b.v;
-    return a.v + (b.v - a.v) * (t - a.t) / (b.t - a.t);
+    let sw = 0, sv = 0;
+    for (const r of sorted) {
+      const dt = Math.abs(r.t - t);
+      if (dt > reach) continue;
+      const k = Math.exp(-0.5 * (dt / h) ** 2) * r.w;
+      sw += k; sv += k * r.v;
+    }
+    if (sw > 1e-9) return sv / sw;
+    let best = sorted[0], bd = Infinity;
+    for (const r of sorted) { const d = Math.abs(r.t - t); if (d < bd) { bd = d; best = r; } }
+    return best.v;
   });
 }
 
@@ -155,7 +172,7 @@ function interpBand(recs: { t: number; v: number }[], dailyTs: number[]): number
 // 0.658 / 0.724 / 0.671 / 0.600 / 0.743 / 0.616 inside ten days.
 function rejectSpikes(recs: MultiBandRecord[], halfWin = 3, k = 3, minSigma = 0.02): MultiBandRecord[] {
   if (recs.length < 2 * halfWin + 1) return recs;
-  const med = (a: number[]) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
+  const med = (a: number[]) => { const t = [...a].sort((x, y) => x - y); return t[Math.floor(t.length / 2)]; };
   const keep: MultiBandRecord[] = [];
   for (let i = 0; i < recs.length; i++) {
     const lo = Math.max(0, i - halfWin), hi = Math.min(recs.length - 1, i + halfWin);
@@ -207,7 +224,7 @@ export function runV2Pipeline(
 
   // Daily timeline from first observed scene to today.
   // Extends past the last satellite observation so EWMA carries forward to the current date
-  // (interpBand forward-fills the last known value for days with no new scene).
+  // (kernelBand falls back to the nearest observation across a long cloudy gap).
   const sorted = rejectSpikes([...records].sort((a, b) => a.date.localeCompare(b.date)));
   const startT = new Date(sorted[0].date + 'T00:00').getTime();
   const lastObsT = new Date(sorted[sorted.length - 1].date + 'T00:00').getTime();
@@ -218,11 +235,16 @@ export function runV2Pipeline(
   const N = dailyTs.length;
   const dates = dailyTs.map(t => new Date(t).toISOString().slice(0, 10));
 
+  // Coverage acts as an observation weight; series with no coverage field weigh equally.
   const mkRecs = (key: keyof MultiBandRecord) =>
-    sorted.map(r => ({ t: new Date(r.date + 'T00:00').getTime(), v: r[key] as number }));
-  const ndvi = interpBand(mkRecs('ndvi'), dailyTs);
-  const evi  = interpBand(mkRecs('evi'),  dailyTs);
-  const ndwi = interpBand(mkRecs('ndwi'), dailyTs);
+    sorted.map(r => ({
+      t: new Date(r.date + 'T00:00').getTime(),
+      v: r[key] as number,
+      w: Math.max(0.05, r.coverage ?? 1),
+    }));
+  const ndvi = kernelBand(mkRecs('ndvi'), dailyTs);
+  const evi  = kernelBand(mkRecs('evi'),  dailyTs);
+  const ndwi = kernelBand(mkRecs('ndwi'), dailyTs);
 
   // Greenness: NDVI anchors; blend in EVI as NDVI saturates in dense canopy
   const greenness = ndvi.map((nd, i) => {

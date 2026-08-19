@@ -9,9 +9,11 @@
 //    ~9.7 km disc near a tile boundary previously produced two same-date records, each a
 //    partial-area mean. Measured at South Valley: 33 duplicate dates, same-day NDVI
 //    disagreeing by up to 0.100 — roughly 40% of that site's entire dynamic range.
-//  - Every date reports the fraction of the forage disc that had usable pixels. Scenes below
-//    `minCoverage` are dropped: a 92%-clouded scene otherwise returned the mean of the
-//    surviving 8% (a biased corner sample) weighted exactly like a clear scene.
+//  - Every date reports the fraction of the forage disc that had usable pixels. This is a
+//    WEIGHT, not a gate: the engine weights each observation by its coverage, so a
+//    half-clouded scene still contributes but at half the pull of a clear one. Only
+//    genuinely useless scenes (below `minCoverage`) are discarded outright — a 92%-clouded
+//    scene is the mean of a biased 8% corner of the disc.
 // @ts-ignore
 import { XMLHttpRequest } from 'xmlhttprequest';
 if (typeof global !== 'undefined' && !(global as any).XMLHttpRequest) {
@@ -67,8 +69,11 @@ function evaluate(expr: any): Promise<any> {
   });
 }
 
-/** Minimum fraction of the forage disc that must have usable pixels for a date to count. */
-export const MIN_COVERAGE = 0.6;
+/** Floor below which a date is discarded outright. Above it, coverage is used as a
+ *  weight by the engine rather than as a pass/fail gate — a hard 0.6 cut cost
+ *  Murfreesboro two thirds of its observations (372 dates -> 111, about one usable
+ *  pass every 12 days against a 24-day rate window). */
+export const MIN_COVERAGE = 0.2;
 
 export async function fetchMultiBandsDetailed(
   lat: number,
