@@ -36,6 +36,38 @@ export interface FetchBandsResult {
   records: MultiBandRecord[];
   /** Dates returned by Earth Engine but rejected for insufficient usable area. */
   droppedLowCoverage: number;
+  /** Mean forage weight across the disc: how much of it can produce nectar at all. */
+  forageFraction: number;
+}
+
+// Per-land-cover forage weight, applied as a per-pixel reducer weight (ESA WorldCover
+// v200 classes). Measured at Ron's South Valley apiary, the 4.83 km disc is 52% built-up,
+// 18% bare and 2.9% cropland — so the unweighted mean tracked the built-up trace almost
+// exactly (flat 0.16-0.21 all season) while the cropland stratum, carrying the alfalfa
+// he actually forages, swung 0.40-0.61 and was averaged into nothing.
+//
+// These are PRIORS, not measurements. Tree cover is the least certain: at Murfreesboro it
+// is deciduous forest full of tulip poplar and black locust, at Tijeras it is evergreen
+// pinon-juniper that produces almost nothing. Built-up keeps a small non-zero weight
+// because suburban gardens are real forage we cannot resolve at 10 m.
+export const FORAGE_WEIGHTS: Record<number, number> = {
+  10: 0.6,  // tree cover
+  20: 0.8,  // shrubland
+  30: 1.0,  // grassland
+  40: 1.0,  // cropland
+  50: 0.1,  // built-up
+  60: 0.0,  // bare / sparse vegetation
+  70: 0.0,  // snow and ice
+  80: 0.0,  // permanent water
+  90: 0.8,  // herbaceous wetland
+  95: 0.0,  // mangroves
+  100: 0.0, // moss and lichen
+};
+
+function forageWeightImage(): any {
+  const from = Object.keys(FORAGE_WEIGHTS).map(Number);
+  const to = from.map(k => FORAGE_WEIGHTS[k]);
+  return ee.ImageCollection('ESA/WorldCover/v200').first().remap(from, to, 0).rename('forage');
 }
 
 let isEEInitialized = false;
@@ -85,7 +117,9 @@ export async function fetchMultiBandsDetailed(
   // The whole disc is averaged into one number, so a finer reduce buys nothing. Measured
   // over 3.6 years at South Valley: 20 m took 41.3 s, 60 m took 19.6 s, and the NDVI
   // series differed by a mean of 0.0037 (max 0.0088).
-  scaleM = 60
+  scaleM = 60,
+  /** Weight each pixel by the forage value of its land cover (see FORAGE_WEIGHTS). */
+  forageWeighted = true
 ): Promise<FetchBandsResult> {
   await initEarthEngine();
 
@@ -117,7 +151,12 @@ export async function fetchMultiBandsDetailed(
     ee.ImageCollection(ee.List(img.get('sameDay'))).mosaic().set('dstamp', img.get('dstamp'))
   );
 
-  const processed = ee.ImageCollection(perDate).map((m: any) => {
+  const forage = forageWeightImage();
+
+  const processed = ee.ImageCollection(perDate).map((mScl: any) => {
+    // A fractional mask acts as a per-pixel weight in Earth Engine reducers, so the
+    // land-cover weighting costs nothing extra: it rides the reduce we already do.
+    const m = forageWeighted ? mScl.updateMask(forage) : mScl;
     // Ratio-based indices — scale-invariant, use raw DN
     const ndvi = m.normalizedDifference(['B8', 'B4']).rename('ndvi');
     const ndwi = m.normalizedDifference(['B8', 'B11']).rename('ndwi');
@@ -133,9 +172,9 @@ export async function fetchMultiBandsDetailed(
     // at South Valley on 2025-11-06: evi = 1.12e9. Physically valid EVI lies within
     // [-1, 1]; anything outside that is a numerical artifact, so drop those pixels.
     const evi = eviRaw.updateMask(eviRaw.gte(-1).and(eviRaw.lte(1)));
-    // 1 where a usable pixel survived the mask, 0 elsewhere — mean over the disc
-    // is the usable-area fraction.
-    const coverage = m.select('B8').mask().unmask(0).rename('coverage');
+    // Coverage stays on the SCL mask alone — it measures cloud/quality, not forage,
+    // and conflating the two would make a city look permanently overcast.
+    const coverage = mScl.select('B8').mask().unmask(0).rename('coverage');
 
     const stack = ndvi.addBands(evi).addBands(ndwi).addBands(coverage);
     const means = stack.reduceRegion({
@@ -150,8 +189,15 @@ export async function fetchMultiBandsDetailed(
     });
   }).filter(ee.Filter.notNull(['ndvi', 'evi', 'ndwi']));
 
+  // Static per location, so precision does not matter: reduce it at a coarse scale to keep
+  // this second round-trip cheap. (Bundling it into the per-date evaluate via ee.Dictionary
+  // was tried and silently returned no features.)
+  const ffResult: any = await evaluate(forage.reduceRegion({
+    reducer: ee.Reducer.mean(), geometry: geom, scale: 100, maxPixels: 1e9, bestEffort: true }));
+  const forageFraction = Math.round(((ffResult?.forage as number) ?? 0) * 1000) / 1000;
+
   const fc = await evaluate(processed);
-  if (!fc?.features) return { records: [], droppedLowCoverage: 0 };
+  if (!fc?.features) return { records: [], droppedLowCoverage: 0, forageFraction };
 
   const all = (fc.features as any[]).map(f => ({
     date: f.properties.date as string,
@@ -165,7 +211,7 @@ export async function fetchMultiBandsDetailed(
     .filter(r => r.coverage >= minCoverage)
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  return { records, droppedLowCoverage: all.length - records.length };
+  return { records, droppedLowCoverage: all.length - records.length, forageFraction };
 }
 
 /** Back-compat wrapper — existing callers just want the records. */
