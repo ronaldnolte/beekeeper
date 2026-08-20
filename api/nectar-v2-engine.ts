@@ -28,6 +28,18 @@ export interface V2HistoryPoint {
   phase: Phase;
 }
 
+/** Per-day component series, for diagnosis and ablation. Not part of the API response. */
+export interface V2Series {
+  greenness: number[];
+  vigor: number[];
+  rate: number[];
+  rateNorm: number[];
+  moist: number[];
+  warmth: number[];
+  fallTerm: number[];
+  indexRaw: number[];
+}
+
 export interface V2EngineResult {
   dates: string[];
   idxEwma: number[];
@@ -35,6 +47,7 @@ export interface V2EngineResult {
   slopeArr: number[];
   latest: V2LatestValues;
   history: V2HistoryPoint[];
+  series: V2Series;
 }
 
 interface V2Params {
@@ -227,6 +240,7 @@ export function runV2Pipeline(
     dates: [], idxEwma: [], phases: [], slopeArr: [],
     latest: { greenness: 0, vigor: 0, moisture: 0, warmth: 0, fall_term: 0, rate_norm: 0 },
     history: [],
+    series: { greenness: [], vigor: [], rate: [], rateNorm: [], moist: [], warmth: [], fallTerm: [], indexRaw: [] },
   };
   if (records.length === 0) return empty;
 
@@ -364,5 +378,8 @@ export function runV2Pipeline(
     phase: phases[i],
   }));
 
-  return { dates, idxEwma, phases, slopeArr, latest, history };
+  return {
+    dates, idxEwma, phases, slopeArr, latest, history,
+    series: { greenness, vigor, rate, rateNorm, moist, warmth, fallTerm, indexRaw },
+  };
 }
