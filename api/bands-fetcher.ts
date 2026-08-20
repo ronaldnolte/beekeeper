@@ -82,7 +82,10 @@ export async function fetchMultiBandsDetailed(
   endDate: string,
   radiusKm = 4.83, // ~3 mile bee forage radius; averages the colony's true foraging range
   minCoverage = MIN_COVERAGE,
-  scaleM = 20
+  // The whole disc is averaged into one number, so a finer reduce buys nothing. Measured
+  // over 3.6 years at South Valley: 20 m took 41.3 s, 60 m took 19.6 s, and the NDVI
+  // series differed by a mean of 0.0037 (max 0.0088).
+  scaleM = 60
 ): Promise<FetchBandsResult> {
   await initEarthEngine();
 
@@ -122,9 +125,14 @@ export async function fetchMultiBandsDetailed(
     const nir  = m.select('B8').multiply(0.0001);
     const red  = m.select('B4').multiply(0.0001);
     const blue = m.select('B2').multiply(0.0001);
-    const evi  = nir.subtract(red).multiply(2.5)
+    const eviRaw = nir.subtract(red).multiply(2.5)
       .divide(nir.add(red.multiply(6)).subtract(blue.multiply(7.5)).add(1))
       .rename('evi');
+    // EVI's denominator (nir + 6*red - 7.5*blue + 1) can collapse toward zero over dark
+    // or anomalous pixels, and a single such pixel destroys the regional mean — observed
+    // at South Valley on 2025-11-06: evi = 1.12e9. Physically valid EVI lies within
+    // [-1, 1]; anything outside that is a numerical artifact, so drop those pixels.
+    const evi = eviRaw.updateMask(eviRaw.gte(-1).and(eviRaw.lte(1)));
     // 1 where a usable pixel survived the mask, 0 elsewhere — mean over the disc
     // is the usable-area fraction.
     const coverage = m.select('B8').mask().unmask(0).rename('coverage');

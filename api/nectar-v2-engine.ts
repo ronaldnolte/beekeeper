@@ -170,6 +170,14 @@ function kernelBand(
 // V2 shipped without an equivalent, and a rate-of-change core is MORE spike-sensitive
 // than a level core. Measured at Murfreesboro Aug 2026, consecutive passes read
 // 0.658 / 0.724 / 0.671 / 0.600 / 0.743 / 0.616 inside ten days.
+// Defence in depth against physically impossible band values reaching the pipeline.
+// The fetcher masks these at the pixel level, but the engine is also called with cached
+// and synthetic series, and one bad value poisons a percentile, a mean and the EWMA.
+function sane(recs: MultiBandRecord[]): MultiBandRecord[] {
+  const ok = (v: number, lim: number) => Number.isFinite(v) && Math.abs(v) <= lim;
+  return recs.filter(r => ok(r.ndvi, 1) && ok(r.ndwi, 1) && ok(r.evi, 1.5));
+}
+
 function rejectSpikes(recs: MultiBandRecord[], halfWin = 3, k = 3, minSigma = 0.02): MultiBandRecord[] {
   if (recs.length < 2 * halfWin + 1) return recs;
   const med = (a: number[]) => { const t = [...a].sort((x, y) => x - y); return t[Math.floor(t.length / 2)]; };
@@ -225,7 +233,7 @@ export function runV2Pipeline(
   // Daily timeline from first observed scene to today.
   // Extends past the last satellite observation so EWMA carries forward to the current date
   // (kernelBand falls back to the nearest observation across a long cloudy gap).
-  const sorted = rejectSpikes([...records].sort((a, b) => a.date.localeCompare(b.date)));
+  const sorted = rejectSpikes(sane([...records]).sort((a, b) => a.date.localeCompare(b.date)));
   const startT = new Date(sorted[0].date + 'T00:00').getTime();
   const lastObsT = new Date(sorted[sorted.length - 1].date + 'T00:00').getTime();
   const todayT  = new Date(new Date().toISOString().slice(0, 10) + 'T00:00').getTime();
@@ -315,14 +323,20 @@ export function runV2Pipeline(
   // with dwell hysteresis to prevent daily flipping
   const instPhase = idxEwma.map((v, i): Phase => {
     const sl = slopeArr[i] ?? 0;
+    // Below the dearth floor there is no flow to be starting or ending. The slope
+    // tests used to run first, so a trivial slope on a near-zero index promoted a dead
+    // yard to "Flow Ending" — South Valley displayed "Flow Ending: monitor honey stores,
+    // watch for robbing" at NFI 1. DEARTH was effectively unreachable, and noise near
+    // zero flipped the label between two flow phases that were not in play.
+    if (v < P.dearth) return 'DEARTH';
     // Above the enter level you're IN flow regardless of slope (sharp peaks never
     // have a flat top, so requiring flatness made IN_FLOW unreachable) — unless
     // it's falling hard, which is the wind-down.
     if (v >= P.enter)  return sl < -P.riseThr ? 'FLOW_ENDING' : 'IN_FLOW';
-    // Below it, strong slope = direction-named phase
+    // Between the floor and the flow level, a strong slope names the direction.
     if (sl >  P.riseThr)  return 'FLOW_STARTING';
     if (sl < -P.riseThr)  return 'FLOW_ENDING';
-    return v < P.dearth ? 'DEARTH' : 'TRANSITION';
+    return 'TRANSITION';
   });
   const phases: Phase[] = new Array(N);
   let cur: Phase = 'TRANSITION', cand: Phase | null = null, candN = 0;
