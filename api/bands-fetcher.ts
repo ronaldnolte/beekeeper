@@ -119,7 +119,27 @@ export async function fetchMultiBandsDetailed(
   // series differed by a mean of 0.0037 (max 0.0088).
   scaleM = 60,
   /** Weight each pixel by the forage value of its land cover (see FORAGE_WEIGHTS). */
-  forageWeighted = true
+  forageWeighted = true,
+  /**
+   * How to collapse the disc to one number per date. 0 = mean.
+   *
+   * TESTED AND REJECTED (2026-08-20). The reasoning was that bees do not experience the
+   * average of their range - they find the best patch and work it - so an upper percentile
+   * should let a small blooming patch register instead of being averaged into pavement.
+   * Scored against the ground-truth calendars at four sites: mean 16 PASS / 2 FAIL,
+   * p75 13/5, p90 12/6. p90 broke tn-2026-july-empty, which is anchored to hives that
+   * needed emergency feeding, so it is not a close call.
+   *
+   * Why it fails: an upper percentile does not track a fixed patch, it tracks whichever
+   * pixels are greenest today - and the greenest pixels are not the blooming ones (an
+   * irrigated lawn beats a flowering alfalfa field). The identity of the sample drifts
+   * through the season, adding noise. It also saturates: the greenest pixels sit near
+   * their maximum most of the year, so seasonal amplitude SHRINKS, which starves the
+   * rate-of-change core (Murfreesboro April fell from 80 to 45 at p75).
+   *
+   * Kept as a parameter so the negative result is reproducible rather than rediscovered.
+   */
+  percentile = 0
 ): Promise<FetchBandsResult> {
   await initEarthEngine();
 
@@ -156,7 +176,11 @@ export async function fetchMultiBandsDetailed(
   const processed = ee.ImageCollection(perDate).map((mScl: any) => {
     // A fractional mask acts as a per-pixel weight in Earth Engine reducers, so the
     // land-cover weighting costs nothing extra: it rides the reduce we already do.
-    const m = forageWeighted ? mScl.updateMask(forage) : mScl;
+    // In percentile mode the mask is binarised instead: "the Nth percentile among
+    // forage-capable pixels" is meaningful, a weighted percentile much less so.
+    const m = !forageWeighted ? mScl
+      : percentile > 0 ? mScl.updateMask(forage.gte(0.5))
+      : mScl.updateMask(forage);
     // Ratio-based indices — scale-invariant, use raw DN
     const ndvi = m.normalizedDifference(['B8', 'B4']).rename('ndvi');
     const ndwi = m.normalizedDifference(['B8', 'B11']).rename('ndwi');
@@ -176,16 +200,23 @@ export async function fetchMultiBandsDetailed(
     // and conflating the two would make a city look permanently overcast.
     const coverage = mScl.select('B8').mask().unmask(0).rename('coverage');
 
-    const stack = ndvi.addBands(evi).addBands(ndwi).addBands(coverage);
-    const means = stack.reduceRegion({
-      reducer: ee.Reducer.mean(), geometry: geom, scale: scaleM, maxPixels: 1e9
+    const stack = ndvi.addBands(evi).addBands(ndwi);
+    const bandStats = stack.reduceRegion({
+      reducer: percentile > 0 ? ee.Reducer.percentile([percentile]) : ee.Reducer.mean(),
+      geometry: geom, scale: scaleM, maxPixels: 1e9, bestEffort: true
     });
+    // Coverage is always a plain mean - it is an area fraction, not a band value.
+    const covStats = coverage.reduceRegion({
+      reducer: ee.Reducer.mean(), geometry: geom, scale: scaleM, maxPixels: 1e9, bestEffort: true
+    });
+    // ee.Reducer.percentile([n]) with a SINGLE percentile returns plain band names —
+    // the "_p75" suffix only appears when several percentiles are requested at once.
     return ee.Feature(null, {
-      date: m.get('dstamp'),
-      ndvi: means.get('ndvi'),
-      evi:  means.get('evi'),
-      ndwi: means.get('ndwi'),
-      coverage: means.get('coverage'),
+      date: mScl.get('dstamp'),
+      ndvi: bandStats.get('ndvi'),
+      evi:  bandStats.get('evi'),
+      ndwi: bandStats.get('ndwi'),
+      coverage: covStats.get('coverage'),
     });
   }).filter(ee.Filter.notNull(['ndvi', 'evi', 'ndwi']));
 
