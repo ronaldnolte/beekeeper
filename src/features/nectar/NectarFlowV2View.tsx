@@ -378,15 +378,22 @@ export const NectarFlowV2View: React.FC = () => {
     ? '0.0%'
     : (deltaVal > 0 ? '+' : '') + (deltaVal * 100).toFixed(1) + '%';
 
-  // Helper functions (copied verbatim from NectarFlowView)
+  // Day-of-year bucketing. MUST be computed in UTC: with local-time dates, midnight
+  // after the spring-forward is one hour short of a whole number of days from Jan 1,
+  // so Math.floor dropped a day and every later date shifted down one bucket. Because
+  // DST starts on a different date each year, the three historical years shifted at
+  // three different indices, and each one collapsed two dates into a single bucket
+  // (2023 idx 70, 2024 idx 69, 2025 idx 67). Those buckets then averaged four samples
+  // with one year counted twice while their neighbours averaged three — the sawtooth
+  // visible on the historical-average line every March. The fall-back did the reverse,
+  // skipping buckets 305-308 so they averaged only two of the three years.
+  // bloomFactor.ts already does this correctly with Date.UTC.
   const getDayOfYear = (dateStr: string) => {
     const parts = dateStr.split('-');
     const year = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10) - 1;
     const day = parseInt(parts[2], 10);
-    const d = new Date(year, month, day);
-    const start = new Date(year, 0, 1);
-    const diff = d.getTime() - start.getTime();
+    const diff = Date.UTC(year, month, day) - Date.UTC(year, 0, 1);
     const oneDay = 1000 * 60 * 60 * 24;
     return Math.min(364, Math.max(0, Math.floor(diff / oneDay)));
   };
@@ -396,8 +403,8 @@ export const NectarFlowV2View: React.FC = () => {
   };
 
   const getHoveredDateLabel = (day: number) => {
-    const date = new Date(2025, 0, 1 + day);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const date = new Date(Date.UTC(2025, 0, 1 + day));
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   };
 
   // Year-split history (copied verbatim from NectarFlowView, V2 has no ndvi/bloom/weather in history)
@@ -435,10 +442,10 @@ export const NectarFlowV2View: React.FC = () => {
   const historyBase = Array.from({ length: 365 }, (_, dayIdx) => {
     const cell = historyBaseMap[dayIdx];
     const nfiAvg = cell.count > 0 ? cell.sum / cell.count : null;
-    const date = new Date(2025, 0, 1 + dayIdx);
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
+    const date = new Date(Date.UTC(2025, 0, 1 + dayIdx));
+    const yyyy = date.getUTCFullYear();
+    const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(date.getUTCDate()).padStart(2, '0');
     const dateStr = `${yyyy}-${mm}-${dd}`;
     return { date: dateStr, forage_index_smoothed: nfiAvg };
   }).filter(h => h.forage_index_smoothed !== null) as { date: string; forage_index_smoothed: number }[];

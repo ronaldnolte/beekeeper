@@ -28,6 +28,18 @@ export interface V2HistoryPoint {
   phase: Phase;
 }
 
+/** Per-day component series, for diagnosis and ablation. Not part of the API response. */
+export interface V2Series {
+  greenness: number[];
+  vigor: number[];
+  rate: number[];
+  rateNorm: number[];
+  moist: number[];
+  warmth: number[];
+  fallTerm: number[];
+  indexRaw: number[];
+}
+
 export interface V2EngineResult {
   dates: string[];
   idxEwma: number[];
@@ -35,6 +47,7 @@ export interface V2EngineResult {
   slopeArr: number[];
   latest: V2LatestValues;
   history: V2HistoryPoint[];
+  series: V2Series;
 }
 
 interface V2Params {
@@ -137,16 +150,82 @@ function localPoly(arr: number[], half: number): { smooth: number[]; slope: numb
   return { smooth, slope };
 }
 
-function interpBand(recs: { t: number; v: number }[], dailyTs: number[]): number[] {
+// Coverage-weighted temporal kernel. Replaces plain linear interpolation between
+// scenes so that a partially-clouded observation still contributes, but in
+// proportion to how much of the forage disc it actually saw. Weight is
+// coverage x Gaussian(time). Beyond the kernel's reach (a long cloudy gap) it
+// falls back to the nearest observation.
+function kernelBand(
+  recs: { t: number; v: number; w: number }[],
+  dailyTs: number[],
+  hDays = 6
+): number[] {
   const sorted = [...recs].sort((a, b) => a.t - b.t);
+  if (sorted.length === 0) return dailyTs.map(() => 0);
+  const h = hDays * DAY_MS;
+  const reach = 3 * h;
   return dailyTs.map(t => {
-    let j = 0;
-    while (j < sorted.length - 1 && sorted[j + 1].t <= t) j++;
-    const a = sorted[j], b = sorted[Math.min(j + 1, sorted.length - 1)];
-    if (t <= a.t) return a.v;
-    if (t >= b.t) return b.v;
-    return a.v + (b.v - a.v) * (t - a.t) / (b.t - a.t);
+    let sw = 0, sv = 0;
+    for (const r of sorted) {
+      const dt = Math.abs(r.t - t);
+      if (dt > reach) continue;
+      const k = Math.exp(-0.5 * (dt / h) ** 2) * r.w;
+      sw += k; sv += k * r.v;
+    }
+    if (sw > 1e-9) return sv / sw;
+    let best = sorted[0], bd = Infinity;
+    for (const r of sorted) { const d = Math.abs(r.t - t); if (d < bd) { bd = d; best = r; } }
+    return best.v;
   });
+}
+
+// Robust spike rejection (Hampel filter on NDVI). V1 carried `filterNDVIOutliers`;
+// V2 shipped without an equivalent, and a rate-of-change core is MORE spike-sensitive
+// than a level core. Measured at Murfreesboro Aug 2026, consecutive passes read
+// 0.658 / 0.724 / 0.671 / 0.600 / 0.743 / 0.616 inside ten days.
+// Defence in depth against physically impossible band values reaching the pipeline.
+// The fetcher masks these at the pixel level, but the engine is also called with cached
+// and synthetic series, and one bad value poisons a percentile, a mean and the EWMA.
+function sane(recs: MultiBandRecord[]): MultiBandRecord[] {
+  const ok = (v: number, lim: number) => Number.isFinite(v) && Math.abs(v) <= lim;
+  return recs.filter(r => ok(r.ndvi, 1) && ok(r.ndwi, 1) && ok(r.evi, 1.5));
+}
+
+function rejectSpikes(recs: MultiBandRecord[], halfWin = 3, k = 3, minSigma = 0.02): MultiBandRecord[] {
+  if (recs.length < 2 * halfWin + 1) return recs;
+  const med = (a: number[]) => { const t = [...a].sort((x, y) => x - y); return t[Math.floor(t.length / 2)]; };
+  const keep: MultiBandRecord[] = [];
+  for (let i = 0; i < recs.length; i++) {
+    const lo = Math.max(0, i - halfWin), hi = Math.min(recs.length - 1, i + halfWin);
+    const win: number[] = [];
+    for (let j = lo; j <= hi; j++) if (j !== i) win.push(recs[j].ndvi);
+    if (win.length < 3) { keep.push(recs[i]); continue; }
+    const m = med(win);
+    const sigma = Math.max(1.4826 * med(win.map(v => Math.abs(v - m))), minSigma);
+    if (Math.abs(recs[i].ndvi - m) > k * sigma) continue;
+    keep.push(recs[i]);
+  }
+  return keep;
+}
+
+// One-sided linear slope over a trailing window. The centred quadratic fit in
+// localPoly has no future points for the final sgHalf days and extrapolates wildly
+// there — measured at Murfreesboro on 2026-08-18: slope -0.18062, larger in magnitude
+// than the maximum (0.13434) anywhere in 3.6 years of fully-supported fits, and
+// sign-flipped from the day before. That final value is exactly what drives
+// trend_direction and the phase badge, so it gets a stable estimator instead.
+function trailingSlope(arr: number[], i: number, win: number): number {
+  const lo = Math.max(0, i - win + 1);
+  let n = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
+  for (let j = lo; j <= i; j++) {
+    const y = arr[j];
+    if (!isFinite(y)) continue;
+    const x = j - i;
+    n++; sx += x; sy += y; sxx += x * x; sxy += x * y;
+  }
+  if (n < 3) return 0;
+  const den = n * sxx - sx * sx;
+  return Math.abs(den) < 1e-12 ? 0 : (n * sxy - sx * sy) / den;
 }
 
 export function runV2Pipeline(
@@ -161,13 +240,14 @@ export function runV2Pipeline(
     dates: [], idxEwma: [], phases: [], slopeArr: [],
     latest: { greenness: 0, vigor: 0, moisture: 0, warmth: 0, fall_term: 0, rate_norm: 0 },
     history: [],
+    series: { greenness: [], vigor: [], rate: [], rateNorm: [], moist: [], warmth: [], fallTerm: [], indexRaw: [] },
   };
   if (records.length === 0) return empty;
 
   // Daily timeline from first observed scene to today.
   // Extends past the last satellite observation so EWMA carries forward to the current date
-  // (interpBand forward-fills the last known value for days with no new scene).
-  const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
+  // (kernelBand falls back to the nearest observation across a long cloudy gap).
+  const sorted = rejectSpikes(sane([...records]).sort((a, b) => a.date.localeCompare(b.date)));
   const startT = new Date(sorted[0].date + 'T00:00').getTime();
   const lastObsT = new Date(sorted[sorted.length - 1].date + 'T00:00').getTime();
   const todayT  = new Date(new Date().toISOString().slice(0, 10) + 'T00:00').getTime();
@@ -177,11 +257,16 @@ export function runV2Pipeline(
   const N = dailyTs.length;
   const dates = dailyTs.map(t => new Date(t).toISOString().slice(0, 10));
 
+  // Coverage acts as an observation weight; series with no coverage field weigh equally.
   const mkRecs = (key: keyof MultiBandRecord) =>
-    sorted.map(r => ({ t: new Date(r.date + 'T00:00').getTime(), v: r[key] as number }));
-  const ndvi = interpBand(mkRecs('ndvi'), dailyTs);
-  const evi  = interpBand(mkRecs('evi'),  dailyTs);
-  const ndwi = interpBand(mkRecs('ndwi'), dailyTs);
+    sorted.map(r => ({
+      t: new Date(r.date + 'T00:00').getTime(),
+      v: r[key] as number,
+      w: Math.max(0.05, r.coverage ?? 1),
+    }));
+  const ndvi = kernelBand(mkRecs('ndvi'), dailyTs);
+  const evi  = kernelBand(mkRecs('evi'),  dailyTs);
+  const ndwi = kernelBand(mkRecs('ndwi'), dailyTs);
 
   // Greenness: NDVI anchors; blend in EVI as NDVI saturates in dense canopy
   const greenness = ndvi.map((nd, i) => {
@@ -243,19 +328,29 @@ export function runV2Pipeline(
   // EWMA for live smoothed value; local-poly for slope (SG-equivalent, uses future pts for history)
   const idxEwma         = ewmaArr(indexRaw, P.alpha);
   const { slope: slopeArr } = localPoly(indexRaw, P.sgHalf);
+  // Days without a full future window get the one-sided fit (see trailingSlope).
+  for (let i = Math.max(0, N - P.sgHalf); i < N; i++) {
+    slopeArr[i] = trailingSlope(indexRaw, i, 2 * P.sgHalf + 1);
+  }
 
   // Phase classification: intuitive (low=dearth, rising=building, high=peak, falling=winding down)
   // with dwell hysteresis to prevent daily flipping
   const instPhase = idxEwma.map((v, i): Phase => {
     const sl = slopeArr[i] ?? 0;
+    // Below the dearth floor there is no flow to be starting or ending. The slope
+    // tests used to run first, so a trivial slope on a near-zero index promoted a dead
+    // yard to "Flow Ending" — South Valley displayed "Flow Ending: monitor honey stores,
+    // watch for robbing" at NFI 1. DEARTH was effectively unreachable, and noise near
+    // zero flipped the label between two flow phases that were not in play.
+    if (v < P.dearth) return 'DEARTH';
     // Above the enter level you're IN flow regardless of slope (sharp peaks never
     // have a flat top, so requiring flatness made IN_FLOW unreachable) — unless
     // it's falling hard, which is the wind-down.
     if (v >= P.enter)  return sl < -P.riseThr ? 'FLOW_ENDING' : 'IN_FLOW';
-    // Below it, strong slope = direction-named phase
+    // Between the floor and the flow level, a strong slope names the direction.
     if (sl >  P.riseThr)  return 'FLOW_STARTING';
     if (sl < -P.riseThr)  return 'FLOW_ENDING';
-    return v < P.dearth ? 'DEARTH' : 'TRANSITION';
+    return 'TRANSITION';
   });
   const phases: Phase[] = new Array(N);
   let cur: Phase = 'TRANSITION', cand: Phase | null = null, candN = 0;
@@ -283,5 +378,8 @@ export function runV2Pipeline(
     phase: phases[i],
   }));
 
-  return { dates, idxEwma, phases, slopeArr, latest, history };
+  return {
+    dates, idxEwma, phases, slopeArr, latest, history,
+    series: { greenness, vigor, rate, rateNorm, moist, warmth, fallTerm, indexRaw },
+  };
 }
