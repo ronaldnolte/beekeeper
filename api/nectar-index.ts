@@ -1,5 +1,5 @@
 import { applyCors, fetchFirstOk, getAuthedUser, getBearerToken, createRateLimiter, getClientIp, isNectarAuthGraceActive, sendUpdateRequired } from './_lib.js';
-import { fetchNDVI, NDVIRecord } from './ndvi-fetcher.js';
+import { fetchNDVI, NDVIRecord } from './_shared/ndvi-fetcher.js';
 import { computeBloomFactor, PlantProfileEntry } from '../src/features/nectar/bloomFactor.js';
 import { computeWeatherSuitability, WeatherSuitabilityInput } from '../src/features/nectar/weatherSuitability.js';
 import { computeNectarStatus, Apiary, DailyEnvironment } from '../src/features/nectar/engine.js';

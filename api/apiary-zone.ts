@@ -1,6 +1,6 @@
 import { applyCors, getAuthedUser, getBearerToken, createRateLimiter, getClientIp } from './_lib.js';
-import { initEarthEngine, describePointLandCover } from './bands-fetcher.js';
-import { resolveEcoregion } from './ecoregion.js';
+import { initEarthEngine, describePointLandCover } from './_shared/bands-fetcher.js';
+import { resolveEcoregion } from './_shared/ecoregion.js';
 
 // Resolves an apiary to its EPA ecoregion, caches the result on the row, and sanity-checks
 // the pin while it is there.

@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
-import { runV2Pipeline, WeatherDay, Phase } from '../nectar-v2-engine';
-import type { MultiBandRecord } from '../bands-fetcher';
+import { runV2Pipeline, WeatherDay, Phase } from '../_shared/nectar-v2-engine';
+import type { MultiBandRecord } from '../_shared/bands-fetcher';
 
 const DAY_MS = 86_400_000;
 const LAT = 35;
