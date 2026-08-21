@@ -22,8 +22,15 @@ import { resolveEcoregion } from './ecoregion.js';
 
 const zoneLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 30 });
 
-/** Land covers that cannot support forage — a pin here is very likely wrong. */
-const IMPLAUSIBLE_FOR_HIVES = new Set([50, 60, 70, 80, 95, 100]);
+/**
+ * Land covers where a pin is very likely a typo. Deliberately EXCLUDES built-up (50):
+ * checked against the 13 real apiaries in the database, three of them sit on pixels
+ * classified built-up — backyard and suburban hives are completely normal, and
+ * WorldCover labels residential lots as built-up at 10 m. Warning on that would have
+ * fired on nearly a quarter of real users. Bare ground still catches the gravel-pit
+ * case; water, snow, mangrove and moss are simply not places hives sit.
+ */
+const IMPLAUSIBLE_FOR_HIVES = new Set([60, 70, 80, 95, 100]);
 
 export default async function handler(req: any, res: any) {
   if (applyCors(req, res)) return;
