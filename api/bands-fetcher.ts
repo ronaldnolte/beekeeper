@@ -64,6 +64,37 @@ export const FORAGE_WEIGHTS: Record<number, number> = {
   100: 0.0, // moss and lichen
 };
 
+/** Human-readable ESA WorldCover classes, for explaining a location back to a user. */
+export const WORLDCOVER_CLASS_NAMES: Record<number, string> = {
+  10: 'tree cover', 20: 'shrubland', 30: 'grassland', 40: 'cropland', 50: 'built-up',
+  60: 'bare or sparse ground', 70: 'snow and ice', 80: 'open water',
+  90: 'herbaceous wetland', 95: 'mangroves', 100: 'moss and lichen',
+};
+
+/**
+ * What land cover sits at a single coordinate. Used to sanity-check an apiary pin:
+ * a pin on bare ground, pavement or open water is almost certainly a typo, and it
+ * silently wrecks the index because those classes carry a forage weight of zero.
+ * A one-mile slip can land an apiary in a gravel pit.
+ */
+export async function describePointLandCover(
+  lat: number,
+  lon: number
+): Promise<{ code: number | null; name: string | null; forageWeight: number | null }> {
+  const point = ee.Geometry.Point([lon, lat]);
+  const wc = ee.ImageCollection('ESA/WorldCover/v200').first();
+  const result: any = await evaluate(
+    wc.reduceRegion({ reducer: ee.Reducer.first(), geometry: point, scale: 10 })
+  );
+  const code = result?.Map ?? result?.map ?? Object.values(result ?? {})[0] ?? null;
+  if (code == null) return { code: null, name: null, forageWeight: null };
+  return {
+    code: code as number,
+    name: WORLDCOVER_CLASS_NAMES[code as number] ?? null,
+    forageWeight: FORAGE_WEIGHTS[code as number] ?? null,
+  };
+}
+
 function forageWeightImage(): any {
   const from = Object.keys(FORAGE_WEIGHTS).map(Number);
   const to = from.map(k => FORAGE_WEIGHTS[k]);

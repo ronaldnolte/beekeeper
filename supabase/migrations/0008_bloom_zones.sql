@@ -23,6 +23,9 @@
 --
 -- NOTE: apiaries.id is TEXT, not uuid (confirmed against the live table).
 --
+-- This file is idempotent (add column if not exists / create table if not exists /
+-- drop policy if exists), so it is safe to re-run after an amendment.
+--
 -- Apply order: run on "Beekeeper Dev v2" FIRST and exercise the app against it,
 -- THEN production. Never the other way round.
 -- ============================================================================
@@ -38,6 +41,15 @@
 alter table public.apiaries add column if not exists ecoregion_l3 text;
 alter table public.apiaries add column if not exists ecoregion_l4 text;
 alter table public.apiaries add column if not exists ecoregion_resolved_at timestamptz;
+
+-- Which coordinates the zone was derived from. An apiary holding only a zip code
+-- still gets a zone (the client geocodes the zip for the nectar index already), but
+-- a zip centroid is coarse: the two New Mexico apiaries sit 30 km apart in DIFFERENT
+-- Level III ecoregions, so a zip spanning valley and foothills can land on the wrong
+-- side of that line. Recording the source lets the UI mark such a zone approximate,
+-- and lets us re-resolve once real coordinates are added.
+alter table public.apiaries add column if not exists ecoregion_source text
+  check (ecoregion_source is null or ecoregion_source in ('coordinates','zip'));
 
 -- ---------------------------------------------------------------------------
 -- 2. Species master.
