@@ -72,7 +72,8 @@ function forageWeightImage(): any {
 
 let isEEInitialized = false;
 
-function initEarthEngine(): Promise<void> {
+/** Exported so other endpoints (e.g. the ecoregion lookup) can reuse the same auth. */
+export function initEarthEngine(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (isEEInitialized) return resolve();
     const keyString = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
