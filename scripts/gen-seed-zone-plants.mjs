@@ -8,7 +8,7 @@
 // pinon, juniper, mountain mahogany. Yucca is excluded too (yucca moths, not honeybees).
 import { writeFileSync } from 'node:fs';
 
-const PLANTS = {
+export const PLANTS = {
   'Alfalfa':                   'Medicago sativa',
   'Russian Olive':             'Elaeagnus angustifolia',
   'Salt Cedar':                'Tamarix ramosissima',
@@ -50,7 +50,7 @@ const RON  = 'Ron Nolte field observation 2026-08';
 const INFER = 'Inferred from regional flora - NOT yet validated';
 
 // [plant, bloom_start, bloom_peak, bloom_end, nectar_value, source, confidence]
-const ZONES = {
+export const ZONES = {
   '22g': {
     name: 'Rio Grande Floodplain',
     rows: [
