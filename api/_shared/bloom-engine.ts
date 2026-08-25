@@ -149,15 +149,17 @@ function gddAtCalendarDate(mmdd: string, gdd: Map<string, number>, years: string
  * this does not.
  */
 /**
- * Combine the open plants into one figure.
+ * Combine the open plants into one figure: a plain sum of what is blooming.
  *
- * Best plant counts fully, the next half, the next a quarter. See note 3 at the top for why
- * a plain sum is wrong. Order matters, so this sorts rather than trusting the caller.
+ * A positional decay (best plant fully, next half, next a quarter) was tried and REMOVED on
+ * the beekeeper's instruction 2026-08-25. It weighted plants by their rank in a sorted list,
+ * which is not a property of any plant. The known consequence is that months with several
+ * species overlapping outscore months carrying a single dominant flow: on the Rio Grande
+ * list this puts mid-June at about 2.1x mid-September, where the beekeeper reports 1.5x.
+ * The intended fix is honest per-zone significance ratings, not a transform on top.
  */
 export function combineContributions(contributions: number[]): number {
-  return [...contributions]
-    .sort((a, b) => b - a)
-    .reduce((acc, c, i) => acc + c * Math.pow(0.5, i), 0);
+  return contributions.reduce((acc, c) => acc + c, 0);
 }
 
 export function openness(x: number, start: number, peak: number, end: number): number {

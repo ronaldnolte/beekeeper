@@ -96,28 +96,34 @@ describe('combineContributions', () => {
     expect(combineContributions([0.9])).toBeCloseTo(0.9, 6);
   });
 
-  it('halves each further plant, so species count cannot dominate', () => {
-    // 0.9 + 0.8/2 + 0.4/4
-    expect(combineContributions([0.9, 0.8, 0.4])).toBeCloseTo(0.9 + 0.4 + 0.1, 6);
+  it('sums what is open, with no positional weighting', () => {
+    // The decay was removed on instruction: rank in a sorted list is not a property of a
+    // plant. The cost is that overlapping months outscore single-dominant-flow months.
+    expect(combineContributions([0.9, 0.8, 0.4])).toBeCloseTo(2.1, 6);
   });
 
   it('sorts, so caller order cannot change the answer', () => {
     expect(combineContributions([0.4, 0.9, 0.8])).toBeCloseTo(combineContributions([0.9, 0.8, 0.4]), 9);
   });
 
-  it('keeps a single dominant flow competitive with a diverse month', () => {
-    // The failure this rule exists to prevent. Real 22g values: mid-June has five species
-    // overlapping, mid-September has chamisa essentially alone. A plain sum scored June at
-    // 2.8x September, which labels every autumn a dearth under absolute thresholds. The
-    // beekeeper reports the true ratio is about 1.5x.
+  // KNOWN AND ACCEPTED SHORTFALL, recorded so it cannot be forgotten.
+  //
+  // Real 22g contributions: mid-June has five species overlapping, mid-September has
+  // chamisa essentially alone. A plain sum scores June at about 2.8x September; the
+  // beekeeper reports the real ratio is about 1.5x. Under absolute phase thresholds this
+  // would label a genuine autumn flow a dearth.
+  //
+  // The positional decay that corrected the ratio was removed on instruction, because rank
+  // in a sorted list is not a property of a plant. The intended fix is honest per-zone
+  // significance ratings: the current seed rates six of ten plants between 0.5 and 0.9,
+  // which is what lets minor species inflate June. Ratings alone were measured to move this
+  // from 2.8x to 2.1x, so they narrow the gap without closing it.
+  //
+  // When ratings land, re-measure. If the ratio is still far above 1.5x, this is unresolved.
+  it('overstates a diverse month against a single dominant flow (known shortfall)', () => {
     const june = combineContributions([0.90, 0.70, 0.64, 0.47, 0.09]);
     const september = combineContributions([0.90, 0.11]);
-    const ratio = june / september;
-    expect(ratio).toBeGreaterThan(1.2);
-    expect(ratio).toBeLessThan(1.9);
-
-    const plainSumRatio = 2.80 / 1.01;
-    expect(ratio).toBeLessThan(plainSumRatio);
+    expect(june / september).toBeGreaterThan(2.5);
   });
 
   it('is zero when nothing is open', () => {

@@ -95,19 +95,20 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    const plants: PlantWindow[] = rows
-      .filter(r => r.bloom_start && r.bloom_peak && r.bloom_end)
-      .map(r => ({
-        name: r.plants?.common_name ?? 'Unknown',
-        bloomStart: r.bloom_start,
-        bloomPeak: r.bloom_peak,
-        bloomEnd: r.bloom_end,
-        // Currently the seeded nectar_value. These ratings are the weakest input in the
-        // whole calculation: published sources rate alfalfa, both clovers and willow all
-        // "major" and do not cover chamisa, Russian olive or salt cedar at all. Treat the
-        // shape of this curve as far more trustworthy than its height.
-        nectarValue: r.nectar_value ?? 0.5,
-      }));
+    // No gap filling. A row without a bloom window or without a nectar rating is not
+    // usable, and substituting a middling default would invent forage that nobody
+    // researched. Unusable rows are counted and reported instead.
+    const usable = rows.filter(r =>
+      r.bloom_start && r.bloom_peak && r.bloom_end && r.nectar_value != null);
+    const unusable = rows.length - usable.length;
+
+    const plants: PlantWindow[] = usable.map(r => ({
+      name: r.plants?.common_name ?? 'Unknown',
+      bloomStart: r.bloom_start,
+      bloomPeak: r.bloom_peak,
+      bloomEnd: r.bloom_end,
+      nectarValue: r.nectar_value,
+    }));
 
     if (!plants.length) {
       res.status(200).json({
@@ -153,6 +154,8 @@ export default async function handler(req: any, res: any) {
       zoneLevel,
       zoneCode,
       plantCount: plants.length,
+      // Rows in the zone list we could not use: missing a bloom window or a nectar rating.
+      unusablePlants: unusable,
       // Days this year the list cannot account for at all. A hole in the research, not a
       // dearth, and it has to be visible rather than reported to a beekeeper as zero forage.
       emptyDays: bloom.emptyDays,

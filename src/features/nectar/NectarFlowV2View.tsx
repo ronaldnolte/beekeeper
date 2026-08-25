@@ -93,11 +93,16 @@ interface PotentialResponse {
   }[];
 }
 
-// The combination rule (best plant fully, each further one halved) has a mathematical
-// ceiling of exactly 2.0 — the sum of the halving series with every plant rated 1.0 and
-// wide open. Dividing by it puts the curve on the same 0-1 axis as the satellite index
-// without inventing a scale factor.
-const POTENTIAL_CEILING = 2.0;
+// Potential is a plain sum of what is blooming, so it has no fixed ceiling — a zone with
+// more plants reaches higher. The chart axis is therefore fitted to the data actually
+// returned: the highest value across all five years plus the current one. That makes the
+// vertical scale comparable BETWEEN YEARS ON THIS CHART, which is what the five-year
+// comparison needs, and NOT comparable between apiaries. Display only; the stored numbers
+// are raw.
+function potentialScale(history: { potential: number }[]): number {
+  const max = history.reduce((m, h) => Math.max(m, h.potential), 0);
+  return max > 0 ? max : 1;
+}
 
 export const NectarFlowV2View: React.FC = () => {
   const { selectedApiaryId, apiariesList } = useAppStore();
@@ -377,6 +382,37 @@ export const NectarFlowV2View: React.FC = () => {
   }
 
   // Loading (copied verbatim from NectarFlowView)
+  // Nectar Potential is fetched lazily, only once the user asks to see it. It costs a
+  // weather call and no Earth Engine, so about a second.
+  useEffect(() => {
+    if (chartSource !== 'potential' || potential || potentialLoading || !selectedApiaryId) return;
+    let cancelled = false;
+    (async () => {
+      setPotentialLoading(true);
+      setPotentialError(null);
+      try {
+        const apiBase = Capacitor.isNativePlatform()
+          ? 'https://beekeeper.beektools.com/api/nectar-potential'
+          : '/api/nectar-potential';
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${apiBase}?apiaryId=${encodeURIComponent(selectedApiaryId)}`, {
+          headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+        });
+        if (!res.ok) throw new Error((await res.text()) || `API error ${res.status}`);
+        const json = await res.json();
+        if (!cancelled) setPotential(json);
+      } catch (e: any) {
+        if (!cancelled) setPotentialError(e?.message ?? 'Failed to load Nectar Potential');
+      } finally {
+        if (!cancelled) setPotentialLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [chartSource, potential, potentialLoading, selectedApiaryId]);
+
+  // Switching apiary invalidates the cached potential.
+  useEffect(() => { setPotential(null); setPotentialError(null); }, [selectedApiaryId]);
+
   if (loading) {
     return (
       <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-white bg-[#0f0f1a]">
@@ -459,49 +495,20 @@ export const NectarFlowV2View: React.FC = () => {
   // already consumes. It carries no phase — the plant list says nothing about whether a
   // flow is starting or ending — so every point is marked TRANSITION and the line is drawn
   // in one colour instead of being segmented.
+  const potScale = potentialScale(potential?.history ?? []);
   const potentialAsHistory = (potential?.history ?? []).map((h) => ({
     date: h.date,
-    forage_index_smoothed: Math.min(1, h.potential / POTENTIAL_CEILING),
+    forage_index_smoothed: Math.min(1, h.potential / potScale),
     phase: 'TRANSITION' as Phase,
-    normal: h.normal == null ? null : Math.min(1, h.normal / POTENTIAL_CEILING),
-    deviation: h.deviation == null ? null : h.deviation / POTENTIAL_CEILING,
-    spread: h.spread == null ? null : h.spread / POTENTIAL_CEILING,
+    normal: h.normal == null ? null : Math.min(1, h.normal / potScale),
+    deviation: h.deviation == null ? null : h.deviation / potScale,
+    spread: h.spread == null ? null : h.spread / potScale,
     normalYears: h.normalYears,
   }));
 
   const showingPotential = chartSource === 'potential';
   const activeHistory = showingPotential ? potentialAsHistory : (data.full_history || []);
 
-  // Nectar Potential is fetched lazily, only once the user asks to see it. It costs a
-  // weather call and no Earth Engine, so about a second.
-  useEffect(() => {
-    if (chartSource !== 'potential' || potential || potentialLoading || !selectedApiaryId) return;
-    let cancelled = false;
-    (async () => {
-      setPotentialLoading(true);
-      setPotentialError(null);
-      try {
-        const apiBase = Capacitor.isNativePlatform()
-          ? 'https://beekeeper.beektools.com/api/nectar-potential'
-          : '/api/nectar-potential';
-        const { data: { session } } = await supabase.auth.getSession();
-        const res = await fetch(`${apiBase}?apiaryId=${encodeURIComponent(selectedApiaryId)}`, {
-          headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
-        });
-        if (!res.ok) throw new Error((await res.text()) || `API error ${res.status}`);
-        const json = await res.json();
-        if (!cancelled) setPotential(json);
-      } catch (e: any) {
-        if (!cancelled) setPotentialError(e?.message ?? 'Failed to load Nectar Potential');
-      } finally {
-        if (!cancelled) setPotentialLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [chartSource, potential, potentialLoading, selectedApiaryId]);
-
-  // Switching apiary invalidates the cached potential.
-  useEffect(() => { setPotential(null); setPotentialError(null); }, [selectedApiaryId]);
 
   // Year-split history (copied verbatim from NectarFlowView, V2 has no ndvi/bloom/weather in history)
   const years = Array.from(
