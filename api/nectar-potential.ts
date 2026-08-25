@@ -1,0 +1,186 @@
+import { applyCors, getAuthedUser, getBearerToken } from './_lib.js';
+import { fetchWeather, historyStartDate } from './_shared/weather.js';
+import { computeBloomBase, type PlantWindow } from './_shared/bloom-engine.js';
+import { withNormals } from './_shared/normal.js';
+import { resolveEcoregion } from './_shared/ecoregion.js';
+
+// Nectar Potential: what the apiary's own plant list says should be yielding today,
+// against the same date in the previous five years.
+//
+// This is the bloom half of the plant-driven design, on its own and unmodified. No
+// satellite reading touches it — that is deliberate for review, so the calendar's
+// contribution can be judged before anything is layered on top of it. It is therefore NOT
+// the nectar index and must not be presented as one: it says what should be open and how
+// good those plants are, not whether they are actually running.
+//
+// No Earth Engine, so it costs a weather call and some arithmetic — about a second, against
+// roughly eighteen for the satellite index.
+
+export default async function handler(req: any, res: any) {
+  if (applyCors(req, res)) return;
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  const auth = await getAuthedUser(getBearerToken(req));
+  if (!auth) { res.status(401).json({ error: 'You must be signed in.' }); return; }
+
+  const apiaryId = req.method === 'POST' ? req.body?.apiaryId : req.query?.apiaryId;
+  if (!apiaryId || typeof apiaryId !== 'string') {
+    res.status(400).json({ error: 'apiaryId is required' });
+    return;
+  }
+
+  try {
+    const { data: apiary, error } = await auth.supabase
+      .from('apiaries')
+      .select('id, name, latitude, longitude, ecoregion_l3, ecoregion_l4, ecoregion_resolved_at')
+      .eq('id', apiaryId)
+      .single();
+
+    if (error || !apiary) { res.status(404).json({ error: 'Apiary not found' }); return; }
+    if (apiary.latitude == null || apiary.longitude == null) {
+      res.status(200).json({ available: false, reason: 'no-coordinates', history: [] });
+      return;
+    }
+
+    const lat = Number(apiary.latitude);
+    const lng = Number(apiary.longitude);
+
+    // Resolve the ecoregion on demand rather than sending the caller away to another
+    // endpoint first. It costs well under a second and only happens once per apiary.
+    let l3 = apiary.ecoregion_l3;
+    let l4 = apiary.ecoregion_l4;
+    if (!apiary.ecoregion_resolved_at) {
+      const zone = await resolveEcoregion(lat, lng);
+      l3 = zone.l3code;
+      l4 = zone.l4code;
+      await auth.supabase.from('apiaries').update({
+        ecoregion_l3: zone.l3code,
+        ecoregion_l4: zone.l4code,
+        ecoregion_resolved_at: new Date().toISOString(),
+        ecoregion_source: 'coordinates',
+      }).eq('id', apiaryId);
+    }
+
+    if (!l3 && !l4) {
+      // Outside the conterminous US. Hidden rather than degraded.
+      res.status(200).json({ available: false, reason: 'outside-coverage', history: [] });
+      return;
+    }
+
+    // Level IV first, then Level III, so an uncurated fine zone still gets a list.
+    const select = 'bloom_start, bloom_peak, bloom_end, nectar_value, source, confidence, plants(common_name)';
+    let zoneLevel = 'l4';
+    let zoneCode = l4;
+    let rows: any[] = [];
+
+    if (zoneCode) {
+      const { data } = await auth.supabase.from('zone_plants')
+        .select(select).eq('zone_level', 'l4').eq('zone_code', zoneCode);
+      rows = data ?? [];
+    }
+    if (!rows.length && l3) {
+      zoneLevel = 'l3';
+      zoneCode = l3;
+      const { data } = await auth.supabase.from('zone_plants')
+        .select(select).eq('zone_level', 'l3').eq('zone_code', zoneCode);
+      rows = data ?? [];
+    }
+    if (!rows.length) {
+      res.status(200).json({
+        available: false, reason: 'zone-not-curated', zoneLevel, zoneCode, history: [],
+      });
+      return;
+    }
+
+    const plants: PlantWindow[] = rows
+      .filter(r => r.bloom_start && r.bloom_peak && r.bloom_end)
+      .map(r => ({
+        name: r.plants?.common_name ?? 'Unknown',
+        bloomStart: r.bloom_start,
+        bloomPeak: r.bloom_peak,
+        bloomEnd: r.bloom_end,
+        // Currently the seeded nectar_value. These ratings are the weakest input in the
+        // whole calculation: published sources rate alfalfa, both clovers and willow all
+        // "major" and do not cover chamisa, Russian olive or salt cedar at all. Treat the
+        // shape of this curve as far more trustworthy than its height.
+        nectarValue: r.nectar_value ?? 0.5,
+      }));
+
+    if (!plants.length) {
+      res.status(200).json({
+        available: false, reason: 'no-usable-windows', zoneLevel, zoneCode, history: [],
+      });
+      return;
+    }
+
+    const today = new Date();
+    const endDate = today.toISOString().slice(0, 10);
+    const startDate = historyStartDate(today);
+
+    const weather = await fetchWeather(lat, lng, startDate, endDate);
+    const temps = Object.entries(weather.days)
+      .map(([date, d]) => ({ date, tmax: d.tmax, tmin: d.tmin }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    if (temps.length < 400) {
+      res.status(200).json({
+        available: false, reason: 'insufficient-weather', days: temps.length, history: [],
+      });
+      return;
+    }
+
+    const bloom = computeBloomBase(plants, temps);
+    const normals = withNormals(bloom.dates, bloom.potential);
+
+    const history = bloom.dates.map((date, i) => ({
+      date,
+      potential: Math.round(bloom.potential[i] * 1000) / 1000,
+      normal: normals[i].normal,
+      deviation: normals[i].deviation,
+      spread: normals[i].spread,
+      normalYears: normals[i].normalYears,
+    }));
+
+    const last = history[history.length - 1];
+
+    res.setHeader('Cache-Control', 'private, max-age=3600, stale-while-revalidate=600');
+    res.status(200).json({
+      available: true,
+      apiary: { id: apiary.id, name: apiary.name, lat, lng },
+      zoneLevel,
+      zoneCode,
+      plantCount: plants.length,
+      // Days this year the list cannot account for at all. A hole in the research, not a
+      // dearth, and it has to be visible rather than reported to a beekeeper as zero forage.
+      emptyDays: bloom.emptyDays,
+      latest: {
+        date: last?.date ?? null,
+        potential: last?.potential ?? null,
+        normal: last?.normal ?? null,
+        deviation: last?.deviation ?? null,
+        breakdown: bloom.latestBreakdown.map(b => ({
+          name: b.name,
+          openness: Math.round(b.openness * 100) / 100,
+          nectarValue: b.nectarValue,
+          contribution: Math.round(b.contribution * 1000) / 1000,
+          trigger: b.trigger,
+        })),
+      },
+      thresholds: bloom.thresholds.map(t => ({
+        name: t.name,
+        trigger: t.trigger,
+        start: Math.round(t.start),
+        peak: Math.round(t.peak),
+        end: Math.round(t.end),
+      })),
+      weather: { archive_ok: weather.archive_ok, forecast_source: weather.forecast_source },
+      history,
+    });
+  } catch (e: any) {
+    console.error('Nectar potential error:', e);
+    res.status(500).json({ error: 'Failed to compute nectar potential: ' + (e?.message ?? 'Unknown error') });
+  }
+}

@@ -1,111 +1,12 @@
 import { applyCors, getAuthedUser, getBearerToken, createRateLimiter, getClientIp, isNectarAuthGraceActive, sendUpdateRequired } from './_lib.js';
 import { fetchMultiBands } from './_shared/bands-fetcher.js';
-import { runV2Pipeline, Phase, WeatherDay } from './_shared/nectar-v2-engine.js';
-import { fetchFirstOk } from './_lib.js';
+import { runV2Pipeline, Phase } from './_shared/nectar-v2-engine.js';
+import { fetchWeather as fetchWeatherV2 } from './_shared/weather.js';
 
 // Anonymous nectar calls are only possible during the auth grace window (see
 // _lib). Rate-limit them to blunt scripted abuse of the paid Earth Engine /
 // weather work while old app builds age out.
 const nectarLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 20 });
-
-// Open-Meteo response shapes
-interface OMDaily {
-  time: string[];
-  temperature_2m_max: (number | null)[];
-  temperature_2m_min: (number | null)[];
-}
-interface OMHourly {
-  time: string[];
-  dew_point_2m: (number | null)[];
-}
-
-interface WeatherV2Result {
-  days: Record<string, WeatherDay>;
-  /** Which host supplied the recent/forecast window (outage diagnostics). */
-  forecast_source: 'primary' | 'auxiliary' | 'none';
-  archive_ok: boolean;
-}
-
-async function fetchWeatherV2(
-  lat: number,
-  lng: number,
-  startDate: string,
-  endDate: string
-): Promise<WeatherV2Result> {
-  const today = new Date();
-  const archiveEnd = new Date(today.getTime() - 3 * 86_400_000).toISOString().slice(0, 10);
-  const recentStart = new Date(today.getTime() - 10 * 86_400_000).toISOString().slice(0, 10);
-
-  const base = `latitude=${lat}&longitude=${lng}&temperature_unit=fahrenheit&timezone=auto`;
-  const dailyVars = 'daily=temperature_2m_max,temperature_2m_min';
-  const hourlyVars = 'hourly=dew_point_2m&temperature_unit=fahrenheit';
-
-  const map: Record<string, { tmax: number | null; tmin: number | null; _ds: number; _dn: number }> = {};
-  const ensure = (d: string) => { if (!map[d]) map[d] = { tmax: null, tmin: null, _ds: 0, _dn: 0 }; return map[d]; };
-
-  function absorbDaily(daily: OMDaily | null) {
-    if (!daily?.time) return;
-    for (let i = 0; i < daily.time.length; i++) {
-      const e = ensure(daily.time[i]);
-      if (daily.temperature_2m_max[i] != null) e.tmax = daily.temperature_2m_max[i];
-      if (daily.temperature_2m_min[i] != null) e.tmin = daily.temperature_2m_min[i];
-    }
-  }
-  function absorbHourlyDew(hourly: OMHourly | null) {
-    if (!hourly?.time) return;
-    for (let i = 0; i < hourly.time.length; i++) {
-      const dp = hourly.dew_point_2m[i];
-      if (dp == null) continue;
-      const d = hourly.time[i].slice(0, 10);
-      const e = ensure(d);
-      e._ds += dp; e._dn++;
-    }
-  }
-
-  const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?${base}&start_date=${startDate}&end_date=${archiveEnd}&${dailyVars}&${hourlyVars}`;
-  // Recent window: primary Forecast API, then Open-Meteo's separately-hosted
-  // auxiliary Historical Forecast API (same request/response shape, same model
-  // data, hours-stale at worst). Proven necessary 2026-07-03 when the primary
-  // went down while the auxiliary stayed at 100% uptime.
-  const forecastPath = `/v1/forecast?${base}&start_date=${recentStart}&end_date=${endDate}&${dailyVars}&${hourlyVars}`;
-  const forecastCandidates = [
-    `https://api.open-meteo.com${forecastPath}`,
-    `https://historical-forecast-api.open-meteo.com${forecastPath}`,
-  ];
-
-  // fetchFirstOk never rejects — a dead host degrades the data instead of
-  // killing the whole request (the old Promise.all([fetch, fetch]) did).
-  const [arch, fc] = await Promise.all([
-    fetchFirstOk([archiveUrl], 12_000),
-    fetchFirstOk(forecastCandidates, 8_000),
-  ]);
-
-  if (arch) {
-    const j = await arch.res.json();
-    absorbDaily(j.daily ?? null);
-    absorbHourlyDew(j.hourly ?? null);
-  }
-  if (fc) {
-    const j = await fc.res.json();
-    absorbDaily(j.daily ?? null);
-    absorbHourlyDew(j.hourly ?? null);
-  }
-
-  const out: Record<string, WeatherDay> = {};
-  for (const [d, e] of Object.entries(map)) {
-    if (e.tmax == null || e.tmin == null) continue;
-    out[d] = {
-      tmax: e.tmax,
-      tmin: e.tmin,
-      dew:  e._dn ? +(e._ds / e._dn).toFixed(2) : null,
-    };
-  }
-  return {
-    days: out,
-    forecast_source: fc ? (fc.url.includes('historical-forecast') ? 'auxiliary' : 'primary') : 'none',
-    archive_ok: !!arch,
-  };
-}
 
 function phaseToStatus(phase: Phase): 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low' {
   switch (phase) {

@@ -69,6 +69,36 @@ interface LoadTiming {
   server: ServerTiming | null;
 }
 
+interface PotentialResponse {
+  available: boolean;
+  reason?: string;
+  zoneLevel?: string;
+  zoneCode?: string;
+  plantCount?: number;
+  emptyDays?: number;
+  latest?: {
+    date: string | null;
+    potential: number | null;
+    normal: number | null;
+    deviation: number | null;
+    breakdown: { name: string; openness: number; nectarValue: number; contribution: number; trigger: string }[];
+  };
+  history: {
+    date: string;
+    potential: number;
+    normal: number | null;
+    deviation: number | null;
+    spread: number | null;
+    normalYears: number;
+  }[];
+}
+
+// The combination rule (best plant fully, each further one halved) has a mathematical
+// ceiling of exactly 2.0 — the sum of the halving series with every plant rated 1.0 and
+// wide open. Dividing by it puts the curve on the same 0-1 axis as the satellite index
+// without inventing a scale factor.
+const POTENTIAL_CEILING = 2.0;
+
 export const NectarFlowV2View: React.FC = () => {
   const { selectedApiaryId, apiariesList } = useAppStore();
   const [loading, setLoading] = useState(true);
@@ -85,6 +115,14 @@ export const NectarFlowV2View: React.FC = () => {
 
   // Hover cursor state for trends chart
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // Which series the trends chart draws. 'satellite' is the shipped index; 'potential' is
+  // the plant-driven bloom curve, which is a DIFFERENT QUANTITY and not a second opinion on
+  // the same one — it says what should be open, not whether it is yielding.
+  const [chartSource, setChartSource] = useState<'satellite' | 'potential'>('satellite');
+  const [potential, setPotential] = useState<PotentialResponse | null>(null);
+  const [potentialLoading, setPotentialLoading] = useState(false);
+  const [potentialError, setPotentialError] = useState<string | null>(null);
 
   // Enlarged Landscape Modal State
   const [isEnlarged, setIsEnlarged] = useState(false);
@@ -417,9 +455,57 @@ export const NectarFlowV2View: React.FC = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   };
 
+  // Nectar Potential shares the chart, so it is mapped into the same shape the drawing code
+  // already consumes. It carries no phase — the plant list says nothing about whether a
+  // flow is starting or ending — so every point is marked TRANSITION and the line is drawn
+  // in one colour instead of being segmented.
+  const potentialAsHistory = (potential?.history ?? []).map((h) => ({
+    date: h.date,
+    forage_index_smoothed: Math.min(1, h.potential / POTENTIAL_CEILING),
+    phase: 'TRANSITION' as Phase,
+    normal: h.normal == null ? null : Math.min(1, h.normal / POTENTIAL_CEILING),
+    deviation: h.deviation == null ? null : h.deviation / POTENTIAL_CEILING,
+    spread: h.spread == null ? null : h.spread / POTENTIAL_CEILING,
+    normalYears: h.normalYears,
+  }));
+
+  const showingPotential = chartSource === 'potential';
+  const activeHistory = showingPotential ? potentialAsHistory : (data.full_history || []);
+
+  // Nectar Potential is fetched lazily, only once the user asks to see it. It costs a
+  // weather call and no Earth Engine, so about a second.
+  useEffect(() => {
+    if (chartSource !== 'potential' || potential || potentialLoading || !selectedApiaryId) return;
+    let cancelled = false;
+    (async () => {
+      setPotentialLoading(true);
+      setPotentialError(null);
+      try {
+        const apiBase = Capacitor.isNativePlatform()
+          ? 'https://beekeeper.beektools.com/api/nectar-potential'
+          : '/api/nectar-potential';
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${apiBase}?apiaryId=${encodeURIComponent(selectedApiaryId)}`, {
+          headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+        });
+        if (!res.ok) throw new Error((await res.text()) || `API error ${res.status}`);
+        const json = await res.json();
+        if (!cancelled) setPotential(json);
+      } catch (e: any) {
+        if (!cancelled) setPotentialError(e?.message ?? 'Failed to load Nectar Potential');
+      } finally {
+        if (!cancelled) setPotentialLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [chartSource, potential, potentialLoading, selectedApiaryId]);
+
+  // Switching apiary invalidates the cached potential.
+  useEffect(() => { setPotential(null); setPotentialError(null); }, [selectedApiaryId]);
+
   // Year-split history (copied verbatim from NectarFlowView, V2 has no ndvi/bloom/weather in history)
   const years = Array.from(
-    new Set((data.full_history || []).map((h) => parseInt(h.date.split('-')[0], 10)))
+    new Set(activeHistory.map((h) => parseInt(h.date.split('-')[0], 10)))
   ).sort() as number[];
 
   const currentYear = years[years.length - 1] || new Date().getFullYear();
@@ -429,7 +515,7 @@ export const NectarFlowV2View: React.FC = () => {
     ? `Normal ${historicalYears[0]}-${historicalYears[historicalYears.length - 1]}`
     : `${baseYear}`;
 
-  const historyCurrent = (data.full_history || []).filter(
+  const historyCurrent = activeHistory.filter(
     (h) => parseInt(h.date.split('-')[0], 10) === currentYear
   );
 
@@ -438,7 +524,7 @@ export const NectarFlowV2View: React.FC = () => {
     historyBaseMap[i] = { sum: 0, count: 0 };
   }
 
-  (data.full_history || []).forEach((h) => {
+  activeHistory.forEach((h) => {
     const year = parseInt(h.date.split('-')[0], 10);
     if (year < currentYear) {
       const dayIdx = getDayOfYear(h.date);
@@ -633,7 +719,9 @@ export const NectarFlowV2View: React.FC = () => {
         const y1 = yCoord(h1.forage_index_smoothed);
         const x2 = getXCoordForDate(h2.date);
         const y2 = yCoord(h2.forage_index_smoothed);
-        const color = getPhaseColor(h1.phase);
+        // Phase colours describe the satellite index. The bloom curve has no phase, so
+        // colouring it by one would assert something the plant list cannot know.
+        const color = showingPotential ? '#C084FC' : getPhaseColor(h1.phase);
         currentSegments.push(
           <line
             key={`curr-seg-${i}`}
@@ -655,7 +743,7 @@ export const NectarFlowV2View: React.FC = () => {
       if (lastCurrent.forage_index_smoothed !== null && !isNaN(lastCurrent.forage_index_smoothed)) {
         lastX = getXCoordForDate(lastCurrent.date);
         lastY = yCoord(lastCurrent.forage_index_smoothed);
-        dotColor = getPhaseColor(lastCurrent.phase);
+        dotColor = showingPotential ? '#C084FC' : getPhaseColor(lastCurrent.phase);
       }
     }
 
@@ -1048,6 +1136,54 @@ export const NectarFlowV2View: React.FC = () => {
         {/* TRENDS TAB (copied verbatim from NectarFlowView; hover panel shows NFI only — V2 history has no NDVI/Bloom/Weather) */}
         {activeTab === 'trends' && (
           <div className="space-y-3 select-none">
+            {/* Series switch. These are two different quantities, not two opinions on one. */}
+            <div className="bg-[#121226] border border-[#222240] rounded-xl p-1 flex gap-1">
+              {([
+                { key: 'satellite' as const, label: 'Satellite Index', sub: 'what the ground is doing' },
+                { key: 'potential' as const, label: 'Nectar Potential', sub: 'what should be blooming' },
+              ]).map(({ key, label, sub }) => (
+                <button
+                  key={key}
+                  onClick={() => { setChartSource(key); setHoveredIndex(null); }}
+                  className={`flex-1 rounded-lg px-3 py-2 text-left transition-all cursor-pointer ${
+                    chartSource === key
+                      ? 'bg-[#2b2b54] text-white shadow'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <div className="text-[11px] font-black tracking-wide">{label}</div>
+                  <div className="text-[9px] opacity-70 leading-tight">{sub}</div>
+                </button>
+              ))}
+            </div>
+
+            {showingPotential && (
+              <div className="bg-[#1a1530] border border-amber-600/40 rounded-xl px-4 py-2.5 text-[11px] leading-relaxed text-amber-200/90">
+                {potentialLoading && <span>Loading Nectar Potential…</span>}
+                {potentialError && <span className="text-red-300">{potentialError}</span>}
+                {!potentialLoading && !potentialError && potential && !potential.available && (
+                  <span>
+                    Not available for this apiary
+                    {potential.reason === 'zone-not-curated' && ' — its ecoregion has no researched plant list yet'}
+                    {potential.reason === 'outside-coverage' && ' — outside the conterminous United States'}
+                    {potential.reason === 'no-coordinates' && ' — pin the apiary on the map first'}
+                    .
+                  </span>
+                )}
+                {!potentialLoading && potential?.available && (
+                  <>
+                    <b>Blooming potential only — no satellite reading.</b> What this apiary&rsquo;s{' '}
+                    {potential.plantCount} researched plants say should be open and yielding, on the
+                    heat and day length actually recorded. Zone {potential.zoneCode}.
+                    {!!potential.emptyDays && potential.emptyDays > 0 && (
+                      <> <span className="text-amber-400">{potential.emptyDays} days this year the plant
+                      list cannot account for at all</span> — a gap in the research, not a dearth.</>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Hero chart — the focal point */}
             <div
               ref={chartContainerRef}
@@ -1132,7 +1268,7 @@ export const NectarFlowV2View: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <span className="text-[9px] font-mono text-slate-600" title="Build timestamp">⏱ {__BUILD_TIME__}</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
-                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-amber-500 inline-block" />{currentYear} (current)</span>
+                    <span className="flex items-center gap-1.5"><span className={`w-3 h-[2px] rounded inline-block ${showingPotential ? 'bg-purple-400' : 'bg-amber-500'}`} />{currentYear} (current)</span>
                     <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500/40 inline-block" />above normal</span>
                     <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-500/40 inline-block" />below normal</span>
                   </div>
