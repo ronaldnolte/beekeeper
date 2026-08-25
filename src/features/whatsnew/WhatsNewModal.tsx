@@ -6,7 +6,7 @@ import { X, Camera, Mic, Download, MapPin, Sparkles } from 'lucide-react';
 // stored value doesn't match sees the modal once, then it's marked as read.
 // Kept as a content id (not the app version) so a release with nothing
 // user-facing to say doesn't have to trigger the popup.
-export const WHATS_NEW_VERSION = '2026-08-apiary-coordinates';
+export const WHATS_NEW_VERSION = '2026-08-apiary-coordinates-2';
 const SEEN_KEY = 'beek_whats_new_seen';
 
 // One-time "What's New" modal. Self-managing: on mount it checks localStorage
@@ -70,14 +70,11 @@ export const WhatsNewModal: React.FC = () => {
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-4 text-sm custom-scrollbar">
           <Feature
+            accent
+            eyebrow="Do this first — takes a minute"
             icon={<MapPin size={20} />}
-            title="Pin your apiaries on the map — it makes Nectar Flow far more accurate"
-            body="If an apiary only has a ZIP code, Nectar Flow has to guess its position from the centre of that ZIP — which can be miles off, and in hill country can land on the wrong side of a ridge entirely. Open any apiary, choose Edit, and drop a pin on the map. Switch to satellite view to find your actual hive stand. It takes a few seconds per apiary and it is the single best thing you can do to improve your forage readings."
-          />
-          <Feature
-            icon={<MapPin size={20} />}
-            title="Set your apiary location on a map"
-            body="Adding or editing an apiary? You can now drop a pin on a map to set the exact spot — search an address or town, switch to the satellite view to find the tree line, and confirm. No more looking up coordinates."
+            title="Pin your apiaries on the map, or Nectar Flow is guessing"
+            body="Without a pin, we read the satellite at the centre of your ZIP code — which can be miles from your hives, and in hill country lands on the wrong side of a ridge entirely. That is a different set of plants, a different water table, and a forage reading that is not yours. Open each apiary, tap Edit, and drop a pin on your actual hive stand; switch to satellite view to find it. A few seconds per apiary, and every reading after that is about your bees instead of somebody else's."
           />
           <Feature
             icon={<><Camera size={20} /><Mic size={20} /></>}
@@ -115,13 +112,30 @@ export const WhatsNewModal: React.FC = () => {
   );
 };
 
-function Feature({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+// `accent` marks the one card that is asking for an action rather than announcing a
+// feature, so it does not read as just another item in a list.
+function Feature({ icon, title, body, accent, eyebrow }: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+  accent?: boolean;
+  eyebrow?: string;
+}) {
   return (
-    <div className="flex gap-4 border border-[var(--color-card-border)] bg-[var(--color-bg-raised)] rounded-2xl p-4">
-      <div className="shrink-0 w-11 h-11 rounded-2xl bg-[var(--color-primary)]/15 flex items-center justify-center gap-0.5 text-[var(--color-primary)]">
+    <div className={`flex gap-4 rounded-2xl p-4 ${accent
+      ? 'border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/10'
+      : 'border border-[var(--color-card-border)] bg-[var(--color-bg-raised)]'}`}>
+      <div className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center gap-0.5 ${accent
+        ? 'bg-[var(--color-primary)] text-black'
+        : 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]'}`}>
         {icon}
       </div>
       <div>
+        {eyebrow && (
+          <p className="text-[10px] uppercase font-black tracking-wider text-[var(--color-primary)] mb-1">
+            {eyebrow}
+          </p>
+        )}
         <h4 className="font-black text-[var(--color-text)] mb-1">{title}</h4>
         <p className="text-xs text-[var(--color-text-muted)] font-medium leading-relaxed">{body}</p>
       </div>
