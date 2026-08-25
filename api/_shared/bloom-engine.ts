@@ -52,6 +52,11 @@ export interface PlantWindow {
   nectarValue: number;
   /** Heat-driven (spring/summer) or day-length-driven (fall). Derived when absent. */
   trigger?: BloomTrigger;
+  /**
+   * A threshold already computed and saved for this apiary. Prior years' accumulated
+   * warmth is fixed forever, so once derived it is read, not recalculated.
+   */
+  storedThreshold?: { start: number; peak: number; end: number };
 }
 
 export interface DailyTemp {
@@ -208,17 +213,24 @@ export function computeBloomBase(plants: PlantWindow[], temps: DailyTemp[]): Blo
         start: mmddToDoy(p.bloomStart), peak: mmddToDoy(p.bloomPeak), end: mmddToDoy(p.bloomEnd),
       };
     }
+    // A threshold already computed and stored for this apiary wins: a prior year's
+    // accumulated warmth on a given date never changes, so there is nothing to recompute.
+    if (p.storedThreshold) {
+      const t = p.storedThreshold;
+      return { name: p.name, trigger, nectarValue: p.nectarValue, start: t.start, peak: t.peak, end: t.end };
+    }
     const start = gddAtCalendarDate(p.bloomStart, gdd, thresholdYears);
     const peak  = gddAtCalendarDate(p.bloomPeak,  gdd, thresholdYears);
     const end   = gddAtCalendarDate(p.bloomEnd,   gdd, thresholdYears);
     if (start == null || peak == null || end == null) {
-      return {
-        name: p.name, trigger: 'photoperiod' as BloomTrigger, nectarValue: p.nectarValue,
-        start: mmddToDoy(p.bloomStart), peak: mmddToDoy(p.bloomPeak), end: mmddToDoy(p.bloomEnd),
-      };
+      // Only reachable if the weather record has no entry for that month-day in any prior
+      // year. Callers now require a complete series, so this means the plant's window
+      // itself is unusable — drop it rather than silently switching axes, which would have
+      // measured a heat-driven plant on the calendar without saying so.
+      return null;
     }
     return { name: p.name, trigger, nectarValue: p.nectarValue, start, peak, end };
-  }).filter(s => s.start != null && s.peak != null && s.end != null) as {
+  }).filter(s => s != null && s.start != null && s.peak != null && s.end != null) as {
     name: string; trigger: BloomTrigger; nectarValue: number;
     start: number; peak: number; end: number;
   }[];

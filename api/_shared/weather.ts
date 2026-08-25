@@ -11,7 +11,7 @@
 // 2026-07-03 when the primary went down while the auxiliary stayed up. fetchFirstOk never
 // rejects, so a dead host degrades the data rather than failing the whole request.
 
-import { fetchFirstOk } from '../_lib.js';
+import { fetchFirstOk, getResendKey, escapeHtml } from '../_lib.js';
 
 export interface WeatherDay {
   tmax: number;
@@ -39,6 +39,53 @@ interface OMHourly {
 /** First of January, five years back. The one place this window is defined. */
 export function historyStartDate(today = new Date()): string {
   return `${today.getUTCFullYear() - 5}-01-01`;
+}
+
+/** Calendar days from start to end inclusive — what a complete response must contain. */
+export function expectedDayCount(startDate: string, endDate: string): number {
+  const a = Date.parse(startDate + 'T00:00:00Z');
+  const b = Date.parse(endDate + 'T00:00:00Z');
+  if (!isFinite(a) || !isFinite(b) || b < a) return 0;
+  return Math.round((b - a) / 86_400_000) + 1;
+}
+
+/**
+ * Did the archive come back whole?
+ *
+ * Open-Meteo's archive is complete, so a short response means the request failed, not that
+ * the weather is missing. A partial series must not be used: thresholds derived from it
+ * would be silently wrong rather than absent. The last few days are allowed to be missing
+ * because the archive lags real time and the forecast window covers the tail.
+ */
+export function isComplete(days: Record<string, WeatherDay>, startDate: string, endDate: string): boolean {
+  const expected = expectedDayCount(startDate, endDate);
+  if (!expected) return false;
+  return Object.keys(days).length >= expected - 3;
+}
+
+/**
+ * Email Ron when the weather source fails twice. There is no other signal that an apiary
+ * silently stopped getting an index — the user just sees "unavailable" and shrugs.
+ * Never throws: an alert that fails must not take the request down with it.
+ */
+async function alertWeatherFailure(detail: string): Promise<void> {
+  try {
+    const apiKey = getResendKey();
+    if (!apiKey) { console.error('Weather failure, and no RESEND_API_KEY to report it:', detail); return; }
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'BeekTools <beta@beektools.com>',
+        to: 'ron.nolte@gmail.com',
+        subject: 'Beekeeper: weather fetch failed twice',
+        html: `<p>Open-Meteo did not return a complete series after a retry, so the index was not calculated.</p>
+               <p style="font-family:monospace;font-size:13px">${escapeHtml(detail)}</p>`,
+      }),
+    });
+  } catch (e) {
+    console.error('Could not send weather failure alert:', e);
+  }
 }
 
 export async function fetchWeather(
@@ -114,4 +161,43 @@ export async function fetchWeather(
     forecast_source: fc ? (fc.url.includes('historical-forecast') ? 'auxiliary' : 'primary') : 'none',
     archive_ok: !!arch,
   };
+}
+
+export interface CompleteWeather extends WeatherResult {
+  complete: true;
+}
+
+/**
+ * Weather for a calculation that must not run on partial data.
+ *
+ * Fetches, and if the series is short, waits briefly and tries once more — a short response
+ * means the request failed, not that the archive has holes, so a retry usually settles it.
+ * If the second attempt is also short it emails Ron and returns null. The caller must then
+ * report that the index is unavailable rather than computing something from a gap-filled
+ * series, which would be wrong in a way nobody could see.
+ */
+export async function fetchCompleteWeather(
+  lat: number,
+  lng: number,
+  startDate: string,
+  endDate: string,
+  context = ''
+): Promise<CompleteWeather | null> {
+  let last: WeatherResult | null = null;
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    last = await fetchWeather(lat, lng, startDate, endDate);
+    if (isComplete(last.days, startDate, endDate)) {
+      return { ...last, complete: true };
+    }
+    if (attempt === 1) await new Promise(r => setTimeout(r, 1200));
+  }
+
+  const got = last ? Object.keys(last.days).length : 0;
+  await alertWeatherFailure(
+    `${context}\nlat ${lat}, lng ${lng}\nrequested ${startDate} to ${endDate} ` +
+    `(${expectedDayCount(startDate, endDate)} days)\nreceived ${got} days after two attempts\n` +
+    `archive_ok=${last?.archive_ok} forecast_source=${last?.forecast_source}`
+  );
+  return null;
 }

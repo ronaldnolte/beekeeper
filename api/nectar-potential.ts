@@ -1,5 +1,5 @@
 import { applyCors, getAuthedUser, getBearerToken } from './_lib.js';
-import { fetchWeather, historyStartDate } from './_shared/weather.js';
+import { fetchCompleteWeather, historyStartDate } from './_shared/weather.js';
 import { computeBloomBase, type PlantWindow } from './_shared/bloom-engine.js';
 import { withNormals } from './_shared/normal.js';
 import { resolveEcoregion } from './_shared/ecoregion.js';
@@ -65,13 +65,19 @@ export default async function handler(req: any, res: any) {
     }
 
     if (!l3 && !l4) {
-      // Outside the conterminous US. Hidden rather than degraded.
-      res.status(200).json({ available: false, reason: 'outside-coverage', history: [] });
+      // Outside the contiguous 48. The ecoregion dataset does not cover Alaska, Hawaii or
+      // anywhere overseas, so there is no plant list to be had.
+      res.status(200).json({
+        available: false,
+        reason: 'outside-coverage',
+        message: 'Option not available outside of contiguous 48 states.',
+        history: [],
+      });
       return;
     }
 
     // Level IV first, then Level III, so an uncurated fine zone still gets a list.
-    const select = 'bloom_start, bloom_peak, bloom_end, nectar_value, source, confidence, plants(common_name)';
+    const select = 'plant_id, bloom_start, bloom_peak, bloom_end, nectar_value, source, confidence, plants(common_name)';
     let zoneLevel = 'l4';
     let zoneCode = l4;
     let rows: any[] = [];
@@ -102,13 +108,27 @@ export default async function handler(req: any, res: any) {
       r.bloom_start && r.bloom_peak && r.bloom_end && r.nectar_value != null);
     const unusable = rows.length - usable.length;
 
-    const plants: PlantWindow[] = usable.map(r => ({
-      name: r.plants?.common_name ?? 'Unknown',
-      bloomStart: r.bloom_start,
-      bloomPeak: r.bloom_peak,
-      bloomEnd: r.bloom_end,
-      nectarValue: r.nectar_value,
-    }));
+    // Thresholds already derived for THIS apiary. Prior years' accumulated warmth never
+    // changes, so they are read rather than recomputed on every request.
+    const { data: storedRows } = await auth.supabase
+      .from('apiary_plant_thresholds')
+      .select('plant_id, trigger_type, threshold_start, threshold_peak, threshold_end')
+      .eq('apiary_id', apiaryId);
+    const stored = new Map<string, any>((storedRows ?? []).map((t: any) => [t.plant_id, t]));
+
+    const plants: PlantWindow[] = usable.map(r => {
+      const t = stored.get(r.plant_id);
+      return {
+        name: r.plants?.common_name ?? 'Unknown',
+        bloomStart: r.bloom_start,
+        bloomPeak: r.bloom_peak,
+        bloomEnd: r.bloom_end,
+        nectarValue: r.nectar_value,
+        storedThreshold: t
+          ? { start: Number(t.threshold_start), peak: Number(t.threshold_peak), end: Number(t.threshold_end) }
+          : undefined,
+      };
+    });
 
     if (!plants.length) {
       res.status(200).json({
@@ -121,20 +141,56 @@ export default async function handler(req: any, res: any) {
     const endDate = today.toISOString().slice(0, 10);
     const startDate = historyStartDate(today);
 
-    const weather = await fetchWeather(lat, lng, startDate, endDate);
+    // Must be a COMPLETE series. Open-Meteo's archive has no holes, so a short response
+    // means the request failed -- and an index built on a partial series is garbage that
+    // looks fine. Retries once, emails on a second failure, then gives up.
+    const weather = await fetchCompleteWeather(
+      lat, lng, startDate, endDate,
+      `Nectar Potential for apiary ${apiaryId} (${apiary.name})`
+    );
+    if (!weather) {
+      res.status(200).json({ available: false, reason: 'weather-incomplete', history: [] });
+      return;
+    }
     const temps = Object.entries(weather.days)
       .map(([date, d]) => ({ date, tmax: d.tmax, tmin: d.tmin }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    if (temps.length < 400) {
-      res.status(200).json({
-        available: false, reason: 'insufficient-weather', days: temps.length, history: [],
-      });
-      return;
-    }
-
     const bloom = computeBloomBase(plants, temps);
     const normals = withNormals(bloom.dates, bloom.potential);
+
+    // Save any threshold derived on this request. A prior year's accumulated warmth on a
+    // given date is fixed forever, so this is a one-time cost per apiary and plant. Failure
+    // to save is not fatal -- the numbers are already computed and correct for this
+    // response; the next request simply derives them again.
+    const priorYearCount = new Set(
+      temps.map(t => t.date.slice(0, 4)).filter(y => y < String(new Date().getUTCFullYear()))
+    ).size;
+    const toSave = bloom.thresholds
+      .map(t => {
+        const row = usable.find(r => (r.plants?.common_name ?? 'Unknown') === t.name);
+        if (!row || stored.has(row.plant_id)) return null;
+        return {
+          apiary_id: apiaryId,
+          plant_id: row.plant_id,
+          trigger_type: t.trigger,
+          threshold_start: t.start,
+          threshold_peak: t.peak,
+          threshold_end: t.end,
+          weather_years: priorYearCount,
+          zone_level: zoneLevel,
+          zone_code: zoneCode,
+          computed_at: new Date().toISOString(),
+        };
+      })
+      .filter(Boolean);
+
+    if (toSave.length) {
+      const { error: saveError } = await auth.supabase
+        .from('apiary_plant_thresholds')
+        .upsert(toSave, { onConflict: 'apiary_id,plant_id' });
+      if (saveError) console.error('Could not save bloom thresholds:', saveError.message);
+    }
 
     const history = bloom.dates.map((date, i) => ({
       date,

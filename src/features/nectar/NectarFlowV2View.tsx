@@ -72,6 +72,8 @@ interface LoadTiming {
 interface PotentialResponse {
   available: boolean;
   reason?: string;
+  message?: string;
+  unusablePlants?: number;
   zoneLevel?: string;
   zoneCode?: string;
   plantCount?: number;
@@ -1170,11 +1172,17 @@ export const NectarFlowV2View: React.FC = () => {
                 {potentialError && <span className="text-red-300">{potentialError}</span>}
                 {!potentialLoading && !potentialError && potential && !potential.available && (
                   <span>
-                    Not available for this apiary
-                    {potential.reason === 'zone-not-curated' && ' — its ecoregion has no researched plant list yet'}
-                    {potential.reason === 'outside-coverage' && ' — outside the conterminous United States'}
-                    {potential.reason === 'no-coordinates' && ' — pin the apiary on the map first'}
-                    .
+                    {potential.reason === 'outside-coverage'
+                      ? (potential.message ?? 'Option not available outside of contiguous 48 states.')
+                      : potential.reason === 'weather-incomplete'
+                        ? 'Weather data came back incomplete twice, so nothing was calculated rather than calculating on a partial record. Ron has been emailed.'
+                        : <>
+                            Not available for this apiary
+                            {potential.reason === 'zone-not-curated' && ' — its ecoregion has no researched plant list yet'}
+                            {potential.reason === 'no-coordinates' && ' — pin the apiary on the map first'}
+                            {potential.reason === 'no-usable-windows' && ' — its plant rows are missing bloom windows or nectar ratings'}
+                            .
+                          </>}
                   </span>
                 )}
                 {!potentialLoading && potential?.available && (
