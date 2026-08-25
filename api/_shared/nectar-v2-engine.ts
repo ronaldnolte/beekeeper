@@ -85,9 +85,16 @@ const DEFAULTS: V2Params = {
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const DAY_MS = 86_400_000;
 
+// UTC, not local. The local-time version drifted by a day between the start of daylight
+// saving and its end, and the start date moves year to year (8 Mar 2026, 10 Mar 2024), so
+// prior years were bucketed on keys misaligned by a day — which showed up as a 0.9-point
+// disagreement between the server's `normal` and the same average computed in the client.
+// It was also environment-dependent: Vercel runs UTC, a developer machine does not, so the
+// harness and the deployed server computed different fall terms from identical inputs.
+// 1-based, matching the client's 0-based getDayOfYear exactly one apart for every date.
 function dayOfYear(dateStr: string): number {
-  const dt = new Date(dateStr + 'T00:00');
-  return Math.floor((dt.getTime() - new Date(dt.getFullYear(), 0, 0).getTime()) / DAY_MS);
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return Math.floor((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 0)) / DAY_MS);
 }
 
 // Photoperiod-proxy center for fall flows: shifts earlier with latitude (~Sep 23 at 35°N).

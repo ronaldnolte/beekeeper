@@ -48,7 +48,17 @@ interface V2Response {
     fall_term: number;
     rate_norm: number;
   };
-  full_history: { date: string; forage_index_smoothed: number; phase: Phase }[];
+  full_history: {
+    date: string;
+    forage_index_smoothed: number;
+    phase: Phase;
+    // Added 2026-08. Optional because production's endpoint predates them; the client
+    // falls back to averaging the prior years it was sent.
+    normal?: number | null;
+    deviation?: number | null;
+    spread?: number | null;
+    normalYears?: number;
+  }[];
   _timing?: ServerTiming;
 }
 
@@ -416,7 +426,7 @@ export const NectarFlowV2View: React.FC = () => {
   const historicalYears = years.filter(y => y < currentYear);
   const baseYear = years[0] || currentYear - 1;
   const baseYearLabel = historicalYears.length > 1
-    ? `${historicalYears[0]}-${historicalYears[historicalYears.length - 1]} Avg`
+    ? `Normal ${historicalYears[0]}-${historicalYears[historicalYears.length - 1]}`
     : `${baseYear}`;
 
   const historyCurrent = (data.full_history || []).filter(
@@ -449,6 +459,44 @@ export const NectarFlowV2View: React.FC = () => {
     const dateStr = `${yyyy}-${mm}-${dd}`;
     return { date: dateStr, forage_index_smoothed: nfiAvg };
   }).filter(h => h.forage_index_smoothed !== null) as { date: string; forage_index_smoothed: number }[];
+
+  // Deviation from normal.
+  //
+  // The blue line already IS normal: historyBase averages the prior years at the same
+  // day-of-year, which is exactly what the server computes for each point's `normal`.
+  // So the deviation is the vertical gap between the current-year line and the blue line —
+  // already on the chart, just never shaded. Nothing new is plotted; the gap is coloured.
+  //
+  // Prefer the server's number so the shading and the header can never disagree, and fall
+  // back to the client-side average when talking to an endpoint that does not send it.
+  const normalByDoy: (number | null)[] = Array.from({ length: 365 }, () => null);
+  for (const h of historyBase) normalByDoy[getDayOfYear(h.date)] = h.forage_index_smoothed;
+
+  const normalFor = (h: { date: string; normal?: number | null }): number | null =>
+    h.normal ?? normalByDoy[getDayOfYear(h.date)];
+
+  // Index points are 0-1; deviations are quoted in the same whole-number units as the NFI,
+  // so round both ends before subtracting or the label disagrees with the two values shown.
+  const deviationOf = (h: { date: string; forage_index_smoothed: number; normal?: number | null }) => {
+    const nrm = normalFor(h);
+    if (nrm == null || h.forage_index_smoothed == null || isNaN(h.forage_index_smoothed)) return null;
+    return Math.round(h.forage_index_smoothed * 100) - Math.round(nrm * 100);
+  };
+
+  const latestCurrent = historyCurrent.length ? historyCurrent[historyCurrent.length - 1] : null;
+  const latestDeviation = latestCurrent ? deviationOf(latestCurrent) : null;
+  const latestSpread = latestCurrent?.spread ?? null;
+  const normalYearCount = latestCurrent?.normalYears ?? historicalYears.length;
+
+  // "11 below normal" rather than "-11", and the honest word when the gap sits inside the
+  // year-to-year noise. Half a standard deviation is comfortably ordinary. This never
+  // replaces the NFI: a January 0 against a normal of 0 deviates by 0 and is still a hard
+  // dearth. The absolute says what is happening, the deviation says whether it is unusual.
+  const deviationLabel = (dev: number) => {
+    const band = latestSpread != null ? Math.max(3, Math.round(latestSpread * 100) / 2) : 5;
+    if (Math.abs(dev) < band) return 'about normal';
+    return `${Math.abs(dev)} ${dev > 0 ? 'above' : 'below'} normal`;
+  };
 
   // renderChartSvg — copied verbatim from NectarFlowView (lines 460-781)
   const renderChartSvg = (width: number, height: number, isFullscreen: boolean = false) => {
@@ -503,28 +551,58 @@ export const NectarFlowV2View: React.FC = () => {
       return paddingLeft + fraction * chartWidth;
     };
 
-    // Build area fill path for current year
-    let areaPathPoints = '';
-    let isFirstArea = true;
-    let firstAreaX = paddingLeft;
-    let lastAreaX = paddingLeft;
-    for (const h of historyCurrent) {
-      if (h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed)) {
-        const x = getXCoordForDate(h.date);
-        const y = yCoord(h.forage_index_smoothed);
-        if (isFirstArea) {
-          areaPathPoints += `${x},${y}`;
-          firstAreaX = x;
-          isFirstArea = false;
-        } else {
-          areaPathPoints += ` L ${x},${y}`;
+    // Deviation ribbons: the band between the current year and normal — green where the
+    // year runs above normal, red where it runs below. This replaces the old flat green
+    // area-under-the-curve fill, which shaded the absolute value a second time and said
+    // nothing the line had not already said.
+    //
+    // Each run is split at the crossings so a ribbon never straddles the normal line, and
+    // closed back along normal so the shape reads as a gap rather than an area.
+    const devRibbons: { d: string; above: boolean }[] = [];
+    {
+      type Pt = { x: number; cur: number; nrm: number };
+      let run: Pt[] = [];
+      let runAbove: boolean | null = null;
+
+      const flush = () => {
+        if (run.length > 1 && runAbove !== null) {
+          const fwd = run.map(p => `${p.x},${yCoord(p.cur)}`).join(' L ');
+          const back = [...run].reverse().map(p => `${p.x},${yCoord(p.nrm)}`).join(' L ');
+          devRibbons.push({ d: `M ${fwd} L ${back} Z`, above: runAbove });
         }
-        lastAreaX = x;
+        run = [];
+        runAbove = null;
+      };
+
+      let prev: Pt | null = null;
+      for (const h of historyCurrent) {
+        const cur = h.forage_index_smoothed;
+        const nrm = normalFor(h);
+        if (cur == null || isNaN(cur) || nrm == null || isNaN(nrm)) { flush(); prev = null; continue; }
+        const pt: Pt = { x: getXCoordForDate(h.date), cur, nrm };
+        const above = cur >= nrm;
+
+        if (prev && runAbove !== null && above !== runAbove) {
+          // Close the old ribbon and open the new one at the crossing, so the two colours
+          // meet exactly on the normal line instead of overlapping by a day.
+          const d1 = prev.cur - prev.nrm;
+          const d2 = cur - nrm;
+          const t = d1 === d2 ? 0.5 : d1 / (d1 - d2);
+          const cross: Pt = {
+            x: prev.x + t * (pt.x - prev.x),
+            cur: prev.nrm + t * (nrm - prev.nrm),
+            nrm: prev.nrm + t * (nrm - prev.nrm),
+          };
+          run.push(cross);
+          flush();
+          run.push(cross);
+        }
+        run.push(pt);
+        runAbove = above;
+        prev = pt;
       }
+      flush();
     }
-    const areaPath = areaPathPoints
-      ? `M ${firstAreaX},${yCoord(0)} L ${areaPathPoints} L ${lastAreaX},${yCoord(0)} Z`
-      : '';
 
     // Build baseline path (Solid Blue line)
     let baselinePathPoints = '';
@@ -611,9 +689,13 @@ export const NectarFlowV2View: React.FC = () => {
           onTouchEnd={handlePointerLeave}
         >
           <defs>
-            <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2ECC71" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="#2ECC71" stopOpacity="0.01" />
+            <linearGradient id="devAbove" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2ECC71" stopOpacity="0.38" />
+              <stop offset="100%" stopColor="#2ECC71" stopOpacity="0.16" />
+            </linearGradient>
+            <linearGradient id="devBelow" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#E74C3C" stopOpacity="0.16" />
+              <stop offset="100%" stopColor="#E74C3C" stopOpacity="0.38" />
             </linearGradient>
           </defs>
 
@@ -692,8 +774,10 @@ export const NectarFlowV2View: React.FC = () => {
             );
           })}
 
-          {/* Area fill under current year curve */}
-          {areaPath && <path d={areaPath} fill="url(#areaFill)" />}
+          {/* Deviation from normal — green above the blue line, red below */}
+          {devRibbons.map((r, i) => (
+            <path key={`dev-${i}`} d={r.d} fill={r.above ? 'url(#devAbove)' : 'url(#devBelow)'} />
+          ))}
 
           {/* Baseline Path (Solid Blue) */}
           {baselinePathPoints && (
@@ -813,8 +897,11 @@ export const NectarFlowV2View: React.FC = () => {
           </div>
           <p className="text-[11px] font-semibold opacity-90 leading-snug mt-0.5 line-clamp-1">{data.transitionAdvice}</p>
         </div>
-        <span className="bg-black/15 text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full border border-white/10 shrink-0">
+        <span className="bg-black/15 text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full border border-white/10 shrink-0 tabular-nums">
           NFI {data.nfi}
+          {latestDeviation !== null && normalYearCount >= 3 && (
+            <span className="opacity-85"> &middot; {deviationLabel(latestDeviation)}</span>
+          )}
         </span>
         <button
           onClick={() => loadData(true)}
@@ -1023,6 +1110,15 @@ export const NectarFlowV2View: React.FC = () => {
                     <div className="flex items-center gap-4">
                       <span className="text-slate-400">{baseYearLabel}: <b className="text-blue-400">{hb && hb.forage_index_smoothed != null ? `${(hb.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}</b></span>
                       <span className="text-slate-400">{currentYear}: <b className="text-amber-500">{hc && hc.forage_index_smoothed != null ? `${(hc.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}</b></span>
+                      {(() => {
+                        const dev = hc ? deviationOf(hc) : null;
+                        if (dev === null) return null;
+                        return (
+                          <span className={`font-extrabold ${dev >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {dev >= 0 ? '+' : '-'}{Math.abs(dev)} vs normal
+                          </span>
+                        );
+                      })()}
                       {hc && (
                         <span className={`font-extrabold px-2 py-0.5 rounded-full text-[10px] ${getPhaseColors(hc.phase).bg} ${getPhaseColors(hc.phase).text}`}>
                           {getPhaseColors(hc.phase).emoji} {getPhaseColors(hc.phase).label}
@@ -1037,6 +1133,8 @@ export const NectarFlowV2View: React.FC = () => {
                     <span className="text-[9px] font-mono text-slate-600" title="Build timestamp">⏱ {__BUILD_TIME__}</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-amber-500 inline-block" />{currentYear} (current)</span>
+                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-emerald-500/40 inline-block" />above normal</span>
+                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-500/40 inline-block" />below normal</span>
                   </div>
                   <span className="text-slate-500 italic">Hover for daily values</span>
                 </div>
