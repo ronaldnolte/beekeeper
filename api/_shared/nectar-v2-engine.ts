@@ -26,6 +26,15 @@ export interface V2HistoryPoint {
   date: string;
   forage_index_smoothed: number;
   phase: Phase;
+  /** Mean of this same calendar day across prior years. Null before enough history. */
+  normal: number | null;
+  /** forage_index_smoothed - normal. Positive = better than usual for the date. */
+  deviation: number | null;
+  /** Spread of prior years on this day. A deviation is uninterpretable without it:
+   *  a -0.32 gap is extraordinary against sd 0.06 and ordinary against sd 0.21. */
+  spread: number | null;
+  /** How many prior years contributed. Below 3, treat normal/spread as indicative only. */
+  normalYears: number;
 }
 
 /** Per-day component series, for diagnosis and ablation. Not part of the API response. */
@@ -372,11 +381,39 @@ export function runV2Pipeline(
     rate_norm: Math.round(rateNorm[li]  * 1000) / 1000,
   };
 
-  const history: V2HistoryPoint[] = dates.map((d, i) => ({
-    date: d,
-    forage_index_smoothed: Math.round(idxEwma[i] * 1000) / 1000,
-    phase: phases[i],
-  }));
+  // Same-calendar-day normal from prior years. This is the quantity the product actually
+  // needs: three skilled beekeepers validated the historical curve, and the same formula
+  // draws the current year, so what is missing is the GAP between them. At South Valley on
+  // 2026-05-07 the index read 57 — which looks like a flow — against a normal of 90, and
+  // the absolute value did not collapse until June. The deviation leads by weeks.
+  const currentYear = new Date(dates[N - 1] + 'T00:00').getFullYear();
+  const priorByDoy = new Map<number, number[]>();
+  for (let i = 0; i < N; i++) {
+    const yr = parseInt(dates[i].slice(0, 4), 10);
+    if (yr >= currentYear) continue;
+    const k = dayOfYear(dates[i]);
+    const arr = priorByDoy.get(k);
+    if (arr) arr.push(idxEwma[i]); else priorByDoy.set(k, [idxEwma[i]]);
+  }
+  const r3 = (v: number) => Math.round(v * 1000) / 1000;
+
+  const history: V2HistoryPoint[] = dates.map((d, i) => {
+    const prior = priorByDoy.get(dayOfYear(d)) ?? [];
+    const n = prior.length;
+    const normal = n ? prior.reduce((a, b) => a + b, 0) / n : null;
+    const spread = n > 1 && normal != null
+      ? Math.sqrt(prior.reduce((a, b) => a + (b - normal) ** 2, 0) / n)
+      : null;
+    return {
+      date: d,
+      forage_index_smoothed: r3(idxEwma[i]),
+      phase: phases[i],
+      normal: normal == null ? null : r3(normal),
+      deviation: normal == null ? null : r3(idxEwma[i] - normal),
+      spread: spread == null ? null : r3(spread),
+      normalYears: n,
+    };
+  });
 
   return {
     dates, idxEwma, phases, slopeArr, latest, history,

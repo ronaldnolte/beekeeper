@@ -178,7 +178,12 @@ export default async function handler(req: any, res: any) {
     // Earth Engine query and the response payload — grow without bound every year.
     // Mirrors the same fix already applied to the V1 endpoint (api/nectar-index.ts).
     const currentYear = new Date().getFullYear();
-    const startDate = `${currentYear - 3}-01-01`;
+    // Five years, not three. Measured cost: +0.5 s (12.9 -> 13.4 s), and index values are
+    // essentially unchanged. The reason is the SPREAD: three similar seasons produced a
+    // standard deviation of 0.06 at South Valley in early May where the true spread is
+    // 0.21, which made an ordinary year look like a 5-sigma collapse. Three samples cannot
+    // estimate a spread, and a deviation without one is not interpretable.
+    const startDate = `${currentYear - 5}-01-01`;
     const endDate = new Date().toISOString().slice(0, 10);
 
     // Per-phase timing so a slow load can be diagnosed. Only meaningful on a
