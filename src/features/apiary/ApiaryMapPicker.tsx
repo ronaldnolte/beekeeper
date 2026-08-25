@@ -21,8 +21,8 @@ const round5 = (n: number) => Math.round(n * 1e5) / 1e5;
 // Full-screen map to pick an apiary's coordinates. The pin is fixed at the
 // screen center (a DOM overlay, not a Leaflet marker) and the map pans beneath
 // it, so the map's center IS the chosen point. No location permission is used
-// unless the user taps "locate me". Tiles: OpenStreetMap (free, no API key),
-// with an Esri World Imagery satellite layer as a toggle.
+// unless the user taps "locate me". Tiles: Esri World Imagery satellite by default,
+// with an OpenStreetMap street layer as a toggle (both free, no API key).
 export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onConfirm, onClose }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -34,7 +34,10 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
   const [center, setCenter] = useState<[number, number]>(
     hasInitial ? [initialLat as number, initialLng as number] : DEFAULT_CENTER
   );
-  const [isSatellite, setIsSatellite] = useState(false);
+  // Satellite by default: the point of the picker is to land the pin on the actual hive
+  // stand, and a street map cannot show a tree line, a pasture edge or a ditch bank. The
+  // toggle still switches back for anyone who wants road context to orient themselves.
+  const [isSatellite, setIsSatellite] = useState(true);
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -66,7 +69,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { maxZoom: 19, attribution: 'Imagery &copy; Esri' }
     );
-    streetRef.current.addTo(map);
+    satRef.current.addTo(map);
 
     const sync = () => {
       const c = map.getCenter();
