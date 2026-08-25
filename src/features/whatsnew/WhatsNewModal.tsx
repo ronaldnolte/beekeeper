@@ -6,7 +6,7 @@ import { X, Camera, Mic, Download, MapPin, Sparkles } from 'lucide-react';
 // stored value doesn't match sees the modal once, then it's marked as read.
 // Kept as a content id (not the app version) so a release with nothing
 // user-facing to say doesn't have to trigger the popup.
-export const WHATS_NEW_VERSION = '2026-07-map-location-picker';
+export const WHATS_NEW_VERSION = '2026-08-apiary-coordinates';
 const SEEN_KEY = 'beek_whats_new_seen';
 
 // One-time "What's New" modal. Self-managing: on mount it checks localStorage
@@ -69,6 +69,11 @@ export const WhatsNewModal: React.FC = () => {
 
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-4 text-sm custom-scrollbar">
+          <Feature
+            icon={<MapPin size={20} />}
+            title="Pin your apiaries on the map — it makes Nectar Flow far more accurate"
+            body="If an apiary only has a ZIP code, Nectar Flow has to guess its position from the centre of that ZIP — which can be miles off, and in hill country can land on the wrong side of a ridge entirely. Open any apiary, choose Edit, and drop a pin on the map. Switch to satellite view to find your actual hive stand. It takes a few seconds per apiary and it is the single best thing you can do to improve your forage readings."
+          />
           <Feature
             icon={<MapPin size={20} />}
             title="Set your apiary location on a map"
