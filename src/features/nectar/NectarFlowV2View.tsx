@@ -141,6 +141,37 @@ export const NectarFlowV2View: React.FC = () => {
   // Per-phase load timing (diagnostics) + a live elapsed counter for the spinner.
   const [timing, setTiming] = useState<LoadTiming | null>(null);
   const [elapsedSec, setElapsedSec] = useState(0);
+
+  // Nectar Potential is fetched lazily, only once the user asks to see it. It costs a
+  // weather call and no Earth Engine, so about a second.
+  useEffect(() => {
+    if (chartSource !== 'potential' || potential || potentialLoading || !selectedApiaryId) return;
+    let cancelled = false;
+    (async () => {
+      setPotentialLoading(true);
+      setPotentialError(null);
+      try {
+        const apiBase = Capacitor.isNativePlatform()
+          ? 'https://beekeeper.beektools.com/api/nectar-potential'
+          : '/api/nectar-potential';
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`${apiBase}?apiaryId=${encodeURIComponent(selectedApiaryId)}`, {
+          headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+        });
+        if (!res.ok) throw new Error((await res.text()) || `API error ${res.status}`);
+        const json = await res.json();
+        if (!cancelled) setPotential(json);
+      } catch (e: any) {
+        if (!cancelled) setPotentialError(e?.message ?? 'Failed to load Nectar Potential');
+      } finally {
+        if (!cancelled) setPotentialLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [chartSource, potential, potentialLoading, selectedApiaryId]);
+
+  // Switching apiary invalidates the cached potential.
+  useEffect(() => { setPotential(null); setPotentialError(null); }, [selectedApiaryId]);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -384,36 +415,6 @@ export const NectarFlowV2View: React.FC = () => {
   }
 
   // Loading (copied verbatim from NectarFlowView)
-  // Nectar Potential is fetched lazily, only once the user asks to see it. It costs a
-  // weather call and no Earth Engine, so about a second.
-  useEffect(() => {
-    if (chartSource !== 'potential' || potential || potentialLoading || !selectedApiaryId) return;
-    let cancelled = false;
-    (async () => {
-      setPotentialLoading(true);
-      setPotentialError(null);
-      try {
-        const apiBase = Capacitor.isNativePlatform()
-          ? 'https://beekeeper.beektools.com/api/nectar-potential'
-          : '/api/nectar-potential';
-        const { data: { session } } = await supabase.auth.getSession();
-        const res = await fetch(`${apiBase}?apiaryId=${encodeURIComponent(selectedApiaryId)}`, {
-          headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
-        });
-        if (!res.ok) throw new Error((await res.text()) || `API error ${res.status}`);
-        const json = await res.json();
-        if (!cancelled) setPotential(json);
-      } catch (e: any) {
-        if (!cancelled) setPotentialError(e?.message ?? 'Failed to load Nectar Potential');
-      } finally {
-        if (!cancelled) setPotentialLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [chartSource, potential, potentialLoading, selectedApiaryId]);
-
-  // Switching apiary invalidates the cached potential.
-  useEffect(() => { setPotential(null); setPotentialError(null); }, [selectedApiaryId]);
 
   if (loading) {
     return (
