@@ -606,6 +606,16 @@ export const NectarFlowV2View: React.FC = () => {
   const latestSpread = latestCurrent?.spread ?? null;
   const normalYearCount = latestCurrent?.normalYears ?? historicalYears.length;
 
+  // Readout values, taken from whichever series is drawn and scaled the same way the chart
+  // scales it, so the strip and the curve can never disagree.
+  const latestActive = activeHistory.length ? activeHistory[activeHistory.length - 1] : null;
+  const latestPotentialDisplay = latestActive
+    ? Math.round(latestActive.forage_index_smoothed * 100)
+    : null;
+  const latestDeviationDisplay = showingPotential
+    ? (latestActive?.deviation == null ? null : Math.round(latestActive.deviation * 100))
+    : latestDeviation;
+
   // "11 below normal" rather than "-11", and the honest word when the gap sits inside the
   // year-to-year noise. Half a standard deviation is comfortably ordinary. This never
   // replaces the NFI: a January 0 against a normal of 0 deviates by 0 and is still a hard
@@ -1229,31 +1239,77 @@ export const NectarFlowV2View: React.FC = () => {
             >
               {(historyBase.length > 1 || historyCurrent.length > 1) ? (
                 <>
-                  {/* Inset metrics overlay */}
-                  <div className="absolute top-3 left-3 z-20 bg-[#0a0a16]/80 backdrop-blur-sm border border-[#2b2b54]/60 rounded-xl px-3 py-2 shadow-lg pointer-events-none">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-3xl font-black text-white leading-none">{data.nfi}</span>
+                  {/* Readout strip.
+                      Out of the plot area: it used to float over the top-left of the chart
+                      and sat on top of the curve. Laid out for the shape the finished index
+                      takes -- the value, how far that is from normal, and the drivers behind
+                      it -- so the same strip carries over when the two views become one. */}
+                  <div className="mb-3 flex items-stretch gap-3 flex-wrap">
+                    <div className="flex items-baseline gap-1.5 pr-3 border-r border-[#2b2b54]">
+                      <span className="text-3xl font-black text-white leading-none tabular-nums">
+                        {showingPotential
+                          ? (latestPotentialDisplay ?? '—')
+                          : data.nfi}
+                      </span>
                       <div className="flex flex-col leading-tight">
-                        <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">NFI</span>
+                        <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">
+                          {showingPotential ? 'Potential' : 'NFI'}
+                        </span>
                         <span className="text-[10px] font-bold text-slate-300 flex items-center gap-0.5 capitalize">
                           {resolvedTrendDirection === 'rising' ? <TrendingUp size={10} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={10} className="text-red-400" /> : <Minus size={10} className="text-slate-400" />}
                           {resolvedTrendDirection}
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-3 mt-2">
-                      <div className="flex flex-col leading-tight">
-                        <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Rate</span>
-                        <span className="text-[11px] font-black text-emerald-400">{Math.round(data.v2.rate_norm * 100)}%</span>
-                      </div>
-                      <div className="flex flex-col leading-tight">
-                        <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Warmth</span>
-                        <span className="text-[11px] font-black text-sky-400">{Math.round(data.v2.warmth * 100)}%</span>
-                      </div>
-                      <div className="flex flex-col leading-tight">
-                        <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Fall</span>
-                        <span className="text-[11px] font-black text-orange-400">{Math.round(data.v2.fall_term * 100)}%</span>
-                      </div>
+
+                    {/* Distance from normal — the reading that leads the absolute value by
+                        weeks, and the one thing both views always have in common. */}
+                    <div className="flex flex-col justify-center leading-tight pr-3 border-r border-[#2b2b54]">
+                      <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">vs Normal</span>
+                      <span className={`text-[13px] font-black tabular-nums ${
+                        latestDeviationDisplay == null ? 'text-slate-500'
+                          : latestDeviationDisplay >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {latestDeviationDisplay == null
+                          ? '—'
+                          : `${latestDeviationDisplay >= 0 ? '+' : '-'}${Math.abs(latestDeviationDisplay)}`}
+                      </span>
+                    </div>
+
+                    {/* Drivers. Satellite shows its components; potential shows what is
+                        actually in bloom, which is the equivalent question for that half. */}
+                    <div className="flex gap-3 items-center">
+                      {showingPotential ? (
+                        <>
+                          <div className="flex flex-col leading-tight">
+                            <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">In bloom</span>
+                            <span className="text-[13px] font-black text-purple-300 tabular-nums">
+                              {potential?.latest?.breakdown?.length ?? 0}
+                              <span className="text-slate-500 font-bold"> of {potential?.plantCount ?? 0}</span>
+                            </span>
+                          </div>
+                          <div className="flex flex-col leading-tight min-w-0">
+                            <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Leading</span>
+                            <span className="text-[13px] font-black text-purple-300 truncate max-w-[11rem]">
+                              {potential?.latest?.breakdown?.[0]?.name ?? '—'}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex flex-col leading-tight">
+                            <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Rate</span>
+                            <span className="text-[13px] font-black text-emerald-400">{Math.round(data.v2.rate_norm * 100)}%</span>
+                          </div>
+                          <div className="flex flex-col leading-tight">
+                            <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Warmth</span>
+                            <span className="text-[13px] font-black text-sky-400">{Math.round(data.v2.warmth * 100)}%</span>
+                          </div>
+                          <div className="flex flex-col leading-tight">
+                            <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Fall</span>
+                            <span className="text-[13px] font-black text-orange-400">{Math.round(data.v2.fall_term * 100)}%</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   {/* Enlarge button */}
