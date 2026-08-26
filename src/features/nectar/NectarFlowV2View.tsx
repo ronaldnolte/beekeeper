@@ -3,6 +3,8 @@
 // warmth weighting → EWMA smooth → phase classification. Served by /api/nectar-index-v2.
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { combineSeries, DEFAULT_SATELLITE_FLOOR } from './combineIndex';
+import { withNormals } from '../../../api/_shared/normal';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { supabase } from '../../data/supabase';
@@ -58,6 +60,11 @@ interface V2Response {
     deviation?: number | null;
     spread?: number | null;
     normalYears?: number;
+    /** Greenness against this location's own range, and canopy water. Added 2026-08 so the
+     *  client can combine the satellite reading with the bloom curve without a second
+     *  Earth Engine fetch. Optional: production's endpoint predates them. */
+    vigor?: number;
+    moisture?: number;
   }[];
   _timing?: ServerTiming;
 }
@@ -126,7 +133,12 @@ export const NectarFlowV2View: React.FC = () => {
   // Which series the trends chart draws. 'satellite' is the shipped index; 'potential' is
   // the plant-driven bloom curve, which is a DIFFERENT QUANTITY and not a second opinion on
   // the same one — it says what should be open, not whether it is yielding.
-  const [chartSource, setChartSource] = useState<'satellite' | 'potential'>('satellite');
+  const [chartSource, setChartSource] = useState<'satellite' | 'potential' | 'combined'>('satellite');
+  // How far the satellite may cut the bloom number. Exposed rather than picked: Ron asked
+  // to test values against real data instead of taking one on trust. `applied` is what the
+  // chart is drawing, `draft` is what the select shows before Apply is pressed.
+  const [satelliteFloorDraft, setSatelliteFloorDraft] = useState(DEFAULT_SATELLITE_FLOOR);
+  const [satelliteFloor, setSatelliteFloor] = useState(DEFAULT_SATELLITE_FLOOR);
   const [potential, setPotential] = useState<PotentialResponse | null>(null);
   const [potentialLoading, setPotentialLoading] = useState(false);
   const [potentialError, setPotentialError] = useState<string | null>(null);
@@ -151,7 +163,8 @@ export const NectarFlowV2View: React.FC = () => {
   const potentialInFlight = useRef(false);
 
   useEffect(() => {
-    if (chartSource !== 'potential' || potential || potentialInFlight.current || !selectedApiaryId) return;
+    const needsBloom = chartSource === 'potential' || chartSource === 'combined';
+    if (!needsBloom || potential || potentialInFlight.current || !selectedApiaryId) return;
 
     potentialInFlight.current = true;
     const apiaryAtStart = selectedApiaryId;
@@ -531,8 +544,37 @@ export const NectarFlowV2View: React.FC = () => {
     normalYears: h.normalYears,
   }));
 
+  // The combined index: bloom potential with the satellite factor applied, joined on date.
+  // Done in the browser because both halves are already loaded, so changing the floor is
+  // instant. Doing it server-side would cost an 18-second Earth Engine fetch per change.
+  const combinedAsHistory = (() => {
+    if (chartSource !== 'combined' || !potential?.history?.length) return [];
+    const rows = combineSeries(
+      potential.history.map(h => ({ date: h.date, potential: h.potential })),
+      (data.full_history || []).map(h => ({ date: h.date, vigor: h.vigor, moisture: h.moisture })),
+      satelliteFloor
+    );
+    // Normals are recomputed from the COMBINED series, not carried over from the bloom one:
+    // once the satellite is applied, "normal" has to mean normal for the combined number.
+    const norms = withNormals(rows.map(r => r.date), rows.map(r => r.combined));
+    const scale = Math.max(...rows.map(r => r.combined), 0.0001);
+    return rows.map((r, i) => ({
+      date: r.date,
+      forage_index_smoothed: Math.min(1, r.combined / scale),
+      phase: 'TRANSITION' as Phase,
+      normal: norms[i].normal == null ? null : Math.min(1, norms[i].normal! / scale),
+      deviation: norms[i].deviation == null ? null : norms[i].deviation! / scale,
+      spread: norms[i].spread == null ? null : norms[i].spread! / scale,
+      normalYears: norms[i].normalYears,
+    }));
+  })();
+
   const showingPotential = chartSource === 'potential';
-  const activeHistory = showingPotential ? potentialAsHistory : (data.full_history || []);
+  const showingCombined = chartSource === 'combined';
+  const usesPotentialData = showingPotential || showingCombined;
+  const activeHistory = showingCombined
+    ? combinedAsHistory
+    : showingPotential ? potentialAsHistory : (data.full_history || []);
 
 
   // Year-split history (copied verbatim from NectarFlowView, V2 has no ndvi/bloom/weather in history)
@@ -612,7 +654,7 @@ export const NectarFlowV2View: React.FC = () => {
   const latestPotentialDisplay = latestActive
     ? Math.round(latestActive.forage_index_smoothed * 100)
     : null;
-  const latestDeviationDisplay = showingPotential
+  const latestDeviationDisplay = usesPotentialData
     ? (latestActive?.deviation == null ? null : Math.round(latestActive.deviation * 100))
     : latestDeviation;
 
@@ -763,7 +805,7 @@ export const NectarFlowV2View: React.FC = () => {
         const y2 = yCoord(h2.forage_index_smoothed);
         // Phase colours describe the satellite index. The bloom curve has no phase, so
         // colouring it by one would assert something the plant list cannot know.
-        const color = showingPotential ? '#C084FC' : getPhaseColor(h1.phase);
+        const color = showingCombined ? '#F5B301' : showingPotential ? '#C084FC' : getPhaseColor(h1.phase);
         currentSegments.push(
           <line
             key={`curr-seg-${i}`}
@@ -785,7 +827,7 @@ export const NectarFlowV2View: React.FC = () => {
       if (lastCurrent.forage_index_smoothed !== null && !isNaN(lastCurrent.forage_index_smoothed)) {
         lastX = getXCoordForDate(lastCurrent.date);
         lastY = yCoord(lastCurrent.forage_index_smoothed);
-        dotColor = showingPotential ? '#C084FC' : getPhaseColor(lastCurrent.phase);
+        dotColor = showingCombined ? '#F5B301' : showingPotential ? '#C084FC' : getPhaseColor(lastCurrent.phase);
       }
     }
 
@@ -1163,6 +1205,7 @@ export const NectarFlowV2View: React.FC = () => {
               {([
                 { key: 'satellite' as const, label: 'Satellite Index', sub: 'what the ground is doing' },
                 { key: 'potential' as const, label: 'Nectar Potential', sub: 'what should be blooming' },
+                { key: 'combined' as const, label: 'Combined', sub: 'bloom × satellite' },
               ]).map(({ key, label, sub }) => (
                 <button
                   key={key}
@@ -1179,7 +1222,42 @@ export const NectarFlowV2View: React.FC = () => {
               ))}
             </div>
 
-            {showingPotential && (
+            {/* Satellite authority. Combining happens in the browser, so Recalc redraws
+                instantly with no network call — the point being to try values against real
+                data rather than take one on trust. */}
+            {showingCombined && (
+              <div className="bg-[#121226] border border-[#222240] rounded-xl px-4 py-2.5 flex items-center gap-3 flex-wrap text-[11px]">
+                <span className="font-bold text-slate-300">Satellite may cut the bloom to at most</span>
+                <select
+                  value={satelliteFloorDraft}
+                  onChange={(e) => setSatelliteFloorDraft(Number(e.target.value))}
+                  className="bg-[#1b1b36] border border-[#2b2b54] rounded-lg px-2 py-1 text-white font-bold cursor-pointer outline-none"
+                >
+                  {[0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1].map(f => (
+                    <option key={f} value={f}>
+                      {f === 0 ? '0% — can zero it' : f === 1 ? '100% — satellite off' : `${Math.round(f * 100)}%`}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setSatelliteFloor(satelliteFloorDraft)}
+                  disabled={satelliteFloorDraft === satelliteFloor}
+                  className={`px-3 py-1 rounded-lg font-black uppercase tracking-wider border transition-all ${
+                    satelliteFloorDraft === satelliteFloor
+                      ? 'border-[#2b2b54] text-slate-600 cursor-default'
+                      : 'border-amber-500 text-amber-400 hover:bg-amber-500/10 cursor-pointer active:scale-95'
+                  }`}
+                >
+                  Recalc
+                </button>
+                <span className="text-slate-500">
+                  drawing <b className="text-slate-300">{Math.round(satelliteFloor * 100)}%</b>
+                  {' '}· lower gives the satellite more say
+                </span>
+              </div>
+            )}
+
+            {usesPotentialData && (
               <div className="bg-[#1a1530] border border-amber-600/40 rounded-xl px-4 py-2.5 text-[11px] leading-relaxed text-amber-200/90">
                 {potentialLoading && <span>Loading Nectar Potential…</span>}
                 {potentialError && <span className="text-red-300">{potentialError}</span>}
@@ -1200,7 +1278,7 @@ export const NectarFlowV2View: React.FC = () => {
                 )}
                 {!potentialLoading && potential?.available && (
                   <>
-                    <b>Blooming potential only — no satellite reading.</b> What this apiary&rsquo;s{' '}
+                    <b>{showingCombined ? 'Bloom × satellite.' : 'Blooming potential only — no satellite reading.'}</b> What this apiary&rsquo;s{' '}
                     {potential.plantCount} researched plants say should be open and yielding, on the
                     heat and day length actually recorded. Zone {potential.zoneCode}.
                     {!!potential.emptyDays && potential.emptyDays > 0 && (
@@ -1227,13 +1305,13 @@ export const NectarFlowV2View: React.FC = () => {
                   <div className="mb-3 flex items-stretch gap-3 flex-wrap">
                     <div className="flex items-baseline gap-1.5 pr-3 border-r border-[#2b2b54]">
                       <span className="text-3xl font-black text-white leading-none tabular-nums">
-                        {showingPotential
+                        {usesPotentialData
                           ? (latestPotentialDisplay ?? '—')
                           : data.nfi}
                       </span>
                       <div className="flex flex-col leading-tight">
                         <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">
-                          {showingPotential ? 'Potential' : 'NFI'}
+                          {showingCombined ? 'Index' : showingPotential ? 'Potential' : 'NFI'}
                         </span>
                         <span className="text-[10px] font-bold text-slate-300 flex items-center gap-0.5 capitalize">
                           {resolvedTrendDirection === 'rising' ? <TrendingUp size={10} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={10} className="text-red-400" /> : <Minus size={10} className="text-slate-400" />}
@@ -1258,7 +1336,7 @@ export const NectarFlowV2View: React.FC = () => {
                     {/* Drivers. Satellite shows its components; potential shows what is
                         actually in bloom, which is the equivalent question for that half. */}
                     <div className="flex gap-3 items-center">
-                      {showingPotential ? (
+                      {usesPotentialData ? (
                         <>
                           <div className="flex flex-col leading-tight">
                             <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">In bloom</span>

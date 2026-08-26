@@ -35,6 +35,10 @@ export interface V2HistoryPoint {
   spread: number | null;
   /** How many prior years contributed. Below 3, treat normal/spread as indicative only. */
   normalYears: number;
+  /** Greenness against this location's own five-year range, 0-1. Is anything growing here. */
+  vigor: number;
+  /** Canopy water from NDWI, floored at 0.7, so at worst a 30% penalty. Sees irrigation. */
+  moisture: number;
 }
 
 /** Per-day component series, for diagnosis and ablation. Not part of the API response. */
@@ -419,6 +423,13 @@ export function runV2Pipeline(
       deviation: normal == null ? null : r3(idxEwma[i] - normal),
       spread: spread == null ? null : r3(spread),
       normalYears: n,
+      // Exposed so the client can combine the satellite reading with the plant-driven
+      // bloom curve without a second Earth Engine fetch. These two are what the satellite
+      // uniquely knows and a calendar cannot: whether the vegetation is actually there and
+      // whether it is watered. The greening-RATE core is deliberately not exposed for that
+      // purpose -- rate is a timing signal, and timing is the plant list's job.
+      vigor: r3(vigor[i]),
+      moisture: r3(moist[i]),
     };
   });
 
