@@ -3,6 +3,7 @@ import { fetchCompleteWeather, historyStartDate } from './_shared/weather.js';
 import { computeBloomBase, type PlantWindow } from './_shared/bloom-engine.js';
 import { withNormals } from './_shared/normal.js';
 import { resolveEcoregion } from './_shared/ecoregion.js';
+import { initEarthEngine } from './_shared/bands-fetcher.js';
 
 // Nectar Potential: what the apiary's own plant list says should be yielding today,
 // against the same date in the previous five years.
@@ -13,8 +14,10 @@ import { resolveEcoregion } from './_shared/ecoregion.js';
 // the nectar index and must not be presented as one: it says what should be open and how
 // good those plants are, not whether they are actually running.
 //
-// No Earth Engine, so it costs a weather call and some arithmetic — about a second, against
-// roughly eighteen for the satellite index.
+// Cost: a weather call and some arithmetic, about a second, against roughly eighteen for
+// the satellite index. The one exception is an apiary whose ecoregion has never been looked
+// up — that first request touches Earth Engine, then caches the answer on the row and never
+// does it again.
 
 export default async function handler(req: any, res: any) {
   if (applyCors(req, res)) return;
@@ -49,10 +52,18 @@ export default async function handler(req: any, res: any) {
     const lng = Number(apiary.longitude);
 
     // Resolve the ecoregion on demand rather than sending the caller away to another
-    // endpoint first. It costs well under a second and only happens once per apiary.
+    // endpoint first. Happens once per apiary, then it is cached on the row.
+    //
+    // initEarthEngine FIRST. resolveEcoregion documents that it assumes an initialised
+    // client, and on an uninitialised one the Earth Engine library falls back to a
+    // synchronous request -- which the xmlhttprequest package services by writing a temp
+    // file into the working directory. That is read-only on Vercel, so it surfaced as
+    // "EROFS: read-only file system, open '.node-xmlhttprequest-sync-4'" rather than as
+    // anything resembling a missing initialisation.
     let l3 = apiary.ecoregion_l3;
     let l4 = apiary.ecoregion_l4;
     if (!apiary.ecoregion_resolved_at) {
+      await initEarthEngine();
       const zone = await resolveEcoregion(lat, lng);
       l3 = zone.l3code;
       l4 = zone.l4code;
