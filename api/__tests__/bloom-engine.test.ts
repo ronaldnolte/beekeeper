@@ -1,6 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
 import {
   computeBloomBase, openness, accumulateGdd, defaultTrigger, combineContributions,
+  degreeDaysSingleSine,
   type PlantWindow, type DailyTemp,
 } from '../_shared/bloom-engine';
 
@@ -57,6 +58,53 @@ describe('openness', () => {
     const o = openness(21, 0, 20, 24);
     expect(o).toBeGreaterThan(0.8);
     expect(openness(23, 0, 20, 24)).toBeLessThan(0.2);
+  });
+});
+
+describe('degreeDaysSingleSine', () => {
+  it('gives nothing when the day never reaches the base', () => {
+    expect(degreeDaysSingleSine(20, 45)).toBe(0);
+    expect(degreeDaysSingleSine(48, 50)).toBe(0);
+  });
+
+  it('matches the simple average when the whole day is above the base', () => {
+    // No part of the curve dips below base, so there is nothing for the sine to recover.
+    expect(degreeDaysSingleSine(55, 75)).toBeCloseTo(15, 6);
+    expect(degreeDaysSingleSine(50, 70)).toBeCloseTo(10, 6);
+  });
+
+  it('credits a warm afternoon under a cold night', () => {
+    // The real case from South Valley, 23 February 2026: reached 62.6F, fell to 29.4F.
+    // Daily mean is 46.0, so the averaging method credited exactly nothing while the
+    // plants sat in the sixties for hours.
+    const credited = degreeDaysSingleSine(29.4, 62.6);
+    expect(credited).toBeGreaterThan(0);
+    expect((62.6 + 29.4) / 2).toBeLessThan(50);           // averaging method gives zero
+    expect(credited).toBeLessThan(6.3);                    // and not more than half the excess
+  });
+
+  it('grows with the daytime high for a fixed overnight low', () => {
+    const cool = degreeDaysSingleSine(30, 55);
+    const warm = degreeDaysSingleSine(30, 70);
+    const hot  = degreeDaysSingleSine(30, 85);
+    expect(warm).toBeGreaterThan(cool);
+    expect(hot).toBeGreaterThan(warm);
+  });
+
+  it('never returns less than the averaging method would', () => {
+    // The whole point: the sine recovers heat the average discards, and never loses any.
+    for (let tmin = 10; tmin <= 70; tmin += 5) {
+      for (let tmax = tmin; tmax <= 100; tmax += 5) {
+        const avg = Math.max(0, (tmax + tmin) / 2 - 50);
+        expect(degreeDaysSingleSine(tmin, tmax)).toBeGreaterThanOrEqual(avg - 1e-9);
+      }
+    }
+  });
+
+  it('applies no upper cutoff — heat shutdown is a separate question', () => {
+    // Development keeps accumulating in extreme heat. Whether a plant SECRETES at 105F is
+    // about nectar, not about phenology, and belongs in its own term.
+    expect(degreeDaysSingleSine(75, 105)).toBeCloseTo(40, 6);
   });
 });
 

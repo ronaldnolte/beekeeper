@@ -104,9 +104,38 @@ export function defaultTrigger(bloomPeak: string): BloomTrigger {
 }
 
 /**
+ * Growing degree days for one day, by the single sine method.
+ *
+ * The obvious method — daily mean minus base — discards any day whose MEAN falls below the
+ * base, however warm the afternoon was. Measured at South Valley in February 2026, that
+ * threw away 21 of 64 days, including one that reached 62.6F and was credited nothing
+ * because the night fell to 29F. Plants develop through those afternoons. Discarding them
+ * both under-counts spring and makes the bloom curve advance in visible lurches: a run of
+ * zero days, then a warm spell lifting the mean over the base and everything jumping at once.
+ *
+ * The single sine method fits a sine curve between the day's low and high and measures only
+ * the area above the base, so a warm afternoon under a cold night gets partial credit. It is
+ * the standard used by agricultural extension services. No upper threshold: heat shutdown is
+ * a separate question about nectar secretion, not about plant development, and it belongs in
+ * its own term rather than hidden inside this one.
+ */
+export function degreeDaysSingleSine(tmin: number, tmax: number, base = GDD_BASE_F): number {
+  if (tmax <= base) return 0;                        // never warm enough
+  if (tmin >= base) return (tmax + tmin) / 2 - base; // warm all day; sine adds nothing
+
+  const mid = (tmax + tmin) / 2;
+  const amplitude = (tmax - tmin) / 2;
+  if (amplitude <= 0) return Math.max(0, mid - base);
+
+  // Angle at which the fitted curve crosses the base temperature.
+  const theta = Math.asin(Math.min(1, Math.max(-1, (base - mid) / amplitude)));
+  return ((mid - base) * (Math.PI / 2 - theta) + amplitude * Math.cos(theta)) / Math.PI;
+}
+
+/**
  * Accumulated growing degree days from 1 January, base 50F, keyed by date.
- * Restarts each calendar year — the count is a measure of how far into the growing season
- * this particular year has travelled, so it cannot carry across the turn.
+ * Restarts each calendar year — the count measures how far into the growing season this
+ * particular year has travelled, so it cannot carry across the turn.
  */
 export function accumulateGdd(days: DailyTemp[]): Map<string, number> {
   const out = new Map<string, number>();
@@ -116,7 +145,7 @@ export function accumulateGdd(days: DailyTemp[]): Map<string, number> {
   for (const d of sorted) {
     const y = d.date.slice(0, 4);
     if (y !== year) { year = y; acc = 0; }
-    acc += Math.max(0, (d.tmax + d.tmin) / 2 - GDD_BASE_F);
+    acc += degreeDaysSingleSine(d.tmin, d.tmax);
     out.set(d.date, acc);
   }
   return out;
