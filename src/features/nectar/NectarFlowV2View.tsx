@@ -138,8 +138,8 @@ export const NectarFlowV2View: React.FC = () => {
   // Resolved lat/lng actually sent to the API (post zip-geocoding). Shown next to
   // the apiary name so dev/prod runs can be confirmed to use identical coordinates.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  // Per-phase load timing (diagnostics) + a live elapsed counter for the spinner.
-  const [timing, setTiming] = useState<LoadTiming | null>(null);
+  // Load timing is still measured and logged to the console as [nectar timing]; it is no
+  // longer held in state because nothing renders it since the diagnostic bar came out.
   const [elapsedSec, setElapsedSec] = useState(0);
 
   // Nectar Potential is fetched lazily, only once the user asks to see it.
@@ -303,7 +303,7 @@ export const NectarFlowV2View: React.FC = () => {
         const loadTiming: LoadTiming = { coordMs, roundTripMs, server: json._timing ?? null };
         // eslint-disable-next-line no-console
         console.log('[nectar timing]', loadTiming);
-        setTiming(loadTiming);
+
         setData(json);
       } finally {
         clearTimeout(timeout);
@@ -1042,29 +1042,9 @@ export const NectarFlowV2View: React.FC = () => {
         </button>
       </div>
 
-      {/* Load-timing diagnostic bar — always visible after a load, on every tab,
-          and NOT swapped out by chart hover. Use the Refresh button for a true
-          fresh measurement (a cached response returns near-instantly). */}
-      {timing && (
-        <div className="w-full bg-[#0f0f20] border-b border-[#222240] px-4 py-1.5 flex items-center gap-3 text-[10px] font-mono text-slate-300 overflow-x-auto whitespace-nowrap z-10 select-none">
-          <span className="text-amber-500 font-bold uppercase tracking-wider shrink-0">Load</span>
-          {timing.server ? (
-            <>
-              <span title="Earth Engine satellite fetch">satellite <b className="text-white">{(timing.server.earth_engine_ms / 1000).toFixed(1)}s</b></span>
-              <span title="Open-Meteo weather fetch">weather <b className="text-white">{(timing.server.weather_ms / 1000).toFixed(1)}s</b></span>
-              <span title="Index computation on the server">compute <b className="text-white">{timing.server.pipeline_ms}ms</b></span>
-              <span title="Network + browser (round trip minus server compute)">network <b className="text-white">{Math.max(0, (timing.roundTripMs - timing.server.server_total_ms) / 1000).toFixed(1)}s</b></span>
-            </>
-          ) : (
-            <span title="Per-phase split only on the preview deploy; production has no timing yet">
-              api <b className="text-white">{(timing.roundTripMs / 1000).toFixed(1)}s</b>
-              <span className="text-slate-500"> (no server split — test on preview)</span>
-            </span>
-          )}
-          <span title="Apiary coordinate lookup (database)">coords <b className="text-white">{timing.coordMs}ms</b></span>
-          <span className="text-amber-400 shrink-0" title="Total from tap to chart">total <b>{((timing.coordMs + timing.roundTripMs) / 1000).toFixed(1)}s</b></span>
-        </div>
-      )}
+      {/* The load-timing bar was removed 2026-08-26: the numbers were not useful day to day.
+          Timings are still measured and logged to the console as [nectar timing], so putting a
+          strip back is a display change, not a re-instrumentation. */}
 
       {/* Scrollable content */}
       <div ref={contentRef} className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
