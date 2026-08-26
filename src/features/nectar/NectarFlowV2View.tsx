@@ -142,11 +142,24 @@ export const NectarFlowV2View: React.FC = () => {
   const [timing, setTiming] = useState<LoadTiming | null>(null);
   const [elapsedSec, setElapsedSec] = useState(0);
 
-  // Nectar Potential is fetched lazily, only once the user asks to see it. It costs a
-  // weather call and no Earth Engine, so about a second.
+  // Nectar Potential is fetched lazily, only once the user asks to see it.
+  //
+  // The in-flight guard is a ref, NOT the loading state. Putting potentialLoading in the
+  // dependency array while also setting it inside the effect deadlocked: setting it changed
+  // the deps, which ran the cleanup and marked the request cancelled, so when the response
+  // arrived nothing was stored and the spinner never cleared. A ref does not re-trigger.
+  const potentialInFlight = useRef(false);
+
   useEffect(() => {
-    if (chartSource !== 'potential' || potential || potentialLoading || !selectedApiaryId) return;
-    let cancelled = false;
+    if (chartSource !== 'potential' || potential || potentialInFlight.current || !selectedApiaryId) return;
+
+    potentialInFlight.current = true;
+    const apiaryAtStart = selectedApiaryId;
+    // Nothing here should take a minute; without a timeout a stalled connection would leave
+    // the spinner up with no way out.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60_000);
+
     (async () => {
       setPotentialLoading(true);
       setPotentialError(null);
@@ -155,23 +168,32 @@ export const NectarFlowV2View: React.FC = () => {
           ? 'https://beekeeper.beektools.com/api/nectar-potential'
           : '/api/nectar-potential';
         const { data: { session } } = await supabase.auth.getSession();
-        const res = await fetch(`${apiBase}?apiaryId=${encodeURIComponent(selectedApiaryId)}`, {
+        const res = await fetch(`${apiBase}?apiaryId=${encodeURIComponent(apiaryAtStart)}`, {
+          signal: controller.signal,
           headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
         });
         if (!res.ok) throw new Error((await res.text()) || `API error ${res.status}`);
-        const json = await res.json();
-        if (!cancelled) setPotential(json);
+        setPotential(await res.json());
       } catch (e: any) {
-        if (!cancelled) setPotentialError(e?.message ?? 'Failed to load Nectar Potential');
+        setPotentialError(
+          e?.name === 'AbortError'
+            ? 'Nectar Potential timed out after 60 seconds.'
+            : (e?.message ?? 'Failed to load Nectar Potential')
+        );
       } finally {
-        if (!cancelled) setPotentialLoading(false);
+        clearTimeout(timer);
+        potentialInFlight.current = false;
+        setPotentialLoading(false);
       }
     })();
-    return () => { cancelled = true; };
-  }, [chartSource, potential, potentialLoading, selectedApiaryId]);
+  }, [chartSource, potential, selectedApiaryId]);
 
   // Switching apiary invalidates the cached potential.
-  useEffect(() => { setPotential(null); setPotentialError(null); }, [selectedApiaryId]);
+  useEffect(() => {
+    setPotential(null);
+    setPotentialError(null);
+    potentialInFlight.current = false;
+  }, [selectedApiaryId]);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
