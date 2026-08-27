@@ -963,18 +963,34 @@ export const NectarFlowV2View: React.FC = () => {
             );
           })}
 
-          {/* Month boundaries. Behind the curves, faint enough to read past. */}
+          {/* Month boundaries and their labels.
+              Both live INSIDE the svg on purpose. The labels were HTML, positioned as a
+              percentage of the container, while the gridlines are viewBox coordinates —
+              two coordinate systems that only agree when the element width exactly equals
+              the viewBox width, which it does not, because the chart sits inside a padded
+              container. Same coordinates now, so they cannot drift apart. */}
           {monthMarks.map((m, i) => (
-            i === 0 ? null : (
-              <line
-                key={`mo-${m.label}`}
-                x1={m.x} y1={paddingTop}
-                x2={m.x} y2={height - paddingBottom}
-                stroke="#ffffff"
-                strokeOpacity="0.07"
-                strokeWidth="1"
-              />
-            )
+            <g key={`mo-${m.label}`}>
+              {i > 0 && (
+                <line
+                  x1={m.x} y1={paddingTop}
+                  x2={m.x} y2={height - paddingBottom}
+                  stroke="#ffffff"
+                  strokeOpacity="0.07"
+                  strokeWidth="1"
+                />
+              )}
+              <text
+                x={m.x}
+                y={height - 5}
+                fill="#64748b"
+                fontSize={isFullscreen ? '9' : '8'}
+                fontWeight="bold"
+                textAnchor={i === 0 ? 'start' : 'middle'}
+              >
+                {m.label}
+              </text>
+            </g>
           ))}
 
           {/* Deviation from normal — green above the blue line, red below */}
@@ -1046,23 +1062,7 @@ export const NectarFlowV2View: React.FC = () => {
           })()}
         </svg>
 
-        {/* X-axis month labels, positioned from the same day-of-year scale as the curve.
-            Absolutely placed rather than flex-spaced, so each label sits over the gridline
-            marking the first of that month. */}
-        <div
-          className="relative w-full text-slate-500 font-bold border-t border-[#222240]/40 pt-1.5 mt-1 select-none"
-          style={{ height: isFullscreen ? '16px' : '14px', fontSize: isFullscreen ? '9px' : '8px' }}
-        >
-          {monthMarks.map((m) => (
-            <span
-              key={m.label}
-              className="absolute"
-              style={{ left: `${(m.x / width) * 100}%`, transform: 'translateX(-50%)' }}
-            >
-              {m.label}
-            </span>
-          ))}
-        </div>
+        {/* Month labels are drawn inside the svg, so nothing goes here. */}
       </div>
     );
   };
