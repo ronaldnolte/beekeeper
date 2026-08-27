@@ -5,6 +5,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { combineSeries, DEFAULT_SATELLITE_FLOOR } from './combineIndex';
 import { withNormals } from '../../../api/_shared/normal';
+import { daysLengthening } from '../../../api/_shared/season';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { supabase } from '../../data/supabase';
@@ -385,39 +386,69 @@ export const NectarFlowV2View: React.FC = () => {
     setHoveredIndex(null);
   };
 
-  // Phase advice (copied verbatim from NectarFlowView)
+  // Phase advice, split by whether the days are lengthening or shortening.
+  //
+  // These were phase-only, so a New Mexico beekeeper in late August was told to "check for
+  // rapid queen egg-laying and brood nest expansion" and to "wind down any supplemental
+  // feeding" — spring advice, and the second could do real harm going into autumn.
+  //
+  // Editorial rules, both Ron's. No hive-type assumptions: "supers" presumes Langstroth and
+  // he runs top-bar. And contested practices get a conditional register — treatments are a
+  // touchy subject in beekeeping, and some beekeepers count feeding as one — so these
+  // describe the forage situation and leave the response to the beekeeper.
   const getPhaseAdvice = (phase: string): string[] => {
+    const building = coords ? daysLengthening(new Date(), coords.lat) : true;
     switch (phase) {
       case 'IN_FLOW':
-        return [
-          'Add honey supers (space) to prevent swarming.',
-          'Stop supplemental feeding immediately.',
+        return building ? [
+          'Add space if the bees are crowded.',
+          'Natural forage is available now.',
           'Monitor brood nests for queen cups and swarm cells.'
+        ] : [
+          'Add space if the bees are crowded, but leave enough for winter stores.',
+          'Watch that nectar is not filling the brood nest — the queen still needs room to lay.',
+          'Natural forage is available now.'
         ];
       case 'FLOW_ENDING':
-        return [
+        return building ? [
           'Reduce hive entrance sizes to protect against robbing.',
           'Avoid making splits or exposing comb to the air.',
-          'Plan or prepare sugar syrup for supplemental feeding.'
+          'Hives may start running light as the flow closes.'
+        ] : [
+          'Reduce hive entrances to protect against robbing.',
+          'Heft or weigh hives to check winter stores are adequate.',
+          'Hives may be running light as the season closes.'
         ];
       case 'DEARTH':
-        return [
-          'Feed sugar syrup / protein patties if hives are light.',
+        return building ? [
+          'Hives may be running light — worth checking stores.',
           'Ensure entrance reducers or robbing screens are installed.',
           'Avoid opening hives for long periods; robbing risk is extreme.'
+        ] : [
+          'Check winter stores; hives may be running light.',
+          'Keep entrances reduced; robbing pressure is high in a dearth.',
+          'If you treat for mites, this is the window — before the winter bees are raised.'
         ];
       case 'FLOW_STARTING':
-        return [
-          'Super your colonies early to catch the start of flow.',
+        return building ? [
+          'Add space early to catch the start of the flow.',
           'Check for rapid queen egg-laying and brood nest expansion.',
-          'Slow down or wind down any supplemental feeding.'
+          'Natural forage is coming in.'
+        ] : [
+          'Add space if the bees are crowded.',
+          'Assess winter stores — this may be the last real chance to build them.',
+          'Natural forage is coming in.'
         ];
       case 'TRANSITION':
       default:
-        return [
+        return building ? [
           'Monitor hive weight and colony population weekly.',
           'Ensure bees have access to a clean water source nearby.',
           'Check that hive entrances are clean and unblocked.'
+        ] : [
+          'Assess stores and colony population heading into autumn.',
+          'Ensure bees have access to a clean water source nearby.',
+          'Consider reducing entrances as the dearth deepens.'
         ];
     }
   };

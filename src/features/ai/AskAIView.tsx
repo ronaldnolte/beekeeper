@@ -190,7 +190,7 @@ export const AskAIView: React.FC = () => {
                 </p>
                 <div className="flex flex-wrap justify-center gap-2 mt-4">
                   <span className="bg-[var(--color-input-bg)] border border-[var(--color-card-border)] px-3 py-1.5 rounded-full text-xs font-bold text-[var(--color-text-muted)] shadow-sm">"Do I need to feed them today?"</span>
-                  <span className="bg-[var(--color-input-bg)] border border-[var(--color-card-border)] px-3 py-1.5 rounded-full text-xs font-bold text-[var(--color-text-muted)] shadow-sm">"When should I add a super?"</span>
+                  <span className="bg-[var(--color-input-bg)] border border-[var(--color-card-border)] px-3 py-1.5 rounded-full text-xs font-bold text-[var(--color-text-muted)] shadow-sm">"When should I add space?"</span>
                   <span className="bg-[var(--color-input-bg)] border border-[var(--color-card-border)] px-3 py-1.5 rounded-full text-xs font-bold text-[var(--color-text-muted)] shadow-sm">"How do I treat for mites?"</span>
                 </div>
               </div>

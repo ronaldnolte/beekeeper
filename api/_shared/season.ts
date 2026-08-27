@@ -98,3 +98,35 @@ export function statusFor(
   if (Math.abs(todayDoy - peakDoy) <= 7) return 'peak';
   return todayDoy < peakDoy ? 'starting' : 'ending';
 }
+
+/**
+ * Hours of daylight at a latitude on a given day of year.
+ *
+ * Standard solar geometry: declination from the day of year, then the hour angle at which
+ * the sun crosses the horizon. Inside the polar circles the hour angle has no solution —
+ * the sun does not rise or does not set — so the cosine is clamped, giving 0 or 24.
+ */
+export function dayLengthHours(lat: number, doy: number): number {
+  const declination = 23.45 * Math.sin((2 * Math.PI * (284 + doy)) / 365);
+  const phi = (lat * Math.PI) / 180;
+  const delta = (declination * Math.PI) / 180;
+  const cosH = Math.min(1, Math.max(-1, -Math.tan(phi) * Math.tan(delta)));
+  return (2 * Math.acos(cosH) * 180) / Math.PI / 15;
+}
+
+/**
+ * Are the days getting longer?
+ *
+ * This is the split between advice for a colony BUILDING UP and advice for one STORING FOR
+ * WINTER. It is the right question to ask because it is what the bees respond to, and
+ * because it works at any latitude — a calendar split would hand Northern Hemisphere autumn
+ * advice to someone in Australia in April.
+ *
+ * Compared over a week rather than a single day: within a few days of a solstice the change
+ * is smaller than floating-point noise, and a colony's situation does not hinge on which
+ * side of 21 June it is by one day.
+ */
+export function daysLengthening(date: Date, lat: number): boolean {
+  const doy = dayOfYearUTC(date);
+  return dayLengthHours(lat, doy + 3) > dayLengthHours(lat, doy - 3);
+}

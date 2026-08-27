@@ -2,6 +2,7 @@ import { applyCors, getAuthedUser, getBearerToken, createRateLimiter, getClientI
 import { fetchMultiBands } from './_shared/bands-fetcher.js';
 import { runV2Pipeline, Phase } from './_shared/nectar-v2-engine.js';
 import { fetchWeather as fetchWeatherV2 } from './_shared/weather.js';
+import { daysLengthening } from './_shared/season.js';
 
 // Anonymous nectar calls are only possible during the auth grace window (see
 // _lib). Rate-limit them to blunt scripted abuse of the paid Earth Engine /
@@ -18,18 +19,45 @@ function phaseToStatus(phase: Phase): 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' |
   }
 }
 
-function phaseToAdvice(phase: Phase): string {
+/**
+ * Advice for the current phase, split by whether the days are lengthening or shortening.
+ *
+ * The same phase means opposite things in each half of the year, and this used to switch on
+ * phase alone. In late August 2026 it told a New Mexico beekeeper "Queen egg-laying is
+ * stimulated. Colony is expanding — watch for swarm preparations" — spring advice, in
+ * autumn. Ron: "way off for sure."
+ *
+ * Split on day length rather than the calendar so it holds at any latitude, and because day
+ * length is what the bees are actually responding to.
+ *
+ * Two editorial rules, both Ron's. No hive-type assumptions: "supers" presumes Langstroth
+ * and he runs top-bar. And contested practices get a conditional register — treatments are
+ * a touchy subject in beekeeping, and some beekeepers count feeding as one, so the text
+ * describes the forage situation rather than prescribing an intervention.
+ */
+function phaseToAdvice(phase: Phase, lat: number, when = new Date()): string {
+  const building = daysLengthening(when, lat);
   switch (phase) {
     case 'IN_FLOW':
-      return 'Peak nectar flow is active. Ensure honey supers are in place. Colony is actively storing surplus honey.';
+      return building
+        ? 'Peak nectar flow is active. Ensure adequate empty honeycomb cells for both honey and eggs. Colony is actively storing surplus.'
+        : 'A late season flow is running. Ensure adequate empty honeycomb, though this is more likely winter stores than surplus.';
     case 'FLOW_STARTING':
-      return 'Nectar flow is building. Queen egg-laying is stimulated. Colony is expanding — watch for swarm preparations.';
+      return building
+        ? 'Nectar flow is building. Queen egg-laying is stimulated. Colony is expanding — watch for swarm preparations.'
+        : 'A late season flow is starting. Expect stores rather than expansion. Ensure adequate empty honeycomb for what comes in.';
     case 'FLOW_ENDING':
-      return 'Nectar flow is winding down. Monitor honey stores and watch for robbing behavior as colonies sense the dearth ahead.';
+      return building
+        ? 'Nectar flow is winding down early. Check stores and watch for robbing — the colony still has a season ahead of it.'
+        : 'Nectar flow is winding down into the dearth ahead. Monitor honey stores and watch for robbing behaviour.';
     case 'DEARTH':
-      return 'Colony is in a dearth. Monitor food reserves closely. Supplemental feeding may be required to maintain colony strength.';
+      return building
+        ? 'Colony is in a dearth during the build-up season. Monitor food reserves closely.'
+        : 'Colony is in a dearth. Check that winter stores are adequate.';
     default:
-      return 'Transitional forage conditions. Monitor colony strength and watch for shifts in the next 1–2 weeks.';
+      return building
+        ? 'Transitional forage conditions. Monitor colony strength and watch for shifts in the next 1–2 weeks.'
+        : 'Transitional forage conditions heading into autumn. Assess stores and watch for shifts in the next 1–2 weeks.';
   }
 }
 
@@ -134,7 +162,7 @@ export default async function handler(req: any, res: any) {
       nfi,
       phase: latestPhase,
       status: phaseToStatus(latestPhase),
-      transitionAdvice: phaseToAdvice(latestPhase),
+      transitionAdvice: phaseToAdvice(latestPhase, lat),
       trend_direction,
       slope: latestSlope,
       v2: result.latest,

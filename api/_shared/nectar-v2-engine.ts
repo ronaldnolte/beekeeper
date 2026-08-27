@@ -39,6 +39,17 @@ export interface V2HistoryPoint {
   vigor: number;
   /** Canopy water from NDWI, floored at 0.7, so at worst a 30% penalty. Sees irrigation. */
   moisture: number;
+  /**
+   * How hard greenness is FALLING, 0-1, against the steepest change this location shows.
+   * 0 while flat or greening; 1 while browning off as fast as it ever does.
+   *
+   * Exposed as decline rather than as the greening rate because a plateau is not a
+   * problem: alfalfa in steady full bloom produces no green-up at all, and scoring that
+   * as weak is the blind spot that made greenness-LEVEL scoring useless in the first
+   * place. A landscape drying out is a different thing, and it is what ended the
+   * South Valley flow in May 2026 while the ground was still visibly green.
+   */
+  decline: number;
 }
 
 /** Per-day component series, for diagnosis and ablation. Not part of the API response. */
@@ -430,6 +441,7 @@ export function runV2Pipeline(
       // purpose -- rate is a timing signal, and timing is the plant list's job.
       vigor: r3(vigor[i]),
       moisture: r3(moist[i]),
+      decline: r3(clamp(Math.max(0, -rate[i]) / ratePeak, 0, 1)),
     };
   });
 
