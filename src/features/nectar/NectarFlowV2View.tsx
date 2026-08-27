@@ -365,10 +365,15 @@ export const NectarFlowV2View: React.FC = () => {
       case 'FLOW_ENDING':
         return { bg: 'bg-[#1E8449]', text: 'text-white', label: 'Flow Ending', emoji: '🍂' };
       case 'DEARTH':
-        return { bg: 'bg-[#E74C3C]', text: 'text-white', label: 'Dearth', emoji: '🏜️' };
+        // Darker than the chart's #E74C3C on purpose. White on #E74C3C measures 3.8:1, and
+        // the advice line under it is small text, which needs 4.5:1 — it was genuinely hard
+        // to read, and worse outdoors on a phone at a hive. #C0392B measures 5.4:1. The
+        // chart line keeps the brighter red, where nothing sits on top of it.
+        return { bg: 'bg-[#C0392B]', text: 'text-white', label: 'Dearth', emoji: '🏜️' };
       case 'TRANSITION':
       default:
-        return { bg: 'bg-[#95A5A6]', text: 'text-white', label: 'Transition', emoji: '🌫️' };
+        // Same reasoning: white on #95A5A6 is only 2.6:1, worse than the red was.
+        return { bg: 'bg-[#657374]', text: 'text-white', label: 'Transition', emoji: '🌫️' };
     }
   };
 
@@ -1137,7 +1142,10 @@ export const NectarFlowV2View: React.FC = () => {
               {resolvedTrendDirection === 'rising' ? '↑' : resolvedTrendDirection === 'falling' ? '↓' : '→'} {resolvedTrendDirection}
             </span>
           </div>
-          <p className="text-[11px] font-semibold opacity-90 leading-snug mt-0.5 line-clamp-1">{data.transitionAdvice}</p>
+          {/* No opacity here. It was decorative and cost about half a contrast point on
+              text already at the legibility floor. Two lines rather than one, because the
+              late-season wordings are longer and were being truncated mid-sentence. */}
+          <p className="text-[11px] font-semibold leading-snug mt-0.5 line-clamp-2">{data.transitionAdvice}</p>
         </div>
         <span className="bg-black/15 text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full border border-white/10 shrink-0 tabular-nums">
           NFI {data.nfi}
