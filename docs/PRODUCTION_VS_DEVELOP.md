@@ -131,3 +131,24 @@ Open, unresolved, in `NECTAR_POTENTIAL_OPEN_QUESTIONS.md`:
 - June reads 2.8x September where Ron reports 1.5x
 - The April hole: 31 days near zero at South Valley, needs a beekeeper not research
 - Bloom windows are presence, not yield. White clover runs to 15 September.
+
+## Deferred: a visual consistency pass
+
+Ron, 2026-08-27: *"I think there is a decorative consistency that we have lost along the
+way. Perhaps we can have a lipstick on a pig moment when we get everything to work."*
+
+Agreed, and it is mostly from adding UI piecemeal during the index work. Known drift:
+
+- **Three card treatments on one screen.** The chart-source tabs, the satellite-floor
+  control and the readout strip each chose their own radius and border rather than the
+  app's established `rounded-3xl` / `#2b2b4d` card.
+- **Colours outside the phase palette.** Purple for Nectar Potential, amber for Combined.
+  Chosen to be distinguishable from each other, not to belong to the app.
+- **Two reds for Dearth.** The banner is `#C0392B` for contrast, the chart line is
+  `#E74C3C`. Deliberate, but it reads as inconsistent unless you know why.
+- **The floor control** is a bare select and button, styled like nothing else.
+- **Spacing above the chart** was not rebalanced after the load-timing bar was removed.
+
+Do this AFTER the index settles. Several of these elements are scaffolding for the build
+(the three tabs, the floor control) and should not ship at all, so polishing them now would
+be work spent on things due to be deleted.
