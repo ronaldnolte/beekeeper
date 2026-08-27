@@ -65,6 +65,8 @@ interface V2Response {
      *  Earth Engine fetch. Optional: production's endpoint predates them. */
     vigor?: number;
     moisture?: number;
+    /** How hard greenness is falling, 0-1. The signal that gets flow ENDINGS right. */
+    decline?: number;
   }[];
   _timing?: ServerTiming;
 }
@@ -551,7 +553,7 @@ export const NectarFlowV2View: React.FC = () => {
     if (chartSource !== 'combined' || !potential?.history?.length) return [];
     const rows = combineSeries(
       potential.history.map(h => ({ date: h.date, potential: h.potential })),
-      (data.full_history || []).map(h => ({ date: h.date, vigor: h.vigor, moisture: h.moisture })),
+      (data.full_history || []).map(h => ({ date: h.date, vigor: h.vigor, moisture: h.moisture, decline: h.decline })),
       satelliteFloor
     );
     // Normals are recomputed from the COMBINED series, not carried over from the bloom one:
@@ -847,7 +849,22 @@ export const NectarFlowV2View: React.FC = () => {
     const currentHovered = historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
 
     // Month labels layout parameters
+    // Month boundaries at their TRUE position on the axis.
+    //
+    // These labels used to be a flex row with justify-between, which spaces twelve labels
+    // evenly from edge to edge. The DATA is plotted at its real day-of-year fraction, so the
+    // two disagreed, and the error grew through the year: the "Aug" label sat at 63.6% of
+    // the width where 1 August actually falls at 58.1%, about twenty days out, and December
+    // was a full month adrift. It made late August look like the start of the month.
+    //
+    // Positioned from day-of-year now, so a label and a gridline sit exactly where that
+    // month begins on the same scale the curve is drawn on.
+    const MONTH_STARTS = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthMarks = months.map((label, i) => ({
+      label,
+      x: paddingLeft + (MONTH_STARTS[i] / 365) * chartWidth,
+    }));
 
     return (
       <div className="w-full flex flex-col justify-between" style={{ height }}>
@@ -946,6 +963,20 @@ export const NectarFlowV2View: React.FC = () => {
             );
           })}
 
+          {/* Month boundaries. Behind the curves, faint enough to read past. */}
+          {monthMarks.map((m, i) => (
+            i === 0 ? null : (
+              <line
+                key={`mo-${m.label}`}
+                x1={m.x} y1={paddingTop}
+                x2={m.x} y2={height - paddingBottom}
+                stroke="#ffffff"
+                strokeOpacity="0.07"
+                strokeWidth="1"
+              />
+            )
+          ))}
+
           {/* Deviation from normal — green above the blue line, red below */}
           {devRibbons.map((r, i) => (
             <path key={`dev-${i}`} d={r.d} fill={r.above ? 'url(#devAbove)' : 'url(#devBelow)'} />
@@ -1015,13 +1046,21 @@ export const NectarFlowV2View: React.FC = () => {
           })()}
         </svg>
 
-        {/* X-axis Month Labels (Jan - Dec) */}
+        {/* X-axis month labels, positioned from the same day-of-year scale as the curve.
+            Absolutely placed rather than flex-spaced, so each label sits over the gridline
+            marking the first of that month. */}
         <div
-          className="flex justify-between w-full text-slate-500 font-bold border-t border-[#222240]/40 pt-1.5 mt-1 select-none"
-          style={{ paddingLeft: `${paddingLeft}px`, paddingRight: `${paddingRight}px`, fontSize: isFullscreen ? '9px' : '8px' }}
+          className="relative w-full text-slate-500 font-bold border-t border-[#222240]/40 pt-1.5 mt-1 select-none"
+          style={{ height: isFullscreen ? '16px' : '14px', fontSize: isFullscreen ? '9px' : '8px' }}
         >
-          {months.map((m) => (
-            <span key={m}>{m}</span>
+          {monthMarks.map((m) => (
+            <span
+              key={m.label}
+              className="absolute"
+              style={{ left: `${(m.x / width) * 100}%`, transform: 'translateX(-50%)' }}
+            >
+              {m.label}
+            </span>
           ))}
         </div>
       </div>
