@@ -152,3 +152,12 @@ Agreed, and it is mostly from adding UI piecemeal during the index work. Known d
 Do this AFTER the index settles. Several of these elements are scaffolding for the build
 (the three tabs, the floor control) and should not ship at all, so polishing them now would
 be work spent on things due to be deleted.
+
+**The apiary selector is the clearest example** (Ron, 2026-08-27). The same list of yards
+appears twice in two different visual languages: the Apiaries screen uses light cream cards
+with orange pin icons and a chevron; the Nectar Flow selector uses dark navy pills with
+centred bold text. Neither is wrong on its own, but they are plainly not the same app.
+
+They are also **not sorted**. Both show South Valley, Desert Hives, Murfreesboro — insertion
+order. Alphabetical would put Desert Hives first. That is a behaviour bug, not decoration,
+and worth fixing whenever either list is next touched.
