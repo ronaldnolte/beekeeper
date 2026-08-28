@@ -3,7 +3,7 @@
 // warmth weighting → EWMA smooth → phase classification. Served by /api/nectar-index-v2.
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { daysLengthening, chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../../../api/_season';
+import { chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../../../api/_season';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { supabase } from '../../data/supabase';
@@ -16,8 +16,7 @@ import {
   RefreshCw,
   TrendingDown,
   Minus,
-  Sparkles,
-  ShieldAlert,
+  Sparkles,
   Maximize2,
   X,
 } from 'lucide-react';
@@ -266,60 +265,6 @@ export const NectarFlowV2View: React.FC = () => {
   };
 
   // Phase advice (copied verbatim from NectarFlowView)
-  // Split by whether the days are lengthening or shortening. These were phase-only, so in
-  // late August a beekeeper was told to "check for rapid queen egg-laying and brood nest
-  // expansion" and to "wind down any supplemental feeding" — spring advice, and the second
-  // could do real harm going into autumn.
-  //
-  // No hive-type assumptions ("supers" presumes Langstroth), and contested practices get a
-  // conditional register — treatments are a touchy subject and some beekeepers count
-  // feeding as one — so these describe the forage situation and leave the response alone.
-  const getPhaseAdvice = (phase: string): string[] => {
-    const building = coords ? daysLengthening(new Date(), coords.lat) : true;
-    switch (phase) {
-      case 'IN_FLOW':
-        return building ? [
-          'Add space if the bees are crowded.',
-          'Natural forage is available now.',
-          'Monitor brood nests for queen cups and swarm cells.'
-        ] : [
-          'Add space if the bees are crowded, but leave enough for winter stores.',
-          'Watch that nectar is not filling the brood nest — the queen still needs room to lay.',
-          'Natural forage is available now.'
-        ];
-      case 'TRENDING_DOWN':
-        return building ? [
-          'Reduce hive entrance sizes to protect against robbing.',
-          'Avoid making splits or exposing comb to the air.',
-          'Hives may start running light as the flow closes.'
-        ] : [
-          'Reduce hive entrances to protect against robbing.',
-          'Heft or weigh hives to check winter stores are adequate.',
-          'Hives may be running light as the season closes.'
-        ];
-      case 'TRENDING_UP':
-        return building ? [
-          'Add space early to catch the start of the flow.',
-          'Check for rapid queen egg-laying and brood nest expansion.',
-          'Natural forage is coming in.'
-        ] : [
-          'Add space if the bees are crowded.',
-          'Assess winter stores — this may be the last real chance to build them.',
-          'Natural forage is coming in.'
-        ];
-      case 'DEARTH':
-      default:
-        return building ? [
-          'Hives may be running light — worth checking stores.',
-          'Ensure entrance reducers or robbing screens are installed.',
-          'Avoid opening hives for long periods; robbing risk is extreme.'
-        ] : [
-          'Check winter stores; hives may be running light.',
-          'Keep entrances reduced; robbing pressure is high in a dearth.',
-          'If you treat for mites, this is the window — before the winter bees are raised.'
-        ];
-    }
-  };
 
   // No apiary (copied verbatim from NectarFlowView)
   if (!selectedApiaryId) {
@@ -392,7 +337,6 @@ export const NectarFlowV2View: React.FC = () => {
   // Resolved values
   const currentPhase = data.phase;
   const colors = getPhaseColors(currentPhase);
-  const adviceList = getPhaseAdvice(currentPhase);
   const resolvedTrendDirection = data.trend_direction;
   const forageIndexVal = data.nfi.toString();
   const deltaVal = data.slope ?? 0;
@@ -916,22 +860,6 @@ export const NectarFlowV2View: React.FC = () => {
               </div>
             </div>
 
-            {/* Recommended Actions (copied verbatim from NectarFlowView) */}
-            <div className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg select-none">
-              <div className="border-b border-[#2b2b4d] pb-3 mb-4">
-                <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider flex items-center gap-2">
-                  <ShieldAlert size={16} /> Recommended Actions
-                </h3>
-              </div>
-              <ul className="space-y-3 text-xs leading-relaxed text-slate-300">
-                {adviceList.map((advice, i) => (
-                  <li key={i} className="flex items-start gap-2.5">
-                    <span className="text-amber-500 font-bold mt-0.5">•</span>
-                    <span>{advice}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </>
         )}
 
@@ -1091,7 +1019,7 @@ export const NectarFlowV2View: React.FC = () => {
       {/* Bottom Nav (copied verbatim from NectarFlowView, Settings tab omitted for V2 preview) */}
       <div className="w-full absolute bottom-0 left-0 right-0 bg-[#0f0f20]/95 backdrop-blur-lg border-t border-[#222240] px-6 py-2.5 flex items-center justify-around z-20 select-none">
         {([
-          { key: 'home' as const,     icon: <Activity size={20} />,   label: 'Home' },
+          { key: 'home' as const,     icon: <Activity size={20} />,   label: 'Details' },
           { key: 'trends' as const,   icon: <TrendingUp size={20} />, label: 'Trends' },
           { key: 'apiaries' as const, icon: <MapPin size={20} />,     label: 'Apiaries' },
         ]).map(({ key, icon, label }) => (
