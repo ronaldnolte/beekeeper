@@ -157,8 +157,16 @@ export const useAppStore = create<AppState>()((set, get) => ({
             }
           }
           
+          // Sorted once here rather than at each render site: the same list appears on
+          // the Apiaries screen, the Nectar yard picker, the Nectar apiary dropdown and the
+          // Apiaries tab, and it was in insertion order in all four. localeCompare so
+          // accented names sort where a reader expects rather than by code point.
+          const sortedApiaries = [...apiaries].sort((a: any, b: any) =>
+            String(a?.name ?? '').localeCompare(String(b?.name ?? ''), undefined, { sensitivity: 'base' })
+          );
+
           set({ 
-            apiariesList: apiaries, 
+            apiariesList: sortedApiaries, 
             hivesList: hives, 
             isLoadingNavigation: false 
           });

@@ -3,6 +3,7 @@
 // warmth weighting → EWMA smooth → phase classification. Served by /api/nectar-index-v2.
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { daysLengthening, MONTH_STARTS, MONTH_LABELS } from '../../../api/_season';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { supabase } from '../../data/supabase';
@@ -84,7 +85,8 @@ export const NectarFlowV2View: React.FC = () => {
   // the apiary name so dev/prod runs can be confirmed to use identical coordinates.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   // Per-phase load timing (diagnostics) + a live elapsed counter for the spinner.
-  const [timing, setTiming] = useState<LoadTiming | null>(null);
+  // Load timing is still measured and logged to the console as [nectar timing]; it is no
+  // longer held in state because nothing renders it since the diagnostic bar came out.
   const [elapsedSec, setElapsedSec] = useState(0);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -195,7 +197,7 @@ export const NectarFlowV2View: React.FC = () => {
         const loadTiming: LoadTiming = { coordMs, roundTripMs, server: json._timing ?? null };
         // eslint-disable-next-line no-console
         console.log('[nectar timing]', loadTiming);
-        setTiming(loadTiming);
+
         setData(json);
       } finally {
         clearTimeout(timeout);
@@ -241,10 +243,15 @@ export const NectarFlowV2View: React.FC = () => {
       case 'FLOW_ENDING':
         return { bg: 'bg-[#1E8449]', text: 'text-white', label: 'Flow Ending', emoji: '🍂' };
       case 'DEARTH':
-        return { bg: 'bg-[#E74C3C]', text: 'text-white', label: 'Dearth', emoji: '🏜️' };
+        // Darker than the chart's #E74C3C on purpose. White on #E74C3C measures 3.8:1, and
+        // the advice line under it is small text, which needs 4.5:1 — genuinely hard to
+        // read, and worse outdoors on a phone at a hive. #C0392B measures 5.4:1. The chart
+        // line keeps the brighter red, where nothing sits on top of it.
+        return { bg: 'bg-[#C0392B]', text: 'text-white', label: 'Dearth', emoji: '🏜️' };
       case 'TRANSITION':
       default:
-        return { bg: 'bg-[#95A5A6]', text: 'text-white', label: 'Transition', emoji: '🌫️' };
+        // Same reasoning. White on #95A5A6 was 2.6:1 — worse than the red, and unnoticed.
+        return { bg: 'bg-[#657374]', text: 'text-white', label: 'Transition', emoji: '🌫️' };
     }
   };
 
@@ -263,38 +270,67 @@ export const NectarFlowV2View: React.FC = () => {
   };
 
   // Phase advice (copied verbatim from NectarFlowView)
+  // Split by whether the days are lengthening or shortening. These were phase-only, so in
+  // late August a beekeeper was told to "check for rapid queen egg-laying and brood nest
+  // expansion" and to "wind down any supplemental feeding" — spring advice, and the second
+  // could do real harm going into autumn.
+  //
+  // No hive-type assumptions ("supers" presumes Langstroth), and contested practices get a
+  // conditional register — treatments are a touchy subject and some beekeepers count
+  // feeding as one — so these describe the forage situation and leave the response alone.
   const getPhaseAdvice = (phase: string): string[] => {
+    const building = coords ? daysLengthening(new Date(), coords.lat) : true;
     switch (phase) {
       case 'IN_FLOW':
-        return [
-          'Add honey supers (space) to prevent swarming.',
-          'Stop supplemental feeding immediately.',
+        return building ? [
+          'Add space if the bees are crowded.',
+          'Natural forage is available now.',
           'Monitor brood nests for queen cups and swarm cells.'
+        ] : [
+          'Add space if the bees are crowded, but leave enough for winter stores.',
+          'Watch that nectar is not filling the brood nest — the queen still needs room to lay.',
+          'Natural forage is available now.'
         ];
       case 'FLOW_ENDING':
-        return [
+        return building ? [
           'Reduce hive entrance sizes to protect against robbing.',
           'Avoid making splits or exposing comb to the air.',
-          'Plan or prepare sugar syrup for supplemental feeding.'
+          'Hives may start running light as the flow closes.'
+        ] : [
+          'Reduce hive entrances to protect against robbing.',
+          'Heft or weigh hives to check winter stores are adequate.',
+          'Hives may be running light as the season closes.'
         ];
       case 'DEARTH':
-        return [
-          'Feed sugar syrup / protein patties if hives are light.',
+        return building ? [
+          'Hives may be running light — worth checking stores.',
           'Ensure entrance reducers or robbing screens are installed.',
           'Avoid opening hives for long periods; robbing risk is extreme.'
+        ] : [
+          'Check winter stores; hives may be running light.',
+          'Keep entrances reduced; robbing pressure is high in a dearth.',
+          'If you treat for mites, this is the window — before the winter bees are raised.'
         ];
       case 'FLOW_STARTING':
-        return [
-          'Super your colonies early to catch the start of flow.',
+        return building ? [
+          'Add space early to catch the start of the flow.',
           'Check for rapid queen egg-laying and brood nest expansion.',
-          'Slow down or wind down any supplemental feeding.'
+          'Natural forage is coming in.'
+        ] : [
+          'Add space if the bees are crowded.',
+          'Assess winter stores — this may be the last real chance to build them.',
+          'Natural forage is coming in.'
         ];
       case 'TRANSITION':
       default:
-        return [
+        return building ? [
           'Monitor hive weight and colony population weekly.',
           'Ensure bees have access to a clean water source nearby.',
           'Check that hive entrances are clean and unblocked.'
+        ] : [
+          'Assess stores and colony population heading into autumn.',
+          'Ensure bees have access to a clean water source nearby.',
+          'Consider reducing entrances as the dearth deepens.'
         ];
     }
   };
@@ -590,7 +626,17 @@ export const NectarFlowV2View: React.FC = () => {
     const currentHovered = historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
 
     // Month labels layout parameters
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    // Month boundaries at their TRUE position on the axis.
+    //
+    // These labels were a flex row with justify-between, which spaces twelve of them evenly
+    // edge to edge, while the DATA is plotted at its real day-of-year fraction. Two
+    // different scales, and the error grew through the year: the "Aug" label sat at 63.6%
+    // of the width where 1 August falls at 58.1% — about twenty days out — and December was
+    // a full month adrift. Late August read as the start of the month.
+    const monthMarks = MONTH_LABELS.map((label, i) => ({
+      label,
+      x: paddingLeft + (MONTH_STARTS[i] / 365) * chartWidth,
+    }));
 
     return (
       <div className="w-full flex flex-col justify-between" style={{ height }}>
@@ -654,6 +700,30 @@ export const NectarFlowV2View: React.FC = () => {
               );
             });
           })()}
+
+          {/* Month boundaries and their labels. Both inside the svg on purpose: they share
+              one coordinate system with the curve, so they cannot drift apart however the
+              chart is scaled or padded. */}
+          {monthMarks.map((m, i) => (
+            <g key={`mo-${m.label}`}>
+              {i > 0 && (
+                <line
+                  x1={m.x} y1={paddingTop}
+                  x2={m.x} y2={height - paddingBottom}
+                  stroke="#ffffff" strokeOpacity="0.07" strokeWidth="1"
+                />
+              )}
+              <text
+                x={m.x} y={height - 5}
+                fill="#64748b"
+                fontSize={isFullscreen ? '9' : '8'}
+                fontWeight="bold"
+                textAnchor={i === 0 ? 'start' : 'middle'}
+              >
+                {m.label}
+              </text>
+            </g>
+          ))}
 
           {/* Grid lines and Y-axis text */}
           {yGridValues.map((val) => {
@@ -752,15 +822,7 @@ export const NectarFlowV2View: React.FC = () => {
           })()}
         </svg>
 
-        {/* X-axis Month Labels (Jan - Dec) */}
-        <div
-          className="flex justify-between w-full text-slate-500 font-bold border-t border-[#222240]/40 pt-1.5 mt-1 select-none"
-          style={{ paddingLeft: `${paddingLeft}px`, paddingRight: `${paddingRight}px`, fontSize: isFullscreen ? '9px' : '8px' }}
-        >
-          {months.map((m) => (
-            <span key={m}>{m}</span>
-          ))}
-        </div>
+        {/* Month labels are drawn inside the svg, so nothing goes here. */}
       </div>
     );
   };
@@ -804,7 +866,10 @@ export const NectarFlowV2View: React.FC = () => {
               {resolvedTrendDirection === 'rising' ? '↑' : resolvedTrendDirection === 'falling' ? '↓' : '→'} {resolvedTrendDirection}
             </span>
           </div>
-          <p className="text-[11px] font-semibold opacity-90 leading-snug mt-0.5 line-clamp-1">{data.transitionAdvice}</p>
+          {/* No opacity: it was decorative and cost about half a contrast point on text
+              already at the legibility floor. Two lines, because the late-season wordings
+              are longer and were being truncated mid-sentence. */}
+          <p className="text-[11px] font-semibold leading-snug mt-0.5 line-clamp-2">{data.transitionAdvice}</p>
         </div>
         <span className="bg-black/15 text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full border border-white/10 shrink-0">
           NFI {data.nfi}
@@ -818,29 +883,9 @@ export const NectarFlowV2View: React.FC = () => {
         </button>
       </div>
 
-      {/* Load-timing diagnostic bar — always visible after a load, on every tab,
-          and NOT swapped out by chart hover. Use the Refresh button for a true
-          fresh measurement (a cached response returns near-instantly). */}
-      {timing && (
-        <div className="w-full bg-[#0f0f20] border-b border-[#222240] px-4 py-1.5 flex items-center gap-3 text-[10px] font-mono text-slate-300 overflow-x-auto whitespace-nowrap z-10 select-none">
-          <span className="text-amber-500 font-bold uppercase tracking-wider shrink-0">Load</span>
-          {timing.server ? (
-            <>
-              <span title="Earth Engine satellite fetch">satellite <b className="text-white">{(timing.server.earth_engine_ms / 1000).toFixed(1)}s</b></span>
-              <span title="Open-Meteo weather fetch">weather <b className="text-white">{(timing.server.weather_ms / 1000).toFixed(1)}s</b></span>
-              <span title="Index computation on the server">compute <b className="text-white">{timing.server.pipeline_ms}ms</b></span>
-              <span title="Network + browser (round trip minus server compute)">network <b className="text-white">{Math.max(0, (timing.roundTripMs - timing.server.server_total_ms) / 1000).toFixed(1)}s</b></span>
-            </>
-          ) : (
-            <span title="Per-phase split only on the preview deploy; production has no timing yet">
-              api <b className="text-white">{(timing.roundTripMs / 1000).toFixed(1)}s</b>
-              <span className="text-slate-500"> (no server split — test on preview)</span>
-            </span>
-          )}
-          <span title="Apiary coordinate lookup (database)">coords <b className="text-white">{timing.coordMs}ms</b></span>
-          <span className="text-amber-400 shrink-0" title="Total from tap to chart">total <b>{((timing.coordMs + timing.roundTripMs) / 1000).toFixed(1)}s</b></span>
-        </div>
-      )}
+      {/* The load-timing bar was removed: the per-phase numbers were useful while the
+          satellite fetch was being tuned, and are not useful day to day. Timings are
+          still logged to the console as [nectar timing]. */}
 
       {/* Scrollable content */}
       <div ref={contentRef} className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
