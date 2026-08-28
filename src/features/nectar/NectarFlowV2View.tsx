@@ -24,7 +24,7 @@ import {
 
 declare const __BUILD_TIME__: string;
 
-type Phase = 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING';
+type Phase = 'DEARTH' | 'TRENDING_UP' | 'IN_FLOW' | 'TRENDING_DOWN';
 
 interface ServerTiming {
   earth_engine_ms: number;
@@ -238,10 +238,10 @@ export const NectarFlowV2View: React.FC = () => {
     switch (phase) {
       case 'IN_FLOW':
         return { bg: 'bg-[#F5B301]', text: 'text-black', label: 'In Flow', emoji: '🌼' };
-      case 'FLOW_STARTING':
-        return { bg: 'bg-[#58D68D]', text: 'text-black', label: 'Flow Starting', emoji: '🌱' };
-      case 'FLOW_ENDING':
-        return { bg: 'bg-[#1E8449]', text: 'text-white', label: 'Flow Ending', emoji: '🍂' };
+      case 'TRENDING_UP':
+        return { bg: 'bg-[#58D68D]', text: 'text-black', label: 'Trending Up', emoji: '🌱' };
+      case 'TRENDING_DOWN':
+        return { bg: 'bg-[#1E8449]', text: 'text-white', label: 'Trending Down', emoji: '🍂' };
       case 'DEARTH':
       default:
         // Darker than the chart's #E74C3C on purpose. White on #E74C3C measures 3.8:1, and
@@ -254,8 +254,8 @@ export const NectarFlowV2View: React.FC = () => {
   const getPhaseColor = (phase: string) => {
     switch (phase) {
       case 'IN_FLOW': return '#F5B301';
-      case 'FLOW_STARTING': return '#58D68D';
-      case 'FLOW_ENDING': return '#1E8449';
+      case 'TRENDING_UP': return '#58D68D';
+      case 'TRENDING_DOWN': return '#1E8449';
       case 'DEARTH': return '#E74C3C';
       default: return '#95A5A6';
     }
@@ -287,7 +287,7 @@ export const NectarFlowV2View: React.FC = () => {
           'Watch that nectar is not filling the brood nest — the queen still needs room to lay.',
           'Natural forage is available now.'
         ];
-      case 'FLOW_ENDING':
+      case 'TRENDING_DOWN':
         return building ? [
           'Reduce hive entrance sizes to protect against robbing.',
           'Avoid making splits or exposing comb to the air.',
@@ -297,7 +297,7 @@ export const NectarFlowV2View: React.FC = () => {
           'Heft or weigh hives to check winter stores are adequate.',
           'Hives may be running light as the season closes.'
         ];
-      case 'FLOW_STARTING':
+      case 'TRENDING_UP':
         return building ? [
           'Add space early to catch the start of the flow.',
           'Check for rapid queen egg-laying and brood nest expansion.',

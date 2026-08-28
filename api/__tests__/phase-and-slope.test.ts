@@ -5,8 +5,8 @@ import type { MultiBandRecord } from '../bands-fetcher';
 // Two bugs in the phase badge, both measured on production data.
 //
 // 1. A dead yard could be labelled a flow. The slope tests ran before the dearth floor, so a
-//    trivial slope on a near-zero index promoted it to FLOW_STARTING or FLOW_ENDING, and the
-//    dwell hysteresis then held that label indefinitely. Measured: FLOW_STARTING at index 2
+//    trivial slope on a near-zero index promoted it to TRENDING_UP or TRENDING_DOWN, and the
+//    dwell hysteresis then held that label indefinitely. Measured: TRENDING_UP at index 2
 //    with a slope of -0.00183. The same defect once showed "Flow Ending: watch for robbing"
 //    at NFI 1.
 //
@@ -130,8 +130,8 @@ function weather(): Record<string, WeatherDay> {
 describe('phase rules: direction decides, one level threshold', () => {
   // Ron's specification, 2026-08-28:
   //   1. flat under 7          -> DEARTH
-  //   2. any 4 days rising     -> FLOW_STARTING
-  //   3. any 4 days falling    -> FLOW_ENDING
+  //   2. any 4 days rising     -> TRENDING_UP
+  //   3. any 4 days falling    -> TRENDING_DOWN
   //   4. (otherwise, above 7)  -> IN_FLOW
   //
   // Replaces three level bands plus a TRANSITION phase, and the chart's four bands that
@@ -143,7 +143,7 @@ describe('phase rules: direction decides, one level threshold', () => {
 
   it('calls a sustained climb a flow starting', () => {
     const r = runV2Pipeline(records(d => (d < 80 ? 0.20 : 0.20 + (d - 80) * 0.006)), weather(), LAT);
-    expect(r.phases).toContain('FLOW_STARTING');
+    expect(r.phases).toContain('TRENDING_UP');
   });
 
   it('calls a sustained decline a flow ending', () => {
@@ -151,7 +151,7 @@ describe('phase rules: direction decides, one level threshold', () => {
       records(d => (d < 80 ? 0.20 + d * 0.005 : 0.60 - (d - 80) * 0.004)),
       weather(), LAT
     );
-    expect(r.phases).toContain('FLOW_ENDING');
+    expect(r.phases).toContain('TRENDING_DOWN');
   });
 
   it('calls a flat low reading a dearth', () => {
@@ -172,12 +172,12 @@ describe('phase rules: direction decides, one level threshold', () => {
       let rising = 0, out: string[] = [];
       for (const sl of slopes) {
         rising = sl > 0.002 ? rising + 1 : 0;
-        out.push(rising >= 4 ? 'FLOW_STARTING' : 'other');
+        out.push(rising >= 4 ? 'TRENDING_UP' : 'other');
       }
       return out;
     };
-    expect(runLength([0.01, 0.01, 0.01, 0])).not.toContain('FLOW_STARTING');
-    expect(runLength([0.01, 0.01, 0.01, 0.01])).toContain('FLOW_STARTING');
+    expect(runLength([0.01, 0.01, 0.01, 0])).not.toContain('TRENDING_UP');
+    expect(runLength([0.01, 0.01, 0.01, 0.01])).toContain('TRENDING_UP');
   });
 
   it('treats a plateau above the floor as a flow, not a dearth', () => {
@@ -202,7 +202,7 @@ describe('phase rules: direction decides, one level threshold', () => {
 
 describe('a qualifying run is coloured in full', () => {
   // Labelling as the counter climbed meant the phase appeared only from day four onward, so
-  // every run lost its first three days: a four-day rise showed ONE day of FLOW_STARTING.
+  // every run lost its first three days: a four-day rise showed ONE day of TRENDING_UP.
   // Measured on the real South Valley 2026 series, all eleven qualifying runs hid exactly
   // three days. Ron, reading the chart: "the circled flows don't appear to be 4+ days."
   // They were. The label just started late.
@@ -223,7 +223,7 @@ describe('a qualifying run is coloured in full', () => {
     // Count the days the slope was actually rising, and the days labelled as such.
     let risingDays = 0;
     for (let i = 0; i < r.slopeArr.length; i++) if ((r.slopeArr[i] ?? 0) > 0.002) risingDays++;
-    const labelled = r.phases.filter(p => p === 'FLOW_STARTING').length;
+    const labelled = r.phases.filter(p => p === 'TRENDING_UP').length;
     // Every rising day inside a qualifying run should carry the label. Allow for short runs
     // that never reached four days and so are correctly unlabelled.
     expect(labelled).toBeGreaterThan(risingDays * 0.8);
@@ -234,7 +234,7 @@ describe('a qualifying run is coloured in full', () => {
     // appearance of the label must be at least that wide.
     for (const period of [24, 30, 38]) {
       const r = runV2Pipeline(records(d => 0.25 + 0.3 * Math.sin(d / period)), weather(), LAT);
-      for (const phase of ['FLOW_STARTING', 'FLOW_ENDING']) {
+      for (const phase of ['TRENDING_UP', 'TRENDING_DOWN']) {
         const longest = longestRun(r.phases, phase);
         if (longest > 0) expect(longest).toBeGreaterThanOrEqual(4);
       }
@@ -247,7 +247,70 @@ describe('a qualifying run is coloured in full', () => {
       records(d => (d > 100 && d < 112 ? 0.20 + (d - 100) * 0.002 : 0.20)),
       weather(), LAT
     );
-    const longest = longestRun(r.phases, 'FLOW_STARTING');
+    const longest = longestRun(r.phases, 'TRENDING_UP');
     expect(longest === 0 || longest >= 4).toBe(true);
+  });
+});
+
+describe('two regimes: above the floor it is a flow, below it we look for one', () => {
+  // Ron: "Anything above dearth is by definition a flow. So the only real info we can give
+  // the beekeeper is the direction." And: "The downside of the curve is still a flow."
+  //
+  // Above the floor, direction comes from a tolerant trailing trend, so a one-day wobble
+  // cannot flip it. That is what a strict run rule got wrong: the 20-27 August 2026 monsoon
+  // climb ran 2.3 -> 13.7, unmistakable on the chart, but two down-ticks in the middle split
+  // it into runs of three and three and it was never called a flow at all.
+  //
+  // Below the floor the strict four-day rule survives, because that is the one place it is
+  // needed — spotting a rise that has not yet cleared the line.
+
+  it('keeps calling it a flow while it comes back DOWN', () => {
+    // The old model called anything under 40 "not in flow". Coming down from a peak there
+    // is still real nectar.
+    const r = runV2Pipeline(
+      records(d => (d < 90 ? 0.20 + d * 0.005 : 0.65 - (d - 90) * 0.002)),
+      weather(), LAT
+    );
+    const descending: string[] = [];
+    for (let i = 1; i < r.dates.length; i++) {
+      const v = r.idxEwma[i] * 100;
+      if (v >= 7 && r.idxEwma[i] < r.idxEwma[i - 1]) descending.push(r.phases[i]);
+    }
+    expect(descending.length).toBeGreaterThan(10);
+    expect(descending.every(p => p !== 'DEARTH')).toBe(true);
+  });
+
+  it('survives a one-day wobble in a climb above the floor', () => {
+    // A steady rise with a single down-tick two thirds of the way up. Under a strict
+    // day-over-day run this split the climb in two and lost the label entirely.
+    const r = runV2Pipeline(
+      records(d => {
+        if (d < 60) return 0.20;
+        const base = 0.20 + (d - 60) * 0.005;
+        return d >= 115 && d < 125 ? base - 0.02 : base;   // the wobble
+      }),
+      weather(), LAT
+    );
+    const high = r.phases.filter((_, i) => r.idxEwma[i] * 100 >= 7);
+    expect(high.filter(p => p === 'TRENDING_UP').length).toBeGreaterThan(10);
+  });
+
+  it('never says dearth above the floor, nor a flow phase below it without a run', () => {
+    const r = runV2Pipeline(records(d => 0.2 + 0.35 * Math.sin(d / 28)), weather(), LAT);
+    for (let i = 0; i < r.dates.length; i++) {
+      const v = r.idxEwma[i] * 100;
+      if (v >= 7) expect(r.phases[i]).not.toBe('DEARTH');
+    }
+  });
+
+  it('still flags a sustained climb that has NOT cleared the floor', () => {
+    // The upturn a beekeeper watches for when they are waiting on a flow.
+    const r = runV2Pipeline(
+      records(d => (d < 120 ? 0.20 : 0.20 + (d - 120) * 0.0012)),
+      weather(), LAT
+    );
+    const lowFlags = r.phases.filter((_, i) =>
+      r.idxEwma[i] * 100 < 7 && r.phases[i] === 'TRENDING_UP').length;
+    expect(lowFlags).toBeGreaterThan(0);
   });
 });

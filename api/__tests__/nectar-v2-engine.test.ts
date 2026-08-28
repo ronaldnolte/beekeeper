@@ -59,10 +59,10 @@ describe('V2 nectar pipeline — phase classification', () => {
   });
 
   it('orders the phases: starting before peak, ending after peak', () => {
-    const firstStart = result.phases.indexOf('FLOW_STARTING');
+    const firstStart = result.phases.indexOf('TRENDING_UP');
     const firstPeak = result.phases.indexOf('IN_FLOW');
     const lastPeak = result.phases.lastIndexOf('IN_FLOW');
-    const ending = result.phases.slice(lastPeak).indexOf('FLOW_ENDING');
+    const ending = result.phases.slice(lastPeak).indexOf('TRENDING_DOWN');
     expect(firstStart).toBeGreaterThanOrEqual(0);
     expect(firstPeak).toBeGreaterThan(firstStart);
     expect(ending).toBeGreaterThan(0);
@@ -123,6 +123,6 @@ describe('V2 nectar pipeline — dormancy gate', () => {
     );
     expect(Math.max(...cold.idxEwma)).toBeLessThanOrEqual(0.01);
     expect(cold.phases).not.toContain('IN_FLOW');
-    expect(cold.phases).not.toContain('FLOW_STARTING');
+    expect(cold.phases).not.toContain('TRENDING_UP');
   });
 });

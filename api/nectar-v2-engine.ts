@@ -6,18 +6,22 @@
 import type { MultiBandRecord } from './bands-fetcher.js';
 
 /**
- * Four phases. TRANSITION and the chart's PEAK band were removed 2026-08-28 on Ron's
- * instruction: both were arbitrary level bands, and "setting arbitrary limits is likely
- * going to never work in all places."
+ * Four phases, and ONE level threshold. TRANSITION and the chart's PEAK band are gone:
+ * both were arbitrary level bands, and Ron — "setting arbitrary limits is likely going to
+ * never work in all places."
  *
- * The phase is now decided by DIRECTION, with one level threshold left:
- *   - four consecutive days rising  -> FLOW_STARTING
- *   - four consecutive days falling -> FLOW_ENDING
- *   - neither, and below the dearth floor -> DEARTH
- *   - neither, and above it -> IN_FLOW (a steady flow shows no slope, which is why a
- *     plateau must not be scored as weak)
+ * ABOVE the dearth line the landscape IS in flow, and the only news is which way it is
+ * going. "The downside of the curve is still a flow."
+ *
+ *   trending up   -> TRENDING_UP
+ *   level         -> IN_FLOW        (a steady flow shows no slope; a plateau is not weak)
+ *   trending down -> TRENDING_DOWN
+ *
+ * BELOW it the question is different — is one starting? A sustained four-day climb is
+ * called out even under the floor, because that upturn is what a beekeeper watches for
+ * while waiting on a flow. Otherwise DEARTH.
  */
-export type Phase = 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING';
+export type Phase = 'DEARTH' | 'TRENDING_UP' | 'IN_FLOW' | 'TRENDING_DOWN';
 
 export interface WeatherDay {
   tmax: number;
@@ -289,17 +293,24 @@ export function runV2Pipeline(
 
   // EWMA for live smoothed value; local-poly for slope (SG-equivalent, uses future pts for history)
   const idxEwma         = ewmaArr(indexRaw, P.alpha);
-  const { slope: slopeArr } = localPoly(indexRaw, P.sgHalf);
+  // The slope must describe the series the beekeeper is LOOKING AT.
+  //
+  // It was computed from indexRaw while the chart, the phase test and the NFI all use
+  // idxEwma. The smoother lags, so when the raw series turned up the smoothed one was still
+  // coming down, and the badge described a line that was not on screen. Measured at South
+  // Valley: 27-30 June 2026 the index fell 3.53 -> 0.72 while the slope read +0.005 to
+  // +0.015 and the phase said TRENDING_UP for five straight days.
+  const { slope: slopeArr } = localPoly(idxEwma, P.sgHalf);
   // The last sgHalf days have no future points, so the centred fit extrapolates there.
   // Replace those with the one-sided estimator (see trailingSlope).
   for (let i = Math.max(0, N - P.sgHalf); i < N; i++) {
-    slopeArr[i] = trailingSlope(indexRaw, i, 2 * P.sgHalf + 1);
+    slopeArr[i] = trailingSlope(idxEwma, i, 2 * P.sgHalf + 1);
   }
 
   // Phase classification, rewritten 2026-08-28 to Ron's specification.
   //
-  //   1. four consecutive days rising  -> FLOW_STARTING
-  //   2. four consecutive days falling -> FLOW_ENDING
+  //   1. four consecutive days rising  -> TRENDING_UP
+  //   2. four consecutive days falling -> TRENDING_DOWN
   //   3. otherwise, below the dearth floor -> DEARTH
   //   4. otherwise -> IN_FLOW
   //
@@ -318,39 +329,80 @@ export function runV2Pipeline(
   // candidate counter that could be reset by a third phase appearing mid-transition — the
   // defect that stranded the badge on DEARTH while the index climbed past 18.
   //
-  // NOTE: a rising run earns FLOW_STARTING at ANY level, including below the dearth floor.
+  // NOTE: a rising run earns TRENDING_UP at ANY level, including below the dearth floor.
   // That is rule 2 as written ("any 4 days with positive slope"), and it is deliberate: a
   // sustained climb is information even when the absolute number is small.
   // Two passes, because a qualifying run must colour the WHOLE rise, not just its tail.
   //
   // Labelling as the counter climbed meant the phase only appeared on day four onward, so
-  // every run lost its first three days: a four-day rise showed one day of FLOW_STARTING, a
+  // every run lost its first three days: a four-day rise showed one day of TRENDING_UP, a
   // five-day rise showed two. On the real South Valley 2026 series that hid exactly three
   // days from all eleven qualifying runs. Ron, reading the chart: "the circled flows don't
   // appear to be 4+ days." They were — the label just started late.
   //
   // Pass one finds the runs. Pass two labels a run in full once it is long enough.
+  // Above the dearth line the landscape IS in flow, and the only news is which way it is
+  // going. Below it, the question is whether one is starting. Two different questions, so
+  // two different tests — Ron: "Anything above dearth is by definition a flow. So the only
+  // real info we can give the beekeeper is the direction."
+  //
+  // That split is what makes the run length stop mattering where it was causing trouble. A
+  // strict four-day rule broke on a single wiggle: the 20-27 August 2026 monsoon climb went
+  // 2.3 -> 13.7, unmistakable on the chart, but two down-ticks in the middle split it into
+  // runs of three and three and it was never labelled a flow at all. Above the floor the
+  // run length is now irrelevant; it only governs the one case it is needed for.
   const phases: Phase[] = new Array(N);
-  const direction = new Array<number>(N).fill(0);
+
+  // TREND, for use above the floor. A trailing linear fit over a week, so it is causal — no
+  // peeking at days that have not happened — and a one-day wobble cannot flip it. A centred
+  // fit could see the future: on 29 June 2026 it reported the trend as upward while the
+  // index was visibly falling, 0.88 -> 0.72 -> 0.59, because it could already see 2-4 July.
+  const TREND_WINDOW = 7;
+  const trend = new Array<number>(N).fill(0);
   for (let i = 0; i < N; i++) {
-    const sl = slopeArr[i] ?? 0;
-    direction[i] = sl > P.riseThr ? 1 : sl < -P.riseThr ? -1 : 0;
+    const sl = trailingSlope(idxEwma, i, TREND_WINDOW);
+    trend[i] = sl > P.riseThr ? 1 : sl < -P.riseThr ? -1 : 0;
   }
 
-  // Default everything on level, then let qualifying runs overwrite.
-  for (let i = 0; i < N; i++) {
-    phases[i] = idxEwma[i] < P.dearth ? 'DEARTH' : 'IN_FLOW';
+  // DAY-OVER-DAY, for spotting a rise that has not yet cleared the floor. Strict here on
+  // purpose: below the floor the numbers are tiny and a fitted trend would call almost any
+  // drift a flow. "Four days with positive slope", read off a chart, means four days each
+  // higher than the one before.
+  const dayOverDay = new Array<number>(N).fill(0);
+  for (let i = 1; i < N; i++) {
+    const change = idxEwma[i] - idxEwma[i - 1];
+    dayOverDay[i] = change > P.riseThr ? 1 : change < -P.riseThr ? -1 : 0;
   }
 
+  // Above the floor: a flow, named by its direction. Below: a dearth until a run says
+  // otherwise.
+  for (let i = 0; i < N; i++) {
+    if (idxEwma[i] >= P.dearth) {
+      phases[i] = trend[i] > 0 ? 'TRENDING_UP' : trend[i] < 0 ? 'TRENDING_DOWN' : 'IN_FLOW';
+    } else {
+      phases[i] = 'DEARTH';
+    }
+  }
+
+  // Below the floor, a sustained climb still gets called out — the upturn a beekeeper
+  // watches for when they are waiting on a flow. A qualifying run is coloured in FULL, not
+  // just from its fourth day: labelling as the counter climbed hid the first three days of
+  // every run, so a four-day rise showed one day of colour.
   let i = 0;
   while (i < N) {
-    const dir = direction[i];
-    if (dir === 0) { i++; continue; }
+    if (dayOverDay[i] !== 1) { i++; continue; }
     let j = i;
-    while (j + 1 < N && direction[j + 1] === dir) j++;
+    while (j + 1 < N && dayOverDay[j + 1] === 1) j++;
     if (j - i + 1 >= P.runDays) {
-      const label: Phase = dir > 0 ? 'FLOW_STARTING' : 'FLOW_ENDING';
-      for (let k = i; k <= j; k++) phases[k] = label;
+      for (let k = i; k <= j; k++) {
+        if (idxEwma[k] >= P.dearth) continue;          // already labelled by trend
+        // A displayed NFI of zero is never a flow, whatever the slope is doing. Ron: "I
+        // guess I am assuming a NFI of 0 will never be labeled as a Flow." Measured before
+        // this guard: 45 days across three years carried a flow phase while the number on
+        // screen read 0 — a run can clear the threshold on rounding alone and go nowhere.
+        if (Math.round(idxEwma[k] * 100) === 0) continue;
+        phases[k] = 'TRENDING_UP';
+      }
     }
     i = j + 1;
   }

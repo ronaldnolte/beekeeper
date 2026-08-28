@@ -108,11 +108,11 @@ async function fetchWeatherV2(
   };
 }
 
-function phaseToStatus(phase: Phase): 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' {
+function phaseToStatus(phase: Phase): 'Trending Up' | 'In Flow' | 'Trending Down' | 'Dearth' {
   switch (phase) {
-    case 'IN_FLOW':       return 'Peak Flow';
-    case 'FLOW_STARTING': return 'Pre-Flow';
-    case 'FLOW_ENDING':   return 'Flow Ending';
+    case 'TRENDING_UP':   return 'Trending Up';
+    case 'IN_FLOW':       return 'In Flow';
+    case 'TRENDING_DOWN': return 'Trending Down';
     case 'DEARTH':
     default:              return 'Dearth';
   }
@@ -138,11 +138,11 @@ function phaseToAdvice(phase: Phase, lat: number, when = new Date()): string {
       return building
         ? 'Peak nectar flow is active. Ensure adequate empty honeycomb cells for both honey and eggs. Colony is actively storing surplus.'
         : 'A late season flow is running. Ensure adequate empty honeycomb, though this is more likely winter stores than surplus.';
-    case 'FLOW_STARTING':
+    case 'TRENDING_UP':
       return building
         ? 'Nectar flow is building. Queen egg-laying is stimulated. Colony is expanding — watch for swarm preparations.'
         : 'A late season flow is starting. Expect stores rather than expansion. Ensure adequate empty honeycomb for what comes in.';
-    case 'FLOW_ENDING':
+    case 'TRENDING_DOWN':
       return building
         ? 'Nectar flow is winding down early. Check stores and watch for robbing — the colony still has a season ahead of it.'
         : 'Nectar flow is winding down into the dearth ahead. Monitor honey stores and watch for robbing behaviour.';
