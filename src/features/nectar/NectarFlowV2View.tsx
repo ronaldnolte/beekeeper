@@ -840,7 +840,6 @@ export const NectarFlowV2View: React.FC = () => {
               <div className="space-y-4">
                 {[
                   { label: 'Greenness',   val: data.v2.greenness,  color: 'bg-emerald-500', tip: 'NDVI/EVI fusion' },
-                  { label: 'Vigor',       val: data.v2.vigor,      color: 'bg-lime-500',    tip: 'above winter baseline' },
                   { label: 'Moisture',    val: data.v2.moisture,   color: 'bg-sky-500',     tip: 'NDWI canopy water' },
                   { label: 'Rate (core)', val: data.v2.rate_norm,  color: 'bg-amber-500',   tip: 'greening velocity' },
                   { label: 'Fall term',   val: data.v2.fall_term,  color: 'bg-orange-500',  tip: 'photoperiod × dewpoint' },
