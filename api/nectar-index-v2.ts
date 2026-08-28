@@ -108,13 +108,13 @@ async function fetchWeatherV2(
   };
 }
 
-function phaseToStatus(phase: Phase): 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low' {
+function phaseToStatus(phase: Phase): 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' {
   switch (phase) {
     case 'IN_FLOW':       return 'Peak Flow';
     case 'FLOW_STARTING': return 'Pre-Flow';
     case 'FLOW_ENDING':   return 'Flow Ending';
-    case 'DEARTH':        return 'Dearth';
-    default:              return 'Stable Low';
+    case 'DEARTH':
+    default:              return 'Dearth';
   }
 }
 
@@ -147,13 +147,10 @@ function phaseToAdvice(phase: Phase, lat: number, when = new Date()): string {
         ? 'Nectar flow is winding down early. Check stores and watch for robbing — the colony still has a season ahead of it.'
         : 'Nectar flow is winding down into the dearth ahead. Monitor honey stores and watch for robbing behaviour.';
     case 'DEARTH':
+    default:
       return building
         ? 'Colony is in a dearth during the build-up season. Monitor food reserves closely.'
         : 'Colony is in a dearth. Check that winter stores are adequate.';
-    default:
-      return building
-        ? 'Transitional forage conditions. Monitor colony strength and watch for shifts in the next 1–2 weeks.'
-        : 'Transitional forage conditions heading into autumn. Assess stores and watch for shifts in the next 1–2 weeks.';
   }
 }
 

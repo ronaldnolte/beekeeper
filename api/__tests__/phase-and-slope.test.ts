@@ -127,46 +127,75 @@ function weather(): Record<string, WeatherDay> {
   return out;
 }
 
-describe('the dearth floor is checked before the slope', () => {
-  it('does not leave a flow label standing on a near-zero index', () => {
-    // The shape that produced FLOW_STARTING at index 2. A real spring green-up first, so
-    // the rate normalisation has a genuine peak to scale against — on a flat series the
-    // end-drift IS the biggest change in the record and normalises to a large number, which
-    // is the percentile normalisation working correctly on a degenerate fixture.
+describe('phase rules: direction decides, one level threshold', () => {
+  // Ron's specification, 2026-08-28:
+  //   1. flat under 7          -> DEARTH
+  //   2. any 4 days rising     -> FLOW_STARTING
+  //   3. any 4 days falling    -> FLOW_ENDING
+  //   4. (otherwise, above 7)  -> IN_FLOW
+  //
+  // Replaces three level bands plus a TRANSITION phase, and the chart's four bands that
+  // agreed with none of them. "Setting arbitrary limits is likely going to never work in
+  // all places."
+  //
+  // Four days rather than three: 1-3 July 2026 at South Valley scaled up for three days and
+  // died on the fourth, which is not something to put in front of a beekeeper as advice.
+
+  it('calls a sustained climb a flow starting', () => {
+    const r = runV2Pipeline(records(d => (d < 80 ? 0.20 : 0.20 + (d - 80) * 0.006)), weather(), LAT);
+    expect(r.phases).toContain('FLOW_STARTING');
+  });
+
+  it('calls a sustained decline a flow ending', () => {
     const r = runV2Pipeline(
-      records(d => {
-        if (d < 60) return 0.20 + d * 0.006;                  // green-up
-        if (d < 110) return 0.56 - (d - 60) * 0.007;          // decline to bare
-        return 0.21 + (d > 190 ? (d - 190) * 0.0004 : 0);     // dead, with a late wobble
-      }),
+      records(d => (d < 80 ? 0.20 + d * 0.005 : 0.60 - (d - 80) * 0.004)),
       weather(), LAT
     );
-    const last = r.idxEwma.length - 1;
-    expect(r.idxEwma[last] * 100).toBeLessThan(15);
-    expect(r.phases[last]).toBe('DEARTH');
+    expect(r.phases).toContain('FLOW_ENDING');
   });
 
-  it('cannot hold a flow phase below the floor for longer than the dwell', () => {
-    // Below the floor the instantaneous phase is always DEARTH, so the hysteresis can only
-    // delay the label by `dwell` days (3) — it can no longer hold it indefinitely, which is
-    // what the old ordering allowed.
-    const r = runV2Pipeline(records(d => 0.2 + 0.45 * Math.sin(d / 32)), weather(), LAT);
-    let run = 0, worst = 0;
-    for (let i = 0; i < r.dates.length; i++) {
-      const belowFloor = r.idxEwma[i] * 100 < 15;
-      const flowPhase = r.phases[i] === 'FLOW_STARTING' || r.phases[i] === 'FLOW_ENDING'
-        || r.phases[i] === 'IN_FLOW';
-      run = (belowFloor && flowPhase) ? run + 1 : 0;
-      worst = Math.max(worst, run);
-    }
-    expect(worst).toBeLessThanOrEqual(3);
+  it('calls a flat low reading a dearth', () => {
+    const r = runV2Pipeline(records(d => (d < 90 ? 0.20 + d * 0.004 : 0.20)), weather(), LAT);
+    expect(r.phases[r.phases.length - 1]).toBe('DEARTH');
+    expect(r.idxEwma[r.idxEwma.length - 1] * 100).toBeLessThan(7);
   });
 
-  it('still reaches the flow phases when the index is genuinely high', () => {
-    // The floor must not make IN_FLOW unreachable — that was a previous overcorrection.
-    const r = runV2Pipeline(records(d => 0.15 + 0.6 * Math.sin(d / 40)), weather(), LAT);
-    const seen = new Set(r.phases);
-    expect(seen.has('DEARTH')).toBe(true);
-    expect(seen.has('IN_FLOW') || seen.has('FLOW_STARTING')).toBe(true);
+  it('never emits TRANSITION — the phase no longer exists', () => {
+    const r = runV2Pipeline(records(d => 0.2 + 0.4 * Math.sin(d / 30)), weather(), LAT);
+    expect(new Set(r.phases).has('TRANSITION' as never)).toBe(false);
+  });
+
+  it('needs four days, not three: a three-day rise that dies is not a flow', () => {
+    // The 1-3 July case. Build a slope series directly so the run length is exactly
+    // controlled — going through greenness cannot pin it to the day.
+    const runLength = (slopes: number[]) => {
+      let rising = 0, out: string[] = [];
+      for (const sl of slopes) {
+        rising = sl > 0.002 ? rising + 1 : 0;
+        out.push(rising >= 4 ? 'FLOW_STARTING' : 'other');
+      }
+      return out;
+    };
+    expect(runLength([0.01, 0.01, 0.01, 0])).not.toContain('FLOW_STARTING');
+    expect(runLength([0.01, 0.01, 0.01, 0.01])).toContain('FLOW_STARTING');
+  });
+
+  it('treats a plateau above the floor as a flow, not a dearth', () => {
+    // A steady flow produces no slope at all. Scoring that as weak is the blind spot that
+    // made greenness-level scoring useless — it is why alfalfa in full bloom was invisible.
+    const r = runV2Pipeline(
+      records(d => (d < 70 ? 0.20 + d * 0.006 : 0.62)),
+      weather(), LAT
+    );
+    const last = r.phases.length - 1;
+    if (r.idxEwma[last] * 100 >= 7) expect(r.phases[last]).toBe('IN_FLOW');
+  });
+
+  it('keeps the badge steady rather than flickering day to day', () => {
+    const r = runV2Pipeline(records(d => 0.35 + 0.15 * Math.sin(d / 25)), weather(), LAT);
+    let switches = 0;
+    for (let i = 1; i < r.phases.length; i++) if (r.phases[i] !== r.phases[i - 1]) switches++;
+    const years = new Set(r.dates.map(d => d.slice(0, 4))).size || 1;
+    expect(switches / years).toBeLessThanOrEqual(12);
   });
 });

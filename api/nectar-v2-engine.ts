@@ -5,7 +5,19 @@
 // phase classification (incl. IN_FLOW plateau) with dwell hysteresis.
 import type { MultiBandRecord } from './bands-fetcher.js';
 
-export type Phase = 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING' | 'TRANSITION';
+/**
+ * Four phases. TRANSITION and the chart's PEAK band were removed 2026-08-28 on Ron's
+ * instruction: both were arbitrary level bands, and "setting arbitrary limits is likely
+ * going to never work in all places."
+ *
+ * The phase is now decided by DIRECTION, with one level threshold left:
+ *   - four consecutive days rising  -> FLOW_STARTING
+ *   - four consecutive days falling -> FLOW_ENDING
+ *   - neither, and below the dearth floor -> DEARTH
+ *   - neither, and above it -> IN_FLOW (a steady flow shows no slope, which is why a
+ *     plateau must not be scored as weak)
+ */
+export type Phase = 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING';
 
 export interface WeatherDay {
   tmax: number;
@@ -42,8 +54,8 @@ interface V2Params {
   fuseLo: number; fuseHi: number;
   moistFloor: number;
   alpha: number; sgHalf: number;
-  enter: number; dearth: number;
-  riseThr: number; dwell: number;
+  dearth: number;
+  riseThr: number; runDays: number;
   dormLo: number; dormHi: number; tWin: number;
   rateLag: number;
   wFall: number; dpLo: number; dpHi: number; fallWidth: number;
@@ -54,7 +66,9 @@ const DEFAULTS: V2Params = {
   fuseLo: 0.6, fuseHi: 0.9,
   moistFloor: 0.7,
   alpha: 0.18, sgHalf: 5,
-  enter: 0.40, dearth: 0.15, riseThr: 0.002, dwell: 3,
+  // Dearth floor at 7, not 15. Ron: "In Albuquerque right now an Index of any other
+  // than 0 seems good." A high floor in an arid landscape calls a real trickle nothing.
+  dearth: 0.07, riseThr: 0.002, runDays: 4,
   dormLo: 38, dormHi: 58, tWin: 14,
   rateLag: 24,
   wFall: 0.7, dpLo: 45, dpHi: 55, fallWidth: 26,
@@ -282,37 +296,43 @@ export function runV2Pipeline(
     slopeArr[i] = trailingSlope(indexRaw, i, 2 * P.sgHalf + 1);
   }
 
-  // Phase classification: intuitive (low=dearth, rising=building, high=peak, falling=winding down)
-  // with dwell hysteresis to prevent daily flipping
-  const instPhase = idxEwma.map((v, i): Phase => {
-    const sl = slopeArr[i] ?? 0;
-    // The dearth floor is checked FIRST. Below it there is no flow to be starting or
-    // ending, whatever the slope is doing.
-    //
-    // The slope tests used to run first, so a trivial slope on a near-zero index promoted a
-    // dead yard to a flow phase — and the dwell hysteresis below then held that label as the
-    // index kept falling. Measured on production: FLOW_STARTING reported at index 2 with a
-    // slope of -0.00183. The same defect once displayed "Flow Ending: monitor honey stores,
-    // watch for robbing" at NFI 1. DEARTH was effectively unreachable, and noise near zero
-    // flipped the badge between two flow phases that were not in play.
-    if (v < P.dearth) return 'DEARTH';
-    // Above the enter level you're IN flow regardless of slope (sharp peaks never
-    // have a flat top, so requiring flatness made IN_FLOW unreachable) — unless
-    // it's falling hard, which is the wind-down.
-    if (v >= P.enter)  return sl < -P.riseThr ? 'FLOW_ENDING' : 'IN_FLOW';
-    // Between the floor and the flow level, a strong slope names the direction.
-    if (sl >  P.riseThr)  return 'FLOW_STARTING';
-    if (sl < -P.riseThr)  return 'FLOW_ENDING';
-    return 'TRANSITION';
-  });
+  // Phase classification, rewritten 2026-08-28 to Ron's specification.
+  //
+  //   1. four consecutive days rising  -> FLOW_STARTING
+  //   2. four consecutive days falling -> FLOW_ENDING
+  //   3. otherwise, below the dearth floor -> DEARTH
+  //   4. otherwise -> IN_FLOW
+  //
+  // DIRECTION decides the phase; only one level threshold survives. The old scheme had
+  // three separate level bands (dearth 15, enter 40) plus a TRANSITION phase, and the chart
+  // drew four more that disagreed with all of them — dearth to 20, flow from 30, peak from
+  // 75. Three sets of numbers on one screen, none matching. Ron: "setting arbitrary limits
+  // is likely going to never work in all places."
+  //
+  // Four days rather than three because a shorter run picks up noise: 1-3 July 2026 at
+  // South Valley scaled up for three days and died on the fourth, which is not something to
+  // put in front of a beekeeper as advice.
+  //
+  // The run counter IS the hysteresis, so the separate dwell is gone. A run only ends when
+  // the slope stops agreeing with it, which is a stronger and more legible guarantee than a
+  // candidate counter that could be reset by a third phase appearing mid-transition — the
+  // defect that stranded the badge on DEARTH while the index climbed past 18.
+  //
+  // NOTE: a rising run earns FLOW_STARTING at ANY level, including below the dearth floor.
+  // That is rule 2 as written ("any 4 days with positive slope"), and it is deliberate: a
+  // sustained climb is information even when the absolute number is small.
   const phases: Phase[] = new Array(N);
-  let cur: Phase = 'TRANSITION', cand: Phase | null = null, candN = 0;
+  let risingRun = 0, fallingRun = 0;
   for (let i = 0; i < N; i++) {
-    if (instPhase[i] === cur) { cand = null; candN = 0; }
-    else if (instPhase[i] === cand) {
-      if (++candN >= P.dwell) { cur = cand!; cand = null; candN = 0; }
-    } else { cand = instPhase[i]; candN = 1; }
-    phases[i] = cur;
+    const sl = slopeArr[i] ?? 0;
+    if (sl > P.riseThr)       { risingRun++;  fallingRun = 0; }
+    else if (sl < -P.riseThr) { fallingRun++; risingRun = 0; }
+    else                      { risingRun = 0; fallingRun = 0; }
+
+    if (risingRun >= P.runDays)       phases[i] = 'FLOW_STARTING';
+    else if (fallingRun >= P.runDays) phases[i] = 'FLOW_ENDING';
+    else if (idxEwma[i] < P.dearth)   phases[i] = 'DEARTH';
+    else                              phases[i] = 'IN_FLOW';
   }
 
   const li = N - 1;

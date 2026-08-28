@@ -24,7 +24,7 @@ import {
 
 declare const __BUILD_TIME__: string;
 
-type Phase = 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING' | 'TRANSITION';
+type Phase = 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING';
 
 interface ServerTiming {
   earth_engine_ms: number;
@@ -243,15 +243,11 @@ export const NectarFlowV2View: React.FC = () => {
       case 'FLOW_ENDING':
         return { bg: 'bg-[#1E8449]', text: 'text-white', label: 'Flow Ending', emoji: '🍂' };
       case 'DEARTH':
+      default:
         // Darker than the chart's #E74C3C on purpose. White on #E74C3C measures 3.8:1, and
         // the advice line under it is small text, which needs 4.5:1 — genuinely hard to
-        // read, and worse outdoors on a phone at a hive. #C0392B measures 5.4:1. The chart
-        // line keeps the brighter red, where nothing sits on top of it.
+        // read, and worse outdoors on a phone at a hive. #C0392B measures 5.4:1.
         return { bg: 'bg-[#C0392B]', text: 'text-white', label: 'Dearth', emoji: '🏜️' };
-      case 'TRANSITION':
-      default:
-        // Same reasoning. White on #95A5A6 was 2.6:1 — worse than the red, and unnoticed.
-        return { bg: 'bg-[#657374]', text: 'text-white', label: 'Transition', emoji: '🌫️' };
     }
   };
 
@@ -301,16 +297,6 @@ export const NectarFlowV2View: React.FC = () => {
           'Heft or weigh hives to check winter stores are adequate.',
           'Hives may be running light as the season closes.'
         ];
-      case 'DEARTH':
-        return building ? [
-          'Hives may be running light — worth checking stores.',
-          'Ensure entrance reducers or robbing screens are installed.',
-          'Avoid opening hives for long periods; robbing risk is extreme.'
-        ] : [
-          'Check winter stores; hives may be running light.',
-          'Keep entrances reduced; robbing pressure is high in a dearth.',
-          'If you treat for mites, this is the window — before the winter bees are raised.'
-        ];
       case 'FLOW_STARTING':
         return building ? [
           'Add space early to catch the start of the flow.',
@@ -321,16 +307,16 @@ export const NectarFlowV2View: React.FC = () => {
           'Assess winter stores — this may be the last real chance to build them.',
           'Natural forage is coming in.'
         ];
-      case 'TRANSITION':
+      case 'DEARTH':
       default:
         return building ? [
-          'Monitor hive weight and colony population weekly.',
-          'Ensure bees have access to a clean water source nearby.',
-          'Check that hive entrances are clean and unblocked.'
+          'Hives may be running light — worth checking stores.',
+          'Ensure entrance reducers or robbing screens are installed.',
+          'Avoid opening hives for long periods; robbing risk is extreme.'
         ] : [
-          'Assess stores and colony population heading into autumn.',
-          'Ensure bees have access to a clean water source nearby.',
-          'Consider reducing entrances as the dearth deepens.'
+          'Check winter stores; hives may be running light.',
+          'Keep entrances reduced; robbing pressure is high in a dearth.',
+          'If you treat for mites, this is the window — before the winter bees are raised.'
         ];
     }
   };
@@ -648,50 +634,10 @@ export const NectarFlowV2View: React.FC = () => {
             </linearGradient>
           </defs>
 
-          {/* Phase zone background bands */}
-          {(() => {
-            const bands = [
-              { id: 'peak', label: 'PEAK', low: 0.75, high: 1.00, color: '#2ECC71', opacity: 0.03 },
-              { id: 'flow', label: 'FLOW', low: 0.30, high: 0.75, color: '#F1C40F', opacity: 0.03 },
-              { id: 'transition', label: 'TRANSITION', low: 0.20, high: 0.30, color: '#E67E22', opacity: 0.03 },
-              { id: 'dearth', label: 'DEARTH', low: 0.00, high: 0.20, color: '#E74C3C', opacity: 0.03 },
-            ];
-
-            return bands.map((band) => {
-              const clippedLow = Math.max(0.0, Math.min(yMax, band.low));
-              const clippedHigh = Math.max(0.0, Math.min(yMax, band.high));
-
-              if (clippedHigh <= clippedLow) return null;
-
-              const yTop = yCoord(clippedHigh);
-              const yBottom = yCoord(clippedLow);
-              const rectHeight = yBottom - yTop;
-              const yMid = yCoord((clippedLow + clippedHigh) / 2);
-
-              return (
-                <g key={band.id}>
-                  <rect
-                    x={paddingLeft}
-                    y={yTop}
-                    width={chartWidth}
-                    height={rectHeight}
-                    fill={band.color}
-                    opacity={band.opacity}
-                  />
-                  <text
-                    x={paddingLeft + 10}
-                    y={yMid + 3}
-                    fill={band.color}
-                    opacity="0.3"
-                    fontSize={isFullscreen ? "9" : "7"}
-                    fontWeight="extrabold"
-                  >
-                    {band.label}
-                  </text>
-                </g>
-              );
-            });
-          })()}
+          {/* The phase zone bands were removed 2026-08-28. They drew four level ranges
+              (dearth to 20, flow from 30, peak from 75) that matched neither the engine nor
+              each other, at 3% opacity so they were barely visible anyway. Ron: "setting
+              arbitrary limits is likely going to never work in all places." */}
 
           {/* Month boundaries and their labels. Both inside the svg on purpose: they share
               one coordinate system with the curve, so they cannot drift apart however the
