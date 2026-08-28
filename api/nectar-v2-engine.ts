@@ -357,7 +357,13 @@ export function runV2Pipeline(
   // peeking at days that have not happened — and a one-day wobble cannot flip it. A centred
   // fit could see the future: on 29 June 2026 it reported the trend as upward while the
   // index was visibly falling, 0.88 -> 0.72 -> 0.59, because it could already see 2-4 July.
-  const TREND_WINDOW = 7;
+  // Five days, which is four intervals — the same four-day span the run rule uses.
+  // Seven was too long: after the steep June 2026 peak the climb still dominated the fit,
+  // so the badge read Trending Up on 4 June with the index visibly down three days running,
+  // 68.9 -> 59.0. Measured, a 5-day window turns three days after a peak; 7 takes four, 9
+  // takes five. Short enough to turn promptly, long enough that a one-day wobble cannot
+  // flip it.
+  const TREND_WINDOW = 5;
   const trend = new Array<number>(N).fill(0);
   for (let i = 0; i < N; i++) {
     const sl = trailingSlope(idxEwma, i, TREND_WINDOW);
