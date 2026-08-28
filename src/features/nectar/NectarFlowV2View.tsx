@@ -38,7 +38,7 @@ interface V2Response {
   nfi: number;
   phase: Phase;
   status: string;
-  transitionAdvice: string;
+
   trend_direction: 'rising' | 'falling' | 'flat';
   slope: number;
   v2: {
@@ -804,10 +804,11 @@ export const NectarFlowV2View: React.FC = () => {
               {resolvedTrendDirection === 'rising' ? '↑' : resolvedTrendDirection === 'falling' ? '↓' : '→'} {resolvedTrendDirection}
             </span>
           </div>
-          {/* No opacity: it was decorative and cost about half a contrast point on text
-              already at the legibility floor. Two lines, because the late-season wordings
-              are longer and were being truncated mid-sentence. */}
-          <p className="text-[11px] font-semibold leading-snug mt-0.5 line-clamp-2">{data.transitionAdvice}</p>
+          {/* The banner advice was removed 2026-08-28. Ron: "I think its spotty at best.
+              Too many variables. Many of which are not even on the chart." A phase and a
+              direction are what this data supports; what to DO about them depends on the
+              colony, the climate and the beekeeper's own practice, none of which the index
+              can see. */}
         </div>
         <span className="bg-black/15 text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full border border-white/10 shrink-0">
           NFI {data.nfi}
