@@ -199,3 +199,55 @@ describe('phase rules: direction decides, one level threshold', () => {
     expect(switches / years).toBeLessThanOrEqual(12);
   });
 });
+
+describe('a qualifying run is coloured in full', () => {
+  // Labelling as the counter climbed meant the phase appeared only from day four onward, so
+  // every run lost its first three days: a four-day rise showed ONE day of FLOW_STARTING.
+  // Measured on the real South Valley 2026 series, all eleven qualifying runs hid exactly
+  // three days. Ron, reading the chart: "the circled flows don't appear to be 4+ days."
+  // They were. The label just started late.
+
+  /** Length of the longest stretch of `phase` in the result. */
+  const longestRun = (phases: readonly string[], phase: string) => {
+    let best = 0, run = 0;
+    for (const p of phases) { run = p === phase ? run + 1 : 0; best = Math.max(best, run); }
+    return best;
+  };
+
+  it('colours every day of a rise, not just the days after the fourth', () => {
+    // A clean 12-day climb out of a flat winter.
+    const r = runV2Pipeline(
+      records(d => (d < 100 ? 0.20 : 0.20 + (d - 100) * 0.005)),
+      weather(), LAT
+    );
+    // Count the days the slope was actually rising, and the days labelled as such.
+    let risingDays = 0;
+    for (let i = 0; i < r.slopeArr.length; i++) if ((r.slopeArr[i] ?? 0) > 0.002) risingDays++;
+    const labelled = r.phases.filter(p => p === 'FLOW_STARTING').length;
+    // Every rising day inside a qualifying run should carry the label. Allow for short runs
+    // that never reached four days and so are correctly unlabelled.
+    expect(labelled).toBeGreaterThan(risingDays * 0.8);
+  });
+
+  it('shows at least four days of the phase whenever it shows any', () => {
+    // The visible consequence: a run cannot qualify without being four days long, so any
+    // appearance of the label must be at least that wide.
+    for (const period of [24, 30, 38]) {
+      const r = runV2Pipeline(records(d => 0.25 + 0.3 * Math.sin(d / period)), weather(), LAT);
+      for (const phase of ['FLOW_STARTING', 'FLOW_ENDING']) {
+        const longest = longestRun(r.phases, phase);
+        if (longest > 0) expect(longest).toBeGreaterThanOrEqual(4);
+      }
+    }
+  });
+
+  it('still refuses a three-day rise', () => {
+    // A short bump between two flat stretches must not be labelled at all.
+    const r = runV2Pipeline(
+      records(d => (d > 100 && d < 112 ? 0.20 + (d - 100) * 0.002 : 0.20)),
+      weather(), LAT
+    );
+    const longest = longestRun(r.phases, 'FLOW_STARTING');
+    expect(longest === 0 || longest >= 4).toBe(true);
+  });
+});

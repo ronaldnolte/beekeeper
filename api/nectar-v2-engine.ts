@@ -321,18 +321,38 @@ export function runV2Pipeline(
   // NOTE: a rising run earns FLOW_STARTING at ANY level, including below the dearth floor.
   // That is rule 2 as written ("any 4 days with positive slope"), and it is deliberate: a
   // sustained climb is information even when the absolute number is small.
+  // Two passes, because a qualifying run must colour the WHOLE rise, not just its tail.
+  //
+  // Labelling as the counter climbed meant the phase only appeared on day four onward, so
+  // every run lost its first three days: a four-day rise showed one day of FLOW_STARTING, a
+  // five-day rise showed two. On the real South Valley 2026 series that hid exactly three
+  // days from all eleven qualifying runs. Ron, reading the chart: "the circled flows don't
+  // appear to be 4+ days." They were — the label just started late.
+  //
+  // Pass one finds the runs. Pass two labels a run in full once it is long enough.
   const phases: Phase[] = new Array(N);
-  let risingRun = 0, fallingRun = 0;
+  const direction = new Array<number>(N).fill(0);
   for (let i = 0; i < N; i++) {
     const sl = slopeArr[i] ?? 0;
-    if (sl > P.riseThr)       { risingRun++;  fallingRun = 0; }
-    else if (sl < -P.riseThr) { fallingRun++; risingRun = 0; }
-    else                      { risingRun = 0; fallingRun = 0; }
+    direction[i] = sl > P.riseThr ? 1 : sl < -P.riseThr ? -1 : 0;
+  }
 
-    if (risingRun >= P.runDays)       phases[i] = 'FLOW_STARTING';
-    else if (fallingRun >= P.runDays) phases[i] = 'FLOW_ENDING';
-    else if (idxEwma[i] < P.dearth)   phases[i] = 'DEARTH';
-    else                              phases[i] = 'IN_FLOW';
+  // Default everything on level, then let qualifying runs overwrite.
+  for (let i = 0; i < N; i++) {
+    phases[i] = idxEwma[i] < P.dearth ? 'DEARTH' : 'IN_FLOW';
+  }
+
+  let i = 0;
+  while (i < N) {
+    const dir = direction[i];
+    if (dir === 0) { i++; continue; }
+    let j = i;
+    while (j + 1 < N && direction[j + 1] === dir) j++;
+    if (j - i + 1 >= P.runDays) {
+      const label: Phase = dir > 0 ? 'FLOW_STARTING' : 'FLOW_ENDING';
+      for (let k = i; k <= j; k++) phases[k] = label;
+    }
+    i = j + 1;
   }
 
   const li = N - 1;
