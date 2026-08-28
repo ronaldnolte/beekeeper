@@ -236,7 +236,7 @@ export const NectarFlowV2View: React.FC = () => {
   const getPhaseColors = (phase: string) => {
     switch (phase) {
       case 'IN_FLOW':
-        return { bg: 'bg-[#F5B301]', text: 'text-black', label: 'In Flow', emoji: '🌼' };
+        return { bg: 'bg-[#2ECC71]', text: 'text-black', label: 'In Flow', emoji: '🌼' };
       case 'TRENDING_UP':
         return { bg: 'bg-[#58D68D]', text: 'text-black', label: 'Trending Up', emoji: '🌱' };
       case 'TRENDING_DOWN':
@@ -252,7 +252,7 @@ export const NectarFlowV2View: React.FC = () => {
 
   const getPhaseColor = (phase: string) => {
     switch (phase) {
-      case 'IN_FLOW': return '#F5B301';
+      case 'IN_FLOW': return '#2ECC71';
       case 'TRENDING_UP': return '#58D68D';
       case 'TRENDING_DOWN': return '#1E8449';
       case 'DEARTH': return '#E74C3C';
@@ -926,7 +926,7 @@ export const NectarFlowV2View: React.FC = () => {
                     <span className="font-extrabold text-white">{getHoveredDateLabel(hoveredIndex)}</span>
                     <div className="flex items-center gap-4">
                       <span className="text-slate-400">{baseYearLabel}: <b className="text-blue-400">{hb && hb.forage_index_smoothed != null ? `${(hb.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}</b></span>
-                      <span className="text-slate-400">{currentYear}: <b className="text-amber-500">{hc && hc.forage_index_smoothed != null ? `${(hc.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}</b></span>
+                      <span className="text-slate-400">{currentYear}: <b style={{ color: getPhaseColor(hc?.phase ?? '') }}>{hc && hc.forage_index_smoothed != null ? `${(hc.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}</b></span>
                       {hc && (
                         <span className={`font-extrabold px-2 py-0.5 rounded-full text-[10px] ${getPhaseColors(hc.phase).bg} ${getPhaseColors(hc.phase).text}`}>
                           {getPhaseColors(hc.phase).emoji} {getPhaseColors(hc.phase).label}
@@ -940,7 +940,7 @@ export const NectarFlowV2View: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <span className="text-[9px] font-mono text-slate-600" title="Build timestamp">⏱ {__BUILD_TIME__}</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
-                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-amber-500 inline-block" />{currentYear} (current)</span>
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-[#2ECC71] inline-block" />{currentYear} (current)</span>
                   </div>
                   <span className="text-slate-500 italic">Hover for daily values</span>
                 </div>
