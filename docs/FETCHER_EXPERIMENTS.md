@@ -90,3 +90,38 @@ Making it discriminate would need graded checks rather than binary ones: not "wa
 a dearth" but "how close is July 2026 to what the beekeeper reported". That needs Ron to put
 numbers on months he currently describes in words, which is a real ask and may not be
 worth it.
+
+## A rule about ground truth, learned the hard way
+
+Ron, 2026-08-27: *"the comments I made about the May flow [were] assumptions, not
+observations. My hive did not have resources in it, which may mean they didn't find the
+small number of resources for a short flow."*
+
+**An empty hive is an observation about the COLONY. A flow is a fact about the LANDSCAPE.**
+The index models only the second. A short, thin flow that a weak or small colony failed to
+exploit is indistinguishable, from inside the box, from no flow at all.
+
+This invalidates an earlier argument in this project. "Ron left 28 April and returned to a
+dry hive" was used to conclude the bloom model's 15 May peak was wrong and the satellite's
+19 April peak was right. That conclusion may still be correct, but the evidence for it was
+weaker than it was presented as.
+
+**So the May figures cannot discriminate between fetch settings**, and the experiments are
+left without a tie-breaker.
+
+What DOES qualify as landscape observation, and is already encoded:
+- Summer 2026 a dearth — multiple beekeepers, discussed at meetings
+- Spring 2026 started early — swarm prevention began early, discussed at meetings
+- Murfreesboro July 2026 — hives empty AND Ron present AND the whole area in it
+
+The same caution applies to the hive-entrance video: "bees look busy" is also colony times
+landscape. When collecting future ground truth, ask about the LANDSCAPE — what is blooming,
+what the area's beekeepers are seeing — not only about the hive.
+
+## Recommendation on the evidence actually available
+
+Take **coverage 10%**: it fixes a known failure (the index going blind during monsoon) at no
+measured cost on any check.
+
+Leave **forage weighting** and **resolution** alone. No evidence either way, and changing
+them on reasoning alone is exactly how the 20% coverage floor got in.
