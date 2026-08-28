@@ -60,3 +60,21 @@ export const MONTH_STARTS = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 3
 export const MONTH_LABELS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
+
+/**
+ * Day of year for the chart's x-axis: 0-based, clamped to 364, UTC.
+ *
+ * Built from LOCAL dates, the gap between 1 January and a date inside daylight saving is not
+ * a whole number of days, so Math.floor drops one — and picks it back up when the clocks go
+ * back. That put a visible notch in the chart in March and a step in late October. UTC has
+ * no such discontinuity.
+ *
+ * Separate from dayOfYearUtc above, which is 1-based and takes a Date: this one is the
+ * chart's own convention and clamps, so December 31 of a leap year shares a pixel with the
+ * 30th rather than falling off the axis.
+ */
+export function chartDayOfYear(dateStr: string): number {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const diff = Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 1);
+  return Math.min(364, Math.max(0, Math.floor(diff / 86_400_000)));
+}

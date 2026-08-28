@@ -6,7 +6,10 @@ export async function fetchApiaries(userId: string) {
     .from('apiaries')
     .select('*')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    // Alphabetical, not insertion order. This one query feeds the Apiaries screen, the
+    // Nectar yard picker, the Nectar dropdown and the Apiaries tab, and all four listed
+    // yards in the order they happened to be created.
+    .order('name', { ascending: true });
   if (error) throw error;
   return data || [];
 }

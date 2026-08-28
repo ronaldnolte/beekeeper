@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { dayLengthHours, daysLengthening, MONTH_STARTS, MONTH_LABELS } from '../_season';
+import { dayLengthHours, daysLengthening, chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../_season';
 
 // Two presentation defects, both measured before they were fixed.
 //
@@ -103,5 +103,59 @@ describe('month axis positions', () => {
     const throughAugust =
       (plotFraction(8, 25) - labelFraction(7)) / (labelFraction(8) - labelFraction(7));
     expect(throughAugust).toBeGreaterThan(0.7);
+  });
+});
+
+describe('chartDayOfYear', () => {
+  // The bug Ron spotted: a notch in the chart in March and a step in late October.
+  // Reproduced here with the old local-time arithmetic, so the fix is demonstrated rather
+  // than asserted. Uses the process timezone, so it only proves anything where DST exists —
+  // hence the guard.
+  const localVersion = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const diff = new Date(y, m - 1, d).getTime() - new Date(y, 0, 1).getTime();
+    return Math.min(364, Math.max(0, Math.floor(diff / 86_400_000)));
+  };
+
+  const janOffset = new Date(2026, 0, 1).getTimezoneOffset();
+  const julOffset = new Date(2026, 6, 1).getTimezoneOffset();
+  const observesDst = janOffset !== julOffset;
+
+  it('advances by exactly one per day across a daylight-saving boundary', () => {
+    // March 2026: DST starts on the 8th in the US.
+    for (let d = 1; d < 20; d++) {
+      const a = chartDayOfYear(`2026-03-${String(d).padStart(2, '0')}`);
+      const b = chartDayOfYear(`2026-03-${String(d + 1).padStart(2, '0')}`);
+      expect(b - a).toBe(1);
+    }
+  });
+
+  it('advances by exactly one per day when the clocks go back', () => {
+    // November 2026: DST ends on the 1st in the US.
+    for (let d = 1; d < 15; d++) {
+      const a = chartDayOfYear(`2026-11-${String(d).padStart(2, '0')}`);
+      const b = chartDayOfYear(`2026-11-${String(d + 1).padStart(2, '0')}`);
+      expect(b - a).toBe(1);
+    }
+  });
+
+  it('is stable for the whole year, which the local-time version was not', () => {
+    let localGaps = 0;
+    for (let doy = 0; doy < 364; doy++) {
+      const d1 = new Date(Date.UTC(2026, 0, 1 + doy)).toISOString().slice(0, 10);
+      const d2 = new Date(Date.UTC(2026, 0, 2 + doy)).toISOString().slice(0, 10);
+      expect(chartDayOfYear(d2) - chartDayOfYear(d1)).toBe(1);
+      if (localVersion(d2) - localVersion(d1) !== 1) localGaps++;
+    }
+    if (observesDst) {
+      // Two discontinuities a year: one in spring, one in autumn. Exactly what was on screen.
+      expect(localGaps).toBeGreaterThan(0);
+    }
+  });
+
+  it('starts at zero and clamps at the end of the year', () => {
+    expect(chartDayOfYear('2026-01-01')).toBe(0);
+    expect(chartDayOfYear('2026-12-31')).toBe(364);
+    expect(chartDayOfYear('2024-12-31')).toBe(364);   // leap year, clamped
   });
 });

@@ -3,7 +3,7 @@
 // warmth weighting → EWMA smooth → phase classification. Served by /api/nectar-index-v2.
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { daysLengthening, MONTH_STARTS, MONTH_LABELS } from '../../../api/_season';
+import { daysLengthening, chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../../../api/_season';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { supabase } from '../../data/supabase';
@@ -415,25 +415,17 @@ export const NectarFlowV2View: React.FC = () => {
     : (deltaVal > 0 ? '+' : '') + (deltaVal * 100).toFixed(1) + '%';
 
   // Helper functions (copied verbatim from NectarFlowView)
-  const getDayOfYear = (dateStr: string) => {
-    const parts = dateStr.split('-');
-    const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1;
-    const day = parseInt(parts[2], 10);
-    const d = new Date(year, month, day);
-    const start = new Date(year, 0, 1);
-    const diff = d.getTime() - start.getTime();
-    const oneDay = 1000 * 60 * 60 * 24;
-    return Math.min(364, Math.max(0, Math.floor(diff / oneDay)));
-  };
+  const getDayOfYear = chartDayOfYear;
 
   const getDayOfYearFraction = (dateStr: string) => {
     return getDayOfYear(dateStr) / 365;
   };
 
   const getHoveredDateLabel = (day: number) => {
-    const date = new Date(2025, 0, 1 + day);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const date = new Date(Date.UTC(2025, 0, 1 + day));
+    // timeZone UTC to match how the date was built. Without it, anyone west of UTC sees
+    // the previous day's label.
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   };
 
   // Year-split history (copied verbatim from NectarFlowView, V2 has no ndvi/bloom/weather in history)
@@ -471,10 +463,10 @@ export const NectarFlowV2View: React.FC = () => {
   const historyBase = Array.from({ length: 365 }, (_, dayIdx) => {
     const cell = historyBaseMap[dayIdx];
     const nfiAvg = cell.count > 0 ? cell.sum / cell.count : null;
-    const date = new Date(2025, 0, 1 + dayIdx);
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
+    const date = new Date(Date.UTC(2025, 0, 1 + dayIdx));
+    const yyyy = date.getUTCFullYear();
+    const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(date.getUTCDate()).padStart(2, '0');
     const dateStr = `${yyyy}-${mm}-${dd}`;
     return { date: dateStr, forage_index_smoothed: nfiAvg };
   }).filter(h => h.forage_index_smoothed !== null) as { date: string; forage_index_smoothed: number }[];
