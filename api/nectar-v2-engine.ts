@@ -102,6 +102,39 @@ function trailingMean(arr: (number | null)[], win: number): (number | null)[] {
   });
 }
 
+/**
+ * One-sided linear slope over a trailing window, for the live end of the series.
+ *
+ * localPoly below fits a PARABOLA over a centred window. That is well behaved in the
+ * interior, where there are points on both sides holding it down. For the final `sgHalf`
+ * days there are none ahead, so the parabola is anchored on one side only and is free to
+ * keep bending past the last point — and the slope is read exactly at that unanchored edge.
+ * It answers "where would this be heading if it kept curving", not "what did it just do".
+ *
+ * Measured at Murfreesboro on 2026-08-18: slope -0.18062, larger in magnitude than the
+ * maximum (0.13434) anywhere in 3.6 years of fully supported fits, and sign-flipped from the
+ * day before. On a gently flattening curve the effect is smaller but the same shape — the
+ * parabola reports a downturn on a series that is still rising.
+ *
+ * A straight line has no curvature to run away with. Two coefficients rather than three, so
+ * it can only answer "on average, which way over the last N days", which is the honest
+ * question at the edge. The final value drives trend_direction and the phase badge, so it
+ * gets the stable estimator rather than the sharper one.
+ */
+export function trailingSlope(arr: number[], i: number, win: number): number {
+  const lo = Math.max(0, i - win + 1);
+  let n = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
+  for (let j = lo; j <= i; j++) {
+    const y = arr[j];
+    if (!isFinite(y)) continue;
+    const x = j - i;
+    n++; sx += x; sy += y; sxx += x * x; sxy += x * y;
+  }
+  if (n < 3) return 0;
+  const den = n * sxx - sx * sx;
+  return Math.abs(den) < 1e-12 ? 0 : (n * sxy - sx * sy) / den;
+}
+
 function localPoly(arr: number[], half: number): { smooth: number[]; slope: number[] } {
   const N = arr.length;
   const smooth: number[] = new Array(N).fill(0);
@@ -243,19 +276,34 @@ export function runV2Pipeline(
   // EWMA for live smoothed value; local-poly for slope (SG-equivalent, uses future pts for history)
   const idxEwma         = ewmaArr(indexRaw, P.alpha);
   const { slope: slopeArr } = localPoly(indexRaw, P.sgHalf);
+  // The last sgHalf days have no future points, so the centred fit extrapolates there.
+  // Replace those with the one-sided estimator (see trailingSlope).
+  for (let i = Math.max(0, N - P.sgHalf); i < N; i++) {
+    slopeArr[i] = trailingSlope(indexRaw, i, 2 * P.sgHalf + 1);
+  }
 
   // Phase classification: intuitive (low=dearth, rising=building, high=peak, falling=winding down)
   // with dwell hysteresis to prevent daily flipping
   const instPhase = idxEwma.map((v, i): Phase => {
     const sl = slopeArr[i] ?? 0;
+    // The dearth floor is checked FIRST. Below it there is no flow to be starting or
+    // ending, whatever the slope is doing.
+    //
+    // The slope tests used to run first, so a trivial slope on a near-zero index promoted a
+    // dead yard to a flow phase — and the dwell hysteresis below then held that label as the
+    // index kept falling. Measured on production: FLOW_STARTING reported at index 2 with a
+    // slope of -0.00183. The same defect once displayed "Flow Ending: monitor honey stores,
+    // watch for robbing" at NFI 1. DEARTH was effectively unreachable, and noise near zero
+    // flipped the badge between two flow phases that were not in play.
+    if (v < P.dearth) return 'DEARTH';
     // Above the enter level you're IN flow regardless of slope (sharp peaks never
     // have a flat top, so requiring flatness made IN_FLOW unreachable) — unless
     // it's falling hard, which is the wind-down.
     if (v >= P.enter)  return sl < -P.riseThr ? 'FLOW_ENDING' : 'IN_FLOW';
-    // Below it, strong slope = direction-named phase
+    // Between the floor and the flow level, a strong slope names the direction.
     if (sl >  P.riseThr)  return 'FLOW_STARTING';
     if (sl < -P.riseThr)  return 'FLOW_ENDING';
-    return v < P.dearth ? 'DEARTH' : 'TRANSITION';
+    return 'TRANSITION';
   });
   const phases: Phase[] = new Array(N);
   let cur: Phase = 'TRANSITION', cand: Phase | null = null, candN = 0;
