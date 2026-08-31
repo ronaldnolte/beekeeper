@@ -3,7 +3,7 @@
 // rate-of-change core (greening velocity) → universal fall-bloom term (photoperiod × dewpoint)
 // → dormancy gate (temperature) × NDWI moisture modifier → EWMA live smooth →
 // phase classification (incl. IN_FLOW plateau) with dwell hysteresis.
-import type { MultiBandRecord } from './bands-fetcher.js';
+import type { MultiBandRecord } from './_bands-fetcher.js';
 
 /**
  * Four phases, and ONE level threshold. TRANSITION and the chart's PEAK band are gone:

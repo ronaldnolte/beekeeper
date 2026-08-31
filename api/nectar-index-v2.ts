@@ -1,6 +1,6 @@
 import { applyCors, getAuthedUser, getBearerToken, createRateLimiter, getClientIp, isNectarAuthGraceActive, sendUpdateRequired } from './_lib.js';
-import { fetchMultiBands } from './bands-fetcher.js';
-import { runV2Pipeline, Phase, WeatherDay } from './nectar-v2-engine.js';
+import { fetchMultiBands } from './_bands-fetcher.js';
+import { runV2Pipeline, Phase, WeatherDay } from './_nectar-v2-engine.js';
 import { fetchFirstOk } from './_lib.js';
 
 // Anonymous nectar calls are only possible during the auth grace window (see

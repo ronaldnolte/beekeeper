@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { interpolateDailyNDVI, smoothNDVISeries, type NDVIRecord } from '../../../../api/ndvi-fetcher';
+import { interpolateDailyNDVI, smoothNDVISeries, type NDVIRecord } from '../../../../api/_ndvi-fetcher';
 import { computeBloomFactor, calculateTriangularValue, parseMonthDayToDoY, getDayOfYear } from '../bloomFactor';
 import { computeWeatherSuitability } from '../weatherSuitability';
 import { computeNectarStatus, calculateNFI, emaSeries, type Apiary, type DailyEnvironment } from '../engine';
