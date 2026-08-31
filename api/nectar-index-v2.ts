@@ -107,30 +107,20 @@ async function fetchWeatherV2(
   };
 }
 
-function phaseToStatus(phase: Phase): 'Pre-Flow' | 'Peak Flow' | 'Flow Ending' | 'Dearth' | 'Stable Low' {
+function phaseToStatus(phase: Phase): 'Trending Up' | 'In Flow' | 'Trending Down' | 'Dearth' {
   switch (phase) {
-    case 'IN_FLOW':       return 'Peak Flow';
-    case 'FLOW_STARTING': return 'Pre-Flow';
-    case 'FLOW_ENDING':   return 'Flow Ending';
-    case 'DEARTH':        return 'Dearth';
-    default:              return 'Stable Low';
+    case 'TRENDING_UP':   return 'Trending Up';
+    case 'IN_FLOW':       return 'In Flow';
+    case 'TRENDING_DOWN': return 'Trending Down';
+    case 'DEARTH':
+    default:              return 'Dearth';
   }
 }
 
-function phaseToAdvice(phase: Phase): string {
-  switch (phase) {
-    case 'IN_FLOW':
-      return 'Peak nectar flow is active. Ensure honey supers are in place. Colony is actively storing surplus honey.';
-    case 'FLOW_STARTING':
-      return 'Nectar flow is building. Queen egg-laying is stimulated. Colony is expanding — watch for swarm preparations.';
-    case 'FLOW_ENDING':
-      return 'Nectar flow is winding down. Monitor honey stores and watch for robbing behavior as colonies sense the dearth ahead.';
-    case 'DEARTH':
-      return 'Colony is in a dearth. Monitor food reserves closely. Supplemental feeding may be required to maintain colony strength.';
-    default:
-      return 'Transitional forage conditions. Monitor colony strength and watch for shifts in the next 1–2 weeks.';
-  }
-}
+// The advice text was removed 2026-08-28. Ron: "I think its spotty at best. Too many
+// variables. Many of which are not even on the chart." A phase and a direction are what
+// this data supports; what to DO about them depends on the colony, the climate and the
+// beekeeper's own practice, none of which the index can see.
 
 export default async function handler(req: any, res: any) {
   if (applyCors(req, res)) return;
@@ -228,7 +218,6 @@ export default async function handler(req: any, res: any) {
       nfi,
       phase: latestPhase,
       status: phaseToStatus(latestPhase),
-      transitionAdvice: phaseToAdvice(latestPhase),
       trend_direction,
       slope: latestSlope,
       v2: result.latest,

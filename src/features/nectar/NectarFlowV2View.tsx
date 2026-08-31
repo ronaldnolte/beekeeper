@@ -3,6 +3,7 @@
 // warmth weighting → EWMA smooth → phase classification. Served by /api/nectar-index-v2.
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../../../api/_season';
 import { useAppStore } from '../../store/useAppStore';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { supabase } from '../../data/supabase';
@@ -15,15 +16,14 @@ import {
   RefreshCw,
   TrendingDown,
   Minus,
-  Sparkles,
-  ShieldAlert,
+  Sparkles,
   Maximize2,
   X,
 } from 'lucide-react';
 
 declare const __BUILD_TIME__: string;
 
-type Phase = 'DEARTH' | 'FLOW_STARTING' | 'IN_FLOW' | 'FLOW_ENDING' | 'TRANSITION';
+type Phase = 'DEARTH' | 'TRENDING_UP' | 'IN_FLOW' | 'TRENDING_DOWN';
 
 interface ServerTiming {
   earth_engine_ms: number;
@@ -37,7 +37,7 @@ interface V2Response {
   nfi: number;
   phase: Phase;
   status: string;
-  transitionAdvice: string;
+
   trend_direction: 'rising' | 'falling' | 'flat';
   slope: number;
   v2: {
@@ -84,7 +84,8 @@ export const NectarFlowV2View: React.FC = () => {
   // the apiary name so dev/prod runs can be confirmed to use identical coordinates.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   // Per-phase load timing (diagnostics) + a live elapsed counter for the spinner.
-  const [timing, setTiming] = useState<LoadTiming | null>(null);
+  // Load timing is still measured and logged to the console as [nectar timing]; it is no
+  // longer held in state because nothing renders it since the diagnostic bar came out.
   const [elapsedSec, setElapsedSec] = useState(0);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -195,7 +196,7 @@ export const NectarFlowV2View: React.FC = () => {
         const loadTiming: LoadTiming = { coordMs, roundTripMs, server: json._timing ?? null };
         // eslint-disable-next-line no-console
         console.log('[nectar timing]', loadTiming);
-        setTiming(loadTiming);
+
         setData(json);
       } finally {
         clearTimeout(timeout);
@@ -235,24 +236,25 @@ export const NectarFlowV2View: React.FC = () => {
   const getPhaseColors = (phase: string) => {
     switch (phase) {
       case 'IN_FLOW':
-        return { bg: 'bg-[#F5B301]', text: 'text-black', label: 'In Flow', emoji: '🌼' };
-      case 'FLOW_STARTING':
-        return { bg: 'bg-[#58D68D]', text: 'text-black', label: 'Flow Starting', emoji: '🌱' };
-      case 'FLOW_ENDING':
-        return { bg: 'bg-[#1E8449]', text: 'text-white', label: 'Flow Ending', emoji: '🍂' };
+        return { bg: 'bg-[#2ECC71]', text: 'text-black', label: 'In Flow', emoji: '🌼' };
+      case 'TRENDING_UP':
+        return { bg: 'bg-[#58D68D]', text: 'text-black', label: 'Trending Up', emoji: '🌱' };
+      case 'TRENDING_DOWN':
+        return { bg: 'bg-[#1E8449]', text: 'text-white', label: 'Trending Down', emoji: '🍂' };
       case 'DEARTH':
-        return { bg: 'bg-[#E74C3C]', text: 'text-white', label: 'Dearth', emoji: '🏜️' };
-      case 'TRANSITION':
       default:
-        return { bg: 'bg-[#95A5A6]', text: 'text-white', label: 'Transition', emoji: '🌫️' };
+        // Darker than the chart's #E74C3C on purpose. White on #E74C3C measures 3.8:1, and
+        // the advice line under it is small text, which needs 4.5:1 — genuinely hard to
+        // read, and worse outdoors on a phone at a hive. #C0392B measures 5.4:1.
+        return { bg: 'bg-[#C0392B]', text: 'text-white', label: 'Dearth', emoji: '🏜️' };
     }
   };
 
   const getPhaseColor = (phase: string) => {
     switch (phase) {
-      case 'IN_FLOW': return '#F5B301';
-      case 'FLOW_STARTING': return '#58D68D';
-      case 'FLOW_ENDING': return '#1E8449';
+      case 'IN_FLOW': return '#2ECC71';
+      case 'TRENDING_UP': return '#58D68D';
+      case 'TRENDING_DOWN': return '#1E8449';
       case 'DEARTH': return '#E74C3C';
       default: return '#95A5A6';
     }
@@ -263,41 +265,6 @@ export const NectarFlowV2View: React.FC = () => {
   };
 
   // Phase advice (copied verbatim from NectarFlowView)
-  const getPhaseAdvice = (phase: string): string[] => {
-    switch (phase) {
-      case 'IN_FLOW':
-        return [
-          'Add honey supers (space) to prevent swarming.',
-          'Stop supplemental feeding immediately.',
-          'Monitor brood nests for queen cups and swarm cells.'
-        ];
-      case 'FLOW_ENDING':
-        return [
-          'Reduce hive entrance sizes to protect against robbing.',
-          'Avoid making splits or exposing comb to the air.',
-          'Plan or prepare sugar syrup for supplemental feeding.'
-        ];
-      case 'DEARTH':
-        return [
-          'Feed sugar syrup / protein patties if hives are light.',
-          'Ensure entrance reducers or robbing screens are installed.',
-          'Avoid opening hives for long periods; robbing risk is extreme.'
-        ];
-      case 'FLOW_STARTING':
-        return [
-          'Super your colonies early to catch the start of flow.',
-          'Check for rapid queen egg-laying and brood nest expansion.',
-          'Slow down or wind down any supplemental feeding.'
-        ];
-      case 'TRANSITION':
-      default:
-        return [
-          'Monitor hive weight and colony population weekly.',
-          'Ensure bees have access to a clean water source nearby.',
-          'Check that hive entrances are clean and unblocked.'
-        ];
-    }
-  };
 
   // No apiary (copied verbatim from NectarFlowView)
   if (!selectedApiaryId) {
@@ -370,7 +337,6 @@ export const NectarFlowV2View: React.FC = () => {
   // Resolved values
   const currentPhase = data.phase;
   const colors = getPhaseColors(currentPhase);
-  const adviceList = getPhaseAdvice(currentPhase);
   const resolvedTrendDirection = data.trend_direction;
   const forageIndexVal = data.nfi.toString();
   const deltaVal = data.slope ?? 0;
@@ -379,25 +345,17 @@ export const NectarFlowV2View: React.FC = () => {
     : (deltaVal > 0 ? '+' : '') + (deltaVal * 100).toFixed(1) + '%';
 
   // Helper functions (copied verbatim from NectarFlowView)
-  const getDayOfYear = (dateStr: string) => {
-    const parts = dateStr.split('-');
-    const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1;
-    const day = parseInt(parts[2], 10);
-    const d = new Date(year, month, day);
-    const start = new Date(year, 0, 1);
-    const diff = d.getTime() - start.getTime();
-    const oneDay = 1000 * 60 * 60 * 24;
-    return Math.min(364, Math.max(0, Math.floor(diff / oneDay)));
-  };
+  const getDayOfYear = chartDayOfYear;
 
   const getDayOfYearFraction = (dateStr: string) => {
     return getDayOfYear(dateStr) / 365;
   };
 
   const getHoveredDateLabel = (day: number) => {
-    const date = new Date(2025, 0, 1 + day);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const date = new Date(Date.UTC(2025, 0, 1 + day));
+    // timeZone UTC to match how the date was built. Without it, anyone west of UTC sees
+    // the previous day's label.
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
   };
 
   // Year-split history (copied verbatim from NectarFlowView, V2 has no ndvi/bloom/weather in history)
@@ -435,10 +393,10 @@ export const NectarFlowV2View: React.FC = () => {
   const historyBase = Array.from({ length: 365 }, (_, dayIdx) => {
     const cell = historyBaseMap[dayIdx];
     const nfiAvg = cell.count > 0 ? cell.sum / cell.count : null;
-    const date = new Date(2025, 0, 1 + dayIdx);
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
+    const date = new Date(Date.UTC(2025, 0, 1 + dayIdx));
+    const yyyy = date.getUTCFullYear();
+    const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(date.getUTCDate()).padStart(2, '0');
     const dateStr = `${yyyy}-${mm}-${dd}`;
     return { date: dateStr, forage_index_smoothed: nfiAvg };
   }).filter(h => h.forage_index_smoothed !== null) as { date: string; forage_index_smoothed: number }[];
@@ -590,7 +548,17 @@ export const NectarFlowV2View: React.FC = () => {
     const currentHovered = historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex);
 
     // Month labels layout parameters
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    // Month boundaries at their TRUE position on the axis.
+    //
+    // These labels were a flex row with justify-between, which spaces twelve of them evenly
+    // edge to edge, while the DATA is plotted at its real day-of-year fraction. Two
+    // different scales, and the error grew through the year: the "Aug" label sat at 63.6%
+    // of the width where 1 August falls at 58.1% — about twenty days out — and December was
+    // a full month adrift. Late August read as the start of the month.
+    const monthMarks = MONTH_LABELS.map((label, i) => ({
+      label,
+      x: paddingLeft + (MONTH_STARTS[i] / 365) * chartWidth,
+    }));
 
     return (
       <div className="w-full flex flex-col justify-between" style={{ height }}>
@@ -610,50 +578,34 @@ export const NectarFlowV2View: React.FC = () => {
             </linearGradient>
           </defs>
 
-          {/* Phase zone background bands */}
-          {(() => {
-            const bands = [
-              { id: 'peak', label: 'PEAK', low: 0.75, high: 1.00, color: '#2ECC71', opacity: 0.03 },
-              { id: 'flow', label: 'FLOW', low: 0.30, high: 0.75, color: '#F1C40F', opacity: 0.03 },
-              { id: 'transition', label: 'TRANSITION', low: 0.20, high: 0.30, color: '#E67E22', opacity: 0.03 },
-              { id: 'dearth', label: 'DEARTH', low: 0.00, high: 0.20, color: '#E74C3C', opacity: 0.03 },
-            ];
+          {/* The phase zone bands were removed 2026-08-28. They drew four level ranges
+              (dearth to 20, flow from 30, peak from 75) that matched neither the engine nor
+              each other, at 3% opacity so they were barely visible anyway. Ron: "setting
+              arbitrary limits is likely going to never work in all places." */}
 
-            return bands.map((band) => {
-              const clippedLow = Math.max(0.0, Math.min(yMax, band.low));
-              const clippedHigh = Math.max(0.0, Math.min(yMax, band.high));
-
-              if (clippedHigh <= clippedLow) return null;
-
-              const yTop = yCoord(clippedHigh);
-              const yBottom = yCoord(clippedLow);
-              const rectHeight = yBottom - yTop;
-              const yMid = yCoord((clippedLow + clippedHigh) / 2);
-
-              return (
-                <g key={band.id}>
-                  <rect
-                    x={paddingLeft}
-                    y={yTop}
-                    width={chartWidth}
-                    height={rectHeight}
-                    fill={band.color}
-                    opacity={band.opacity}
-                  />
-                  <text
-                    x={paddingLeft + 10}
-                    y={yMid + 3}
-                    fill={band.color}
-                    opacity="0.3"
-                    fontSize={isFullscreen ? "9" : "7"}
-                    fontWeight="extrabold"
-                  >
-                    {band.label}
-                  </text>
-                </g>
-              );
-            });
-          })()}
+          {/* Month boundaries and their labels. Both inside the svg on purpose: they share
+              one coordinate system with the curve, so they cannot drift apart however the
+              chart is scaled or padded. */}
+          {monthMarks.map((m, i) => (
+            <g key={`mo-${m.label}`}>
+              {i > 0 && (
+                <line
+                  x1={m.x} y1={paddingTop}
+                  x2={m.x} y2={height - paddingBottom}
+                  stroke="#ffffff" strokeOpacity="0.07" strokeWidth="1"
+                />
+              )}
+              <text
+                x={m.x} y={height - 5}
+                fill="#64748b"
+                fontSize={isFullscreen ? '9' : '8'}
+                fontWeight="bold"
+                textAnchor={i === 0 ? 'start' : 'middle'}
+              >
+                {m.label}
+              </text>
+            </g>
+          ))}
 
           {/* Grid lines and Y-axis text */}
           {yGridValues.map((val) => {
@@ -752,15 +704,7 @@ export const NectarFlowV2View: React.FC = () => {
           })()}
         </svg>
 
-        {/* X-axis Month Labels (Jan - Dec) */}
-        <div
-          className="flex justify-between w-full text-slate-500 font-bold border-t border-[#222240]/40 pt-1.5 mt-1 select-none"
-          style={{ paddingLeft: `${paddingLeft}px`, paddingRight: `${paddingRight}px`, fontSize: isFullscreen ? '9px' : '8px' }}
-        >
-          {months.map((m) => (
-            <span key={m}>{m}</span>
-          ))}
-        </div>
+        {/* Month labels are drawn inside the svg, so nothing goes here. */}
       </div>
     );
   };
@@ -804,7 +748,11 @@ export const NectarFlowV2View: React.FC = () => {
               {resolvedTrendDirection === 'rising' ? '↑' : resolvedTrendDirection === 'falling' ? '↓' : '→'} {resolvedTrendDirection}
             </span>
           </div>
-          <p className="text-[11px] font-semibold opacity-90 leading-snug mt-0.5 line-clamp-1">{data.transitionAdvice}</p>
+          {/* The banner advice was removed 2026-08-28. Ron: "I think its spotty at best.
+              Too many variables. Many of which are not even on the chart." A phase and a
+              direction are what this data supports; what to DO about them depends on the
+              colony, the climate and the beekeeper's own practice, none of which the index
+              can see. */}
         </div>
         <span className="bg-black/15 text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full border border-white/10 shrink-0">
           NFI {data.nfi}
@@ -818,29 +766,9 @@ export const NectarFlowV2View: React.FC = () => {
         </button>
       </div>
 
-      {/* Load-timing diagnostic bar — always visible after a load, on every tab,
-          and NOT swapped out by chart hover. Use the Refresh button for a true
-          fresh measurement (a cached response returns near-instantly). */}
-      {timing && (
-        <div className="w-full bg-[#0f0f20] border-b border-[#222240] px-4 py-1.5 flex items-center gap-3 text-[10px] font-mono text-slate-300 overflow-x-auto whitespace-nowrap z-10 select-none">
-          <span className="text-amber-500 font-bold uppercase tracking-wider shrink-0">Load</span>
-          {timing.server ? (
-            <>
-              <span title="Earth Engine satellite fetch">satellite <b className="text-white">{(timing.server.earth_engine_ms / 1000).toFixed(1)}s</b></span>
-              <span title="Open-Meteo weather fetch">weather <b className="text-white">{(timing.server.weather_ms / 1000).toFixed(1)}s</b></span>
-              <span title="Index computation on the server">compute <b className="text-white">{timing.server.pipeline_ms}ms</b></span>
-              <span title="Network + browser (round trip minus server compute)">network <b className="text-white">{Math.max(0, (timing.roundTripMs - timing.server.server_total_ms) / 1000).toFixed(1)}s</b></span>
-            </>
-          ) : (
-            <span title="Per-phase split only on the preview deploy; production has no timing yet">
-              api <b className="text-white">{(timing.roundTripMs / 1000).toFixed(1)}s</b>
-              <span className="text-slate-500"> (no server split — test on preview)</span>
-            </span>
-          )}
-          <span title="Apiary coordinate lookup (database)">coords <b className="text-white">{timing.coordMs}ms</b></span>
-          <span className="text-amber-400 shrink-0" title="Total from tap to chart">total <b>{((timing.coordMs + timing.roundTripMs) / 1000).toFixed(1)}s</b></span>
-        </div>
-      )}
+      {/* The load-timing bar was removed: the per-phase numbers were useful while the
+          satellite fetch was being tuned, and are not useful day to day. Timings are
+          still logged to the console as [nectar timing]. */}
 
       {/* Scrollable content */}
       <div ref={contentRef} className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
@@ -912,7 +840,6 @@ export const NectarFlowV2View: React.FC = () => {
               <div className="space-y-4">
                 {[
                   { label: 'Greenness',   val: data.v2.greenness,  color: 'bg-emerald-500', tip: 'NDVI/EVI fusion' },
-                  { label: 'Vigor',       val: data.v2.vigor,      color: 'bg-lime-500',    tip: 'above winter baseline' },
                   { label: 'Moisture',    val: data.v2.moisture,   color: 'bg-sky-500',     tip: 'NDWI canopy water' },
                   { label: 'Rate (core)', val: data.v2.rate_norm,  color: 'bg-amber-500',   tip: 'greening velocity' },
                   { label: 'Fall term',   val: data.v2.fall_term,  color: 'bg-orange-500',  tip: 'photoperiod × dewpoint' },
@@ -932,22 +859,6 @@ export const NectarFlowV2View: React.FC = () => {
               </div>
             </div>
 
-            {/* Recommended Actions (copied verbatim from NectarFlowView) */}
-            <div className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg select-none">
-              <div className="border-b border-[#2b2b4d] pb-3 mb-4">
-                <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider flex items-center gap-2">
-                  <ShieldAlert size={16} /> Recommended Actions
-                </h3>
-              </div>
-              <ul className="space-y-3 text-xs leading-relaxed text-slate-300">
-                {adviceList.map((advice, i) => (
-                  <li key={i} className="flex items-start gap-2.5">
-                    <span className="text-amber-500 font-bold mt-0.5">•</span>
-                    <span>{advice}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </>
         )}
 
@@ -1015,7 +926,7 @@ export const NectarFlowV2View: React.FC = () => {
                     <span className="font-extrabold text-white">{getHoveredDateLabel(hoveredIndex)}</span>
                     <div className="flex items-center gap-4">
                       <span className="text-slate-400">{baseYearLabel}: <b className="text-blue-400">{hb && hb.forage_index_smoothed != null ? `${(hb.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}</b></span>
-                      <span className="text-slate-400">{currentYear}: <b className="text-amber-500">{hc && hc.forage_index_smoothed != null ? `${(hc.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}</b></span>
+                      <span className="text-slate-400">{currentYear}: <b style={{ color: getPhaseColor(hc?.phase ?? '') }}>{hc && hc.forage_index_smoothed != null ? `${(hc.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}</b></span>
                       {hc && (
                         <span className={`font-extrabold px-2 py-0.5 rounded-full text-[10px] ${getPhaseColors(hc.phase).bg} ${getPhaseColors(hc.phase).text}`}>
                           {getPhaseColors(hc.phase).emoji} {getPhaseColors(hc.phase).label}
@@ -1029,7 +940,7 @@ export const NectarFlowV2View: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <span className="text-[9px] font-mono text-slate-600" title="Build timestamp">⏱ {__BUILD_TIME__}</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
-                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-amber-500 inline-block" />{currentYear} (current)</span>
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-[#2ECC71] inline-block" />{currentYear} (current)</span>
                   </div>
                   <span className="text-slate-500 italic">Hover for daily values</span>
                 </div>
@@ -1107,7 +1018,7 @@ export const NectarFlowV2View: React.FC = () => {
       {/* Bottom Nav (copied verbatim from NectarFlowView, Settings tab omitted for V2 preview) */}
       <div className="w-full absolute bottom-0 left-0 right-0 bg-[#0f0f20]/95 backdrop-blur-lg border-t border-[#222240] px-6 py-2.5 flex items-center justify-around z-20 select-none">
         {([
-          { key: 'home' as const,     icon: <Activity size={20} />,   label: 'Home' },
+          { key: 'home' as const,     icon: <Activity size={20} />,   label: 'Details' },
           { key: 'trends' as const,   icon: <TrendingUp size={20} />, label: 'Trends' },
           { key: 'apiaries' as const, icon: <MapPin size={20} />,     label: 'Apiaries' },
         ]).map(({ key, icon, label }) => (
