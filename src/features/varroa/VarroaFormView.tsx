@@ -29,26 +29,26 @@ function getStatusInfo(pct: number, threshold: number) {
   if (pct >= threshold * 1.5) {
     return {
       label: 'Critical',
-      color: 'text-red-600 dark:text-red-400',
+      color: 'text-red-600',
       border: 'border-red-500/30',
-      bg: 'bg-red-50/70 dark:bg-red-950/20',
+      bg: 'bg-red-50/70',
       icon: <AlertTriangle size={20} className="text-red-500" />
     };
   }
   if (pct >= threshold) {
     return {
       label: 'Above Limit',
-      color: 'text-amber-600 dark:text-amber-400',
-      border: 'border-amber-500/30',
-      bg: 'bg-amber-50/70 dark:bg-amber-950/20',
-      icon: <AlertTriangle size={20} className="text-amber-500" />
+      color: 'text-[var(--color-primary-ink)]',
+      border: 'border-[var(--color-primary)]',
+      bg: 'bg-[var(--color-primary-wash)]',
+      icon: <AlertTriangle size={20} className="text-[var(--color-primary)]" />
     };
   }
   return {
     label: 'OK',
-    color: 'text-green-600 dark:text-green-400',
+    color: 'text-green-600',
     border: 'border-green-500/30',
-    bg: 'bg-green-50/70 dark:bg-green-950/20',
+    bg: 'bg-green-50/70',
     icon: <Check size={20} className="text-green-500" />
   };
 }
@@ -426,7 +426,7 @@ export const VarroaFormView: React.FC = () => {
                       }}
                       className={`card p-3.5 border-l-4 transition-all duration-200 cursor-pointer active:scale-98 flex items-center justify-between ${
                         pct >= thresh * 1.5 ? 'border-red-500/80 hover:border-red-400' :
-                        pct >= thresh ? 'border-amber-500/80 hover:border-amber-400' :
+                        pct >= thresh ? 'border-[var(--color-primary)] hover:border-[var(--color-primary)]' :
                         'border-green-500/80 hover:border-green-400'
                       }`}
                     >
@@ -437,7 +437,7 @@ export const VarroaFormView: React.FC = () => {
                           </h4>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
                             pct >= thresh * 1.5 ? 'bg-red-500/10 text-red-500' :
-                            pct >= thresh ? 'bg-amber-500/10 text-amber-500' :
+                            pct >= thresh ? 'bg-[var(--color-primary)] text-[var(--color-primary)]' :
                             'bg-green-500/10 text-green-500'
                           }`}>
                             {statusInfo.label}
@@ -470,10 +470,10 @@ export const VarroaFormView: React.FC = () => {
         </div>
 
         {/* Segregated Bottom Action Bar — Return to Hive */}
-        <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <button 
             onClick={goBack}
-            className="flex-1 max-w-md bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
+            className="flex-1 max-w-md bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm"
           >
             <Hexagon size={20} />
             Return to Hive Details
@@ -578,7 +578,7 @@ export const VarroaFormView: React.FC = () => {
       </div>
 
       {/* Segregated Bottom Save/Cancel Bar */}
-      <div className="w-full flex-shrink-0 flex justify-center gap-2.5 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className="w-full flex-shrink-0 flex justify-center gap-2.5 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <button
           type="button"
           onClick={() => {
@@ -586,7 +586,7 @@ export const VarroaFormView: React.FC = () => {
             setIsFormOpen(false);
           }}
           disabled={loading}
-          className="flex-1 max-w-[110px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
+          className="flex-1 max-w-[110px] bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-sm"
         >
           Cancel
         </button>

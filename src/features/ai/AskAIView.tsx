@@ -125,7 +125,7 @@ export const AskAIView: React.FC = () => {
                 className="bg-transparent text-[11px] font-bold text-[var(--color-text-muted)] border-none focus:outline-none appearance-none pr-5 cursor-pointer text-center outline-none"
               >
                 {apiariesList.map(a => (
-                  <option key={a.id} value={a.id} className="text-black dark:text-white bg-[var(--color-bg)]">
+                  <option key={a.id} value={a.id} className="text-black bg-[var(--color-bg)]">
                     {a.name}
                   </option>
                 ))}

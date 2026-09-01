@@ -77,17 +77,17 @@ export const FeedbackModal: React.FC = () => {
             <div className="space-y-6">
               
               {/* Roadmap CTA */}
-              <div className="bg-amber-50 p-4 rounded-xl border-2 border-amber-100">
-                <h4 className="font-black text-amber-900 flex items-center gap-2 mb-1">
-                  Have a Feature Idea? <Lightbulb size={18} className="text-amber-500" />
+              <div className="bg-[var(--color-primary-wash)] p-4 rounded-xl border-2 border-[var(--color-primary-faint)]">
+                <h4 className="font-black text-[var(--color-primary-ink)] flex items-center gap-2 mb-1">
+                  Have a Feature Idea? <Lightbulb size={18} className="text-[var(--color-primary)]" />
                 </h4>
-                <p className="text-sm font-bold text-amber-800/80 mb-4">
+                <p className="text-sm font-bold text-[var(--color-primary-ink)] mb-4">
                   Vote on existing requests or submit your own ideas to our public roadmap.
                 </p>
                 <button
                   type="button"
                   onClick={handleGoToRoadmap}
-                  className="w-full text-center bg-[var(--color-input-bg)] border-2 border-amber-300 text-amber-700 py-3 rounded-xl font-black hover:bg-amber-100 transition-colors active:scale-95 shadow-sm"
+                  className="w-full text-center bg-[var(--color-input-bg)] border-2 border-[var(--color-primary)] text-[var(--color-primary-ink)] py-3 rounded-xl font-black hover:bg-[var(--color-primary-wash)] transition-colors active:scale-95 shadow-sm"
                 >
                   View Roadmap & Vote →
                 </button>

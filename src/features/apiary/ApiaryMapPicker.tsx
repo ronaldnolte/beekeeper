@@ -280,7 +280,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
       {/* Bottom sheet */}
       <div className="bg-[var(--color-bg-raised)] px-5 pt-4 pb-6 shadow-[0_-6px_24px_rgba(0,0,0,0.16)]">
         {locateError && (
-          <div className="mb-3 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <div className="mb-3 text-xs font-bold text-[var(--color-primary-ink)] bg-[var(--color-primary-wash)] border border-[var(--color-primary-faint)] rounded-lg px-3 py-2">
             {locateError}
           </div>
         )}

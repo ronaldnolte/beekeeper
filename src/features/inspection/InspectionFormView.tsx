@@ -226,10 +226,10 @@ export const InspectionFormView: React.FC = () => {
         </div>
 
         {/* Segregated Bottom Action Bar — Return to Hive */}
-        <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <button 
             onClick={goBack}
-            className="flex-1 max-w-md bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
+            className="flex-1 max-w-md bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm"
           >
             <Hexagon size={20} />
             Return to Hive Details
@@ -324,7 +324,7 @@ export const InspectionFormView: React.FC = () => {
       </div>
 
       {/* Segregated Bottom Save Bar */}
-      <div className="w-full flex-shrink-0 flex justify-center gap-2.5 px-4 py-3 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+      <div className="w-full flex-shrink-0 flex justify-center gap-2.5 px-4 py-3 bg-white/75 backdrop-blur-xl border-t border-white/40 z-10 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
 
         {selectedRecord && (
           <button

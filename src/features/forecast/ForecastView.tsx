@@ -99,7 +99,7 @@ export const ForecastView: React.FC = () => {
 
   const getScoreColorV2 = (classification: 'Optimal' | 'Viable' | 'Inadvisable') => {
       if (classification === 'Optimal') return 'bg-green-600';
-      if (classification === 'Viable') return 'bg-amber-400';
+      if (classification === 'Viable') return 'bg-[var(--color-primary)]';
       return 'bg-red-500';
   };
 
@@ -116,7 +116,7 @@ export const ForecastView: React.FC = () => {
       {/* Header */}
       <div className="w-full max-w-[800px] flex justify-center items-center py-2 relative">
         <div className="text-center">
-          <h2 className="text-2xl font-black text-[#8B4513] dark:text-amber-500">Hive Forecast</h2>
+          <h2 className="text-2xl font-black text-[#8B4513]">Hive Forecast</h2>
           {selectedApiaryId && apiariesList.length > 1 ? (
             <div className="relative inline-flex items-center gap-1 mt-0.5 justify-center">
               <select
@@ -130,7 +130,7 @@ export const ForecastView: React.FC = () => {
                 className="bg-transparent text-sm font-bold text-[var(--color-text-muted)] border-none focus:outline-none appearance-none pr-5 cursor-pointer text-center outline-none"
               >
                 {apiariesList.map(a => (
-                  <option key={a.id} value={a.id} className="text-black dark:text-white bg-[var(--color-bg)]">
+                  <option key={a.id} value={a.id} className="text-black bg-[var(--color-bg)]">
                     {a.name}
                   </option>
                 ))}
@@ -189,11 +189,11 @@ export const ForecastView: React.FC = () => {
           <div className="w-full flex flex-col items-center space-y-4">
               
               {/* V2 Scoring Legend */}
-              <div className="flex flex-col items-center justify-center text-[10px] sm:text-xs bg-white/70 dark:bg-[#1E1E1E]/70 p-2 sm:p-4 rounded-2xl border border-[var(--color-card-border)] shadow-sm max-w-sm mx-auto backdrop-blur-sm">
-                  <span className="font-extrabold text-[#8B4513] dark:text-amber-500 mb-1 sm:mb-1.5 uppercase tracking-wider text-[9px]">Decision Points (0-9)</span>
+              <div className="flex flex-col items-center justify-center text-[10px] sm:text-xs bg-white/70 p-2 sm:p-4 rounded-2xl border border-[var(--color-card-border)] shadow-sm max-w-sm mx-auto backdrop-blur-sm">
+                  <span className="font-extrabold text-[#8B4513] mb-1 sm:mb-1.5 uppercase tracking-wider text-[9px]">Decision Points (0-9)</span>
                   <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center font-bold text-[var(--color-text-muted)]">
                       <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-600"></div>Optimal 7-9</div>
-                      <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-400"></div>Viable 4-6</div>
+                      <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]"></div>Viable 4-6</div>
                       <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>Inadvisable 0-3</div>
                   </div>
               </div>
@@ -204,7 +204,7 @@ export const ForecastView: React.FC = () => {
                   <span className="text-[var(--color-text-muted)] mx-1">|</span>
                   <button 
                     onClick={() => setIsGuideOpen(true)}
-                    className="text-amber-600 dark:text-amber-500 hover:text-amber-700 underline decoration-dotted underline-offset-4 transition-colors"
+                    className="text-[var(--color-primary-ink)] hover:text-[var(--color-primary-ink)] underline decoration-dotted underline-offset-4 transition-colors"
                   >
                     How are scores calculated?
                   </button>
@@ -216,7 +216,7 @@ export const ForecastView: React.FC = () => {
                       <table className="border-collapse w-full text-xs table-fixed">
                           <thead>
                               <tr className="bg-[var(--color-bg-raised)]">
-                                  <th className="border-b border-r border-[var(--color-card-border)] py-1.5 sm:py-2.5 font-bold sticky left-0 bg-[var(--color-bg-raised)] z-10 text-[#8B4513] dark:text-amber-500 w-[46px] sm:w-20 text-center">Time</th>
+                                  <th className="border-b border-r border-[var(--color-card-border)] py-1.5 sm:py-2.5 font-bold sticky left-0 bg-[var(--color-bg-raised)] z-10 text-[#8B4513] w-[46px] sm:w-20 text-center">Time</th>
                                   {filteredDates.map(dateStr => {
                                       const date = new Date(dateStr + 'T12:00:00');
                                       const getCompactDayStr = (dStr: string) => {
@@ -229,10 +229,10 @@ export const ForecastView: React.FC = () => {
                                       };
                                       return (
                                           <th key={dateStr} className="border-b border-[var(--color-card-border)] py-1.5 sm:py-2.5 px-0.5 text-center min-w-0">
-                                              <div className="font-extrabold text-[#8B4513] dark:text-amber-500 hidden sm:block">
+                                              <div className="font-extrabold text-[#8B4513] hidden sm:block">
                                                   {date.toLocaleDateString('en-US', { weekday: 'short' })}
                                               </div>
-                                              <div className="font-extrabold text-[#8B4513] dark:text-amber-500 block sm:hidden text-[11px]">
+                                              <div className="font-extrabold text-[#8B4513] block sm:hidden text-[11px]">
                                                   {getCompactDayStr(dateStr)}
                                               </div>
                                               <div className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold leading-none mt-0.5">
@@ -245,7 +245,7 @@ export const ForecastView: React.FC = () => {
                           </thead>
                           <tbody>
                               {timeSlots.map(hour => (
-                                  <tr key={hour} className="hover:bg-amber-500/5">
+                                  <tr key={hour} className="hover:bg-[var(--color-primary)]">
                                       <td className="border-b border-r border-[var(--color-card-border)] h-7 sm:h-10 py-0 font-bold sticky left-0 bg-[var(--color-input-bg)] z-10 text-[var(--color-text-muted)] text-[10px] sm:text-[10px] w-[46px] sm:w-20 text-center">
                                           {formatTimeSlot(hour)}
                                       </td>

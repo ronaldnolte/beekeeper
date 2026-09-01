@@ -25,7 +25,7 @@ export const ForecastDetailModal: React.FC<Props> = ({ isOpen, onClose, window }
 
     const getScoreColorV2 = (classification: 'Optimal' | 'Viable' | 'Inadvisable') => {
         if (classification === 'Optimal') return 'bg-green-600';
-        if (classification === 'Viable') return 'bg-amber-400';
+        if (classification === 'Viable') return 'bg-[var(--color-primary)]';
         return 'bg-red-500';
     };
 
@@ -46,10 +46,10 @@ export const ForecastDetailModal: React.FC<Props> = ({ isOpen, onClose, window }
                 {/* Header Row */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-2">
                     <div>
-                        <h3 className="text-xl font-black text-[#8B4513] dark:text-amber-500">Inspection Window Details</h3>
+                        <h3 className="text-xl font-black text-[#8B4513]">Inspection Window Details</h3>
                         <p className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide">
                             {dayDateStr}
-                            <span className="text-amber-600 dark:text-amber-400 ml-2 font-black">
+                            <span className="text-[var(--color-primary-ink)] ml-2 font-black">
                                 {timeStr}
                             </span>
                         </p>
@@ -106,21 +106,21 @@ export const ForecastDetailModal: React.FC<Props> = ({ isOpen, onClose, window }
 
                     {/* Concerns & Fail-Safes */}
                     {window.issuesV2.length > 0 ? (
-                        <div className="bg-red-50 dark:bg-red-950/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30 text-xs">
-                            <h5 className="font-bold text-red-700 dark:text-red-400 mb-1.5 flex items-center gap-1">
+                        <div className="bg-red-50 p-3 rounded-xl border border-red-100 text-xs">
+                            <h5 className="font-bold text-red-700 mb-1.5 flex items-center gap-1">
                                 <AlertTriangle size={14} /> Tripped Fail-Safes:
                             </h5>
-                            <ul className="text-red-600 dark:text-red-400/90 space-y-1 list-disc pl-4 font-bold">
+                            <ul className="text-red-600 space-y-1 list-disc pl-4 font-bold">
                                 {window.issuesV2.map((issue, idx) => <li key={idx}>{issue}</li>)}
                             </ul>
                         </div>
                     ) : window.pressureDelta3hr >= 1.5 && window.pressureDelta3hr < 4.0 ? (
-                        <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-xl border border-amber-200 dark:border-amber-900/30 text-xs text-amber-800 dark:text-amber-400 font-bold flex items-start gap-1">
+                        <div className="bg-[var(--color-primary-wash)] p-3 rounded-xl border border-[var(--color-primary-faint)] text-xs text-[var(--color-primary-ink)] font-bold flex items-start gap-1">
                             <Info size={14} className="shrink-0 mt-0.5" />
                             <span>Warning: Moderate pressure drop detected (possible storm front approaching). Keep inspection brief!</span>
                         </div>
                     ) : (
-                        <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-xl border border-green-100 dark:border-green-900/30 text-xs text-green-700 dark:text-green-400 font-bold flex items-center gap-1">
+                        <div className="bg-green-50 p-3 rounded-xl border border-green-100 text-xs text-green-700 font-bold flex items-center gap-1">
                             <CheckCircle2 size={14} />
                             <span>Fail-safes cleared! Inspection is safe to conduct.</span>
                         </div>

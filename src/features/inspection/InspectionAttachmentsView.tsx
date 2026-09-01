@@ -265,7 +265,7 @@ export const InspectionAttachmentsView: React.FC = () => {
         </div>
 
         {error && (
-          <div className="w-full max-w-2xl bg-red-500/10 border border-red-500/40 text-red-600 dark:text-red-400 rounded-xl px-3 py-2 text-sm font-medium">
+          <div className="w-full max-w-2xl bg-red-500/10 border border-red-500/40 text-red-600 rounded-xl px-3 py-2 text-sm font-medium">
             {error}
           </div>
         )}
@@ -401,10 +401,10 @@ export const InspectionAttachmentsView: React.FC = () => {
       />
 
       {/* Bottom action buttons */}
-      <div className="w-full flex-shrink-0 flex justify-center gap-2.5 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className="w-full flex-shrink-0 flex justify-center gap-2.5 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <button
           onClick={goBackToForm}
-          className="flex-shrink-0 bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] px-4 py-3.5 rounded-2xl font-bold text-sm flex items-center gap-2 active:scale-95 dark:bg-black/30 dark:border-white/10 dark:text-white"
+          className="flex-shrink-0 bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] px-4 py-3.5 rounded-2xl font-bold text-sm flex items-center gap-2 active:scale-95"
           aria-label="Back to inspection"
         >
           <ChevronLeft size={16} />
@@ -439,7 +439,7 @@ export const InspectionAttachmentsView: React.FC = () => {
 
       {busy && (
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-20">
-          <div className="bg-white dark:bg-zinc-800 rounded-2xl px-5 py-4 flex items-center gap-3 shadow-xl">
+          <div className="bg-white rounded-2xl px-5 py-4 flex items-center gap-3 shadow-xl">
             <Loader2 size={18} className="animate-spin text-[var(--color-primary)]" />
             <span className="font-bold text-sm text-[var(--color-text)]">Working…</span>
           </div>

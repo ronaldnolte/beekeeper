@@ -18,8 +18,8 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-5 bg-[var(--color-input-bg)] border-b border-[var(--color-card-border)]">
                     <div>
-                        <h3 className="text-xl font-black text-[#8B4513] dark:text-amber-500">How Scores are Calculated</h3>
-                        <p className="text-xs text-[#8B4513]/70 dark:text-amber-400/80 font-bold uppercase tracking-wider mt-0.5">Optimal conditions for hive inspections</p>
+                        <h3 className="text-xl font-black text-[#8B4513]">How Scores are Calculated</h3>
+                        <p className="text-xs text-[#8B4513]/70 font-bold uppercase tracking-wider mt-0.5">Optimal conditions for hive inspections</p>
                     </div>
                     <button
                         onClick={onClose}
@@ -38,7 +38,7 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
 
                     {/* Point Breakdown */}
                     <div className="space-y-4">
-                        <h4 className="font-black text-[#8B4513] dark:text-amber-500 uppercase tracking-wider text-xs">Weighted Points Matrix</h4>
+                        <h4 className="font-black text-[#8B4513] uppercase tracking-wider text-xs">Weighted Points Matrix</h4>
 
                         <div className="grid gap-3">
                             <ScoreRule
@@ -69,15 +69,15 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
                     </div>
 
                     {/* V2 Fail-Safes */}
-                    <div className="bg-red-50 dark:bg-red-950/20 rounded-xl p-5 border border-red-100 dark:border-red-900/30">
-                        <h4 className="font-black text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
+                    <div className="bg-red-50 rounded-xl p-5 border border-red-100">
+                        <h4 className="font-black text-red-700 mb-3 flex items-center gap-2">
                             <AlertTriangle size={18} />
                             Safety Fail-Safes (Forces Red Cell Abort)
                         </h4>
-                        <p className="text-xs font-medium text-red-600 dark:text-red-400/80 mb-3">
+                        <p className="text-xs font-medium text-red-600 mb-3">
                             If any of these conditions evaluate to TRUE, execution is immediately aborted (classification: <strong>Inadvisable / Red Cell</strong>) and points default to 0:
                         </p>
-                        <ul className="grid grid-cols-1 gap-y-2 text-xs font-bold text-red-700 dark:text-red-400 list-disc ml-4">
+                        <ul className="grid grid-cols-1 gap-y-2 text-xs font-bold text-red-700 list-disc ml-4">
                             <li><strong>Brood Chill Threshold:</strong> Temperature &lt; 57°F (14°C) (extreme cold risk)</li>
                             <li><strong>Comb Heat/Heat Stroke:</strong> Temperature &gt; 92°F (33°C) (slumping wax risk)</li>
                             <li><strong>Flight Disruption Wind:</strong> Wind speed &gt; 18mph (colony aggression risk)</li>
@@ -89,12 +89,12 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
                     </div>
 
                     {/* Barometric storm tracking */}
-                    <div className="bg-blue-50 dark:bg-blue-950/20 rounded-xl p-5 border border-blue-100 dark:border-blue-900/30">
-                        <h4 className="font-black text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-2">
+                    <div className="bg-blue-50 rounded-xl p-5 border border-blue-100">
+                        <h4 className="font-black text-blue-700 mb-3 flex items-center gap-2">
                             <Info size={18} />
                             Storm Front Tracking
                         </h4>
-                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400/80 mb-3">
+                        <p className="text-xs font-medium text-blue-600 mb-3">
                             A moderate 3-hour pressure drop (between 1.5 and 4.0 hPa) does not completely abort the inspection, but it applies a **-2 point penalty** to reflect the approaching weather disturbance.
                         </p>
                     </div>
@@ -116,10 +116,10 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
 
 function ScoreRule({ label, max, description, detail }: { label: string, max: string, description: string, detail: string }) {
     return (
-        <div className="group border border-[var(--color-card-border)] bg-[var(--color-bg-raised)] rounded-xl p-4 shadow-sm hover:border-amber-200 hover:shadow-md transition-all">
+        <div className="group border border-[var(--color-card-border)] bg-[var(--color-bg-raised)] rounded-xl p-4 shadow-sm hover:border-[var(--color-primary-faint)] hover:shadow-md transition-all">
             <div className="flex justify-between items-center mb-2">
-                <span className="font-black text-[#8B4513] dark:text-amber-500 text-base">{label}</span>
-                <span className="text-xs font-black bg-amber-100 dark:bg-amber-950/50 text-[#8B4513] dark:text-amber-400 px-3 py-1 rounded-full">{max} pts</span>
+                <span className="font-black text-[#8B4513] text-base">{label}</span>
+                <span className="text-xs font-black bg-[var(--color-primary-wash)] text-[#8B4513] px-3 py-1 rounded-full">{max} pts</span>
             </div>
             <p className="text-xs font-medium text-[var(--color-text-muted)] mb-3">{description}</p>
             <p className="text-[10px] text-[var(--color-text-muted)] font-mono bg-[var(--color-input-bg)] p-2 rounded-lg leading-relaxed">{detail}</p>

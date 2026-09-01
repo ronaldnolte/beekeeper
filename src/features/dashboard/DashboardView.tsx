@@ -91,7 +91,7 @@ export const DashboardView: React.FC = () => {
           onClick={navigateToHivesTab}
           className="card p-3 sm:p-4 text-left flex flex-col justify-between h-24 sm:h-28 active:scale-95 transition-transform hover:border-[var(--color-primary)] hover:bg-[var(--color-card-bg)]/80 outline-none"
         >
-          <div className="text-amber-500">
+          <div className="text-[var(--color-primary)]">
             <Box size={22} />
           </div>
           <div>

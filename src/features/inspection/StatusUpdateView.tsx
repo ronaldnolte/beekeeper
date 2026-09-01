@@ -6,7 +6,7 @@ import { CheckCircle, AlertTriangle, Skull, Wind, Archive, Hexagon } from 'lucid
 
 const STATUS_OPTIONS = [
   { value: 'Active', label: 'Active', icon: <CheckCircle size={32} />, color: 'text-green-600', bg: 'bg-green-100', border: 'border-green-500', desc: 'Hive is healthy and active' },
-  { value: 'Needs Attention', label: 'Needs Attention', icon: <AlertTriangle size={32} />, color: 'text-amber-600', bg: 'bg-amber-100', border: 'border-amber-500', desc: 'Requires immediate inspection' },
+  { value: 'Needs Attention', label: 'Needs Attention', icon: <AlertTriangle size={32} />, color: 'text-[var(--color-primary-ink)]', bg: 'bg-[var(--color-primary-wash)]', border: 'border-[var(--color-primary)]', desc: 'Requires immediate inspection' },
   { value: 'Swarmed', label: 'Swarmed', icon: <Wind size={32} />, color: 'text-orange-600', bg: 'bg-orange-100', border: 'border-orange-500', desc: 'Colony has recently swarmed' },
   { value: 'Deadout', label: 'Deadout', icon: <Skull size={32} />, color: 'text-red-600', bg: 'bg-red-100', border: 'border-red-500', desc: 'Colony did not survive' },
   { value: 'Inactive', label: 'Inactive / Stored', icon: <Archive size={32} />, color: 'text-[var(--color-text-muted)]', bg: 'bg-[var(--color-bg-raised)]', border: 'border-gray-500', desc: 'Equipment currently in storage' },
@@ -81,10 +81,10 @@ export const StatusUpdateView: React.FC = () => {
       </div>
 
       {/* Segregated Bottom Action Bar — Return to Hive Details */}
-      <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <button 
           onClick={() => navigateTo('HIVE_DETAIL')}
-          className="flex-1 max-w-md bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
+          className="flex-1 max-w-md bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm"
         >
           <Hexagon size={20} />
           Return to Hive Details

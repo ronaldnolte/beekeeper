@@ -34,7 +34,7 @@ export const HiveSelectionView: React.FC = () => {
         icon: <Hexagon size={22} />,
         statusBadge: {
           text: h.status || 'Active',
-          colorClass: (h.status || 'Active') === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+          colorClass: (h.status || 'Active') === 'Active' ? 'bg-green-100 text-green-700' : 'bg-[var(--color-primary-wash)] text-[var(--color-primary-ink)]'
         },
         raw: h
       };

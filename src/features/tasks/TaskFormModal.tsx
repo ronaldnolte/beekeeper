@@ -169,7 +169,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <button 
                   onClick={() => setStatus('pending')}
-                  className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors ${status === 'pending' ? 'bg-amber-500/15 border-amber-500 text-amber-400' : 'bg-[var(--color-input-bg)] border-[var(--color-card-border)] text-[var(--color-text-muted)]'}`}
+                  className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors ${status === 'pending' ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-[var(--color-primary)]' : 'bg-[var(--color-input-bg)] border-[var(--color-card-border)] text-[var(--color-text-muted)]'}`}
                 >
                   Pending
                 </button>
@@ -195,7 +195,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </button>
               <button 
                 onClick={() => setPriority('medium')}
-                className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors ${priority === 'medium' ? 'bg-amber-500/15 border-amber-500 text-amber-400' : 'bg-[var(--color-input-bg)] border-[var(--color-card-border)] text-[var(--color-text-muted)]'}`}
+                className={`py-3 rounded-xl font-bold text-sm border-2 transition-colors ${priority === 'medium' ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-[var(--color-primary)]' : 'bg-[var(--color-input-bg)] border-[var(--color-card-border)] text-[var(--color-text-muted)]'}`}
               >
                 Medium
               </button>

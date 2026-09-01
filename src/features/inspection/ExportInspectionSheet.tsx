@@ -84,7 +84,7 @@ export const ExportInspectionSheet: React.FC<{ inspection: InspectionForPdf; hiv
       {open && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4" onClick={close}>
           <div
-            className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-t-3xl sm:rounded-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl"
+            className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -100,12 +100,12 @@ export const ExportInspectionSheet: React.FC<{ inspection: InspectionForPdf; hiv
             </div>
 
             {error && (
-              <div className="mb-3 bg-red-500/10 border border-red-500/40 text-red-600 dark:text-red-400 rounded-xl px-3 py-2 text-sm font-medium">
+              <div className="mb-3 bg-red-500/10 border border-red-500/40 text-red-600 rounded-xl px-3 py-2 text-sm font-medium">
                 {error}
               </div>
             )}
             {note && (
-              <div className="mb-3 bg-green-500/10 border border-green-500/40 text-green-700 dark:text-green-400 rounded-xl px-3 py-2 text-sm font-medium flex items-center gap-2">
+              <div className="mb-3 bg-green-500/10 border border-green-500/40 text-green-700 rounded-xl px-3 py-2 text-sm font-medium flex items-center gap-2">
                 <Check size={16} /> {note}
               </div>
             )}
