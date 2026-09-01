@@ -66,6 +66,17 @@
   --ease-soft: cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 
+/* Shared motion. Fades and a short rise — the vocabulary for dialogs, sheets
+   and view changes, so every screen moves the same way. */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
 /* Anyone who has asked their device to calm down gets no motion from us. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
