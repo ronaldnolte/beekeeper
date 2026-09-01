@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { ArrowLeft, Check, KeyRound, Mail, LogOut, Loader2 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../data/supabase';
@@ -77,9 +78,13 @@ export const ProfileView: React.FC = () => {
   const handlePasswordReset = async () => {
     if (!user?.email) return;
     setError(null);
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(user.email, {
-      redirectTo: `${window.location.origin}/auth/update-password`,
-    });
+    // On the web, come back to whichever site sent you — preview stays on
+    // preview. In the packaged app the origin is capacitor://localhost, which
+    // is not somewhere an email link can land, so send those to production.
+    const redirectTo = Capacitor.isNativePlatform()
+      ? 'https://beekeeper.beektools.com/auth/update-password'
+      : `${window.location.origin}/auth/update-password`;
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(user.email, { redirectTo });
     if (resetError) setError(resetError.message);
     else setResetSent(true);
   };
