@@ -6,20 +6,24 @@ server-side API functions (Google Earth Engine NDVI, Gemini chat).
 ## Running locally
 
 - **Web app:** `npm run dev` — Vite dev server (defaults to :5173).
-- **Nectar index in dev:** the Nectar Flow views call `/api/nectar-index` and
-  `/api/nectar-index-v2`, which `vite.config.ts` proxies to
-  `http://localhost:3001`. That port is served by `local-api-server.js` (a
-  dev-only shim, gitignored — not in the repo, kept on disk). Start it with
-  **`npx tsx local-api-server.js`**.
-  - Both endpoints require a signed-in user (Authorization: Bearer header).
+- **Nectar index in dev:** the Nectar Flow view calls `/api/nectar-index-v2`,
+  which `vite.config.ts` proxies to `http://localhost:3001`. That port is
+  served by `local-api-server.js` (a dev-only shim, gitignored — not in the
+  repo, kept on disk). Start it with **`npx tsx local-api-server.js`**.
+  - The endpoint requires a signed-in user (Authorization: Bearer header).
     The shim loads `.env` then `.env.development.local` (override), so token
     validation uses the same dev database the browser session came from.
   - Use `tsx`, NOT `ts-node` — ts-node's ESM loader fails on this project's
     `moduleResolution: bundler` tsconfig; `tsx` resolves the `.ts`/`.js`
     imports cleanly.
   - Without it, the Nectar view fails with `ECONNREFUSED` on :3001. This is a
-    local-dev gap only — in production `/api/nectar-index` is the deployed
-    Vercel serverless function `api/nectar-index.ts`.
+    local-dev gap only — in production it is the deployed Vercel serverless
+    function `api/nectar-index-v2.ts`.
+  - **v1 is gone** (removed 2026-08-31): `api/nectar-index.ts` and its engine,
+    bloom-factor, weather-suitability, plant-profile and NDVI-fetcher modules.
+    Nothing called it; every install was already on the v2 client. If you need
+    the old algorithm for reference it is preserved in
+    `E:\claude\NectarV2\reference\nectar\`.
 - Other `/api/*` routes proxy to production (`beekeeper.beektools.com`).
 - Verify changes with: `tsc -b`, `vite build`, `npm run test`.
 
