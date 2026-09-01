@@ -154,7 +154,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex flex-col bg-black animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[110] flex flex-col bg-black animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
       {/* Map area */}
       <div className="relative flex-1 min-h-0">
         <div ref={containerRef} className="absolute inset-0 bg-[var(--color-bg-raised)]" />

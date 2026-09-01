@@ -10,9 +10,9 @@ export const ForecastScoreGuideModal: React.FC<Props> = ({ isOpen, onClose }) =>
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[fade-in_var(--dur-base)_var(--ease-soft)]" onClick={onClose}>
             <div
-                className="bg-[var(--color-input-bg)] text-[var(--color-text)] rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300 border border-[var(--color-card-border)]"
+                className="bg-[var(--color-input-bg)] text-[var(--color-text)] rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col animate-[sheet-in_var(--dur-slow)_var(--ease-soft)] sm:zoom-in-95 duration-300 border border-[var(--color-card-border)]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}

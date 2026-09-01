@@ -45,7 +45,7 @@ export const StatusUpdateView: React.FC = () => {
     <div className="w-full h-full flex flex-col overflow-hidden">
       
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-4 space-y-6 animate-in slide-in-from-bottom-8">
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-4 space-y-6 animate-[sheet-in_var(--dur-slow)_var(--ease-soft)]">
         
         {/* Header */}
         <div className="w-full max-w-2xl flex justify-between items-center mb-2">

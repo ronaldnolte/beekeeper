@@ -809,7 +809,7 @@ export const NectarFlowV2View: React.FC = () => {
                 </div>
               </div>
               {expandToday && (
-                <div className="mt-5 pt-4 border-t border-[#2b2b4d] space-y-2 text-xs text-slate-300 animate-in slide-in-from-top-2 duration-200">
+                <div className="mt-5 pt-4 border-t border-[#2b2b4d] space-y-2 text-xs text-slate-300 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
                   {[
                     ['Greenness (NDVI/EVI)', `${Math.round(data.v2.greenness * 100)}%`],
                     ['Vigor (above baseline)', `${Math.round(data.v2.vigor * 100)}%`],
@@ -957,7 +957,7 @@ export const NectarFlowV2View: React.FC = () => {
                 <ChevronDown size={14} className={`transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
               </button>
               {expandTrends && (
-                <div className="mt-1 bg-[#121226] border border-[#222240] rounded-xl p-3 space-y-1.5 text-xs text-slate-300 animate-in slide-in-from-top-2 duration-200">
+                <div className="mt-1 bg-[#121226] border border-[#222240] rounded-xl p-3 space-y-1.5 text-xs text-slate-300 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
                   {historyCurrent.filter((_: any, idx: number) => idx % 7 === 0 || idx === historyCurrent.length - 1).map((h: any, i: number) => (
                     <div key={i} className="flex justify-between border-b border-[#20203a] pb-1.5">
                       <span>{new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>

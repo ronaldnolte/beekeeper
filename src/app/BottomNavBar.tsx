@@ -91,9 +91,11 @@ export const BottomNavBar: React.FC = () => {
                   : 'text-white/50 hover:text-white/80 font-semibold'
             }`}
           >
-            {/* Subtle top indicator bar */}
+            {/* Indicator for the current tab. It used to pulse forever, which
+                is motion that asks for attention it does not need — you already
+                know which tab you are on. It now just fades in. */}
             {tab.isActive && (
-              <span className="absolute top-1 w-5 h-1 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_var(--color-primary-glow)] animate-pulse" />
+              <span className="absolute top-1 w-5 h-1 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_var(--color-primary-glow)] animate-[fade-in_var(--dur-base)_var(--ease-soft)]" />
             )}
             
             <div className={`transition-transform duration-300 ${tab.isActive ? 'scale-110 translate-y-0.5' : 'scale-100'}`}>

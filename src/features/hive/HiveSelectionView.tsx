@@ -64,7 +64,7 @@ export const HiveSelectionView: React.FC = () => {
   }, [selectedApiaryId, isUnifiedHiveView, hivesList, apiariesList, selectedFilterApiaryId]);
 
   return (
-    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center pt-4 animate-in fade-in duration-300">
+    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center pt-4 animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
       
       {/* 2. Sleek yard filter pills (For Hives flat list view if hivesList.length > 5) */}
       {isUnifiedHiveView && hivesList.length > 5 && (

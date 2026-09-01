@@ -138,7 +138,7 @@ export const LangstrothVisualizer: React.FC<LangstrothVisualizerProps> = ({ hive
 
                   {/* Expansion Actions Panel */}
                   {isExpanded && (
-                    <div className="w-64 flex bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl overflow-hidden shadow-sm animate-in slide-in-from-top-2">
+                    <div className="w-64 flex bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl overflow-hidden shadow-sm animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
                       <button 
                         onClick={() => moveBox(idx, 'up')}
                         disabled={idx === 0}

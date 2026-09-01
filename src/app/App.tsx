@@ -159,7 +159,13 @@ function App() {
     <div className="w-full h-[100dvh] bg-[var(--color-bg)] text-[var(--color-text)] flex flex-col font-sans overflow-hidden">
       <AppHeader />
       
-      <main className="flex-1 flex flex-col overflow-hidden relative">
+      {/* Keyed on the view so every screen change fades rather than snapping.
+          A fade, not a slide: the tab bar is not ordered left-to-right in any
+          meaningful way, so sliding would imply a direction that isn't there. */}
+      <main
+        key={currentView}
+        className="flex-1 flex flex-col overflow-hidden relative animate-[fade-in_var(--dur-base)_var(--ease-soft)]"
+      >
         {currentView === 'AUTH' && <Auth />}
         
         {currentView === 'DASHBOARD' && <DashboardView />}

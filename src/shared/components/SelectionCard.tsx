@@ -87,7 +87,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
 
       {/* Expandable action row — only for three-dot menu case */}
       {showActions && (onEdit || item.onDelete) && (
-        <div className="flex items-center gap-2 mt-2 animate-in slide-in-from-top-2 duration-200">
+        <div className="flex items-center gap-2 mt-2 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
           {onEdit && (
             <button
               onClick={(e) => {

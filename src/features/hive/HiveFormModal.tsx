@@ -127,8 +127,8 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-[100] flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-[var(--color-bg)] w-full max-w-md sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-4 duration-300 max-h-[90vh]">
+    <div className="fixed inset-0 bg-black/60 z-[100] flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
+      <div className="bg-[var(--color-bg)] w-full max-w-md sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col animate-[sheet-in_var(--dur-slow)_var(--ease-soft)] duration-300 max-h-[90vh]">
         
         {/* Header */}
         <div className="bg-[var(--color-primary)] p-5 flex justify-between items-center text-white">

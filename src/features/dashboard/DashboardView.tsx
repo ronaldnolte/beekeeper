@@ -53,7 +53,7 @@ export const DashboardView: React.FC = () => {
   const pendingTasksCount = tasks.filter(t => t.status !== 'completed').length;
 
   return (
-    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center pt-4 animate-in fade-in duration-300">
+    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center pt-4 animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
       
       {/* 1. Greeting Header */}
       <div className="w-full max-w-2xl px-4 mb-6">

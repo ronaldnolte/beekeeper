@@ -49,7 +49,7 @@ export const FeedbackModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
       <div className="bg-[var(--color-input-bg)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
         
         {/* Header */}
@@ -68,7 +68,7 @@ export const FeedbackModal: React.FC = () => {
         {/* Body */}
         <div className="p-6 overflow-y-auto max-h-[80vh]">
           {status === 'success' ? (
-            <div className="text-center py-10 animate-in zoom-in">
+            <div className="text-center py-10 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
               <div className="text-5xl mb-4">✅</div>
               <h4 className="text-xl font-black text-[var(--color-card-text)] mb-2">Message Sent!</h4>
               <p className="text-[var(--color-text-muted)] font-bold">Thanks for your feedback.</p>

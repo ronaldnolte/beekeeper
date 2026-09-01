@@ -111,7 +111,7 @@ export const ForecastView: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center p-2 sm:p-4 space-y-4 animate-in slide-in-from-right-4 duration-300 relative">
+    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center p-2 sm:p-4 space-y-4 animate-[slide-in_var(--dur-slow)_var(--ease-soft)] relative">
       
       {/* Header */}
       <div className="w-full max-w-[800px] flex justify-center items-center py-2 relative">

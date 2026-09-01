@@ -127,12 +127,12 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
       {/* Modal Content */}
-      <div className="relative w-full max-w-2xl bg-[var(--color-bg)] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-300">
+      <div className="relative w-full max-w-2xl bg-[var(--color-bg)] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-[sheet-in_var(--dur-slow)_var(--ease-soft)] duration-300">
         
         {/* Header */}
         <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-[var(--color-divider)] bg-[var(--color-primary)]">

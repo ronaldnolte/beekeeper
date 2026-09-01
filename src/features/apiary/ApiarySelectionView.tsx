@@ -52,7 +52,7 @@ export const ApiarySelectionView: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center pt-4 animate-in fade-in duration-300">
+    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center pt-4 animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
       
       {/* Apiary Selection */}
       <div className="w-full max-w-2xl px-4 mb-2">

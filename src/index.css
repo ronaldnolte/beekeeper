@@ -66,8 +66,18 @@
   --ease-soft: cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 
-/* Shared motion. Fades and a short rise — the vocabulary for dialogs, sheets
-   and view changes, so every screen moves the same way. */
+/* Shared motion — the whole vocabulary, four keyframes.
+
+   The app used to carry 31 `animate-in` / `slide-in-from-*` classes from the
+   tailwindcss-animate plugin, which was never installed. None of them appeared
+   in the built stylesheet, so the app read as animated in source and shipped
+   nothing. Rather than install the plugin and turn 31 unreviewed animations on
+   at once, these four cover every case, and everything moves the same way.
+
+   fade-in    a screen or overlay arriving
+   rise-in    a small element appearing in place — a revealed field, a dialog
+   sheet-in   something coming up from the bottom edge
+   slide-in   a panel arriving from the right */
 @keyframes fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -75,6 +85,19 @@
 @keyframes rise-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: none; }
+}
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: none; }
+}
+/* The one looping animation, for "Ask AI is thinking". Breathing, not bouncing. */
+@keyframes thinking {
+  0%, 80%, 100% { opacity: 0.25; }
+  40%           { opacity: 1; }
 }
 
 /* Anyone who has asked their device to calm down gets no motion from us. */

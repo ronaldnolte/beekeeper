@@ -164,7 +164,7 @@ export const RoadmapView: React.FC = () => {
     <div className="w-full h-full flex flex-col overflow-hidden">
       
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-4 space-y-6 animate-in slide-in-from-right-8 relative">
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-4 space-y-6 animate-[slide-in_var(--dur-slow)_var(--ease-soft)] relative">
       
       {/* Header */}
       <div className="w-full max-w-2xl flex justify-between items-center bg-[#FFFBF0] p-6 rounded-2xl border-2 border-amber-200">
@@ -276,7 +276,7 @@ export const RoadmapView: React.FC = () => {
 
       {/* Submit Idea Modal Overlay */}
       {isSubmitModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
           <div className="bg-[var(--color-input-bg)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
             
             <div className="bg-[var(--color-primary)] p-4 flex justify-between items-center text-white">
@@ -344,7 +344,7 @@ export const RoadmapView: React.FC = () => {
 
       {/* Admin Edit Modal Overlay */}
       {editingFeature && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
           <div className="bg-[var(--color-input-bg)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
 
             <div className="bg-[var(--color-primary)] p-4 flex justify-between items-center text-white">
