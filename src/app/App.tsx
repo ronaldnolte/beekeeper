@@ -161,10 +161,15 @@ function App() {
       
       {/* Keyed on the view so every screen change fades rather than snapping.
           A fade, not a slide: the tab bar is not ordered left-to-right in any
-          meaningful way, so sliding would imply a direction that isn't there. */}
+          meaningful way, so sliding would imply a direction that isn't there.
+
+          Runs at the slow duration rather than the base one. React drops the
+          outgoing screen immediately, so this is the incoming screen arriving
+          rather than a true cross-dissolve — at 220ms that read as a flicker
+          you had to look for. */}
       <main
         key={currentView}
-        className="flex-1 flex flex-col overflow-hidden relative animate-[fade-in_var(--dur-base)_var(--ease-soft)]"
+        className="flex-1 flex flex-col overflow-hidden relative animate-[fade-in_var(--dur-slow)_var(--ease-soft)]"
       >
         {currentView === 'AUTH' && <Auth />}
         
