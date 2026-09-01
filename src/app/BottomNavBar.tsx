@@ -1,15 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { LayoutDashboard, Map, Hexagon, CloudSun, Sparkles, Mail, LogOut, Flower } from 'lucide-react';
-import { supabase } from '../data/supabase';
+import { LayoutDashboard, Map, Hexagon, CloudSun, Sparkles, Flower } from 'lucide-react';
 
 export const BottomNavBar: React.FC = () => {
   const { currentView, isUnifiedHiveView, navigateTo, navigateToApiariesTab, navigateToHivesTab } = useAppStore();
-
-  // Log Out sits one thumb-width from Ask AI in a bar whose targets are ~57px
-  // wide, and it ends the session with no way back except signing in again.
-  // Until it moves into the profile screen, it asks first.
-  const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   // Only render the floating bottom bar on the 6 root-level tabs
   const showNavBar = [
@@ -74,21 +68,13 @@ export const BottomNavBar: React.FC = () => {
       isActive: isAskAIActive,
       onClick: () => navigateTo('ASK_AI'),
     },
-    {
-      id: 'FEEDBACK',
-      label: 'Feedback',
-      icon: <Mail size={20} />,
-      isActive: false,
-      onClick: () => useAppStore.getState().setFeedbackModalOpen(true),
-    },
-    {
-      id: 'LOGOUT',
-      label: 'Log Out',
-      icon: <LogOut size={20} />,
-      isActive: false,
-      onClick: () => setConfirmingLogout(true),
-    },
   ];
+
+  // Feedback and Log Out used to sit here, making eight targets in a bar that
+  // caps at 500px — about 57px each, under both Apple's 44pt and Google's 48dp.
+  // Neither was a destination: one opened a modal, the other ended the session
+  // with no confirmation, one thumb-width from Ask AI. Both now live in the
+  // profile screen, reached from the avatar in the header.
 
   return (
     <div className="w-full flex-shrink-0 flex justify-center pt-2 z-40" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 12px))' }}>
@@ -120,46 +106,6 @@ export const BottomNavBar: React.FC = () => {
           </button>
         ))}
       </div>
-
-      {confirmingLogout && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-5 animate-[fade-in_var(--dur-base)_var(--ease-soft)]"
-          onClick={() => setConfirmingLogout(false)}
-          role="presentation"
-        >
-          <div
-            className="w-full max-w-sm rounded-3xl border border-[var(--color-shell-border)] bg-[var(--color-shell-raised)] p-6 text-left shadow-2xl animate-[rise-in_var(--dur-base)_var(--ease-soft)]"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="logout-title"
-          >
-            <h2 id="logout-title" className="text-lg font-black text-[var(--color-shell-text)]">
-              Log out of Beekeeper?
-            </h2>
-            <p className="mt-1.5 text-sm text-white/60">
-              You'll need your email and password to get back in. Nothing you've recorded is lost.
-            </p>
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setConfirmingLogout(false)}
-                className="flex-1 rounded-2xl border border-[var(--color-shell-border)] py-3 font-bold text-[var(--color-shell-text)] transition-colors duration-[var(--dur-fast)] hover:bg-white/5 active:scale-95"
-              >
-                Stay signed in
-              </button>
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  window.location.reload();
-                }}
-                className="flex-1 rounded-2xl bg-[var(--color-bad)] py-3 font-bold text-white transition-colors duration-[var(--dur-fast)] hover:bg-[var(--color-bad-bright)] active:scale-95"
-              >
-                Log out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

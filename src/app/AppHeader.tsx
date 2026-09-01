@@ -32,7 +32,11 @@ const LandscapeSVG = () => (
 );
 
 export const AppHeader: React.FC = () => {
-  const { currentView, isUnifiedHiveView } = useAppStore();
+  const { currentView, isUnifiedHiveView, user, navigateTo } = useAppStore();
+
+  // One letter is enough to make the control feel like *yours* rather than a
+  // generic icon. Falls back to a bee when there is no email to read.
+  const initial = user?.email?.trim()?.[0]?.toUpperCase() ?? '🐝';
 
 
   const titleMap: Record<string, string> = {
@@ -47,7 +51,7 @@ export const AppHeader: React.FC = () => {
     NECTAR_FLOW: 'Nectar Flow',
     ASK_AI: 'Ask AI',
     STATUS_UPDATE_FORM: 'Status',
-    SETTINGS: 'Settings',
+    PROFILE: 'Your Profile',
     ROADMAP: 'Roadmap',
   };
 
@@ -61,12 +65,24 @@ export const AppHeader: React.FC = () => {
       {/* Blue sky overlay for text contrast */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#2E86DE]/60 via-[#4A99E0]/30 to-transparent" />
 
-      <div className="relative w-full max-w-4xl px-4 py-5 flex items-center justify-start z-10">
+      <div className="relative w-full max-w-4xl px-4 py-5 flex items-center justify-between z-10">
         {/* Left: Logo + Title */}
         <div className="flex items-center gap-2">
           <img src="/logo.png" alt="Beektools" className="w-8 h-8 object-contain drop-shadow-md" />
           <h1 className="text-lg font-black text-white drop-shadow-sm">{title}</h1>
         </div>
+
+        {/* Right: the beekeeper. Top-right is where everyone already looks for
+            their own account, and it keeps Log Out well away from the tab bar. */}
+        {user && currentView !== 'PROFILE' && (
+          <button
+            onClick={() => navigateTo('PROFILE')}
+            aria-label="Your profile"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/40 bg-white/20 font-black text-white shadow-sm backdrop-blur-sm transition-all duration-[var(--dur-fast)] hover:bg-white/30 active:scale-90"
+          >
+            {initial}
+          </button>
+        )}
       </div>
     </header>
   );
