@@ -97,7 +97,7 @@ export const BottomNavBar: React.FC = () => {
             onClick={tab.onClick}
             className={`flex flex-col items-center justify-center flex-1 h-full rounded-2xl transition-all duration-300 relative select-none outline-none active:scale-95 ${
               tab.isActive 
-                ? 'text-[#F5A623] font-black' 
+                ? 'text-[var(--color-primary)] font-black' 
                 : tab.id === 'LOGOUT'
                   ? 'text-red-400/50 hover:text-red-400 font-semibold'
                   : 'text-white/50 hover:text-white/80 font-semibold'
@@ -105,7 +105,7 @@ export const BottomNavBar: React.FC = () => {
           >
             {/* Subtle top indicator bar */}
             {tab.isActive && (
-              <span className="absolute top-1 w-5 h-1 rounded-full bg-[#F5A623] shadow-[0_0_8px_rgba(245,166,35,0.5)] animate-pulse" />
+              <span className="absolute top-1 w-5 h-1 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_var(--color-primary-glow)] animate-pulse" />
             )}
             
             <div className={`transition-transform duration-300 ${tab.isActive ? 'scale-110 translate-y-0.5' : 'scale-100'}`}>

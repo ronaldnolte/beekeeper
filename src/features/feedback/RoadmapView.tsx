@@ -176,7 +176,7 @@ export const RoadmapView: React.FC = () => {
         </div>
         <button 
           onClick={() => setSubmitModalOpen(true)}
-          className="bg-[#F5A623] text-white px-5 py-3 rounded-xl font-black flex items-center gap-2 hover:bg-[#D97706] transition-colors active:scale-95 shadow-md"
+          className="bg-[var(--color-primary)] text-white px-5 py-3 rounded-xl font-black flex items-center gap-2 hover:bg-[var(--color-primary-dark)] transition-colors active:scale-95 shadow-md"
         >
           <Lightbulb size={18} />
           Submit Idea
@@ -202,7 +202,7 @@ export const RoadmapView: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {features.map(feature => (
-              <div key={feature.id} className="bg-[var(--color-input-bg)] p-5 rounded-2xl shadow-sm border border-[var(--color-card-border)] flex gap-5 transition-all hover:border-[#F5A623]/30">
+              <div key={feature.id} className="bg-[var(--color-input-bg)] p-5 rounded-2xl shadow-sm border border-[var(--color-card-border)] flex gap-5 transition-all hover:border-[var(--color-primary-faint)]">
                 
                 {/* Upvote Button */}
                 <button
@@ -279,7 +279,7 @@ export const RoadmapView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[var(--color-input-bg)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
             
-            <div className="bg-[#F5A623] p-4 flex justify-between items-center text-white">
+            <div className="bg-[var(--color-primary)] p-4 flex justify-between items-center text-white">
               <h3 className="font-black text-lg flex items-center gap-2">
                 <Lightbulb size={20} /> Submit Feature Idea
               </h3>
@@ -299,7 +299,7 @@ export const RoadmapView: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Add offline mode"
-                  className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none transition-all"
+                  className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none transition-all"
                 />
               </div>
 
@@ -310,7 +310,7 @@ export const RoadmapView: React.FC = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Tell us why this would be helpful..."
-                  className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none resize-none transition-all"
+                  className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none resize-none transition-all"
                 />
               </div>
 
@@ -347,7 +347,7 @@ export const RoadmapView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[var(--color-input-bg)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
 
-            <div className="bg-[#F5A623] p-4 flex justify-between items-center text-white">
+            <div className="bg-[var(--color-primary)] p-4 flex justify-between items-center text-white">
               <h3 className="font-black text-lg flex items-center gap-2">
                 <Pencil size={20} /> Edit Request
               </h3>
@@ -366,7 +366,7 @@ export const RoadmapView: React.FC = () => {
                   required
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none transition-all"
+                  className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none transition-all"
                 />
               </div>
 
@@ -376,7 +376,7 @@ export const RoadmapView: React.FC = () => {
                   required
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none resize-none transition-all"
+                  className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none resize-none transition-all"
                 />
               </div>
 

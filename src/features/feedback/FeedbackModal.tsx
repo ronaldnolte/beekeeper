@@ -53,7 +53,7 @@ export const FeedbackModal: React.FC = () => {
       <div className="bg-[var(--color-input-bg)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
         
         {/* Header */}
-        <div className="bg-[#F5A623] p-4 flex justify-between items-center text-white">
+        <div className="bg-[var(--color-primary)] p-4 flex justify-between items-center text-white">
           <h3 className="font-black text-lg flex items-center gap-2">
             <MessageSquare size={20} /> Send Feedback
           </h3>
@@ -109,7 +109,7 @@ export const FeedbackModal: React.FC = () => {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Suggestions, bugs, or questions..."
-                    className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none resize-none transition-all"
+                    className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none resize-none transition-all"
                   />
                 </div>
 
@@ -122,7 +122,7 @@ export const FeedbackModal: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="If you'd like a reply..."
-                    className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none transition-all"
+                    className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none transition-all"
                   />
                 </div>
 

@@ -6,9 +6,27 @@
 */
 
 :root {
+  /* --- Brand accent -------------------------------------------------------
+     #E99B1A is THE amber. Chosen 2026-08-31 over the four near-identical
+     spellings that had accumulated: #F5A623, #F59E0B (amber-500), #FBBF24
+     (amber-400) and Tailwind's amber scale used ad hoc. Nobody notices any one
+     of them; together they made the app feel unresolved. Use these tokens.
+     NOT the brand amber, do not "unify" them: #F39C12 is the shallow-box
+     colour in the hive visualisers, and #8B4513 is hive wood. Both encode
+     meaning, not brand. */
   --color-primary: #E99B1A;
-  --color-primary-dark: #C47F0A;
+  --color-primary-hover: #F2A93A;
+  --color-primary-dark: #C47F0A;          /* pressed */
   --color-primary-glow: rgba(233, 155, 26, 0.35);
+  --color-primary-ring: rgba(233, 155, 26, 0.20);   /* focus rings */
+  --color-primary-faint: rgba(233, 155, 26, 0.30);  /* hover borders */
+  --color-primary-wash: #FDF4E3;          /* tinted panel on cream */
+  --color-on-primary: #FFFFFF;            /* text on a filled amber surface */
+  --color-primary-ink: #A8690B;           /* amber TEXT on light grounds; the
+                                             brand amber itself is too light to
+                                             read on cream */
+
+  /* --- Ground and type --- */
   --color-bg: #F0EBE0;
   --color-bg-raised: #FFFFFF;
   --color-text: #2D2A26;
@@ -18,10 +36,53 @@
   --color-card-border: rgba(255, 255, 255, 0.5);
   --color-input-bg: rgba(255, 255, 255, 0.7);
   --color-divider: #E0D8C8;
+
+  /* --- The dark shell -----------------------------------------------------
+     Auth, Hive Detail, Nectar Flow and the nav bar live in a navy world while
+     the content screens live on cream. Naming the navy does not resolve that
+     split — it just stops each screen inventing its own. */
+  --color-shell: #1A1A2E;
+  --color-shell-deep: #0F0F1A;
+  --color-shell-raised: #24243E;
+  --color-shell-border: #2A2A4A;
+  --color-shell-text: #EDE7DA;
+
+  /* --- Semantic state -----------------------------------------------------
+     Taken from the nectar chart, which had been a private third palette. */
+  --color-good: #2ECC71;
+  --color-good-deep: #1E8449;
+  --color-bad: #C0392B;        /* on light: 5.4:1 with white text */
+  --color-bad-bright: #E74C3C; /* on the dark shell only */
+  --color-neutral: #95A5A6;
+
+  /* --- Materials --- */
+  --color-wood: #8B4513;
+
+  /* --- Motion -------------------------------------------------------------
+     Fades and wipes; nothing that draws attention to itself. */
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 380ms;
+  --ease-soft: cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* Anyone who has asked their device to calm down gets no motion from us. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 body {
-  background-color: #1a1a2e;
+  /* NOTE: this navy deliberately contradicts --color-bg (cream) above. The app
+     currently runs two visual worlds and body sits in the darker one so the
+     shell screens have no seam. Resolving light-vs-dark is an open product
+     decision, not a bug to quietly "fix" here — changing this line alone
+     repaints every content screen. */
+  background-color: var(--color-shell);
   color: var(--color-text);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
