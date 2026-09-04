@@ -192,6 +192,36 @@ export default async function handler(req: any, res: any) {
     }
 
     const pipeStart = Date.now();
+    // When the satellite actually looked at this apiary, and when it is due back.
+    //
+    // "Next" is a forecast, not a schedule we are told: Sentinel-2's revisit is
+    // regular, but a pass only becomes a usable scene when the sky is clear
+    // enough, so the honest estimate comes from this location's OWN recent
+    // cadence rather than a published orbit figure. Median gap over the last
+    // handful of scenes, added to the last one; clamped to the 2-10 day range
+    // the constellation can actually deliver, and only offered when there are
+    // enough scenes to see a pattern.
+    const sceneDates = bands.map((b) => b.date).sort();
+    const lastScene = sceneDates[sceneDates.length - 1] ?? null;
+    let nextSceneEstimate: string | null = null;
+    if (sceneDates.length >= 4 && lastScene) {
+      const recent = sceneDates.slice(-8);
+      const gaps: number[] = [];
+      for (let i = 1; i < recent.length; i++) {
+        const days = Math.round(
+          (Date.parse(recent[i] + 'T00:00:00Z') - Date.parse(recent[i - 1] + 'T00:00:00Z')) / 86_400_000
+        );
+        if (days > 0) gaps.push(days);
+      }
+      if (gaps.length) {
+        gaps.sort((a, b) => a - b);
+        const median = gaps[Math.floor(gaps.length / 2)];
+        const step = Math.min(10, Math.max(2, median));
+        const next = new Date(Date.parse(lastScene + 'T00:00:00Z') + step * 86_400_000);
+        nextSceneEstimate = next.toISOString().slice(0, 10);
+      }
+    }
+
     const result = runV2Pipeline(bands, weather.days, lat, paramOverrides);
     const pipelineMs = Date.now() - pipeStart;
     const serverTotalMs = Date.now() - t0;
@@ -222,6 +252,11 @@ export default async function handler(req: any, res: any) {
       slope: latestSlope,
       v2: result.latest,
       full_history: result.history,
+      satellite: {
+        last_scene: lastScene,
+        next_scene_estimate: nextSceneEstimate,
+        scene_count: bands.length,
+      },
       _timing: {
         earth_engine_ms: earthEngineMs,
         weather_ms: weatherMs,

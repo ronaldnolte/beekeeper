@@ -16,10 +16,21 @@ import {
   RefreshCw,
   TrendingDown,
   Minus,
-  Sparkles,
+  Sparkles,
   Maximize2,
+  Satellite,
   X,
 } from 'lucide-react';
+
+/** "Aug 28" — scene dates are plain YYYY-MM-DD, so parse them as UTC, not local. */
+function formatSceneDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
 
 declare const __BUILD_TIME__: string;
 
@@ -49,6 +60,15 @@ interface V2Response {
     rate_norm: number;
   };
   full_history: { date: string; forage_index_smoothed: number; phase: Phase }[];
+  // When the satellite last returned a usable image of this apiary, and when it
+  // is next expected. `next_scene_estimate` is a forecast from this location's
+  // own recent cadence — a pass only counts once the sky is clear enough — so it
+  // can be null when there is not enough history to see a pattern.
+  satellite?: {
+    last_scene: string | null;
+    next_scene_estimate: string | null;
+    scene_count: number;
+  };
   _timing?: ServerTiming;
 }
 
@@ -942,7 +962,22 @@ export const NectarFlowV2View: React.FC = () => {
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-[#2ECC71] inline-block" />{currentYear} (current)</span>
                   </div>
-                  <span className="text-slate-500 italic">Hover for daily values</span>
+                  {/* When the satellite last saw this yard, and when it is due
+                      back. The index cannot move between passes, so a flat line
+                      after the last date is waiting for data, not a dead flow. */}
+                  {data.satellite?.last_scene ? (
+                    <span className="flex items-center gap-1.5 text-slate-500">
+                      <Satellite size={11} className="flex-shrink-0" />
+                      <span>
+                        Last image <b className="text-slate-300">{formatSceneDate(data.satellite.last_scene)}</b>
+                        {data.satellite.next_scene_estimate && (
+                          <> · next ~<b className="text-slate-300">{formatSceneDate(data.satellite.next_scene_estimate)}</b></>
+                        )}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-slate-500 italic">Hover for daily values</span>
+                  )}
                 </div>
               )}
             </div>
