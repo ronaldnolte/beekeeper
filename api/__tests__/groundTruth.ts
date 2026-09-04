@@ -81,6 +81,25 @@ export interface Check {
 const low = (s: SiteResult, keys: MonthKey[], limit: number) =>
   keys.every(k => s.monthly[k] <= limit);
 
+/**
+ * PENDING OBSERVATION — recorded 2026-09-04, not yet testable.
+ *
+ * Ron: "The flow is recently on again in Tijeras."
+ *
+ * The fixtures stop at 2026-08-20, so nothing here can score it. It is written down
+ * because ground truth is perishable — a beekeeper remembers "early September" for about
+ * a fortnight, and precisely never afterwards.
+ *
+ * Why it is worth capturing: chamisa (rubber rabbitbrush) is seeded for Tijeras zone 23e
+ * at 08-20 → 10-31 with a nectar value of 0.9, so a flow starting in late August lines up
+ * with the plant list rather than contradicting it. It is also the case the satellite
+ * index is structurally worst at — chamisa blooms on shrub that is ALREADY green, so
+ * greenness barely moves while the nectar does.
+ *
+ * To turn this into a check: refresh the Tijeras fixtures past the flow, then assert that
+ * Sep 2026 is not read as a dearth. Until then it stays a note, not a passing test.
+ */
+
 export const CHECKS: Check[] = [
   // --- South Valley, Albuquerque NM: irrigated Rio Grande bottomland ---
   { id: 'sv-winter-dead', site: 'south_valley',
