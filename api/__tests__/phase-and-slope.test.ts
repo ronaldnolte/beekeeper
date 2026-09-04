@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
-import { runV2Pipeline, trailingSlope, WeatherDay } from '../nectar-v2-engine';
-import type { MultiBandRecord } from '../bands-fetcher';
+import { runV2Pipeline, trailingSlope, WeatherDay } from '../_nectar-v2-engine';
+import type { MultiBandRecord } from '../_bands-fetcher';
 
 // Two bugs in the phase badge, both measured on production data.
 //

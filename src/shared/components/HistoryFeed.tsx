@@ -194,7 +194,7 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
             item._model_type === 'task' ? 'border-cyan-500/60 cursor-pointer hover:border-cyan-400' :
             item._model_type === 'varroa_test' ? 
               (Number(item.mite_pct) >= Number(item.threshold) * 1.5 ? 'border-red-500/60 cursor-pointer hover:border-red-400' : 
-               Number(item.mite_pct) >= Number(item.threshold) ? 'border-amber-500/60 cursor-pointer hover:border-amber-400' : 
+               Number(item.mite_pct) >= Number(item.threshold) ? 'border-[var(--color-primary)] cursor-pointer hover:border-[var(--color-primary)]' : 
                'border-green-500/60 cursor-pointer hover:border-green-400') :
             'border-[var(--color-primary)] cursor-pointer hover:border-[var(--color-primary)]'
           }`}
@@ -209,7 +209,7 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
                   item._model_type === 'task' ? 'text-cyan-400' :
                   item._model_type === 'varroa_test' ? 
                     (Number(item.mite_pct) >= Number(item.threshold) * 1.5 ? 'text-red-400' : 
-                     Number(item.mite_pct) >= Number(item.threshold) ? 'text-amber-400' : 
+                     Number(item.mite_pct) >= Number(item.threshold) ? 'text-[var(--color-primary)]' : 
                      'text-green-400') :
                   'text-[var(--color-text)]'
                 }`}>
@@ -257,7 +257,7 @@ export const HistoryFeed: React.FC<HistoryFeedProps> = ({ hiveId, filter = 'all'
           {item._model_type === 'task' && (
             <div className="mt-2 flex gap-2">
               <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
-                item.status === 'completed' ? 'bg-green-900/30 text-green-400' : 'bg-amber-900/30 text-amber-400'
+                item.status === 'completed' ? 'bg-green-900/30 text-green-400' : 'bg-amber-900/30 text-[var(--color-primary)]'
               }`}>{item.status || 'pending'}</span>
               <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
                 item.priority === 'high' ? 'bg-red-900/30 text-red-400' : 'bg-[var(--color-input-bg)] text-[var(--color-text-muted)]'

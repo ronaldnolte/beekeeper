@@ -1,6 +1,6 @@
 import { applyCors, getAuthedUser, getBearerToken, createRateLimiter, getClientIp, isNectarAuthGraceActive, sendUpdateRequired } from './_lib.js';
-import { fetchMultiBands } from './bands-fetcher.js';
-import { runV2Pipeline, Phase, WeatherDay } from './nectar-v2-engine.js';
+import { fetchMultiBands } from './_bands-fetcher.js';
+import { runV2Pipeline, Phase, WeatherDay } from './_nectar-v2-engine.js';
 import { fetchFirstOk } from './_lib.js';
 
 // Anonymous nectar calls are only possible during the auth grace window (see
@@ -182,16 +182,54 @@ export default async function handler(req: any, res: any) {
       return [r, Date.now() - s];
     };
 
-    const [[bands, earthEngineMs], [weather, weatherMs]] = await Promise.all([
+    const [[fetched, earthEngineMs], [weather, weatherMs]] = await Promise.all([
       timed(() => fetchMultiBands(lat, lng, startDate, endDate)),
       timed(() => fetchWeatherV2(lat, lng, startDate, endDate)),
     ]);
+    const bands = fetched.records;
+    const passDates = fetched.passDates;
 
     if (bands.length === 0) {
       throw new Error('Earth Engine returned no vegetation data for this location.');
     }
 
     const pipeStart = Date.now();
+    // Three dates, and the difference between them is the point.
+    //
+    //   last_pass  the satellite most recently flew over this yard
+    //   last_image the most recent pass that produced usable numbers
+    //   next_pass  when it comes back
+    //
+    // The overflight is orbital and happens whatever the weather, so next_pass
+    // is projected from the yard's OWN observed pass rhythm — Sentinel-2's
+    // revisit is every few days but varies with latitude and swath overlap, so
+    // the local record beats a published figure. Clamped to the 2-10 day range
+    // the constellation can deliver.
+    //
+    // Whether that pass yields anything is a different question, which is why
+    // the client says so plainly rather than implying fresh data is guaranteed.
+    const lastPass = passDates.length ? passDates[passDates.length - 1] : null;
+    const lastImage = bands.length ? bands[bands.length - 1].date : null;
+
+    let nextPass: string | null = null;
+    if (passDates.length >= 4 && lastPass) {
+      const recent = passDates.slice(-8);
+      const gaps: number[] = [];
+      for (let i = 1; i < recent.length; i++) {
+        const days = Math.round(
+          (Date.parse(recent[i] + 'T00:00:00Z') - Date.parse(recent[i - 1] + 'T00:00:00Z')) / 86_400_000
+        );
+        if (days > 0) gaps.push(days);
+      }
+      if (gaps.length) {
+        gaps.sort((a, b) => a - b);
+        const median = gaps[Math.floor(gaps.length / 2)];
+        const step = Math.min(10, Math.max(2, median));
+        const next = new Date(Date.parse(lastPass + 'T00:00:00Z') + step * 86_400_000);
+        nextPass = next.toISOString().slice(0, 10);
+      }
+    }
+
     const result = runV2Pipeline(bands, weather.days, lat, paramOverrides);
     const pipelineMs = Date.now() - pipeStart;
     const serverTotalMs = Date.now() - t0;
@@ -222,6 +260,13 @@ export default async function handler(req: any, res: any) {
       slope: latestSlope,
       v2: result.latest,
       full_history: result.history,
+      satellite: {
+        last_pass: lastPass,
+        last_image: lastImage,
+        next_pass: nextPass,
+        pass_count: passDates.length,
+        image_count: bands.length,
+      },
       _timing: {
         earth_engine_ms: earthEngineMs,
         weather_ms: weatherMs,

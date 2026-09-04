@@ -164,19 +164,19 @@ export const RoadmapView: React.FC = () => {
     <div className="w-full h-full flex flex-col overflow-hidden">
       
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-4 space-y-6 animate-in slide-in-from-right-8 relative">
+      <div className="flex-1 overflow-y-auto w-full flex flex-col items-center p-4 space-y-6 animate-[slide-in_var(--dur-slow)_var(--ease-soft)] relative">
       
       {/* Header */}
-      <div className="w-full max-w-2xl flex justify-between items-center bg-[#FFFBF0] p-6 rounded-2xl border-2 border-amber-200">
+      <div className="w-full max-w-2xl flex justify-between items-center bg-[#FFFBF0] p-6 rounded-2xl border-2 border-[var(--color-primary-faint)]">
         <div>
-          <h2 className="text-2xl font-black text-amber-900 flex items-center gap-2">
+          <h2 className="text-2xl font-black text-[var(--color-primary-ink)] flex items-center gap-2">
             Feedback & Roadmap
           </h2>
-          <p className="text-sm font-bold text-amber-700/80 uppercase tracking-wider mt-1">Community Driven</p>
+          <p className="text-sm font-bold text-[var(--color-primary-ink)] uppercase tracking-wider mt-1">Community Driven</p>
         </div>
         <button 
           onClick={() => setSubmitModalOpen(true)}
-          className="bg-[#F5A623] text-white px-5 py-3 rounded-xl font-black flex items-center gap-2 hover:bg-[#D97706] transition-colors active:scale-95 shadow-md"
+          className="bg-[var(--color-primary)] text-white px-5 py-3 rounded-xl font-black flex items-center gap-2 hover:bg-[var(--color-primary-dark)] transition-colors active:scale-95 shadow-md"
         >
           <Lightbulb size={18} />
           Submit Idea
@@ -195,25 +195,25 @@ export const RoadmapView: React.FC = () => {
           </div>
         ) : features.length === 0 ? (
           <div className="text-center py-12 bg-[var(--color-bg-raised)] rounded-2xl border-2 border-dashed border-[var(--color-card-border)]">
-            <Lightbulb size={48} className="mx-auto text-amber-300 mb-3" />
+            <Lightbulb size={48} className="mx-auto text-[var(--color-primary)] mb-3" />
             <p className="text-lg font-black text-[var(--color-text-muted)]">No feature requests yet!</p>
             <p className="text-[var(--color-text-muted)] font-bold mt-1">Be the first to submit an idea.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {features.map(feature => (
-              <div key={feature.id} className="bg-[var(--color-input-bg)] p-5 rounded-2xl shadow-sm border border-[var(--color-card-border)] flex gap-5 transition-all hover:border-[#F5A623]/30">
+              <div key={feature.id} className="bg-[var(--color-input-bg)] p-5 rounded-2xl shadow-sm border border-[var(--color-card-border)] flex gap-5 transition-all hover:border-[var(--color-primary-faint)]">
                 
                 {/* Upvote Button */}
                 <button
                   onClick={() => handleVote(feature.id, feature.is_voted_by_me)}
                   className={`flex flex-col items-center justify-center min-w-[64px] h-[72px] rounded-xl border-2 transition-transform active:scale-90 ${
                     feature.is_voted_by_me
-                      ? 'bg-amber-50 border-amber-400 text-amber-600 shadow-sm'
-                      : 'bg-[var(--color-bg-raised)] border-[var(--color-card-border)] text-[var(--color-text-muted)] hover:border-amber-400 hover:text-amber-500'
+                      ? 'bg-[var(--color-primary-wash)] border-[var(--color-primary)] text-[var(--color-primary-ink)] shadow-sm'
+                      : 'bg-[var(--color-bg-raised)] border-[var(--color-card-border)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]'
                   }`}
                 >
-                  <Triangle className={`fill-current ${feature.is_voted_by_me ? 'text-amber-500' : 'text-[var(--color-text-muted)]'}`} size={20} />
+                  <Triangle className={`fill-current ${feature.is_voted_by_me ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`} size={20} />
                   <span className="font-black text-lg mt-1">{feature.votes}</span>
                 </button>
 
@@ -276,10 +276,10 @@ export const RoadmapView: React.FC = () => {
 
       {/* Submit Idea Modal Overlay */}
       {isSubmitModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
           <div className="bg-[var(--color-input-bg)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
             
-            <div className="bg-[#F5A623] p-4 flex justify-between items-center text-white">
+            <div className="bg-[var(--color-primary)] p-4 flex justify-between items-center text-white">
               <h3 className="font-black text-lg flex items-center gap-2">
                 <Lightbulb size={20} /> Submit Feature Idea
               </h3>
@@ -299,7 +299,7 @@ export const RoadmapView: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Add offline mode"
-                  className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none transition-all"
+                  className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none transition-all"
                 />
               </div>
 
@@ -310,7 +310,7 @@ export const RoadmapView: React.FC = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Tell us why this would be helpful..."
-                  className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none resize-none transition-all"
+                  className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none resize-none transition-all"
                 />
               </div>
 
@@ -344,10 +344,10 @@ export const RoadmapView: React.FC = () => {
 
       {/* Admin Edit Modal Overlay */}
       {editingFeature && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
           <div className="bg-[var(--color-input-bg)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
 
-            <div className="bg-[#F5A623] p-4 flex justify-between items-center text-white">
+            <div className="bg-[var(--color-primary)] p-4 flex justify-between items-center text-white">
               <h3 className="font-black text-lg flex items-center gap-2">
                 <Pencil size={20} /> Edit Request
               </h3>
@@ -366,7 +366,7 @@ export const RoadmapView: React.FC = () => {
                   required
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none transition-all"
+                  className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none transition-all"
                 />
               </div>
 
@@ -376,7 +376,7 @@ export const RoadmapView: React.FC = () => {
                   required
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none resize-none transition-all"
+                  className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none resize-none transition-all"
                 />
               </div>
 
@@ -407,10 +407,10 @@ export const RoadmapView: React.FC = () => {
       )}
 
       {/* Segregated Bottom Action Bar — Return to Dashboard */}
-      <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 dark:bg-black/55 dark:border-white/10 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className="w-full flex-shrink-0 flex justify-center gap-3 p-4 bg-white/75 backdrop-blur-xl border-t border-white/40 z-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <button 
           onClick={goBack}
-          className="flex-1 max-w-md bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm dark:bg-black/30 dark:border-white/10 dark:text-white"
+          className="flex-1 max-w-md bg-white/60 backdrop-blur-sm border border-white/50 text-[var(--color-text)] py-3.5 rounded-full font-bold text-xs flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform shadow-sm"
         >
           <LayoutDashboard size={20} />
           Return to Dashboard

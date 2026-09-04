@@ -16,10 +16,21 @@ import {
   RefreshCw,
   TrendingDown,
   Minus,
-  Sparkles,
+  Sparkles,
   Maximize2,
+  Satellite,
   X,
 } from 'lucide-react';
+
+/** "Aug 28" — scene dates are plain YYYY-MM-DD, so parse them as UTC, not local. */
+function formatSceneDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
 
 declare const __BUILD_TIME__: string;
 
@@ -49,6 +60,17 @@ interface V2Response {
     rate_norm: number;
   };
   full_history: { date: string; forage_index_smoothed: number; phase: Phase }[];
+  // The satellite's own schedule, separate from what it managed to see.
+  // last_pass / next_pass are overflights, which happen whatever the weather;
+  // last_image is the most recent pass that produced usable numbers. When those
+  // two dates differ, cloud is the difference.
+  satellite?: {
+    last_pass: string | null;
+    last_image: string | null;
+    next_pass: string | null;
+    pass_count: number;
+    image_count: number;
+  };
   _timing?: ServerTiming;
 }
 
@@ -272,7 +294,7 @@ export const NectarFlowV2View: React.FC = () => {
       <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-white bg-[#0f0f1a]">
         <div className="bg-[#1a1a2e]/80 backdrop-blur-md rounded-3xl p-8 flex flex-col items-center justify-center gap-6 shadow-2xl border border-[#2a2a4a] w-full max-w-md">
           <div className="text-center">
-            <h3 className="text-2xl font-black text-amber-500">Select Apiary Yard</h3>
+            <h3 className="text-2xl font-black text-[var(--color-primary)]">Select Apiary Yard</h3>
             <p className="text-xs text-slate-400 font-medium mt-2 leading-relaxed">
               Choose a location to compute the foraging nectar index.
             </p>
@@ -284,7 +306,7 @@ export const NectarFlowV2View: React.FC = () => {
                 onClick={() => {
                   useAppStore.setState({ selectedApiaryId: a.id, selectedApiaryName: a.name });
                 }}
-                className="w-full bg-[#24243e] border border-[#3b3b5c] p-4 rounded-2xl text-center font-bold text-sm hover:border-amber-500 active:scale-98 transition-all duration-200"
+                className="w-full bg-[#24243e] border border-[#3b3b5c] p-4 rounded-2xl text-center font-bold text-sm hover:border-[var(--color-primary)] active:scale-98 transition-all duration-200"
               >
                 {a.name}
               </button>
@@ -300,14 +322,14 @@ export const NectarFlowV2View: React.FC = () => {
     return (
       <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-white bg-[#0f0f1a]">
         <div className="bg-[#1a1a2e]/80 backdrop-blur-md rounded-3xl p-12 flex flex-col items-center justify-center gap-4 shadow-2xl border border-[#2a2a4a] text-center w-full max-w-md">
-          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="font-bold text-amber-500 text-lg mt-2">Analyzing satellite imagery…</p>
+          <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
+          <p className="font-bold text-[var(--color-primary)] text-lg mt-2">Analyzing satellite imagery…</p>
           <p className="text-xs text-slate-400 leading-relaxed max-w-[280px]">
             Pulling recent satellite and weather data for your apiary and computing the
             nectar forecast. This usually takes 10–30 seconds, and a little longer the
             first time each day.
           </p>
-          <p className="text-2xl font-black text-amber-500/90 tabular-nums mt-1">{elapsedSec}s</p>
+          <p className="text-2xl font-black text-[var(--color-primary)] tabular-nums mt-1">{elapsedSec}s</p>
         </div>
       </div>
     );
@@ -715,7 +737,7 @@ export const NectarFlowV2View: React.FC = () => {
       {/* Apiary Selector (copied verbatim from NectarFlowView) */}
       {apiariesList.length > 1 && (
         <div className="w-full bg-[#12121f] border-b border-[#2a2a4a] px-4 py-2.5 flex items-center gap-2 z-20">
-          <MapPin size={14} className="text-amber-500 flex-shrink-0" />
+          <MapPin size={14} className="text-[var(--color-primary)] flex-shrink-0" />
           <select
             value={selectedApiaryId || ''}
             onChange={(e) => {
@@ -782,7 +804,7 @@ export const NectarFlowV2View: React.FC = () => {
               className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
             >
               <div className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4">
-                <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider flex items-center gap-2">
+                <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider flex items-center gap-2">
                   <Activity size={16} /> Today at a Glance
                 </h3>
                 <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandToday ? 'rotate-180' : ''}`} />
@@ -809,7 +831,7 @@ export const NectarFlowV2View: React.FC = () => {
                 </div>
               </div>
               {expandToday && (
-                <div className="mt-5 pt-4 border-t border-[#2b2b4d] space-y-2 text-xs text-slate-300 animate-in slide-in-from-top-2 duration-200">
+                <div className="mt-5 pt-4 border-t border-[#2b2b4d] space-y-2 text-xs text-slate-300 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
                   {[
                     ['Greenness (NDVI/EVI)', `${Math.round(data.v2.greenness * 100)}%`],
                     ['Vigor (above baseline)', `${Math.round(data.v2.vigor * 100)}%`],
@@ -832,7 +854,7 @@ export const NectarFlowV2View: React.FC = () => {
               className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
             >
               <div className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4">
-                <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider flex items-center gap-2">
+                <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider flex items-center gap-2">
                   <Sparkles size={16} /> Index Components
                 </h3>
                 <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandComponents ? 'rotate-180' : ''}`} />
@@ -841,14 +863,14 @@ export const NectarFlowV2View: React.FC = () => {
                 {[
                   { label: 'Greenness',   val: data.v2.greenness,  color: 'bg-emerald-500', tip: 'NDVI/EVI fusion' },
                   { label: 'Moisture',    val: data.v2.moisture,   color: 'bg-sky-500',     tip: 'NDWI canopy water' },
-                  { label: 'Rate (core)', val: data.v2.rate_norm,  color: 'bg-amber-500',   tip: 'greening velocity' },
+                  { label: 'Rate (core)', val: data.v2.rate_norm,  color: 'bg-[var(--color-primary)]',   tip: 'greening velocity' },
                   { label: 'Fall term',   val: data.v2.fall_term,  color: 'bg-orange-500',  tip: 'photoperiod × dewpoint' },
                   { label: 'Warmth',      val: data.v2.warmth,     color: 'bg-red-500',     tip: '14-day mean temp ramp' },
                 ].map(({ label, val, color, tip }) => (
                   <div key={label} className="space-y-1.5">
                     <div className="flex justify-between text-xs font-bold">
                       <span>{label}</span>
-                      <span className="text-amber-400">{Math.round(val * 100)}%</span>
+                      <span className="text-[var(--color-primary)]">{Math.round(val * 100)}%</span>
                     </div>
                     <div className="w-full bg-[#1b1b36] h-3 rounded-full overflow-hidden border border-[#2d2d54]">
                       <div className={`${color} h-full rounded-full transition-all duration-500`} style={{ width: `${Math.round(val * 100)}%` }} />
@@ -942,7 +964,27 @@ export const NectarFlowV2View: React.FC = () => {
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-[#2ECC71] inline-block" />{currentYear} (current)</span>
                   </div>
-                  <span className="text-slate-500 italic">Hover for daily values</span>
+                  {/* The satellite's schedule. Overflights are orbital and
+                      happen regardless of weather; whether one yields a usable
+                      image does not, which the note says outright so nobody
+                      waits on a date expecting guaranteed fresh data. */}
+                  {data.satellite?.last_image ? (
+                    <span
+                      className="flex items-center gap-1.5 text-slate-500"
+                      title="Passes are orbital and happen on schedule. Whether one produces usable data depends on cloud cover over your yard."
+                    >
+                      <Satellite size={11} className="flex-shrink-0" />
+                      <span>
+                        Satellite: last image <b className="text-slate-300">{formatSceneDate(data.satellite.last_image)}</b>
+                        {data.satellite.next_pass && (
+                          <> · next pass <b className="text-slate-300">{formatSceneDate(data.satellite.next_pass)}</b></>
+                        )}
+                        <span className="italic"> — usable data depends on cloud cover</span>
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-slate-500 italic">Hover for daily values</span>
+                  )}
                 </div>
               )}
             </div>
@@ -957,7 +999,7 @@ export const NectarFlowV2View: React.FC = () => {
                 <ChevronDown size={14} className={`transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
               </button>
               {expandTrends && (
-                <div className="mt-1 bg-[#121226] border border-[#222240] rounded-xl p-3 space-y-1.5 text-xs text-slate-300 animate-in slide-in-from-top-2 duration-200">
+                <div className="mt-1 bg-[#121226] border border-[#222240] rounded-xl p-3 space-y-1.5 text-xs text-slate-300 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
                   {historyCurrent.filter((_: any, idx: number) => idx % 7 === 0 || idx === historyCurrent.length - 1).map((h: any, i: number) => (
                     <div key={i} className="flex justify-between border-b border-[#20203a] pb-1.5">
                       <span>{new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
@@ -975,7 +1017,7 @@ export const NectarFlowV2View: React.FC = () => {
         {/* APIARIES TAB (copied verbatim from NectarFlowView) */}
         {activeTab === 'apiaries' && (
           <div className="space-y-4">
-            <h3 className="text-sm uppercase font-extrabold text-amber-500 tracking-wider pl-1 select-none">
+            <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider pl-1 select-none">
               Your Apiaries ({apiariesList.length})
             </h3>
             <div className="space-y-3">
@@ -991,7 +1033,7 @@ export const NectarFlowV2View: React.FC = () => {
                         setActiveTab('home');
                       }
                     }}
-                    className={`bg-[#151529]/80 border ${isSelected ? 'border-amber-500/80 shadow-amber-500/5' : 'border-[#2b2b4d]'} rounded-2xl p-4 flex items-center justify-between active:scale-[0.99] transition-all cursor-pointer select-none`}
+                    className={`bg-[#151529]/80 border ${isSelected ? 'border-[var(--color-primary)] shadow-amber-500/5' : 'border-[#2b2b4d]'} rounded-2xl p-4 flex items-center justify-between active:scale-[0.99] transition-all cursor-pointer select-none`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-3.5 h-3.5 rounded-full ${apiaryPhaseColor}`} />
@@ -1025,7 +1067,7 @@ export const NectarFlowV2View: React.FC = () => {
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${activeTab === key ? 'text-amber-500 scale-105' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${activeTab === key ? 'text-[var(--color-primary)] scale-105' : 'text-slate-500 hover:text-slate-300'}`}
           >
             {icon}
             <span className="text-[9px] font-black uppercase tracking-wider">{label}</span>
@@ -1041,8 +1083,8 @@ export const NectarFlowV2View: React.FC = () => {
           >
             <div className="flex items-center justify-between w-full border-b border-[#2b2b4d] pb-2.5 mb-2 select-none">
               <div className="flex items-center gap-2">
-                <TrendingUp className="text-amber-500" size={18} />
-                <h3 className="text-sm font-black text-amber-500 tracking-wider uppercase">
+                <TrendingUp className="text-[var(--color-primary)]" size={18} />
+                <h3 className="text-sm font-black text-[var(--color-primary)] tracking-wider uppercase">
                   {useAppStore.getState().selectedApiaryName} — Nectar Index Trend
                 </h3>
               </div>
@@ -1088,7 +1130,7 @@ export const NectarFlowV2View: React.FC = () => {
                     </div>
                     <div className="flex justify-between items-center bg-[#1b1b36]/40 px-2 py-1 rounded border border-[#2b2b54]/40">
                       <span className="text-slate-400 text-[9px] font-bold">{currentYear} NFI:</span>
-                      <span className="font-black text-amber-500 text-[10px]">
+                      <span className="font-black text-[var(--color-primary)] text-[10px]">
                         {historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== undefined &&
                         historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex)?.forage_index_smoothed !== null
                           ? `${(historyCurrent.find((h: any) => getDayOfYear(h.date) === hoveredIndex)!.forage_index_smoothed * 100).toFixed(0)}%`
@@ -1119,7 +1161,7 @@ export const NectarFlowV2View: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex gap-4 text-[10px] text-slate-400">
-                    <div>Nectar: <span className="font-bold text-amber-500">{forageIndexVal}</span></div>
+                    <div>Nectar: <span className="font-bold text-[var(--color-primary)]">{forageIndexVal}</span></div>
                     <div>Rate: <span className="font-bold text-emerald-400">{Math.round(data.v2.rate_norm * 100)}%</span></div>
                     <div>Warmth: <span className="font-bold text-sky-400">{Math.round(data.v2.warmth * 100)}%</span></div>
                   </div>

@@ -49,11 +49,11 @@ export const FeedbackModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
       <div className="bg-[var(--color-input-bg)] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
         
         {/* Header */}
-        <div className="bg-[#F5A623] p-4 flex justify-between items-center text-white">
+        <div className="bg-[var(--color-primary)] p-4 flex justify-between items-center text-white">
           <h3 className="font-black text-lg flex items-center gap-2">
             <MessageSquare size={20} /> Send Feedback
           </h3>
@@ -68,7 +68,7 @@ export const FeedbackModal: React.FC = () => {
         {/* Body */}
         <div className="p-6 overflow-y-auto max-h-[80vh]">
           {status === 'success' ? (
-            <div className="text-center py-10 animate-in zoom-in">
+            <div className="text-center py-10 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
               <div className="text-5xl mb-4">✅</div>
               <h4 className="text-xl font-black text-[var(--color-card-text)] mb-2">Message Sent!</h4>
               <p className="text-[var(--color-text-muted)] font-bold">Thanks for your feedback.</p>
@@ -77,17 +77,17 @@ export const FeedbackModal: React.FC = () => {
             <div className="space-y-6">
               
               {/* Roadmap CTA */}
-              <div className="bg-amber-50 p-4 rounded-xl border-2 border-amber-100">
-                <h4 className="font-black text-amber-900 flex items-center gap-2 mb-1">
-                  Have a Feature Idea? <Lightbulb size={18} className="text-amber-500" />
+              <div className="bg-[var(--color-primary-wash)] p-4 rounded-xl border-2 border-[var(--color-primary-faint)]">
+                <h4 className="font-black text-[var(--color-primary-ink)] flex items-center gap-2 mb-1">
+                  Have a Feature Idea? <Lightbulb size={18} className="text-[var(--color-primary)]" />
                 </h4>
-                <p className="text-sm font-bold text-amber-800/80 mb-4">
+                <p className="text-sm font-bold text-[var(--color-primary-ink)] mb-4">
                   Vote on existing requests or submit your own ideas to our public roadmap.
                 </p>
                 <button
                   type="button"
                   onClick={handleGoToRoadmap}
-                  className="w-full text-center bg-[var(--color-input-bg)] border-2 border-amber-300 text-amber-700 py-3 rounded-xl font-black hover:bg-amber-100 transition-colors active:scale-95 shadow-sm"
+                  className="w-full text-center bg-[var(--color-input-bg)] border-2 border-[var(--color-primary)] text-[var(--color-primary-ink)] py-3 rounded-xl font-black hover:bg-[var(--color-primary-wash)] transition-colors active:scale-95 shadow-sm"
                 >
                   View Roadmap & Vote →
                 </button>
@@ -109,7 +109,7 @@ export const FeedbackModal: React.FC = () => {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Suggestions, bugs, or questions..."
-                    className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none resize-none transition-all"
+                    className="w-full min-h-[120px] p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none resize-none transition-all"
                   />
                 </div>
 
@@ -122,7 +122,7 @@ export const FeedbackModal: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="If you'd like a reply..."
-                    className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none transition-all"
+                    className="w-full p-4 bg-[var(--color-bg-raised)] border border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-ring)] outline-none transition-all"
                   />
                 </div>
 

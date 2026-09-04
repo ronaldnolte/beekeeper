@@ -21,8 +21,8 @@ const round5 = (n: number) => Math.round(n * 1e5) / 1e5;
 // Full-screen map to pick an apiary's coordinates. The pin is fixed at the
 // screen center (a DOM overlay, not a Leaflet marker) and the map pans beneath
 // it, so the map's center IS the chosen point. No location permission is used
-// unless the user taps "locate me". Tiles: OpenStreetMap (free, no API key),
-// with an Esri World Imagery satellite layer as a toggle.
+// unless the user taps "locate me". Tiles: Esri World Imagery satellite by
+// default, with an OpenStreetMap street layer as a toggle (both free, no key).
 export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onConfirm, onClose }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -34,7 +34,10 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
   const [center, setCenter] = useState<[number, number]>(
     hasInitial ? [initialLat as number, initialLng as number] : DEFAULT_CENTER
   );
-  const [isSatellite, setIsSatellite] = useState(false);
+  // Satellite by default: the point of the picker is to land the pin on the
+  // actual hive stand, and a street map cannot show a tree line, a pasture edge
+  // or a ditch bank. The toggle still switches back for road context.
+  const [isSatellite, setIsSatellite] = useState(true);
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -66,7 +69,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { maxZoom: 19, attribution: 'Imagery &copy; Esri' }
     );
-    streetRef.current.addTo(map);
+    satRef.current.addTo(map);
 
     const sync = () => {
       const c = map.getCenter();
@@ -154,7 +157,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex flex-col bg-black animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[110] flex flex-col bg-black animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
       {/* Map area */}
       <div className="relative flex-1 min-h-0">
         <div ref={containerRef} className="absolute inset-0 bg-[var(--color-bg-raised)]" />
@@ -280,7 +283,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
       {/* Bottom sheet */}
       <div className="bg-[var(--color-bg-raised)] px-5 pt-4 pb-6 shadow-[0_-6px_24px_rgba(0,0,0,0.16)]">
         {locateError && (
-          <div className="mb-3 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <div className="mb-3 text-xs font-bold text-[var(--color-primary-ink)] bg-[var(--color-primary-wash)] border border-[var(--color-primary-faint)] rounded-lg px-3 py-2">
             {locateError}
           </div>
         )}

@@ -53,7 +53,7 @@ export const DashboardView: React.FC = () => {
   const pendingTasksCount = tasks.filter(t => t.status !== 'completed').length;
 
   return (
-    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center pt-4 animate-in fade-in duration-300">
+    <div className="w-full flex-1 overflow-y-auto flex flex-col items-center pt-4 animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
       
       {/* 1. Greeting Header */}
       <div className="w-full max-w-2xl px-4 mb-6">
@@ -91,7 +91,7 @@ export const DashboardView: React.FC = () => {
           onClick={navigateToHivesTab}
           className="card p-3 sm:p-4 text-left flex flex-col justify-between h-24 sm:h-28 active:scale-95 transition-transform hover:border-[var(--color-primary)] hover:bg-[var(--color-card-bg)]/80 outline-none"
         >
-          <div className="text-amber-500">
+          <div className="text-[var(--color-primary)]">
             <Box size={22} />
           </div>
           <div>

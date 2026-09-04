@@ -103,7 +103,7 @@ export const AskAIView: React.FC = () => {
   const apiaryName = currentApiary ? currentApiary.name : (selectedApiaryName || 'Select Location');
 
   return (
-    <div className="w-full h-full flex flex-col bg-[var(--color-input-bg)] animate-in slide-in-from-bottom-8">
+    <div className="w-full h-full flex flex-col bg-[var(--color-input-bg)] animate-[sheet-in_var(--dur-slow)_var(--ease-soft)]">
       
       {/* Header */}
       <div className="w-full flex-shrink-0 flex items-center justify-center p-4 border-b border-[var(--color-card-border)] shadow-sm bg-[var(--color-input-bg)] z-10">
@@ -125,7 +125,7 @@ export const AskAIView: React.FC = () => {
                 className="bg-transparent text-[11px] font-bold text-[var(--color-text-muted)] border-none focus:outline-none appearance-none pr-5 cursor-pointer text-center outline-none"
               >
                 {apiariesList.map(a => (
-                  <option key={a.id} value={a.id} className="text-black dark:text-white bg-[var(--color-bg)]">
+                  <option key={a.id} value={a.id} className="text-black bg-[var(--color-bg)]">
                     {a.name}
                   </option>
                 ))}
@@ -145,12 +145,12 @@ export const AskAIView: React.FC = () => {
       {!selectedApiaryId ? (
         <div className="flex-1 overflow-y-auto p-4 flex items-center justify-center bg-[var(--color-bg-raised)]/50">
           {apiariesList.length === 0 ? (
-            <div className="bg-[var(--color-input-bg)] rounded-3xl p-8 text-center shadow-sm border border-[var(--color-card-border)] w-full max-w-md mx-auto animate-in fade-in duration-300">
+            <div className="bg-[var(--color-input-bg)] rounded-3xl p-8 text-center shadow-sm border border-[var(--color-card-border)] w-full max-w-md mx-auto animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
               <p className="font-bold text-[var(--color-text)] mb-2">No Apiaries Found</p>
               <p className="text-sm text-[var(--color-text-muted)]">Please create an apiary yard first to use the Ask AI feature.</p>
             </div>
           ) : (
-            <div className="bg-[var(--color-input-bg)] rounded-3xl p-8 flex flex-col items-center justify-center gap-6 shadow-sm border border-[var(--color-card-border)] w-full max-w-md mx-auto animate-in fade-in duration-300">
+            <div className="bg-[var(--color-input-bg)] rounded-3xl p-8 flex flex-col items-center justify-center gap-6 shadow-sm border border-[var(--color-card-border)] w-full max-w-md mx-auto animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
               <div className="text-center">
                 <h3 className="text-lg font-black text-[var(--color-text)]">Select Apiary</h3>
                 <p className="text-xs text-[var(--color-text-muted)] font-medium mt-1">
@@ -222,9 +222,11 @@ export const AskAIView: React.FC = () => {
               {loading && (
                 <div className="flex justify-start">
                   <div className="bg-[var(--color-input-bg)] border border-[var(--color-card-border)] rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-2">
-                    <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                    {/* Thinking. Dots that breathe rather than bounce — same
+                        meaning, calmer, and it matches the app's other motion. */}
+                    <div className="w-2 h-2 rounded-full bg-[var(--color-text-muted)] animate-[thinking_1.4s_ease-in-out_infinite]"></div>
+                    <div className="w-2 h-2 rounded-full bg-[var(--color-text-muted)] animate-[thinking_1.4s_ease-in-out_infinite]" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 rounded-full bg-[var(--color-text-muted)] animate-[thinking_1.4s_ease-in-out_infinite]" style={{ animationDelay: '0.4s' }}></div>
                   </div>
                 </div>
               )}

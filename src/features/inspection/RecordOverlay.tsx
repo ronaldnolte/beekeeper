@@ -147,7 +147,7 @@ export const RecordOverlay: React.FC<RecordOverlayProps> = ({ title, onCancel, o
         </div>
 
         {error && (
-          <div className="mb-4 bg-red-500/10 border border-red-500/40 text-red-600 dark:text-red-400 rounded-xl px-3 py-2 text-sm font-medium">
+          <div className="mb-4 bg-red-500/10 border border-red-500/40 text-red-600 rounded-xl px-3 py-2 text-sm font-medium">
             {error}
           </div>
         )}

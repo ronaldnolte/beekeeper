@@ -1,0 +1,77 @@
+[
+  {
+    "id": "develop baseline",
+    "minCoverage": 0.2,
+    "scaleM": 60,
+    "forageWeighted": true,
+    "passed": 16,
+    "total": 16,
+    "advisory": 2,
+    "scenes": 1494,
+    "secs": 38,
+    "failing": []
+  },
+  {
+    "id": "coverage 10%",
+    "minCoverage": 0.1,
+    "scaleM": 60,
+    "forageWeighted": true,
+    "passed": 16,
+    "total": 16,
+    "advisory": 2,
+    "scenes": 1706,
+    "secs": 35,
+    "failing": []
+  },
+  {
+    "id": "coverage 5%",
+    "minCoverage": 0.05,
+    "scaleM": 60,
+    "forageWeighted": true,
+    "passed": 16,
+    "total": 16,
+    "advisory": 2,
+    "scenes": 1819,
+    "secs": 43,
+    "failing": []
+  },
+  {
+    "id": "coverage 0%",
+    "minCoverage": 0,
+    "scaleM": 60,
+    "forageWeighted": true,
+    "passed": 14,
+    "total": 16,
+    "advisory": 2,
+    "scenes": 2042,
+    "secs": 41,
+    "failing": [
+      "tij-winter-dead",
+      "tij-2026-summer-miss"
+    ]
+  },
+  {
+    "id": "no forage weight",
+    "minCoverage": 0.2,
+    "scaleM": 60,
+    "forageWeighted": false,
+    "passed": 16,
+    "total": 16,
+    "advisory": 2,
+    "scenes": 1494,
+    "secs": 38,
+    "failing": []
+  },
+  {
+    "id": "20 m resolution",
+    "minCoverage": 0.2,
+    "scaleM": 20,
+    "forageWeighted": true,
+    "passed": 16,
+    "total": 16,
+    "advisory": 2,
+    "scenes": 1491,
+    "secs": 36,
+    "failing": []
+  }
+]

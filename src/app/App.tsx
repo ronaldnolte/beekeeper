@@ -26,6 +26,7 @@ const ForecastView = lazy(() => import('../features/forecast/ForecastView').then
 const NectarFlowView = lazy(() => import('../features/nectar/NectarFlowV2View').then(m => ({ default: m.NectarFlowV2View })));
 const AskAIView = lazy(() => import('../features/ai/AskAIView').then(m => ({ default: m.AskAIView })));
 const RoadmapView = lazy(() => import('../features/feedback/RoadmapView').then(m => ({ default: m.RoadmapView })));
+const ProfileView = lazy(() => import('../features/profile/ProfileView').then(m => ({ default: m.ProfileView })));
 
 // Shared Suspense fallback for lazy-loaded views
 const ViewLoader = () => (
@@ -158,7 +159,18 @@ function App() {
     <div className="w-full h-[100dvh] bg-[var(--color-bg)] text-[var(--color-text)] flex flex-col font-sans overflow-hidden">
       <AppHeader />
       
-      <main className="flex-1 flex flex-col overflow-hidden relative">
+      {/* Keyed on the view so every screen change fades rather than snapping.
+          A fade, not a slide: the tab bar is not ordered left-to-right in any
+          meaningful way, so sliding would imply a direction that isn't there.
+
+          Runs at the slow duration rather than the base one. React drops the
+          outgoing screen immediately, so this is the incoming screen arriving
+          rather than a true cross-dissolve — at 220ms that read as a flicker
+          you had to look for. */}
+      <main
+        key={currentView}
+        className="flex-1 flex flex-col overflow-hidden relative animate-[fade-in_var(--dur-slow)_var(--ease-soft)]"
+      >
         {currentView === 'AUTH' && <Auth />}
         
         {currentView === 'DASHBOARD' && <DashboardView />}
@@ -213,6 +225,12 @@ function App() {
         {currentView === 'ROADMAP' && (
           <Suspense fallback={<ViewLoader />}>
             <RoadmapView />
+          </Suspense>
+        )}
+
+        {currentView === 'PROFILE' && (
+          <Suspense fallback={<ViewLoader />}>
+            <ProfileView />
           </Suspense>
         )}
 

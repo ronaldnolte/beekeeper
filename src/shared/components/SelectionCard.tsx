@@ -34,7 +34,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
         >
           <div className="flex items-center gap-3">
             {item.icon && (
-              <div className="w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+              <div className="w-11 h-11 rounded-xl bg-[var(--color-primary-wash)] flex items-center justify-center text-[var(--color-primary-ink)]">
                 {item.icon}
               </div>
             )}
@@ -87,7 +87,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
 
       {/* Expandable action row — only for three-dot menu case */}
       {showActions && (onEdit || item.onDelete) && (
-        <div className="flex items-center gap-2 mt-2 animate-in slide-in-from-top-2 duration-200">
+        <div className="flex items-center gap-2 mt-2 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
           {onEdit && (
             <button
               onClick={(e) => {
@@ -95,7 +95,7 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({ item, onClick, onE
                 setShowActions(false);
                 onEdit(item.id);
               }}
-              className="flex-1 py-3 text-sm font-bold text-amber-700 bg-amber-50 rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95 border border-amber-200"
+              className="flex-1 py-3 text-sm font-bold text-[var(--color-primary-ink)] bg-[var(--color-primary-wash)] rounded-xl flex items-center justify-center gap-2 transition-colors active:scale-95 border border-[var(--color-primary-faint)]"
             >
               <Pencil size={16} /> Edit
             </button>

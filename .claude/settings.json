@@ -31,7 +31,6 @@
     "deny": [
       "Bash(npx vercel:*)",
       "Bash(vercel:*)",
-      "Bash(gh pr merge:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
       "Bash(git push --force-with-lease:*)",

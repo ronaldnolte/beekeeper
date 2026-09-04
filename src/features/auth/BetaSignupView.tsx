@@ -73,7 +73,7 @@ export const BetaSignupView: React.FC = () => {
         </div>
 
         {status === 'success' ? (
-          <div className="text-center py-6 animate-in zoom-in duration-300">
+          <div className="text-center py-6 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
             <div className="text-5xl mb-4">✅</div>
             <h2 className="text-xl font-black text-[var(--color-text)] mb-3">Request Registered!</h2>
             <p className="text-[var(--color-text-muted)] font-bold text-sm leading-relaxed mb-6">

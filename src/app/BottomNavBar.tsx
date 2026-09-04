@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { LayoutDashboard, Map, Hexagon, CloudSun, Sparkles, Mail, LogOut, Flower } from 'lucide-react';
-import { supabase } from '../data/supabase';
+import { LayoutDashboard, Map, Hexagon, CloudSun, Sparkles, Flower } from 'lucide-react';
 
 export const BottomNavBar: React.FC = () => {
   const { currentView, isUnifiedHiveView, navigateTo, navigateToApiariesTab, navigateToHivesTab } = useAppStore();
@@ -69,24 +68,13 @@ export const BottomNavBar: React.FC = () => {
       isActive: isAskAIActive,
       onClick: () => navigateTo('ASK_AI'),
     },
-    {
-      id: 'FEEDBACK',
-      label: 'Feedback',
-      icon: <Mail size={20} />,
-      isActive: false,
-      onClick: () => useAppStore.getState().setFeedbackModalOpen(true),
-    },
-    {
-      id: 'LOGOUT',
-      label: 'Log Out',
-      icon: <LogOut size={20} />,
-      isActive: false,
-      onClick: async () => {
-        await supabase.auth.signOut();
-        window.location.reload();
-      },
-    },
   ];
+
+  // Feedback and Log Out used to sit here, making eight targets in a bar that
+  // caps at 500px — about 57px each, under both Apple's 44pt and Google's 48dp.
+  // Neither was a destination: one opened a modal, the other ended the session
+  // with no confirmation, one thumb-width from Ask AI. Both now live in the
+  // profile screen, reached from the avatar in the header.
 
   return (
     <div className="w-full flex-shrink-0 flex justify-center pt-2 z-40" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 12px))' }}>
@@ -97,15 +85,17 @@ export const BottomNavBar: React.FC = () => {
             onClick={tab.onClick}
             className={`flex flex-col items-center justify-center flex-1 h-full rounded-2xl transition-all duration-300 relative select-none outline-none active:scale-95 ${
               tab.isActive 
-                ? 'text-[#F5A623] font-black' 
+                ? 'text-[var(--color-primary)] font-black' 
                 : tab.id === 'LOGOUT'
                   ? 'text-red-400/50 hover:text-red-400 font-semibold'
                   : 'text-white/50 hover:text-white/80 font-semibold'
             }`}
           >
-            {/* Subtle top indicator bar */}
+            {/* Indicator for the current tab. It used to pulse forever, which
+                is motion that asks for attention it does not need — you already
+                know which tab you are on. It now just fades in. */}
             {tab.isActive && (
-              <span className="absolute top-1 w-5 h-1 rounded-full bg-[#F5A623] shadow-[0_0_8px_rgba(245,166,35,0.5)] animate-pulse" />
+              <span className="absolute top-1 w-5 h-1 rounded-full bg-[var(--color-primary)] shadow-[0_0_8px_var(--color-primary-glow)] animate-[fade-in_var(--dur-base)_var(--ease-soft)]" />
             )}
             
             <div className={`transition-transform duration-300 ${tab.isActive ? 'scale-110 translate-y-0.5' : 'scale-100'}`}>

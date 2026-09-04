@@ -13,6 +13,14 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
   const [name, setName] = useState('');
   const [locationMode, setLocationMode] = useState<'zip' | 'coords'>('zip');
   const [zipCode, setZipCode] = useState('');
+  // Bounding box of the conterminous US. Coordinates outside it are flagged,
+  // never blocked — there are genuine users abroad. But a dropped minus sign on
+  // a US longitude lands in central Asia, and one apiary in the production
+  // database is sitting in China because of exactly that. The satellite forage
+  // data is also CONUS-only, so the warning is honest about capability as well
+  // as catching typos.
+  const CONUS = { latMin: 24, latMax: 50, lngMin: -125, lngMax: -66 };
+
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [notes, setNotes] = useState('');
@@ -49,6 +57,18 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
   }, [isApiaryFormOpen, editingApiary]);
 
   if (!isApiaryFormOpen || !user) return null;
+
+  // Live, non-blocking. Recomputed as the user types or drops a pin.
+  const outsideUS = (() => {
+    if (locationMode !== 'coords') return null;
+    const la = parseFloat(latitude), ln = parseFloat(longitude);
+    if (!isFinite(la) || !isFinite(ln)) return null;
+    if (la >= CONUS.latMin && la <= CONUS.latMax && ln >= CONUS.lngMin && ln <= CONUS.lngMax) return null;
+    // The overwhelmingly common cause: a US longitude entered without its minus sign.
+    const flipped = ln > 0 && -ln >= CONUS.lngMin && -ln <= CONUS.lngMax
+                    && la >= CONUS.latMin && la <= CONUS.latMax;
+    return { flipped, suggestion: flipped ? -ln : null };
+  })();
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,8 +158,8 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-[100] flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-[var(--color-bg)] w-full max-w-md sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-4 duration-300">
+    <div className="fixed inset-0 bg-black/60 z-[100] flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
+      <div className="bg-[var(--color-bg)] w-full max-w-md sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col animate-[sheet-in_var(--dur-slow)_var(--ease-soft)] duration-300">
         
         {/* Header */}
         <div className="bg-[var(--color-primary)] p-5 flex justify-between items-center text-white">
@@ -234,6 +254,28 @@ export const ApiaryFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess
                     className="w-full p-3 bg-[var(--color-input-bg)] border-2 border-[var(--color-card-border)] rounded-xl font-bold text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] outline-none"
                   />
                 </div>
+              </div>
+            )}
+
+            {outsideUS && (
+              <div className="mt-3 rounded-xl border-2 border-[var(--color-primary)]/40 bg-[var(--color-primary)]/10 p-3">
+                <p className="text-xs font-bold text-[var(--color-text)] leading-relaxed">
+                  {outsideUS.flipped ? (
+                    <>
+                      ⚠️ This location is outside the United States. Did you mean{' '}
+                      <button
+                        type="button"
+                        onClick={() => setLongitude(String(outsideUS.suggestion))}
+                        className="underline font-black text-[var(--color-primary-ink)]"
+                      >
+                        {outsideUS.suggestion}
+                      </button>
+                      ? A longitude missing its minus sign is the usual cause.
+                    </>
+                  ) : (
+                    <>⚠️ This location is outside the continental United States. That is fine to save, but Nectar Flow forage data only covers the continental US, so it will not be available for this apiary.</>
+                  )}
+                </p>
               </div>
             )}
           </div>

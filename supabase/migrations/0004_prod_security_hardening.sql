@@ -10,6 +10,12 @@
 -- check, and was callable by anon (not signed in) — i.e. anyone could erase any
 -- account and all its data. Account deletion is handled manually/by email, so
 -- the public never needs to call it.
+--
+-- ⚠️ THIS MIGRATION DID NOT ACTUALLY CLOSE THE HOLE. The revokes below name only
+-- `anon` and `authenticated`, but Postgres also grants EXECUTE to the PUBLIC
+-- pseudo-role by default, and those roles inherit through it. The hole stayed
+-- open on production until 2026-07-03. See 0011, which revokes from `public`
+-- and is the migration that matters. Kept here as history, not as a fix.
 -- ============================================================================
 
 -- 1. Block public access to the account-wipe routine.

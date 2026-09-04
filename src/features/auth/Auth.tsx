@@ -1,6 +1,30 @@
 import React, { useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '../../data/supabase';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
+
+/**
+ * Where a password-reset link should land.
+ *
+ * This used to be hardcoded to production, which is right for real users and
+ * wrong for testing: a reset started on preview is issued against the Dev v2
+ * database, and the link then dropped you on production, whose Supabase project
+ * has never heard of that recovery token. The reset simply failed, and it looked
+ * like the email was broken rather than the destination.
+ *
+ * Web comes back to whichever site sent you. The packaged app cannot — its
+ * origin is capacitor://localhost, which no email link can reach — so it keeps
+ * pointing at production.
+ *
+ * Note: Supabase only honours redirects on its allow list (Authentication ->
+ * URL Configuration). A preview URL that is not listed falls back to the
+ * project's Site URL rather than erroring.
+ */
+export function passwordResetRedirect(): string {
+  return Capacitor.isNativePlatform()
+    ? 'https://beekeeper.beektools.com/auth/update-password'
+    : `${window.location.origin}/auth/update-password`;
+}
 
 export const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -34,7 +58,7 @@ export const Auth: React.FC = () => {
 
     if (mode === 'reset') {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://beekeeper.beektools.com/auth/update-password'
+        redirectTo: passwordResetRedirect()
       });
       if (error) {
         if (error.message === "{}" || error.status === 504) {

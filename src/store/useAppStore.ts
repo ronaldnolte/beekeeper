@@ -21,6 +21,7 @@ export type AppView =
   | 'NECTAR_FLOW'        // Root Tab 6: Localized Nectar Flow Index
   | 'ASK_AI'            // Root Tab 5: AI chat assistant
   | 'ROADMAP'           // Global: Feedback & Roadmap
+  | 'PROFILE'           // Global: the beekeeper's own preferences + account actions
   | 'UPDATE_PASSWORD'   // Global: Reset password flow
   | 'BETA_SIGNUP';      // Public: Closed Beta signup waitlist
 
@@ -308,7 +309,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
         ) {
           prevView = 'HIVE_DETAIL';
         } else if (
-          ['FORECAST', 'NECTAR_FLOW', 'ASK_AI', 'ROADMAP', 'UPDATE_PASSWORD'].includes(state.currentView)
+          ['FORECAST', 'NECTAR_FLOW', 'ASK_AI', 'ROADMAP', 'PROFILE', 'UPDATE_PASSWORD'].includes(state.currentView)
         ) {
           prevView = 'DASHBOARD';
         }
