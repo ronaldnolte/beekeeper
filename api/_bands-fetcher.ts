@@ -8,6 +8,19 @@ if (typeof global !== 'undefined' && !(global as any).XMLHttpRequest) {
 // @ts-ignore
 import ee from '@google/earthengine';
 
+/**
+ * What one fetch returns.
+ *
+ * `records` are the scenes that yielded usable numbers. `passDates` is every
+ * date the satellite flew over this yard, cloudy or not — the two differ by
+ * exactly the days the sky was in the way, which is what lets the chart say
+ * "the satellite looked, it just couldn't see" instead of going quiet.
+ */
+export interface MultiBandFetch {
+  records: MultiBandRecord[];
+  passDates: string[];
+}
+
 export interface MultiBandRecord {
   date: string;
   ndvi: number;
@@ -52,7 +65,7 @@ export async function fetchMultiBands(
   startDate: string,
   endDate: string,
   radiusKm = 4.83 // ~3 mile bee forage radius (was 1.6km); averages the colony's true foraging range
-): Promise<MultiBandRecord[]> {
+): Promise<MultiBandFetch> {
   await initEarthEngine();
 
   const geom = ee.Geometry.Point([lon, lat]).buffer(radiusKm * 1000);
@@ -88,17 +101,33 @@ export async function fetchMultiBands(
       evi:  means.get('evi'),
       ndwi: means.get('ndwi'),
     });
-  }).filter(ee.Filter.notNull(['ndvi', 'evi', 'ndwi']));
+  });
+  // NOTE: the null filter used to live here, on the server side. It now runs in
+  // JS below so we keep BOTH lists: every date the satellite passed over, and
+  // the subset that produced usable numbers. The difference between the two is
+  // cloud — and a beekeeper looking at a flat line deserves to know which of the
+  // two he is seeing.
 
   const fc = await evaluate(processed);
-  if (!fc?.features) return [];
+  if (!fc?.features) return { records: [], passDates: [] };
 
-  return (fc.features as any[])
+  const all = (fc.features as any[])
     .map(f => ({
       date: f.properties.date as string,
-      ndvi: f.properties.ndvi as number,
-      evi:  f.properties.evi as number,
-      ndwi: f.properties.ndwi as number,
+      ndvi: f.properties.ndvi as number | null,
+      evi:  f.properties.evi as number | null,
+      ndwi: f.properties.ndwi as number | null,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
+
+  // Every pass, cloudy or not. Duplicates happen where two orbit swaths overlap
+  // the same yard on one day.
+  const passDates = Array.from(new Set(all.map(r => r.date)));
+
+  const records = all.filter(
+    (r): r is MultiBandRecord =>
+      r.ndvi !== null && r.evi !== null && r.ndwi !== null
+  );
+
+  return { records, passDates };
 }

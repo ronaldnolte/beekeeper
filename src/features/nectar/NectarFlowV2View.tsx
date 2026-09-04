@@ -60,14 +60,16 @@ interface V2Response {
     rate_norm: number;
   };
   full_history: { date: string; forage_index_smoothed: number; phase: Phase }[];
-  // When the satellite last returned a usable image of this apiary, and when it
-  // is next expected. `next_scene_estimate` is a forecast from this location's
-  // own recent cadence — a pass only counts once the sky is clear enough — so it
-  // can be null when there is not enough history to see a pattern.
+  // The satellite's own schedule, separate from what it managed to see.
+  // last_pass / next_pass are overflights, which happen whatever the weather;
+  // last_image is the most recent pass that produced usable numbers. When those
+  // two dates differ, cloud is the difference.
   satellite?: {
-    last_scene: string | null;
-    next_scene_estimate: string | null;
-    scene_count: number;
+    last_pass: string | null;
+    last_image: string | null;
+    next_pass: string | null;
+    pass_count: number;
+    image_count: number;
   };
   _timing?: ServerTiming;
 }
@@ -962,17 +964,22 @@ export const NectarFlowV2View: React.FC = () => {
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-[#2ECC71] inline-block" />{currentYear} (current)</span>
                   </div>
-                  {/* When the satellite last saw this yard, and when it is due
-                      back. The index cannot move between passes, so a flat line
-                      after the last date is waiting for data, not a dead flow. */}
-                  {data.satellite?.last_scene ? (
-                    <span className="flex items-center gap-1.5 text-slate-500">
+                  {/* The satellite's schedule. Overflights are orbital and
+                      happen regardless of weather; whether one yields a usable
+                      image does not, which the note says outright so nobody
+                      waits on a date expecting guaranteed fresh data. */}
+                  {data.satellite?.last_image ? (
+                    <span
+                      className="flex items-center gap-1.5 text-slate-500"
+                      title="Passes are orbital and happen on schedule. Whether one produces usable data depends on cloud cover over your yard."
+                    >
                       <Satellite size={11} className="flex-shrink-0" />
                       <span>
-                        Last image <b className="text-slate-300">{formatSceneDate(data.satellite.last_scene)}</b>
-                        {data.satellite.next_scene_estimate && (
-                          <> · next ~<b className="text-slate-300">{formatSceneDate(data.satellite.next_scene_estimate)}</b></>
+                        Last image <b className="text-slate-300">{formatSceneDate(data.satellite.last_image)}</b>
+                        {data.satellite.next_pass && (
+                          <> · next pass <b className="text-slate-300">{formatSceneDate(data.satellite.next_pass)}</b></>
                         )}
+                        <span className="italic"> — usable data depends on cloud cover</span>
                       </span>
                     </span>
                   ) : (
