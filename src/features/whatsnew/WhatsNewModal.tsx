@@ -84,13 +84,24 @@ export const WhatsNewModal: React.FC = () => {
             title="Export your records for safe keeping"
             body="Save any inspection as a PDF report, and export your photos to your device. It's a great way to keep your own backup of your records and images — for safe keeping, or to share them."
           />
-          {/* Testers on the packaged Android build — nudge them to stay current.
-              Hidden on web/PWA, which is always up to date automatically. */}
+          {/* Testers on the packaged Android build. Hidden on web/PWA, which
+              updates itself on every visit.
+
+              Worded firmly on purpose. The installed app can lag the website by
+              weeks — the features described above may simply not exist in the
+              build someone is holding — and nothing else in the app tells them
+              so. Ron hit exactly this on 2026-08-31: a phone running a build a
+              month old, with the same version number showing as the site. */}
           {Capacitor.isNativePlatform() && (
-            <div className="rounded-2xl border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 p-4">
-              <p className="text-xs font-bold text-[var(--color-text)] leading-relaxed">
-                📱 <strong>Beta testers:</strong> please make sure you're on the latest version
-                (keep auto-updates turned on in Google Play) so every feature keeps working smoothly.
+            <div className="rounded-2xl border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/10 p-4">
+              <p className="text-sm font-black text-[var(--color-text)]">
+                📱 Check for an update before you rely on this
+              </p>
+              <p className="mt-1.5 text-xs font-bold leading-relaxed text-[var(--color-text-muted)]">
+                The features above may not be in the version on your phone yet. The website
+                updates itself; the app does not. Open <strong>Google Play → Beekeeper</strong> and
+                tap <strong>Update</strong> if it's offered, and turn on auto-updates so you stay
+                current without thinking about it.
               </p>
             </div>
           )}

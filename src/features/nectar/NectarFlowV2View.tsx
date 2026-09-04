@@ -975,7 +975,7 @@ export const NectarFlowV2View: React.FC = () => {
                     >
                       <Satellite size={11} className="flex-shrink-0" />
                       <span>
-                        Last image <b className="text-slate-300">{formatSceneDate(data.satellite.last_image)}</b>
+                        Satellite: last image <b className="text-slate-300">{formatSceneDate(data.satellite.last_image)}</b>
                         {data.satellite.next_pass && (
                           <> · next pass <b className="text-slate-300">{formatSceneDate(data.satellite.next_pass)}</b></>
                         )}
