@@ -5,6 +5,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../../../api/_season';
 import { useAppStore } from '../../store/useAppStore';
+import { SelectionList } from '../../shared/components/SelectionList';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { supabase } from '../../data/supabase';
 import {
@@ -288,29 +289,36 @@ export const NectarFlowV2View: React.FC = () => {
 
   // Phase advice (copied verbatim from NectarFlowView)
 
-  // No apiary (copied verbatim from NectarFlowView)
+  // Choosing a yard is the same act here as on the Apiaries screen, so it uses
+  // the same component and reads the same way — Ron, 2026-08-31: "the apiary
+  // selection seems as though it should match the apiary option". This screen
+  // used to roll its own dark buttons, which is also why the picker looked like
+  // a different app from the list two taps away.
   if (!selectedApiaryId) {
     return (
-      <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-white bg-[#0f0f1a]">
-        <div className="bg-[#1a1a2e]/80 backdrop-blur-md rounded-3xl p-8 flex flex-col items-center justify-center gap-6 shadow-2xl border border-[#2a2a4a] w-full max-w-md">
-          <div className="text-center">
-            <h3 className="text-2xl font-black text-[var(--color-primary)]">Select Apiary Yard</h3>
-            <p className="text-xs text-slate-400 font-medium mt-2 leading-relaxed">
-              Choose a location to compute the foraging nectar index.
-            </p>
-          </div>
-          <div className="w-full flex flex-col gap-3">
-            {apiariesList.map((a: any) => (
-              <button
-                key={a.id}
-                onClick={() => {
-                  useAppStore.setState({ selectedApiaryId: a.id, selectedApiaryName: a.name });
-                }}
-                className="w-full bg-[#24243e] border border-[#3b3b5c] p-4 rounded-2xl text-center font-bold text-sm hover:border-[var(--color-primary)] active:scale-98 transition-all duration-200"
-              >
-                {a.name}
-              </button>
-            ))}
+      <div className="w-full flex-1 overflow-y-auto bg-[var(--color-bg)]">
+        <div className="mx-auto w-full max-w-2xl px-4 pt-5 pb-28">
+          <h3 className="text-xl font-black text-[var(--color-text)]">Which yard?</h3>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            Nectar Flow reads the landscape around one apiary at a time.
+          </p>
+          <div className="mt-5">
+            <SelectionList
+              items={apiariesList.map((a: any) => ({
+                id: a.id,
+                title: a.name,
+                subtitle: a.zip_code
+                  ? `ZIP: ${a.zip_code}`
+                  : (a.latitude ? 'Location: Coordinates' : 'No location set'),
+                icon: <MapPin size={22} />,
+                raw: a,
+              }))}
+              emptyMessage="No apiaries yet. Add one on the Apiaries tab and it will show up here."
+              onSelect={(id) => {
+                const a = apiariesList.find((x: any) => x.id === id);
+                useAppStore.setState({ selectedApiaryId: id, selectedApiaryName: a?.name });
+              }}
+            />
           </div>
         </div>
       </div>
