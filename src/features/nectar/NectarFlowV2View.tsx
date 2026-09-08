@@ -263,6 +263,8 @@ export const NectarFlowV2View: React.FC = () => {
       case 'TRENDING_UP':
         return { bg: 'bg-[#58D68D]', text: 'text-black', label: 'Trending Up', emoji: '🌱' };
       case 'TRENDING_DOWN':
+        // White, NOT the text token: these two badges are filled with a dark colour,
+        // so their label has to contrast with the badge, not with the page.
         return { bg: 'bg-[#1E8449]', text: 'text-white', label: 'Trending Down', emoji: '🍂' };
       case 'DEARTH':
       default:
@@ -328,16 +330,16 @@ export const NectarFlowV2View: React.FC = () => {
   // Loading (copied verbatim from NectarFlowView)
   if (loading) {
     return (
-      <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-white bg-[#0f0f1a]">
-        <div className="bg-[#1a1a2e]/80 backdrop-blur-md rounded-3xl p-12 flex flex-col items-center justify-center gap-4 shadow-2xl border border-[#2a2a4a] text-center w-full max-w-md">
+      <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 bg-[var(--color-bg)]">
+        <div className="card p-12 flex flex-col items-center justify-center gap-4 text-center w-full max-w-md">
           <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
-          <p className="font-bold text-[var(--color-primary)] text-lg mt-2">Analyzing satellite imagery…</p>
-          <p className="text-xs text-slate-400 leading-relaxed max-w-[280px]">
+          <p className="font-bold text-[var(--color-primary-ink)] text-lg mt-2">Analyzing satellite imagery…</p>
+          <p className="text-xs text-[var(--color-text-muted)] leading-relaxed max-w-[280px]">
             Pulling recent satellite and weather data for your apiary and computing the
             nectar forecast. This usually takes 10–30 seconds, and a little longer the
             first time each day.
           </p>
-          <p className="text-2xl font-black text-[var(--color-primary)] tabular-nums mt-1">{elapsedSec}s</p>
+          <p className="text-2xl font-black text-[var(--color-primary-ink)] tabular-nums mt-1">{elapsedSec}s</p>
         </div>
       </div>
     );
@@ -346,14 +348,14 @@ export const NectarFlowV2View: React.FC = () => {
   // Error (copied verbatim from NectarFlowView)
   if (error) {
     return (
-      <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-white bg-[#0f0f1a]">
-        <div className="bg-[#1a1a2e]/80 backdrop-blur-md rounded-3xl p-8 text-center border border-red-500/30 shadow-2xl bg-red-950/10 w-full max-w-md">
-          <AlertTriangle className="text-red-500 mx-auto mb-3" size={40} />
-          <p className="text-red-400 font-black text-lg mb-2">Fetch failed</p>
-          <p className="text-xs text-red-300/80 font-medium leading-relaxed mb-6">{error}</p>
+      <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 bg-[var(--color-bg)]">
+        <div className="card p-8 text-center border-2 border-[var(--color-bad)]/30 w-full max-w-md">
+          <AlertTriangle className="text-[var(--color-bad)] mx-auto mb-3" size={40} />
+          <p className="text-[var(--color-bad)] font-black text-lg mb-2">Fetch failed</p>
+          <p className="text-xs text-[var(--color-text-muted)] font-medium leading-relaxed mb-6">{error}</p>
           <button
             onClick={() => loadData(true)}
-            className="w-full py-3 bg-red-900/40 text-red-200 border border-red-800/40 hover:bg-red-900/60 rounded-2xl text-sm font-bold transition-all"
+            className="w-full py-3 bg-[var(--color-bad)] text-white rounded-2xl text-sm font-bold transition-all active:scale-[0.98]"
           >
             Retry Connection
           </button>
@@ -443,7 +445,7 @@ export const NectarFlowV2View: React.FC = () => {
 
     if (!historyBase.length && !historyCurrent.length) {
       return (
-        <div className="flex items-center justify-center text-xs text-slate-500" style={{ height }}>
+        <div className="flex items-center justify-center text-xs text-[var(--color-text-muted)]" style={{ height }}>
           Insufficient history for trend line
         </div>
       );
@@ -740,11 +742,13 @@ export const NectarFlowV2View: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex-1 overflow-hidden flex flex-col text-white bg-[#0a0a14] relative">
+    // Page furniture is light like the rest of the app; the chart panel and its
+    // fullscreen view stay dark on purpose — see the comment at the chart.
+    <div className="w-full flex-1 overflow-hidden flex flex-col text-[var(--color-text)] bg-[var(--color-bg)] relative">
 
       {/* Apiary Selector (copied verbatim from NectarFlowView) */}
       {apiariesList.length > 1 && (
-        <div className="w-full bg-[#12121f] border-b border-[#2a2a4a] px-4 py-2.5 flex items-center gap-2 z-20">
+        <div className="w-full bg-[var(--color-bg-raised)] border-b border-[var(--color-divider)] px-4 py-2.5 flex items-center gap-2 z-20">
           <MapPin size={14} className="text-[var(--color-primary)] flex-shrink-0" />
           <select
             value={selectedApiaryId || ''}
@@ -752,19 +756,19 @@ export const NectarFlowV2View: React.FC = () => {
               const a = apiariesList.find((x: any) => x.id === e.target.value);
               if (a) useAppStore.setState({ selectedApiaryId: a.id, selectedApiaryName: a.name });
             }}
-            className="flex-1 bg-transparent text-white text-sm font-semibold outline-none cursor-pointer appearance-none border-none"
+            className="flex-1 bg-transparent text-[var(--color-text)] text-sm font-semibold outline-none cursor-pointer appearance-none border-none"
             style={{ WebkitAppearance: 'none' }}
           >
             {apiariesList.map((a: any) => (
-              <option key={a.id} value={a.id} className="bg-[#1a1a2e] text-white">{a.name}</option>
+              <option key={a.id} value={a.id} className="bg-[var(--color-bg-raised)] text-[var(--color-text)]">{a.name}</option>
             ))}
           </select>
           {coords && (
-            <span className="text-[10px] font-mono text-slate-400 flex-shrink-0 tabular-nums" title="Resolved coordinates sent to the index API">
+            <span className="text-[10px] font-mono text-[var(--color-text-muted)] flex-shrink-0 tabular-nums" title="Resolved coordinates sent to the index API">
               {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
             </span>
           )}
-          <ChevronDown size={14} className="text-slate-400 flex-shrink-0 pointer-events-none" />
+          <ChevronDown size={14} className="text-[var(--color-text-muted)] flex-shrink-0 pointer-events-none" />
         </div>
       )}
 
@@ -809,37 +813,37 @@ export const NectarFlowV2View: React.FC = () => {
             {/* Today at a Glance */}
             <div
               onClick={() => setExpandToday(!expandToday)}
-              className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
+              className="card p-5 active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
             >
-              <div className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4">
+              <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3 mb-4">
                 <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider flex items-center gap-2">
                   <Activity size={16} /> Today at a Glance
                 </h3>
-                <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandToday ? 'rotate-180' : ''}`} />
+                <ChevronDown size={16} className={`text-[var(--color-text-muted)] transition-transform duration-300 ${expandToday ? 'rotate-180' : ''}`} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Nectar Index</span>
-                  <span className="text-2xl font-black text-white">{forageIndexVal}</span>
+                  <span className="text-[10px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider">Nectar Index</span>
+                  <span className="text-2xl font-black text-[var(--color-text)]">{forageIndexVal}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Trend</span>
-                  <span className={`text-2xl font-black flex items-center gap-1 ${deltaVal > 0.002 ? 'text-green-400' : deltaVal < -0.002 ? 'text-red-400' : 'text-slate-300'}`}>
+                  <span className="text-[10px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider">Trend</span>
+                  <span className={`text-2xl font-black flex items-center gap-1 ${deltaVal > 0.002 ? 'text-[var(--color-good-deep)]' : deltaVal < -0.002 ? 'text-[var(--color-bad)]' : 'text-[var(--color-text)]'}`}>
                     {deltaVal > 0.002 ? <TrendingUp size={20} /> : deltaVal < -0.002 ? <TrendingDown size={20} /> : <Minus size={20} />}
                     {deltaStr}
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Greening Rate</span>
-                  <span className="text-lg font-extrabold text-white mt-0.5">{Math.round(data.v2.rate_norm * 100)}%</span>
+                  <span className="text-[10px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider">Greening Rate</span>
+                  <span className="text-lg font-extrabold text-[var(--color-text)] mt-0.5">{Math.round(data.v2.rate_norm * 100)}%</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Warmth</span>
-                  <span className="text-lg font-extrabold text-white mt-0.5">{Math.round(data.v2.warmth * 100)}%</span>
+                  <span className="text-[10px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider">Warmth</span>
+                  <span className="text-lg font-extrabold text-[var(--color-text)] mt-0.5">{Math.round(data.v2.warmth * 100)}%</span>
                 </div>
               </div>
               {expandToday && (
-                <div className="mt-5 pt-4 border-t border-[#2b2b4d] space-y-2 text-xs text-slate-300 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
+                <div className="mt-5 pt-4 border-t border-[var(--color-divider)] space-y-2 text-xs text-[var(--color-text)] animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
                   {[
                     ['Greenness (NDVI/EVI)', `${Math.round(data.v2.greenness * 100)}%`],
                     ['Vigor (above baseline)', `${Math.round(data.v2.vigor * 100)}%`],
@@ -848,8 +852,8 @@ export const NectarFlowV2View: React.FC = () => {
                     ['Fall term (photo×dew)', `${Math.round(data.v2.fall_term * 100)}%`],
                     ['Warmth gate (14d temp)', `${Math.round(data.v2.warmth * 100)}%`],
                   ].map(([label, val]) => (
-                    <div key={label} className="flex justify-between border-b border-[#20203a] pb-1.5">
-                      <span>{label}</span><span className="font-bold text-white">{val}</span>
+                    <div key={label} className="flex justify-between border-b border-[var(--color-divider)] pb-1.5">
+                      <span>{label}</span><span className="font-bold text-[var(--color-text)]">{val}</span>
                     </div>
                   ))}
                 </div>
@@ -859,13 +863,13 @@ export const NectarFlowV2View: React.FC = () => {
             {/* V2 Index Components (replaces Nectar Drivers) */}
             <div
               onClick={() => setExpandComponents(!expandComponents)}
-              className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
+              className="card p-5 active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
             >
-              <div className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4">
+              <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3 mb-4">
                 <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider flex items-center gap-2">
                   <Sparkles size={16} /> Index Components
                 </h3>
-                <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandComponents ? 'rotate-180' : ''}`} />
+                <ChevronDown size={16} className={`text-[var(--color-text-muted)] transition-transform duration-300 ${expandComponents ? 'rotate-180' : ''}`} />
               </div>
               <div className="space-y-4">
                 {[
@@ -880,10 +884,10 @@ export const NectarFlowV2View: React.FC = () => {
                       <span>{label}</span>
                       <span className="text-[var(--color-primary)]">{Math.round(val * 100)}%</span>
                     </div>
-                    <div className="w-full bg-[#1b1b36] h-3 rounded-full overflow-hidden border border-[#2d2d54]">
+                    <div className="w-full bg-[var(--color-divider)] h-3 rounded-full overflow-hidden border border-[var(--color-card-border)]">
                       <div className={`${color} h-full rounded-full transition-all duration-500`} style={{ width: `${Math.round(val * 100)}%` }} />
                     </div>
-                    {expandComponents && <p className="text-[10px] text-slate-500">{tip}</p>}
+                    {expandComponents && <p className="text-[10px] text-[var(--color-text-muted)]">{tip}</p>}
                   </div>
                 ))}
               </div>
@@ -1001,17 +1005,17 @@ export const NectarFlowV2View: React.FC = () => {
             <div>
               <button
                 onClick={() => setExpandTrends(!expandTrends)}
-                className="w-full flex items-center justify-between text-[11px] uppercase font-bold text-slate-500 tracking-wider px-1 py-1.5 hover:text-slate-300 cursor-pointer"
+                className="w-full flex items-center justify-between text-[11px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider px-1 py-1.5 hover:text-[var(--color-text)] cursor-pointer"
               >
                 <span>{currentYear} Weekly Values</span>
                 <ChevronDown size={14} className={`transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
               </button>
               {expandTrends && (
-                <div className="mt-1 bg-[#121226] border border-[#222240] rounded-xl p-3 space-y-1.5 text-xs text-slate-300 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
+                <div className="mt-1 bg-[var(--color-bg-raised)] border border-[var(--color-divider)] rounded-xl p-3 space-y-1.5 text-xs text-[var(--color-text)] animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
                   {historyCurrent.filter((_: any, idx: number) => idx % 7 === 0 || idx === historyCurrent.length - 1).map((h: any, i: number) => (
-                    <div key={i} className="flex justify-between border-b border-[#20203a] pb-1.5">
+                    <div key={i} className="flex justify-between border-b border-[var(--color-divider)] pb-1.5">
                       <span>{new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                      <span className="font-bold text-white">
+                      <span className="font-bold text-[var(--color-text)]">
                         {h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed) ? `${(h.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}
                       </span>
                     </div>
@@ -1041,13 +1045,13 @@ export const NectarFlowV2View: React.FC = () => {
                         setActiveTab('home');
                       }
                     }}
-                    className={`bg-[#151529]/80 border ${isSelected ? 'border-[var(--color-primary)] shadow-amber-500/5' : 'border-[#2b2b4d]'} rounded-2xl p-4 flex items-center justify-between active:scale-[0.99] transition-all cursor-pointer select-none`}
+                    className={`card border ${isSelected ? 'border-[var(--color-primary)] shadow-amber-500/5' : 'border-[var(--color-card-border)]'} rounded-2xl p-4 flex items-center justify-between active:scale-[0.99] transition-all cursor-pointer select-none`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-3.5 h-3.5 rounded-full ${apiaryPhaseColor}`} />
                       <div className="flex flex-col">
-                        <span className="font-bold text-white text-sm">{a.name}</span>
-                        <span className="text-[10px] text-slate-400 mt-0.5">
+                        <span className="font-bold text-[var(--color-text)] text-sm">{a.name}</span>
+                        <span className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
                           {isSelected ? `Active • Updated today` : 'Tap to select'}
                         </span>
                       </div>
@@ -1066,7 +1070,7 @@ export const NectarFlowV2View: React.FC = () => {
       </div>
 
       {/* Bottom Nav (copied verbatim from NectarFlowView, Settings tab omitted for V2 preview) */}
-      <div className="w-full absolute bottom-0 left-0 right-0 bg-[#0f0f20]/95 backdrop-blur-lg border-t border-[#222240] px-6 py-2.5 flex items-center justify-around z-20 select-none">
+      <div className="w-full absolute bottom-0 left-0 right-0 bg-[var(--color-bg-raised)]/95 backdrop-blur-lg border-t border-[var(--color-divider)] px-6 py-2.5 flex items-center justify-around z-20 select-none">
         {([
           { key: 'home' as const,     icon: <Activity size={20} />,   label: 'Details' },
           { key: 'trends' as const,   icon: <TrendingUp size={20} />, label: 'Trends' },
@@ -1075,7 +1079,7 @@ export const NectarFlowV2View: React.FC = () => {
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${activeTab === key ? 'text-[var(--color-primary)] scale-105' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${activeTab === key ? 'text-[var(--color-primary)] scale-105' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'}`}
           >
             {icon}
             <span className="text-[9px] font-black uppercase tracking-wider">{label}</span>
@@ -1162,19 +1166,19 @@ export const NectarFlowV2View: React.FC = () => {
               ) : (
                 <div className="flex items-center justify-between text-xs w-full">
                   <div className="flex flex-col">
-                    <span className="text-[9px] uppercase font-bold text-slate-500">Latest Status</span>
-                    <span className="font-extrabold text-white text-[11px] mt-0.5 flex items-center gap-1">
-                      {resolvedTrendDirection === 'rising' ? <TrendingUp size={12} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={12} className="text-red-400" /> : <Minus size={12} className="text-slate-400" />}
+                    <span className="text-[9px] uppercase font-bold text-[var(--color-text-muted)]">Latest Status</span>
+                    <span className="font-extrabold text-[var(--color-text)] text-[11px] mt-0.5 flex items-center gap-1">
+                      {resolvedTrendDirection === 'rising' ? <TrendingUp size={12} className="text-[var(--color-good-deep)]" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={12} className="text-[var(--color-bad)]" /> : <Minus size={12} className="text-[var(--color-text-muted)]" />}
                       {resolvedTrendDirection ? `${resolvedTrendDirection} trend` : 'Flat trend'}
                     </span>
                   </div>
-                  <div className="flex gap-4 text-[10px] text-slate-400">
+                  <div className="flex gap-4 text-[10px] text-[var(--color-text-muted)]">
                     <div>Nectar: <span className="font-bold text-[var(--color-primary)]">{forageIndexVal}</span></div>
                     <div>Rate: <span className="font-bold text-emerald-400">{Math.round(data.v2.rate_norm * 100)}%</span></div>
                     <div>Warmth: <span className="font-bold text-sky-400">{Math.round(data.v2.warmth * 100)}%</span></div>
                   </div>
                   <div className="flex flex-col text-right">
-                    <span className="text-[9px] uppercase font-bold text-slate-500">Current Phase</span>
+                    <span className="text-[9px] uppercase font-bold text-[var(--color-text-muted)]">Current Phase</span>
                     <span className={`font-extrabold px-2 py-0.5 rounded-full text-[9px] mt-0.5 ${colors.bg} ${colors.text}`}>
                       {colors.emoji} {colors.label}
                     </span>
