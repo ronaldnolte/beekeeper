@@ -1057,37 +1057,18 @@ export const NectarFlowV2View: React.FC = () => {
       {isEnlarged && (
         <div className="fixed inset-0 z-50 bg-[#07070d] flex flex-col justify-between overflow-hidden">
           <div
-            className="portrait:w-[100vh] portrait:h-[100vw] portrait:absolute portrait:top-0 portrait:left-full portrait:origin-top-left portrait:rotate-90 landscape:w-full landscape:h-full flex flex-col p-6 justify-between"
+            className="portrait:w-[100vh] portrait:h-[100vw] portrait:absolute portrait:top-0 portrait:left-full portrait:origin-top-left portrait:rotate-90 landscape:w-full landscape:h-full flex flex-col p-4 gap-2 overflow-y-auto"
           >
-            <div className="flex items-center justify-between w-full border-b border-[#2b2b4d] pb-2.5 mb-2 select-none">
+            <div className="flex items-center justify-between w-full border-b border-[#2b2b4d] pb-2 shrink-0 select-none">
               {/* Title AND key. Full screen used to drop the legend, leaving two
                   coloured lines with nothing saying which year was which — Ron,
                   2026-09-08: the associated information is left behind, "so I
                   would argue it isn't The Chart". */}
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="flex items-center gap-2 shrink-0">
-                  <TrendingUp className="text-[var(--color-primary)]" size={18} />
-                  <h3 className="text-sm font-black text-[var(--color-primary)] tracking-wider uppercase truncate">
-                    {useAppStore.getState().selectedApiaryName} — Nectar Index Trend
-                  </h3>
-                </div>
-                <div className="hidden sm:flex items-center gap-3 text-[11px] text-slate-400">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-[2px] rounded bg-[#2ECC71] inline-block" />{currentYear}
-                  </span>
-                  {data.satellite?.last_image && (
-                    <span className="flex items-center gap-1.5">
-                      <Satellite size={11} />
-                      last image <b className="text-slate-300">{formatSceneDate(data.satellite.last_image)}</b>
-                      {data.satellite.next_pass && (
-                        <> · next pass <b className="text-slate-300">{formatSceneDate(data.satellite.next_pass)}</b></>
-                      )}
-                    </span>
-                  )}
-                </div>
+              <div className="flex items-center gap-2 min-w-0">
+                <TrendingUp className="text-[var(--color-primary)] shrink-0" size={18} />
+                <h3 className="text-sm font-black text-[var(--color-primary)] tracking-wider uppercase truncate">
+                  {useAppStore.getState().selectedApiaryName} — Nectar Index Trend
+                </h3>
               </div>
               <button
                 onClick={() => {
@@ -1100,17 +1081,52 @@ export const NectarFlowV2View: React.FC = () => {
               </button>
             </div>
 
-            <div className="flex-1 flex items-center justify-center bg-[#0d0d1a] border border-[#20203c] rounded-2xl p-4 my-2">
+            <div className="flex-1 min-h-0 flex items-center justify-center bg-[#0d0d1a] border border-[#20203c] rounded-2xl p-3 overflow-hidden">
               {(() => {
+                // In portrait the whole panel is rotated, so the space available
+                // ACROSS the chart is the viewport's width, and DOWN it is the
+                // viewport's height. Reserve room for the title row, the legend
+                // and status strip, the padding and the gaps — the chart used to
+                // take a flat 60% of the viewport and push the footer clean off
+                // the screen, where nothing could scroll it back.
                 const isPortrait = window.innerHeight > window.innerWidth;
-                const chartW = isPortrait ? window.innerHeight - 48 : window.innerWidth - 48;
-                const chartH = isPortrait ? window.innerWidth * 0.60 : window.innerHeight * 0.60;
-                return renderChartSvg(Math.max(300, chartW), Math.max(120, chartH), true);
+                const across = isPortrait ? window.innerHeight : window.innerWidth;
+                const down = isPortrait ? window.innerWidth : window.innerHeight;
+                const RESERVED = 168; // title + legend/status + padding + gaps
+                return renderChartSvg(
+                  Math.max(300, across - 48),
+                  Math.max(140, down - RESERVED),
+                  true
+                );
               })()}
             </div>
 
+            {/* Key + satellite dates. These live down here rather than beside the
+                title: in the rotated portrait view every pixel of header height
+                comes straight off the chart, and this is the same information
+                the strip under the inline chart shows. */}
+            <div className="flex items-center justify-between gap-4 flex-wrap text-[11px] text-slate-400 px-1 shrink-0">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-[2px] rounded bg-[#2ECC71] inline-block" />{currentYear}
+                </span>
+              </div>
+              {data.satellite?.last_image && (
+                <span className="flex items-center gap-1.5">
+                  <Satellite size={11} className="shrink-0" />
+                  Satellite: last image <b className="text-slate-300">{formatSceneDate(data.satellite.last_image)}</b>
+                  {data.satellite.next_pass && (
+                    <> · next pass <b className="text-slate-300">{formatSceneDate(data.satellite.next_pass)}</b></>
+                  )}
+                </span>
+              )}
+            </div>
+
             {/* Fullscreen hover panel (copied verbatim from NectarFlowView; NDVI/Bloom/Weather columns omitted) */}
-            <div className="bg-[#121226] border border-[#222240] rounded-xl p-3 min-h-[50px] select-none">
+            <div className="bg-[#121226] border border-[#222240] rounded-xl p-3 min-h-[50px] shrink-0 select-none">
               {hoveredIndex !== null ? (
                 <div className="flex items-center justify-between text-xs w-full gap-4">
                   <div className="flex flex-col">
