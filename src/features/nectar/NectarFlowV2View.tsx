@@ -909,28 +909,6 @@ export const NectarFlowV2View: React.FC = () => {
               )}
             </div>
 
-            {/* Weekly values — collapsible detail */}
-            <div>
-              <button
-                onClick={() => setExpandTrends(!expandTrends)}
-                className="w-full flex items-center justify-between text-[11px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider px-1 py-1.5 hover:text-[var(--color-text)] cursor-pointer"
-              >
-                <span>{currentYear} Weekly Values</span>
-                <ChevronDown size={14} className={`transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
-              </button>
-              {expandTrends && (
-                <div className="mt-1 bg-[var(--color-bg-raised)] border border-[var(--color-divider)] rounded-xl p-3 space-y-1.5 text-xs text-[var(--color-text)] animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
-                  {historyCurrent.filter((_: any, idx: number) => idx % 7 === 0 || idx === historyCurrent.length - 1).map((h: any, i: number) => (
-                    <div key={i} className="flex justify-between border-b border-[var(--color-divider)] pb-1.5">
-                      <span>{new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                      <span className="font-bold text-[var(--color-text)]">
-                        {h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed) ? `${(h.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         )}
 
@@ -1013,6 +991,28 @@ export const NectarFlowV2View: React.FC = () => {
                   ))}
                 </div>
               )}
+            {/* Weekly values — collapsible detail */}
+            <div>
+              <button
+                onClick={() => setExpandTrends(!expandTrends)}
+                className="w-full flex items-center justify-between text-[11px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider px-1 py-1.5 hover:text-[var(--color-text)] cursor-pointer"
+              >
+                <span>{currentYear} Weekly Values</span>
+                <ChevronDown size={14} className={`transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
+              </button>
+              {expandTrends && (
+                <div className="mt-1 bg-[var(--color-bg-raised)] border border-[var(--color-divider)] rounded-xl p-3 space-y-1.5 text-xs text-[var(--color-text)] animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
+                  {historyCurrent.filter((_: any, idx: number) => idx % 7 === 0 || idx === historyCurrent.length - 1).map((h: any, i: number) => (
+                    <div key={i} className="flex justify-between border-b border-[var(--color-divider)] pb-1.5">
+                      <span>{new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      <span className="font-bold text-[var(--color-text)]">
+                        {h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed) ? `${(h.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             </div>
 
             {/* V2 Index Components (replaces Nectar Drivers) */}
