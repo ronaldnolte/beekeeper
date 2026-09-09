@@ -5,6 +5,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../../../api/_season';
 import { useAppStore } from '../../store/useAppStore';
+import { SelectionList } from '../../shared/components/SelectionList';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { supabase } from '../../data/supabase';
 import {
@@ -19,6 +20,7 @@ import {
   Sparkles,
   Maximize2,
   Satellite,
+  Info,
   X,
 } from 'lucide-react';
 
@@ -87,8 +89,6 @@ export const NectarFlowV2View: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<V2Response | null>(null);
 
-  // Navigation Tabs state
-  const [activeTab, setActiveTab] = useState<'home' | 'apiaries' | 'trends'>('trends');
 
   // Expandable panels state
   const [expandToday, setExpandToday] = useState(false);
@@ -100,6 +100,8 @@ export const NectarFlowV2View: React.FC = () => {
 
   // Enlarged Landscape Modal State
   const [isEnlarged, setIsEnlarged] = useState(false);
+  // The old DETAILS sub-tab, now a panel behind the (i) on the chart.
+  const [showDetails, setShowDetails] = useState(false);
   const [containerWidth, setContainerWidth] = useState(320);
   const [chartHeight, setChartHeight] = useState(300);
   // Resolved lat/lng actually sent to the API (post zip-geocoding). Shown next to
@@ -124,7 +126,7 @@ export const NectarFlowV2View: React.FC = () => {
     compute();
     window.addEventListener('resize', compute);
     return () => window.removeEventListener('resize', compute);
-  }, [activeTab, loading, data]);
+  }, [loading, data]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -138,7 +140,7 @@ export const NectarFlowV2View: React.FC = () => {
     return () => observer.disconnect();
     // Re-run once data loads: the chart container only mounts after the loading
     // guard clears, so on a Trends-default mount the ref is null on first run.
-  }, [activeTab, loading, data]);
+  }, [loading, data]);
 
   // Auto-select if there is exactly 1 apiary
   useEffect(() => {
@@ -262,6 +264,8 @@ export const NectarFlowV2View: React.FC = () => {
       case 'TRENDING_UP':
         return { bg: 'bg-[#58D68D]', text: 'text-black', label: 'Trending Up', emoji: '🌱' };
       case 'TRENDING_DOWN':
+        // White, NOT the text token: these two badges are filled with a dark colour,
+        // so their label has to contrast with the badge, not with the page.
         return { bg: 'bg-[#1E8449]', text: 'text-white', label: 'Trending Down', emoji: '🍂' };
       case 'DEARTH':
       default:
@@ -288,29 +292,36 @@ export const NectarFlowV2View: React.FC = () => {
 
   // Phase advice (copied verbatim from NectarFlowView)
 
-  // No apiary (copied verbatim from NectarFlowView)
+  // Choosing a yard is the same act here as on the Apiaries screen, so it uses
+  // the same component and reads the same way — Ron, 2026-08-31: "the apiary
+  // selection seems as though it should match the apiary option". This screen
+  // used to roll its own dark buttons, which is also why the picker looked like
+  // a different app from the list two taps away.
   if (!selectedApiaryId) {
     return (
-      <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-white bg-[#0f0f1a]">
-        <div className="bg-[#1a1a2e]/80 backdrop-blur-md rounded-3xl p-8 flex flex-col items-center justify-center gap-6 shadow-2xl border border-[#2a2a4a] w-full max-w-md">
-          <div className="text-center">
-            <h3 className="text-2xl font-black text-[var(--color-primary)]">Select Apiary Yard</h3>
-            <p className="text-xs text-slate-400 font-medium mt-2 leading-relaxed">
-              Choose a location to compute the foraging nectar index.
-            </p>
-          </div>
-          <div className="w-full flex flex-col gap-3">
-            {apiariesList.map((a: any) => (
-              <button
-                key={a.id}
-                onClick={() => {
-                  useAppStore.setState({ selectedApiaryId: a.id, selectedApiaryName: a.name });
-                }}
-                className="w-full bg-[#24243e] border border-[#3b3b5c] p-4 rounded-2xl text-center font-bold text-sm hover:border-[var(--color-primary)] active:scale-98 transition-all duration-200"
-              >
-                {a.name}
-              </button>
-            ))}
+      <div className="w-full flex-1 overflow-y-auto bg-[var(--color-bg)]">
+        <div className="mx-auto w-full max-w-2xl px-4 pt-5 pb-28">
+          <h3 className="text-xl font-black text-[var(--color-text)]">Which yard?</h3>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            Nectar Flow reads the landscape around one apiary at a time.
+          </p>
+          <div className="mt-5">
+            <SelectionList
+              items={apiariesList.map((a: any) => ({
+                id: a.id,
+                title: a.name,
+                subtitle: a.zip_code
+                  ? `ZIP: ${a.zip_code}`
+                  : (a.latitude ? 'Location: Coordinates' : 'No location set'),
+                icon: <MapPin size={22} />,
+                raw: a,
+              }))}
+              emptyMessage="No apiaries yet. Add one on the Apiaries tab and it will show up here."
+              onSelect={(id) => {
+                const a = apiariesList.find((x: any) => x.id === id);
+                useAppStore.setState({ selectedApiaryId: id, selectedApiaryName: a?.name });
+              }}
+            />
           </div>
         </div>
       </div>
@@ -320,16 +331,16 @@ export const NectarFlowV2View: React.FC = () => {
   // Loading (copied verbatim from NectarFlowView)
   if (loading) {
     return (
-      <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-white bg-[#0f0f1a]">
-        <div className="bg-[#1a1a2e]/80 backdrop-blur-md rounded-3xl p-12 flex flex-col items-center justify-center gap-4 shadow-2xl border border-[#2a2a4a] text-center w-full max-w-md">
+      <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 bg-[var(--color-bg)]">
+        <div className="card p-12 flex flex-col items-center justify-center gap-4 text-center w-full max-w-md">
           <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
-          <p className="font-bold text-[var(--color-primary)] text-lg mt-2">Analyzing satellite imagery…</p>
-          <p className="text-xs text-slate-400 leading-relaxed max-w-[280px]">
+          <p className="font-bold text-[var(--color-primary-ink)] text-lg mt-2">Analyzing satellite imagery…</p>
+          <p className="text-xs text-[var(--color-text-muted)] leading-relaxed max-w-[280px]">
             Pulling recent satellite and weather data for your apiary and computing the
             nectar forecast. This usually takes 10–30 seconds, and a little longer the
             first time each day.
           </p>
-          <p className="text-2xl font-black text-[var(--color-primary)] tabular-nums mt-1">{elapsedSec}s</p>
+          <p className="text-2xl font-black text-[var(--color-primary-ink)] tabular-nums mt-1">{elapsedSec}s</p>
         </div>
       </div>
     );
@@ -338,14 +349,14 @@ export const NectarFlowV2View: React.FC = () => {
   // Error (copied verbatim from NectarFlowView)
   if (error) {
     return (
-      <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-white bg-[#0f0f1a]">
-        <div className="bg-[#1a1a2e]/80 backdrop-blur-md rounded-3xl p-8 text-center border border-red-500/30 shadow-2xl bg-red-950/10 w-full max-w-md">
-          <AlertTriangle className="text-red-500 mx-auto mb-3" size={40} />
-          <p className="text-red-400 font-black text-lg mb-2">Fetch failed</p>
-          <p className="text-xs text-red-300/80 font-medium leading-relaxed mb-6">{error}</p>
+      <div className="w-full flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 bg-[var(--color-bg)]">
+        <div className="card p-8 text-center border-2 border-[var(--color-bad)]/30 w-full max-w-md">
+          <AlertTriangle className="text-[var(--color-bad)] mx-auto mb-3" size={40} />
+          <p className="text-[var(--color-bad)] font-black text-lg mb-2">Fetch failed</p>
+          <p className="text-xs text-[var(--color-text-muted)] font-medium leading-relaxed mb-6">{error}</p>
           <button
             onClick={() => loadData(true)}
-            className="w-full py-3 bg-red-900/40 text-red-200 border border-red-800/40 hover:bg-red-900/60 rounded-2xl text-sm font-bold transition-all"
+            className="w-full py-3 bg-[var(--color-bad)] text-white rounded-2xl text-sm font-bold transition-all active:scale-[0.98]"
           >
             Retry Connection
           </button>
@@ -435,7 +446,7 @@ export const NectarFlowV2View: React.FC = () => {
 
     if (!historyBase.length && !historyCurrent.length) {
       return (
-        <div className="flex items-center justify-center text-xs text-slate-500" style={{ height }}>
+        <div className="flex items-center justify-center text-xs text-[var(--color-text-muted)]" style={{ height }}>
           Insufficient history for trend line
         </div>
       );
@@ -732,11 +743,13 @@ export const NectarFlowV2View: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex-1 overflow-hidden flex flex-col text-white bg-[#0a0a14] relative">
+    // Page furniture is light like the rest of the app; the chart panel and its
+    // fullscreen view stay dark on purpose — see the comment at the chart.
+    <div className="w-full flex-1 overflow-hidden flex flex-col text-[var(--color-text)] bg-[var(--color-bg)] relative">
 
       {/* Apiary Selector (copied verbatim from NectarFlowView) */}
       {apiariesList.length > 1 && (
-        <div className="w-full bg-[#12121f] border-b border-[#2a2a4a] px-4 py-2.5 flex items-center gap-2 z-20">
+        <div className="w-full bg-[var(--color-bg-raised)] border-b border-[var(--color-divider)] px-4 py-2.5 flex items-center gap-2 z-20">
           <MapPin size={14} className="text-[var(--color-primary)] flex-shrink-0" />
           <select
             value={selectedApiaryId || ''}
@@ -744,49 +757,31 @@ export const NectarFlowV2View: React.FC = () => {
               const a = apiariesList.find((x: any) => x.id === e.target.value);
               if (a) useAppStore.setState({ selectedApiaryId: a.id, selectedApiaryName: a.name });
             }}
-            className="flex-1 bg-transparent text-white text-sm font-semibold outline-none cursor-pointer appearance-none border-none"
+            className="flex-1 bg-transparent text-[var(--color-text)] text-sm font-semibold outline-none cursor-pointer appearance-none border-none"
             style={{ WebkitAppearance: 'none' }}
           >
             {apiariesList.map((a: any) => (
-              <option key={a.id} value={a.id} className="bg-[#1a1a2e] text-white">{a.name}</option>
+              <option key={a.id} value={a.id} className="bg-[var(--color-bg-raised)] text-[var(--color-text)]">{a.name}</option>
             ))}
           </select>
           {coords && (
-            <span className="text-[10px] font-mono text-slate-400 flex-shrink-0 tabular-nums" title="Resolved coordinates sent to the index API">
+            <span className="text-[10px] font-mono text-[var(--color-text-muted)] flex-shrink-0 tabular-nums" title="Resolved coordinates sent to the index API">
               {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
             </span>
           )}
-          <ChevronDown size={14} className="text-slate-400 flex-shrink-0 pointer-events-none" />
+          <ChevronDown size={14} className="text-[var(--color-text-muted)] flex-shrink-0 pointer-events-none" />
         </div>
       )}
 
-      {/* Status Banner — slim phase strip (chart-focal redesign) */}
-      <div className={`w-full ${colors.bg} ${colors.text} px-4 py-3 shadow-md relative select-none z-10 flex items-center gap-3`}>
-        <span className="text-2xl leading-none shrink-0">{colors.emoji}</span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
-            <h1 className="text-lg font-black tracking-wide leading-none">{colors.label}</h1>
-            <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">
-              {resolvedTrendDirection === 'rising' ? '↑' : resolvedTrendDirection === 'falling' ? '↓' : '→'} {resolvedTrendDirection}
-            </span>
-          </div>
-          {/* The banner advice was removed 2026-08-28. Ron: "I think its spotty at best.
-              Too many variables. Many of which are not even on the chart." A phase and a
-              direction are what this data supports; what to DO about them depends on the
-              colony, the climate and the beekeeper's own practice, none of which the index
-              can see. */}
-        </div>
-        <span className="bg-black/15 text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full border border-white/10 shrink-0">
-          NFI {data.nfi}
-        </span>
-        <button
-          onClick={() => loadData(true)}
-          className="p-2 bg-black/10 border border-white/20 rounded-full hover:bg-black/20 transition-all cursor-pointer shrink-0"
-          title="Refresh (forces a fresh fetch, bypassing cache)"
-        >
-          <RefreshCw size={14} />
-        </button>
-      </div>
+      {/* The full-width phase banner was removed 2026-09-08. It was a whole
+          horizontal band carrying one word and a number the chart's own overlay
+          already showed — NFI appeared twice on one screen. Ron: "If we write
+          Dearth next to the NFI, we can eliminate the Red banner." The phase now
+          lives in the overlay, tinted by its colour, and Refresh moved to the
+          chart's control trio where the other chart actions are.
+
+          The banner advice went earlier, 2026-08-28. Ron: "I think its spotty at
+          best. Too many variables. Many of which are not even on the chart." */}
 
       {/* The load-timing bar was removed: the per-phase numbers were useful while the
           satellite fetch was being tuned, and are not useful day to day. Timings are
@@ -795,97 +790,8 @@ export const NectarFlowV2View: React.FC = () => {
       {/* Scrollable content */}
       <div ref={contentRef} className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
 
-        {/* HOME TAB */}
-        {activeTab === 'home' && (
-          <>
-            {/* Today at a Glance */}
-            <div
-              onClick={() => setExpandToday(!expandToday)}
-              className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
-            >
-              <div className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4">
-                <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider flex items-center gap-2">
-                  <Activity size={16} /> Today at a Glance
-                </h3>
-                <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandToday ? 'rotate-180' : ''}`} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Nectar Index</span>
-                  <span className="text-2xl font-black text-white">{forageIndexVal}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Trend</span>
-                  <span className={`text-2xl font-black flex items-center gap-1 ${deltaVal > 0.002 ? 'text-green-400' : deltaVal < -0.002 ? 'text-red-400' : 'text-slate-300'}`}>
-                    {deltaVal > 0.002 ? <TrendingUp size={20} /> : deltaVal < -0.002 ? <TrendingDown size={20} /> : <Minus size={20} />}
-                    {deltaStr}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Greening Rate</span>
-                  <span className="text-lg font-extrabold text-white mt-0.5">{Math.round(data.v2.rate_norm * 100)}%</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Warmth</span>
-                  <span className="text-lg font-extrabold text-white mt-0.5">{Math.round(data.v2.warmth * 100)}%</span>
-                </div>
-              </div>
-              {expandToday && (
-                <div className="mt-5 pt-4 border-t border-[#2b2b4d] space-y-2 text-xs text-slate-300 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
-                  {[
-                    ['Greenness (NDVI/EVI)', `${Math.round(data.v2.greenness * 100)}%`],
-                    ['Vigor (above baseline)', `${Math.round(data.v2.vigor * 100)}%`],
-                    ['Moisture (NDWI)', `${Math.round(data.v2.moisture * 100)}%`],
-                    ['Rate norm (core signal)', `${Math.round(data.v2.rate_norm * 100)}%`],
-                    ['Fall term (photo×dew)', `${Math.round(data.v2.fall_term * 100)}%`],
-                    ['Warmth gate (14d temp)', `${Math.round(data.v2.warmth * 100)}%`],
-                  ].map(([label, val]) => (
-                    <div key={label} className="flex justify-between border-b border-[#20203a] pb-1.5">
-                      <span>{label}</span><span className="font-bold text-white">{val}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* V2 Index Components (replaces Nectar Drivers) */}
-            <div
-              onClick={() => setExpandComponents(!expandComponents)}
-              className="bg-[#151529]/80 border border-[#2b2b4d] rounded-3xl p-5 shadow-lg active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
-            >
-              <div className="flex items-center justify-between border-b border-[#2b2b4d] pb-3 mb-4">
-                <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider flex items-center gap-2">
-                  <Sparkles size={16} /> Index Components
-                </h3>
-                <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${expandComponents ? 'rotate-180' : ''}`} />
-              </div>
-              <div className="space-y-4">
-                {[
-                  { label: 'Greenness',   val: data.v2.greenness,  color: 'bg-emerald-500', tip: 'NDVI/EVI fusion' },
-                  { label: 'Moisture',    val: data.v2.moisture,   color: 'bg-sky-500',     tip: 'NDWI canopy water' },
-                  { label: 'Rate (core)', val: data.v2.rate_norm,  color: 'bg-[var(--color-primary)]',   tip: 'greening velocity' },
-                  { label: 'Fall term',   val: data.v2.fall_term,  color: 'bg-orange-500',  tip: 'photoperiod × dewpoint' },
-                  { label: 'Warmth',      val: data.v2.warmth,     color: 'bg-red-500',     tip: '14-day mean temp ramp' },
-                ].map(({ label, val, color, tip }) => (
-                  <div key={label} className="space-y-1.5">
-                    <div className="flex justify-between text-xs font-bold">
-                      <span>{label}</span>
-                      <span className="text-[var(--color-primary)]">{Math.round(val * 100)}%</span>
-                    </div>
-                    <div className="w-full bg-[#1b1b36] h-3 rounded-full overflow-hidden border border-[#2d2d54]">
-                      <div className={`${color} h-full rounded-full transition-all duration-500`} style={{ width: `${Math.round(val * 100)}%` }} />
-                    </div>
-                    {expandComponents && <p className="text-[10px] text-slate-500">{tip}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </>
-        )}
-
         {/* TRENDS TAB (copied verbatim from NectarFlowView; hover panel shows NFI only — V2 history has no NDVI/Bloom/Weather) */}
-        {activeTab === 'trends' && (
+        {(
           <div className="space-y-3 select-none">
             {/* Hero chart — the focal point */}
             <div
@@ -894,41 +800,55 @@ export const NectarFlowV2View: React.FC = () => {
             >
               {(historyBase.length > 1 || historyCurrent.length > 1) ? (
                 <>
-                  {/* Inset metrics overlay */}
-                  <div className="absolute top-3 left-3 z-20 bg-[#0a0a16]/80 backdrop-blur-sm border border-[#2b2b54]/60 rounded-xl px-3 py-2 shadow-lg pointer-events-none">
-                    <div className="flex items-baseline gap-1.5">
+                  {/* The state of the yard, in one place. This absorbed the
+                      full-width phase banner: the index, the phase and the
+                      direction now read as one line instead of one number here
+                      and the same number in a red band above. The phase carries
+                      its own colour, so the state is legible before the words
+                      are. Rate / Warmth / Fall moved behind the (i) — they are
+                      diagnostics, not the headline. */}
+                  <div className="absolute top-3 left-3 z-20 bg-[#0a0a16]/85 backdrop-blur-sm border border-[#2b2b54]/60 rounded-xl px-3 py-2 shadow-lg pointer-events-none">
+                    <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-black text-white leading-none">{data.nfi}</span>
-                      <div className="flex flex-col leading-tight">
-                        <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">NFI</span>
-                        <span className="text-[10px] font-bold text-slate-300 flex items-center gap-0.5 capitalize">
-                          {resolvedTrendDirection === 'rising' ? <TrendingUp size={10} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={10} className="text-red-400" /> : <Minus size={10} className="text-slate-400" />}
-                          {resolvedTrendDirection}
-                        </span>
-                      </div>
+                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">NFI</span>
                     </div>
-                    <div className="flex gap-3 mt-2">
-                      <div className="flex flex-col leading-tight">
-                        <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Rate</span>
-                        <span className="text-[11px] font-black text-emerald-400">{Math.round(data.v2.rate_norm * 100)}%</span>
-                      </div>
-                      <div className="flex flex-col leading-tight">
-                        <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Warmth</span>
-                        <span className="text-[11px] font-black text-sky-400">{Math.round(data.v2.warmth * 100)}%</span>
-                      </div>
-                      <div className="flex flex-col leading-tight">
-                        <span className="text-[8px] uppercase font-bold text-slate-500 tracking-wider">Fall</span>
-                        <span className="text-[11px] font-black text-orange-400">{Math.round(data.v2.fall_term * 100)}%</span>
-                      </div>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <span className="text-sm font-black leading-none" style={{ color: getPhaseColor(data.phase) }}>
+                        {colors.label}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 flex items-center gap-0.5 capitalize">
+                        {resolvedTrendDirection === 'rising' ? <TrendingUp size={10} /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={10} /> : <Minus size={10} />}
+                        {resolvedTrendDirection}
+                      </span>
                     </div>
                   </div>
-                  {/* Enlarge button */}
-                  <div className="absolute top-3 right-3 z-20">
+
+                  {/* Chart controls — one trio, equal weight, so none of them
+                      hides in the plot the way the lone expand icon did. */}
+                  <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+                    <button
+                      onClick={() => loadData(true)}
+                      className="p-2 bg-[#1b1b36]/80 hover:bg-[#2b2b54] border border-[#2b2b54] rounded-lg text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center justify-center"
+                      title="Refresh — fetches fresh satellite data, bypassing the cache"
+                      aria-label="Refresh"
+                    >
+                      <RefreshCw size={15} />
+                    </button>
+                    <button
+                      onClick={() => setShowDetails(true)}
+                      className="p-2 bg-[#1b1b36]/80 hover:bg-[#2b2b54] border border-[#2b2b54] rounded-lg text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center justify-center"
+                      title="What is behind this number"
+                      aria-label="Details"
+                    >
+                      <Info size={15} />
+                    </button>
                     <button
                       onClick={() => setIsEnlarged(true)}
-                      className="p-1.5 bg-[#1b1b36]/80 hover:bg-[#2b2b54] border border-[#2b2b54] rounded-lg text-slate-400 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center justify-center"
-                      title="Enlarge Landscape Chart"
+                      className="p-2 bg-[#1b1b36]/80 hover:bg-[#2b2b54] border border-[#2b2b54] rounded-lg text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center justify-center"
+                      title="Full screen"
+                      aria-label="Full screen"
                     >
-                      <Maximize2 size={14} />
+                      <Maximize2 size={15} />
                     </button>
                   </div>
                   {renderChartSvg(containerWidth, chartHeight)}
@@ -989,21 +909,103 @@ export const NectarFlowV2View: React.FC = () => {
               )}
             </div>
 
+          </div>
+        )}
+
+      </div>
+
+
+      {/* Details — what is behind the number. This was the DETAILS sub-tab;
+          it became a panel so the screen could lose a whole navigation bar.
+          Ron, 2026-09-08: "Details could just be an information details (i in
+          a circle) on the chart". */}
+      {showDetails && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center animate-[fade-in_var(--dur-base)_var(--ease-soft)]"
+          onClick={() => setShowDetails(false)}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-lg max-h-[85dvh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[var(--color-bg)] p-4 shadow-2xl animate-[sheet-in_var(--dur-slow)_var(--ease-soft)]"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Nectar index details"
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-black text-[var(--color-text)]">Behind this number</h2>
+              <button
+                onClick={() => setShowDetails(false)}
+                className="p-2 rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-divider)] active:scale-95"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="space-y-4">
+            {/* Today at a Glance */}
+            <div
+              onClick={() => setExpandToday(!expandToday)}
+              className="card p-5 active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
+            >
+              <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3 mb-4">
+                <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider flex items-center gap-2">
+                  <Activity size={16} /> Today at a Glance
+                </h3>
+                <ChevronDown size={16} className={`text-[var(--color-text-muted)] transition-transform duration-300 ${expandToday ? 'rotate-180' : ''}`} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider">Nectar Index</span>
+                  <span className="text-2xl font-black text-[var(--color-text)]">{forageIndexVal}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider">Trend</span>
+                  <span className={`text-2xl font-black flex items-center gap-1 ${deltaVal > 0.002 ? 'text-[var(--color-good-deep)]' : deltaVal < -0.002 ? 'text-[var(--color-bad)]' : 'text-[var(--color-text)]'}`}>
+                    {deltaVal > 0.002 ? <TrendingUp size={20} /> : deltaVal < -0.002 ? <TrendingDown size={20} /> : <Minus size={20} />}
+                    {deltaStr}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider">Greening Rate</span>
+                  <span className="text-lg font-extrabold text-[var(--color-text)] mt-0.5">{Math.round(data.v2.rate_norm * 100)}%</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider">Warmth</span>
+                  <span className="text-lg font-extrabold text-[var(--color-text)] mt-0.5">{Math.round(data.v2.warmth * 100)}%</span>
+                </div>
+              </div>
+              {expandToday && (
+                <div className="mt-5 pt-4 border-t border-[var(--color-divider)] space-y-2 text-xs text-[var(--color-text)] animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
+                  {[
+                    ['Greenness (NDVI/EVI)', `${Math.round(data.v2.greenness * 100)}%`],
+                    ['Vigor (above baseline)', `${Math.round(data.v2.vigor * 100)}%`],
+                    ['Moisture (NDWI)', `${Math.round(data.v2.moisture * 100)}%`],
+                    ['Rate norm (core signal)', `${Math.round(data.v2.rate_norm * 100)}%`],
+                    ['Fall term (photo×dew)', `${Math.round(data.v2.fall_term * 100)}%`],
+                    ['Warmth gate (14d temp)', `${Math.round(data.v2.warmth * 100)}%`],
+                  ].map(([label, val]) => (
+                    <div key={label} className="flex justify-between border-b border-[var(--color-divider)] pb-1.5">
+                      <span>{label}</span><span className="font-bold text-[var(--color-text)]">{val}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             {/* Weekly values — collapsible detail */}
             <div>
               <button
                 onClick={() => setExpandTrends(!expandTrends)}
-                className="w-full flex items-center justify-between text-[11px] uppercase font-bold text-slate-500 tracking-wider px-1 py-1.5 hover:text-slate-300 cursor-pointer"
+                className="w-full flex items-center justify-between text-[11px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider px-1 py-1.5 hover:text-[var(--color-text)] cursor-pointer"
               >
                 <span>{currentYear} Weekly Values</span>
                 <ChevronDown size={14} className={`transition-transform duration-300 ${expandTrends ? 'rotate-180' : ''}`} />
               </button>
               {expandTrends && (
-                <div className="mt-1 bg-[#121226] border border-[#222240] rounded-xl p-3 space-y-1.5 text-xs text-slate-300 animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
+                <div className="mt-1 bg-[var(--color-bg-raised)] border border-[var(--color-divider)] rounded-xl p-3 space-y-1.5 text-xs text-[var(--color-text)] animate-[rise-in_var(--dur-base)_var(--ease-soft)]">
                   {historyCurrent.filter((_: any, idx: number) => idx % 7 === 0 || idx === historyCurrent.length - 1).map((h: any, i: number) => (
-                    <div key={i} className="flex justify-between border-b border-[#20203a] pb-1.5">
+                    <div key={i} className="flex justify-between border-b border-[var(--color-divider)] pb-1.5">
                       <span>{new Date(h.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                      <span className="font-bold text-white">
+                      <span className="font-bold text-[var(--color-text)]">
                         {h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed) ? `${(h.forage_index_smoothed * 100).toFixed(0)}%` : 'N/A'}
                       </span>
                     </div>
@@ -1011,80 +1013,60 @@ export const NectarFlowV2View: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
-        )}
+            </div>
 
-        {/* APIARIES TAB (copied verbatim from NectarFlowView) */}
-        {activeTab === 'apiaries' && (
-          <div className="space-y-4">
-            <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider pl-1 select-none">
-              Your Apiaries ({apiariesList.length})
-            </h3>
-            <div className="space-y-3">
-              {apiariesList.map((a: any) => {
-                const isSelected = a.id === selectedApiaryId;
-                const apiaryPhaseColor = isSelected ? colors.bg : 'bg-slate-500';
-                return (
-                  <div
-                    key={a.id}
-                    onClick={() => {
-                      if (!isSelected) {
-                        useAppStore.setState({ selectedApiaryId: a.id, selectedApiaryName: a.name });
-                        setActiveTab('home');
-                      }
-                    }}
-                    className={`bg-[#151529]/80 border ${isSelected ? 'border-[var(--color-primary)] shadow-amber-500/5' : 'border-[#2b2b4d]'} rounded-2xl p-4 flex items-center justify-between active:scale-[0.99] transition-all cursor-pointer select-none`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3.5 h-3.5 rounded-full ${apiaryPhaseColor}`} />
-                      <div className="flex flex-col">
-                        <span className="font-bold text-white text-sm">{a.name}</span>
-                        <span className="text-[10px] text-slate-400 mt-0.5">
-                          {isSelected ? `Active • Updated today` : 'Tap to select'}
-                        </span>
-                      </div>
+            {/* V2 Index Components (replaces Nectar Drivers) */}
+            <div
+              onClick={() => setExpandComponents(!expandComponents)}
+              className="card p-5 active:scale-[0.99] transition-all duration-150 cursor-pointer select-none"
+            >
+              <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3 mb-4">
+                <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider flex items-center gap-2">
+                  <Sparkles size={16} /> Index Components
+                </h3>
+                <ChevronDown size={16} className={`text-[var(--color-text-muted)] transition-transform duration-300 ${expandComponents ? 'rotate-180' : ''}`} />
+              </div>
+              <div className="space-y-4">
+                {[
+                  { label: 'Greenness',   val: data.v2.greenness,  color: 'bg-emerald-500', tip: 'NDVI/EVI fusion' },
+                  { label: 'Moisture',    val: data.v2.moisture,   color: 'bg-sky-500',     tip: 'NDWI canopy water' },
+                  { label: 'Rate (core)', val: data.v2.rate_norm,  color: 'bg-[var(--color-primary)]',   tip: 'greening velocity' },
+                  { label: 'Fall term',   val: data.v2.fall_term,  color: 'bg-orange-500',  tip: 'photoperiod × dewpoint' },
+                  { label: 'Warmth',      val: data.v2.warmth,     color: 'bg-red-500',     tip: '14-day mean temp ramp' },
+                ].map(({ label, val, color, tip }) => (
+                  <div key={label} className="space-y-1.5">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span>{label}</span>
+                      <span className="text-[var(--color-primary)]">{Math.round(val * 100)}%</span>
                     </div>
-                    <div className="w-14 h-6 opacity-30">
-                      <svg className="w-full h-full" viewBox="0 0 10 5">
-                        <polyline fill="none" stroke="white" strokeWidth="0.8" points="0,5 2,3 4,4 6,2 8,3 10,1" />
-                      </svg>
+                    <div className="w-full bg-[var(--color-divider)] h-3 rounded-full overflow-hidden border border-[var(--color-card-border)]">
+                      <div className={`${color} h-full rounded-full transition-all duration-500`} style={{ width: `${Math.round(val * 100)}%` }} />
                     </div>
+                    {expandComponents && <p className="text-[10px] text-[var(--color-text-muted)]">{tip}</p>}
                   </div>
-                );
-              })}
+                ))}
+              </div>
+            </div>
+
             </div>
           </div>
-        )}
-      </div>
-
-      {/* Bottom Nav (copied verbatim from NectarFlowView, Settings tab omitted for V2 preview) */}
-      <div className="w-full absolute bottom-0 left-0 right-0 bg-[#0f0f20]/95 backdrop-blur-lg border-t border-[#222240] px-6 py-2.5 flex items-center justify-around z-20 select-none">
-        {([
-          { key: 'home' as const,     icon: <Activity size={20} />,   label: 'Details' },
-          { key: 'trends' as const,   icon: <TrendingUp size={20} />, label: 'Trends' },
-          { key: 'apiaries' as const, icon: <MapPin size={20} />,     label: 'Apiaries' },
-        ]).map(({ key, icon, label }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${activeTab === key ? 'text-[var(--color-primary)] scale-105' : 'text-slate-500 hover:text-slate-300'}`}
-          >
-            {icon}
-            <span className="text-[9px] font-black uppercase tracking-wider">{label}</span>
-          </button>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* Enlarged chart modal (copied verbatim from NectarFlowView) */}
       {isEnlarged && (
         <div className="fixed inset-0 z-50 bg-[#07070d] flex flex-col justify-between overflow-hidden">
           <div
-            className="portrait:w-[100vh] portrait:h-[100vw] portrait:absolute portrait:top-0 portrait:left-full portrait:origin-top-left portrait:rotate-90 landscape:w-full landscape:h-full flex flex-col p-6 justify-between"
+            className="portrait:w-[100vh] portrait:h-[100vw] portrait:absolute portrait:top-0 portrait:left-full portrait:origin-top-left portrait:rotate-90 landscape:w-full landscape:h-full flex flex-col p-4 gap-2 overflow-y-auto"
           >
-            <div className="flex items-center justify-between w-full border-b border-[#2b2b4d] pb-2.5 mb-2 select-none">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="text-[var(--color-primary)]" size={18} />
-                <h3 className="text-sm font-black text-[var(--color-primary)] tracking-wider uppercase">
+            <div className="flex items-center justify-between w-full border-b border-[#2b2b4d] pb-2 shrink-0 select-none">
+              {/* Title AND key. Full screen used to drop the legend, leaving two
+                  coloured lines with nothing saying which year was which — Ron,
+                  2026-09-08: the associated information is left behind, "so I
+                  would argue it isn't The Chart". */}
+              <div className="flex items-center gap-2 min-w-0">
+                <TrendingUp className="text-[var(--color-primary)] shrink-0" size={18} />
+                <h3 className="text-sm font-black text-[var(--color-primary)] tracking-wider uppercase truncate">
                   {useAppStore.getState().selectedApiaryName} — Nectar Index Trend
                 </h3>
               </div>
@@ -1099,17 +1081,52 @@ export const NectarFlowV2View: React.FC = () => {
               </button>
             </div>
 
-            <div className="flex-1 flex items-center justify-center bg-[#0d0d1a] border border-[#20203c] rounded-2xl p-4 my-2">
+            <div className="flex-1 min-h-0 flex items-center justify-center bg-[#0d0d1a] border border-[#20203c] rounded-2xl p-3 overflow-hidden">
               {(() => {
+                // In portrait the whole panel is rotated, so the space available
+                // ACROSS the chart is the viewport's width, and DOWN it is the
+                // viewport's height. Reserve room for the title row, the legend
+                // and status strip, the padding and the gaps — the chart used to
+                // take a flat 60% of the viewport and push the footer clean off
+                // the screen, where nothing could scroll it back.
                 const isPortrait = window.innerHeight > window.innerWidth;
-                const chartW = isPortrait ? window.innerHeight - 48 : window.innerWidth - 48;
-                const chartH = isPortrait ? window.innerWidth * 0.60 : window.innerHeight * 0.60;
-                return renderChartSvg(Math.max(300, chartW), Math.max(120, chartH), true);
+                const across = isPortrait ? window.innerHeight : window.innerWidth;
+                const down = isPortrait ? window.innerWidth : window.innerHeight;
+                const RESERVED = 168; // title + legend/status + padding + gaps
+                return renderChartSvg(
+                  Math.max(300, across - 48),
+                  Math.max(140, down - RESERVED),
+                  true
+                );
               })()}
             </div>
 
+            {/* Key + satellite dates. These live down here rather than beside the
+                title: in the rotated portrait view every pixel of header height
+                comes straight off the chart, and this is the same information
+                the strip under the inline chart shows. */}
+            <div className="flex items-center justify-between gap-4 flex-wrap text-[11px] text-slate-400 px-1 shrink-0">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-[2px] rounded bg-[#2ECC71] inline-block" />{currentYear}
+                </span>
+              </div>
+              {data.satellite?.last_image && (
+                <span className="flex items-center gap-1.5">
+                  <Satellite size={11} className="shrink-0" />
+                  Satellite: last image <b className="text-slate-300">{formatSceneDate(data.satellite.last_image)}</b>
+                  {data.satellite.next_pass && (
+                    <> · next pass <b className="text-slate-300">{formatSceneDate(data.satellite.next_pass)}</b></>
+                  )}
+                </span>
+              )}
+            </div>
+
             {/* Fullscreen hover panel (copied verbatim from NectarFlowView; NDVI/Bloom/Weather columns omitted) */}
-            <div className="bg-[#121226] border border-[#222240] rounded-xl p-3 min-h-[50px] select-none">
+            <div className="bg-[#121226] border border-[#222240] rounded-xl p-3 min-h-[50px] shrink-0 select-none">
               {hoveredIndex !== null ? (
                 <div className="flex items-center justify-between text-xs w-full gap-4">
                   <div className="flex flex-col">
@@ -1156,11 +1173,11 @@ export const NectarFlowV2View: React.FC = () => {
                   <div className="flex flex-col">
                     <span className="text-[9px] uppercase font-bold text-slate-500">Latest Status</span>
                     <span className="font-extrabold text-white text-[11px] mt-0.5 flex items-center gap-1">
-                      {resolvedTrendDirection === 'rising' ? <TrendingUp size={12} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={12} className="text-red-400" /> : <Minus size={12} className="text-slate-400" />}
+                      {resolvedTrendDirection === 'rising' ? <TrendingUp size={12} className="text-green-400" /> : resolvedTrendDirection === 'falling' ? <TrendingDown size={12} className="text-red-400" /> : <Minus size={12} className="text-slate-500" />}
                       {resolvedTrendDirection ? `${resolvedTrendDirection} trend` : 'Flat trend'}
                     </span>
                   </div>
-                  <div className="flex gap-4 text-[10px] text-slate-400">
+                  <div className="flex gap-4 text-[10px] text-slate-500">
                     <div>Nectar: <span className="font-bold text-[var(--color-primary)]">{forageIndexVal}</span></div>
                     <div>Rate: <span className="font-bold text-emerald-400">{Math.round(data.v2.rate_norm * 100)}%</span></div>
                     <div>Warmth: <span className="font-bold text-sky-400">{Math.round(data.v2.warmth * 100)}%</span></div>
