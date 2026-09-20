@@ -240,7 +240,11 @@ export function runV2Pipeline(
   records: MultiBandRecord[],
   weatherMap: Record<string, WeatherDay>,
   lat: number,
-  params: Partial<V2Params> = {}
+  params: Partial<V2Params> = {},
+  // Last date the series should cover (YYYY-MM-DD). Omitted for a live request, which
+  // runs to today; set when replaying a past season, so the timeline stops at the end
+  // of that year instead of forward-filling to the present.
+  windowEnd?: string
 ): V2EngineResult {
   const P: V2Params = { ...DEFAULTS, ...params };
 
@@ -251,14 +255,23 @@ export function runV2Pipeline(
   };
   if (records.length === 0) return empty;
 
-  // Daily timeline from first observed scene to today.
-  // Extends past the last satellite observation so EWMA carries forward to the current date
-  // (interpBand forward-fills the last known value for days with no new scene).
+  // Daily timeline from the first observed scene to today — or to the end of the
+  // requested window, when one is given.
+  //
+  // Extending past the last observation is deliberate for a live request: scenes arrive
+  // every few days, so the EWMA has to carry forward to today (interpBand forward-fills
+  // the last known value for days with no new scene).
+  //
+  // It is WRONG for a historical window. Asked for 2017-2022, the timeline ran to the
+  // real today and forward-filled the final 2022 scene across nearly four years, so the
+  // client — which takes the latest year in the payload as "current" — labelled the chart
+  // 2026 and averaged 2017-2025 as the baseline. windowEnd stops that.
   const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
   const startT = new Date(sorted[0].date + 'T00:00').getTime();
   const lastObsT = new Date(sorted[sorted.length - 1].date + 'T00:00').getTime();
   const todayT  = new Date(new Date().toISOString().slice(0, 10) + 'T00:00').getTime();
-  const endT    = Math.max(lastObsT, todayT);
+  const capT    = windowEnd ? new Date(windowEnd + 'T00:00').getTime() : todayT;
+  const endT    = Math.min(Math.max(lastObsT, capT), capT);
   const dailyTs: number[] = [];
   for (let t = startT; t <= endT; t += DAY_MS) dailyTs.push(t);
   const N = dailyTs.length;

@@ -33,7 +33,14 @@ async function fetchWeatherV2(
   endDate: string
 ): Promise<WeatherV2Result> {
   const today = new Date();
-  const archiveEnd = new Date(today.getTime() - 3 * 86_400_000).toISOString().slice(0, 10);
+  const todayStr = today.toISOString().slice(0, 10);
+  // A historical window ends before today, and then there is no "recent" window to
+  // fetch: the archive covers the whole span and the forecast call would drag data
+  // from the present into a past season. Detected by the end date, not by a flag.
+  const isHistorical = endDate < todayStr;
+  const archiveEnd = isHistorical
+    ? endDate
+    : new Date(today.getTime() - 3 * 86_400_000).toISOString().slice(0, 10);
   const recentStart = new Date(today.getTime() - 10 * 86_400_000).toISOString().slice(0, 10);
 
   const base = `latitude=${lat}&longitude=${lng}&temperature_unit=fahrenheit&timezone=auto`;
@@ -77,7 +84,7 @@ async function fetchWeatherV2(
   // killing the whole request (the old Promise.all([fetch, fetch]) did).
   const [arch, fc] = await Promise.all([
     fetchFirstOk([archiveUrl], 12_000),
-    fetchFirstOk(forecastCandidates, 8_000),
+    isHistorical ? Promise.resolve(null) : fetchFirstOk(forecastCandidates, 8_000),
   ]);
 
   if (arch) {
@@ -258,7 +265,7 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    const result = runV2Pipeline(bands, weather.days, lat, paramOverrides);
+    const result = runV2Pipeline(bands, weather.days, lat, paramOverrides, reviewYear ? endDate : undefined);
     const pipelineMs = Date.now() - pipeStart;
     const serverTotalMs = Date.now() - t0;
 
