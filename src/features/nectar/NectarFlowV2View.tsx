@@ -1211,10 +1211,25 @@ export const NectarFlowV2View: React.FC = () => {
                 const across = isPortrait ? window.innerHeight : window.innerWidth;
                 const down = isPortrait ? window.innerWidth : window.innerHeight;
                 const RESERVED = 168; // title + legend/status + padding + gaps
-                return renderChartSvg(
-                  Math.max(300, across - 48),
-                  Math.max(140, down - RESERVED),
-                  true
+                const w = Math.max(300, across - 48);
+                // The difference chart comes with the main one into fullscreen —
+                // they are one picture, and going full screen is exactly when a
+                // beekeeper is looking hard at the season. It takes a fixed slice
+                // and the main chart keeps the rest.
+                const devH = 84;
+                const mainH = Math.max(140, down - RESERVED - devH - 18);
+                return (
+                  // The parent centres its children in a row, so both charts go
+                  // inside one column or they would sit side by side.
+                  <div className="flex flex-col">
+                    {renderChartSvg(w, mainH, true)}
+                    <div className="mt-1 border-t border-[#222240] pt-1.5">
+                      <div className="mb-0.5 pl-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                        Difference from normal
+                      </div>
+                      {renderDeviationSvg(w, devH)}
+                    </div>
+                  </div>
                 );
               })()}
             </div>
