@@ -143,7 +143,7 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw } = req.query;
+  const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw, year: yearRaw } = req.query;
   if (!latRaw || !lngRaw) {
     res.status(400).json({ error: 'lat and lng are required' });
     return;
@@ -175,9 +175,29 @@ export default async function handler(req: any, res: any) {
     //
     // It is a rolling window on purpose: hardcoding a start year made the window, the
     // Earth Engine query and the response payload grow without bound every year.
-    const currentYear = new Date().getFullYear();
-    const startDate = `${currentYear - 5}-01-01`;
-    const endDate = new Date().toISOString().slice(0, 10);
+    // REVIEW MODE (?year=YYYY). Replays a past season as though it were the current
+    // one: that year plus the five before it, ending on 31 December instead of today.
+    // The client needs no special handling — it already treats the LATEST year in the
+    // payload as "current", so the charts, the baseline label and the season-to-date
+    // total all follow from the window alone.
+    //
+    // Built for Ron to check the index against seasons he actually remembers, which is
+    // the validation the project has no other source for. Earliest usable year is
+    // bounded by Sentinel-2, not by us: dense coverage starts around 2017, so a year
+    // needing five prior years cannot reach further back than about 2022.
+    const thisYear = new Date().getFullYear();
+    const reviewYear = (() => {
+      if (!yearRaw) return null;
+      const y = parseInt(String(yearRaw), 10);
+      if (isNaN(y) || y < 2022 || y >= thisYear) return null;
+      return y;
+    })();
+
+    const anchorYear = reviewYear ?? thisYear;
+    const startDate = `${anchorYear - 5}-01-01`;
+    const endDate = reviewYear
+      ? `${reviewYear}-12-31`
+      : new Date().toISOString().slice(0, 10);
 
     // Per-phase timing so a slow load can be diagnosed. Only meaningful on a
     // fresh (cache-bypassing) request — a CDN hit returns these numbers from the

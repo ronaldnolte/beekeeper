@@ -102,6 +102,28 @@ export const NectarFlowV2View: React.FC = () => {
   const [isEnlarged, setIsEnlarged] = useState(false);
   // The old DETAILS sub-tab, now a panel behind the (i) on the chart.
   const [showDetails, setShowDetails] = useState(false);
+
+  /**
+   * REVIEW MODE — Ron's, not the users'.
+   *
+   * Replays a past season as though it were the current one, so the index can be
+   * checked against a year somebody actually remembers. That is the only
+   * validation this project has that does not come from a fixture file.
+   *
+   * Hidden unless the URL carries ?review=1, so it cannot appear for a user and
+   * does not need removing before a release. The year list is bounded by
+   * Sentinel-2, not by choice: dense coverage starts around 2017, and each year
+   * needs the five before it, so nothing earlier than 2022 can be replayed.
+   */
+  const reviewEnabled = typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('review') === '1';
+  const [reviewYear, setReviewYear] = useState<number | null>(null);
+  const reviewYears = (() => {
+    const thisYear = new Date().getFullYear();
+    const out: number[] = [];
+    for (let y = thisYear - 1; y >= 2022; y--) out.push(y);
+    return out;
+  })();
   const [containerWidth, setContainerWidth] = useState(320);
   const [chartHeight, setChartHeight] = useState(300);
   // Resolved lat/lng actually sent to the API (post zip-geocoding). Shown next to
@@ -189,6 +211,8 @@ export const NectarFlowV2View: React.FC = () => {
         const params = new URLSearchParams({
           lat: lat.toFixed(4), lng: lng.toFixed(4),
         });
+        // Review mode: replay a past season as though it were the current one.
+        if (reviewYear) params.set('year', String(reviewYear));
         // Cache control: the refresh button forces a fresh fetch that bypasses the
         // Vercel CDN + browser cache (unique URL); normal loads use a per-day key so
         // repeat visits within a day stay fast but data still refreshes daily.
@@ -237,7 +261,7 @@ export const NectarFlowV2View: React.FC = () => {
       // Skip on an intentional cancel so we don't stomp the superseding load's state.
       if (!externalSignal?.aborted) setLoading(false);
     }
-  }, [selectedApiaryId]);
+  }, [selectedApiaryId, reviewYear]);   // refetch when the review year changes
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1004,6 +1028,21 @@ export const NectarFlowV2View: React.FC = () => {
             </span>
           )}
           <ChevronDown size={14} className="text-[var(--color-text-muted)] flex-shrink-0 pointer-events-none" />
+
+          {/* Review mode only — see the note on reviewEnabled. Never shown to users. */}
+          {reviewEnabled && (
+            <select
+              value={reviewYear ?? ''}
+              onChange={(e) => setReviewYear(e.target.value ? parseInt(e.target.value, 10) : null)}
+              className="ml-2 shrink-0 rounded-lg border-2 border-[var(--color-primary)] bg-[var(--color-primary-wash)] px-2 py-0.5 text-[11px] font-black text-[var(--color-primary-ink)] outline-none"
+              title="Replay a past season as though it were the current one"
+            >
+              <option value="">This season</option>
+              {reviewYears.map((y) => (
+                <option key={y} value={y}>{y} season</option>
+              ))}
+            </select>
+          )}
         </div>
       )}
 
