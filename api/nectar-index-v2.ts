@@ -163,12 +163,20 @@ export default async function handler(req: any, res: any) {
   const hasOverrides = Object.keys(paramOverrides).length > 0;
 
   try {
-    // Rolling 3-year comparative window: Jan 1 of three years ago through today.
-    // Previously hardcoded to '2023-01-01', which made the window — and thus the
-    // Earth Engine query and the response payload — grow without bound every year.
-    // Mirrors the same fix already applied to the V1 endpoint (api/nectar-index.ts).
+    // Rolling FIVE-year comparative window: 1 January of five years ago through today.
+    //
+    // Five, not three, because of the SPREAD rather than the average. Three similar
+    // seasons gave a standard deviation of 0.06 where the true spread is nearer 0.21,
+    // which made an ordinary year read as a five-sigma collapse. Three samples cannot
+    // estimate a spread, and the difference and season-to-date charts are only as
+    // honest as the normal they are measured against — a running total amplifies a
+    // thin baseline rather than averaging it away. Widened 2026-09-20; the reasoning
+    // is from the 2026-08-22 review, where this was written and never shipped.
+    //
+    // It is a rolling window on purpose: hardcoding a start year made the window, the
+    // Earth Engine query and the response payload grow without bound every year.
     const currentYear = new Date().getFullYear();
-    const startDate = `${currentYear - 3}-01-01`;
+    const startDate = `${currentYear - 5}-01-01`;
     const endDate = new Date().toISOString().slice(0, 10);
 
     // Per-phase timing so a slow load can be diagnosed. Only meaningful on a

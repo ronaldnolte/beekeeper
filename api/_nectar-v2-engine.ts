@@ -63,6 +63,11 @@ interface V2Params {
   dormLo: number; dormHi: number; tWin: number;
   rateLag: number;
   wFall: number; dpLo: number; dpHi: number; fallWidth: number;
+  // Growing-degree-day gate. Temperature LEVEL cannot tell a warm December from a
+  // warm May, and both open the warmth ramp; accumulated heat can, because December
+  // has none banked behind it. gddOpen is the accumulation (from 1 January, base
+  // gddBase) at which the gate is fully open. Set gddOpen to 0 to disable it.
+  gddBase: number; gddOpen: number;
 }
 
 const DEFAULTS: V2Params = {
@@ -76,6 +81,12 @@ const DEFAULTS: V2Params = {
   dormLo: 38, dormHi: 58, tWin: 14,
   rateLag: 24,
   wFall: 0.7, dpLo: 45, dpHi: 55, fallWidth: 26,
+  // Enabled 2026-09-20 at 300. Scored against three real seasons in the ground-truth
+  // harness: all 11 checks still pass and the January artefact at Tijeras drops from
+  // 8 to 3. 150, 300 and 500 give identical scores — by the time a real flow starts a
+  // site has banked far more than any of them, and in January nearly none, so the gate
+  // only does work at the edges. 300 is the middle of that insensitive range.
+  gddBase: 50, gddOpen: 300,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -286,10 +297,29 @@ export function runV2Pipeline(
   const tSm    = trailingMean(tmeanRaw, P.tWin);
   const warmth = tSm.map(t => t == null ? 1 : clamp((t - P.dormLo) / (P.dormHi - P.dormLo), 0, 1));
 
+  // Growing degree days accumulated from 1 January of each date's own year, so the
+  // total resets with the calendar rather than running away across the series. A warm
+  // spell in December sits on an empty account and the gate stays shut; the same
+  // temperature in autumn sits on a whole summer of banked heat and it stays open.
+  const gddGate: number[] = (() => {
+    if (!P.gddOpen) return dates.map(() => 1);
+    let year = '';
+    let acc = 0;
+    return dates.map((d, i) => {
+      const y = d.slice(0, 4);
+      if (y !== year) { year = y; acc = 0; }
+      const t = tmeanRaw[i];
+      if (t != null) acc += Math.max(0, t - P.gddBase);
+      return clamp(acc / P.gddOpen, 0, 1);
+    });
+  })();
+
+  const seasonGate = warmth.map((w, i) => w * gddGate[i]);
+
   // Moisture applied as a gentle multiplier (floor 0.7 caps the penalty at -30% in
   // bone-dry conditions). NDWI leads NDVI, so this nudges the index earlier/later
   // than greenness alone would.
-  const indexRaw = indexWithFall.map((v, i) => v * warmth[i] * moist[i]);
+  const indexRaw = indexWithFall.map((v, i) => v * seasonGate[i] * moist[i]);
 
   // EWMA for live smoothed value; local-poly for slope (SG-equivalent, uses future pts for history)
   const idxEwma         = ewmaArr(indexRaw, P.alpha);
