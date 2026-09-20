@@ -120,8 +120,9 @@ export const NectarFlowV2View: React.FC = () => {
     const compute = () => {
       const el = contentRef.current;
       if (!el) return;
-      // reserve = content padding + readout strip + weekly toggle + nav clearance + chart chrome
-      setChartHeight(Math.max(220, el.clientHeight - 255));
+      // reserve = content padding + readout strip + nav clearance + chart chrome,
+      // plus ~130 for the difference chart and its label sitting under the main one.
+      setChartHeight(Math.max(180, el.clientHeight - 385));
     };
     compute();
     window.addEventListener('resize', compute);
@@ -742,6 +743,108 @@ export const NectarFlowV2View: React.FC = () => {
     );
   };
 
+  /**
+   * The difference chart: this year minus the five-year average, on a zero line.
+   *
+   * The main chart answers "how much forage is there". This one answers "is that
+   * more or less than usual", which is the question a beekeeper is actually
+   * asking when they look at a season — and the one the absolute number hides.
+   * An index of 40 means nothing until you know whether normal is 20 or 80.
+   *
+   * Deliberately plain: no gridlines, no month labels, no hover. It shares the
+   * main chart's padding and day-of-year mapping, so the two line up column for
+   * column and read as one picture. Everything it does not draw is something
+   * the chart above already says.
+   */
+  const renderDeviationSvg = (width: number, height: number) => {
+    const paddingLeft = 40;      // identical to the main chart, or the two drift
+    const paddingRight = 15;
+    const paddingTop = 8;
+    const paddingBottom = 8;
+    const chartWidth = width - paddingLeft - paddingRight;
+    const chartHeight = height - paddingTop - paddingBottom;
+
+    const baseByDay: Record<number, number> = {};
+    historyBase.forEach((h) => { baseByDay[getDayOfYear(h.date)] = h.forage_index_smoothed; });
+
+    // Only days where BOTH series have a value can be differenced. The current
+    // year stops at today, so the chart simply ends there rather than pretending.
+    const series = historyCurrent
+      .filter((h: any) => h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed))
+      .map((h: any) => {
+        const day = getDayOfYear(h.date);
+        const base = baseByDay[day];
+        if (base === undefined) return null;
+        return { x: paddingLeft + (day / 365) * chartWidth, diff: h.forage_index_smoothed - base };
+      })
+      .filter(Boolean) as { x: number; diff: number }[];
+
+    if (series.length < 2) return null;
+
+    // Symmetric scale, so above and below the line are directly comparable.
+    // Rounded up to the next 10 points and floored at 10, so a quiet year does
+    // not get magnified into drama by an over-tight axis.
+    const peak = Math.max(...series.map((p) => Math.abs(p.diff)));
+    const span = Math.max(0.1, Math.ceil(peak * 10) / 10);
+    const zeroY = paddingTop + chartHeight / 2;
+    const yFor = (diff: number) => zeroY - (diff / span) * (chartHeight / 2);
+
+    // Split into runs of one sign, interpolating the crossing so the shading
+    // meets the zero line exactly instead of overshooting it.
+    type Run = { sign: number; pts: { x: number; y: number }[] };
+    const runs: Run[] = [];
+    let current: Run | null = null;
+    for (let i = 0; i < series.length; i++) {
+      const p = series[i];
+      const sign = p.diff >= 0 ? 1 : -1;
+      if (!current || current.sign !== sign) {
+        if (current && i > 0) {
+          const prev = series[i - 1];
+          const t = Math.abs(prev.diff) / (Math.abs(prev.diff) + Math.abs(p.diff) || 1);
+          const crossX = prev.x + (p.x - prev.x) * t;
+          current.pts.push({ x: crossX, y: zeroY });
+          runs.push(current);
+          current = { sign, pts: [{ x: crossX, y: zeroY }] };
+        } else {
+          current = { sign, pts: [] };
+        }
+      }
+      current.pts.push({ x: p.x, y: yFor(p.diff) });
+    }
+    if (current && current.pts.length > 1) runs.push(current);
+
+    const label = (v: number) => `${v > 0 ? '+' : ''}${Math.round(v * 100)}`;
+
+    return (
+      <svg width={width} height={height} className="block">
+        {runs.map((run, i) => {
+          const first = run.pts[0];
+          const last = run.pts[run.pts.length - 1];
+          const d = `M ${first.x},${zeroY} L ` + run.pts.map((p) => `${p.x},${p.y}`).join(' L ') + ` L ${last.x},${zeroY} Z`;
+          return (
+            <path
+              key={i}
+              d={d}
+              fill={run.sign > 0 ? 'var(--color-good)' : 'var(--color-bad-bright)'}
+              fillOpacity="0.45"
+            />
+          );
+        })}
+
+        {/* The zero line is the whole point, so it is drawn over the shading. */}
+        <line x1={paddingLeft} y1={zeroY} x2={width - paddingRight} y2={zeroY} stroke="#5b5b7a" strokeWidth="1" />
+
+        <text x={paddingLeft - 6} y={paddingTop + 8} textAnchor="end" fontSize="8" fontWeight="bold" fill="#2ECC71">
+          {label(span)}
+        </text>
+        <text x={paddingLeft - 6} y={zeroY + 3} textAnchor="end" fontSize="8" fontWeight="bold" fill="#8b8ba5">0</text>
+        <text x={paddingLeft - 6} y={height - paddingBottom} textAnchor="end" fontSize="8" fontWeight="bold" fill="#E8695B">
+          {label(-span)}
+        </text>
+      </svg>
+    );
+  };
+
   return (
     // Page furniture is light like the rest of the app; the chart panel and its
     // fullscreen view stay dark on purpose — see the comment at the chart.
@@ -852,6 +955,21 @@ export const NectarFlowV2View: React.FC = () => {
                     </button>
                   </div>
                   {renderChartSvg(containerWidth, chartHeight)}
+
+                  {/* Difference from normal, directly beneath and sharing the
+                      x-axis. Placed inside the same panel on purpose: it is a
+                      second reading of one season, not a second chart. */}
+                  <div className="mt-1 border-t border-[#222240] pt-2">
+                    <div className="mb-1 flex items-baseline gap-2 pl-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                        Difference from normal
+                      </span>
+                      <span className="text-[9px] text-slate-500">
+                        {currentYear} vs {baseYearLabel}
+                      </span>
+                    </div>
+                    {renderDeviationSvg(containerWidth, 96)}
+                  </div>
                 </>
               ) : (
                 <p className="text-xs text-slate-500 text-center py-10">Insufficient history for trend line</p>
