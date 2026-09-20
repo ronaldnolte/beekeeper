@@ -90,17 +90,28 @@ const DEFAULTS: V2Params = {
   dormLo: 38, dormHi: 58, tWin: 14,
   rateLag: 24,
   wFall: 0.7, dpLo: 45, dpHi: 55, fallWidth: 26,
-  // Enabled 2026-09-20 at 300, with gddPost on. Scored against three real seasons in
-  // the ground-truth harness: all 11 checks pass and the January artefact at Tijeras
-  // goes to zero — mean 3 -> 0, peak 18 -> 0. 150/300/500 score identically, because
-  // by the time a real flow starts a site has banked far more than any of them and in
-  // January nearly none; the gate only works at the edges. 300 is the middle of that
-  // insensitive range rather than a tuned number.
+  // HEAT GATE. The index is multiplied by a gate that opens as growing degree days
+  // accumulate over a TRAILING 30 DAYS (base 50F), fully open at 200. Ron: "No GDD,
+  // no flow."
   //
-  // gddWindow stays 0. A trailing 90-day window was tested as a way to close the gate
-  // in a warm December too, and it made January WORSE (mean 6, peak 20) — in January a
-  // trailing window still contains autumn heat, where the calendar reset does not.
-  gddBase: 50, gddOpen: 300, gddWindow: 0, gddPost: 1,
+  // Recent heat, not heat since January. A calendar reset fixed January but left
+  // December wide open — by December a site has a full year banked — and a warm
+  // December then bled across the year boundary through the smoother. A trailing
+  // window asks whether heat is arriving NOW, which is false in both months and true
+  // in autumn, so the chamisa flow survives.
+  //
+  // Window LENGTH is the whole trick. 90 days was tried first and made January worse
+  // (mean 6, peak 20): in January a 90-day window still contains autumn heat. 30 days
+  // does not. Do not lengthen it without re-scoring.
+  //
+  // Scored on three real seasons: all 11 ground-truth checks pass, Tijeras December
+  // 2025 goes 7 -> 0 and January 2026 0 -> 0, the September chamisa flow holds at 42,
+  // and South Valley spring is unchanged to slightly higher. Tighter settings
+  // (30d/300, 45d/450) start eating the spring flow — Tijeras May 28 -> 12.
+  //
+  // gddPost applies the gate to the SMOOTHED series too. Without it the smoother
+  // carries a high December across 1 January whatever the gate says.
+  gddBase: 50, gddOpen: 200, gddWindow: 30, gddPost: 1,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
