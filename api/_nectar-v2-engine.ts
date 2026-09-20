@@ -68,6 +68,15 @@ interface V2Params {
   // has none banked behind it. gddOpen is the accumulation (from 1 January, base
   // gddBase) at which the gate is fully open. Set gddOpen to 0 to disable it.
   gddBase: number; gddOpen: number;
+  // gddWindow: 0 accumulates from 1 January (resets with the calendar). Any positive
+  // value accumulates over a TRAILING window of that many days instead, which closes
+  // the gate in a cold December as well as a cold January and makes no assumption
+  // about which months are winter — the southern hemisphere gets the same treatment.
+  gddWindow: number;
+  // gddPost: apply the gate to the SMOOTHED index as well as the raw one. Without it
+  // the smoother carries a high December across the year boundary, which is what left
+  // a visible January peak even with the gate on.
+  gddPost: number;
 }
 
 const DEFAULTS: V2Params = {
@@ -81,12 +90,17 @@ const DEFAULTS: V2Params = {
   dormLo: 38, dormHi: 58, tWin: 14,
   rateLag: 24,
   wFall: 0.7, dpLo: 45, dpHi: 55, fallWidth: 26,
-  // Enabled 2026-09-20 at 300. Scored against three real seasons in the ground-truth
-  // harness: all 11 checks still pass and the January artefact at Tijeras drops from
-  // 8 to 3. 150, 300 and 500 give identical scores — by the time a real flow starts a
-  // site has banked far more than any of them, and in January nearly none, so the gate
-  // only does work at the edges. 300 is the middle of that insensitive range.
-  gddBase: 50, gddOpen: 300,
+  // Enabled 2026-09-20 at 300, with gddPost on. Scored against three real seasons in
+  // the ground-truth harness: all 11 checks pass and the January artefact at Tijeras
+  // goes to zero — mean 3 -> 0, peak 18 -> 0. 150/300/500 score identically, because
+  // by the time a real flow starts a site has banked far more than any of them and in
+  // January nearly none; the gate only works at the edges. 300 is the middle of that
+  // insensitive range rather than a tuned number.
+  //
+  // gddWindow stays 0. A trailing 90-day window was tested as a way to close the gate
+  // in a warm December too, and it made January WORSE (mean 6, peak 20) — in January a
+  // trailing window still contains autumn heat, where the calendar reset does not.
+  gddBase: 50, gddOpen: 300, gddWindow: 0, gddPost: 1,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -303,13 +317,27 @@ export function runV2Pipeline(
   // temperature in autumn sits on a whole summer of banked heat and it stays open.
   const gddGate: number[] = (() => {
     if (!P.gddOpen) return dates.map(() => 1);
+    const daily = dates.map((_, i) => {
+      const t = tmeanRaw[i];
+      return t == null ? 0 : Math.max(0, t - P.gddBase);
+    });
+
+    if (P.gddWindow > 0) {
+      // Trailing window: no month is special, in either hemisphere.
+      let acc = 0;
+      return daily.map((v, i) => {
+        acc += v;
+        if (i >= P.gddWindow) acc -= daily[i - P.gddWindow];
+        return clamp(acc / P.gddOpen, 0, 1);
+      });
+    }
+
     let year = '';
     let acc = 0;
     return dates.map((d, i) => {
       const y = d.slice(0, 4);
       if (y !== year) { year = y; acc = 0; }
-      const t = tmeanRaw[i];
-      if (t != null) acc += Math.max(0, t - P.gddBase);
+      acc += daily[i];
       return clamp(acc / P.gddOpen, 0, 1);
     });
   })();
@@ -322,7 +350,11 @@ export function runV2Pipeline(
   const indexRaw = indexWithFall.map((v, i) => v * seasonGate[i] * moist[i]);
 
   // EWMA for live smoothed value; local-poly for slope (SG-equivalent, uses future pts for history)
-  const idxEwma         = ewmaArr(indexRaw, P.alpha);
+  const idxEwmaRaw      = ewmaArr(indexRaw, P.alpha);
+  // Re-apply the gate after smoothing when asked: the EWMA has a memory of days, so a
+  // high December leaks across 1 January even when the gate has slammed shut on the
+  // input. Gating the output too makes the shut gate mean what it says.
+  const idxEwma         = P.gddPost ? idxEwmaRaw.map((v, i) => v * gddGate[i]) : idxEwmaRaw;
   // The slope must describe the series the beekeeper is LOOKING AT.
   //
   // It was computed from indexRaw while the chart, the phase test and the NFI all use
