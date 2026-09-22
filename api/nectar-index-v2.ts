@@ -33,7 +33,14 @@ async function fetchWeatherV2(
   endDate: string
 ): Promise<WeatherV2Result> {
   const today = new Date();
-  const archiveEnd = new Date(today.getTime() - 3 * 86_400_000).toISOString().slice(0, 10);
+  const todayStr = today.toISOString().slice(0, 10);
+  // A historical window ends before today, and then there is no "recent" window to
+  // fetch: the archive covers the whole span and the forecast call would drag data
+  // from the present into a past season. Detected by the end date, not by a flag.
+  const isHistorical = endDate < todayStr;
+  const archiveEnd = isHistorical
+    ? endDate
+    : new Date(today.getTime() - 3 * 86_400_000).toISOString().slice(0, 10);
   const recentStart = new Date(today.getTime() - 10 * 86_400_000).toISOString().slice(0, 10);
 
   const base = `latitude=${lat}&longitude=${lng}&temperature_unit=fahrenheit&timezone=auto`;
@@ -77,7 +84,7 @@ async function fetchWeatherV2(
   // killing the whole request (the old Promise.all([fetch, fetch]) did).
   const [arch, fc] = await Promise.all([
     fetchFirstOk([archiveUrl], 12_000),
-    fetchFirstOk(forecastCandidates, 8_000),
+    isHistorical ? Promise.resolve(null) : fetchFirstOk(forecastCandidates, 8_000),
   ]);
 
   if (arch) {
@@ -143,7 +150,7 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw } = req.query;
+  const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw, year: yearRaw } = req.query;
   if (!latRaw || !lngRaw) {
     res.status(400).json({ error: 'lat and lng are required' });
     return;
@@ -163,13 +170,41 @@ export default async function handler(req: any, res: any) {
   const hasOverrides = Object.keys(paramOverrides).length > 0;
 
   try {
-    // Rolling 3-year comparative window: Jan 1 of three years ago through today.
-    // Previously hardcoded to '2023-01-01', which made the window — and thus the
-    // Earth Engine query and the response payload — grow without bound every year.
-    // Mirrors the same fix already applied to the V1 endpoint (api/nectar-index.ts).
-    const currentYear = new Date().getFullYear();
-    const startDate = `${currentYear - 3}-01-01`;
-    const endDate = new Date().toISOString().slice(0, 10);
+    // Rolling FIVE-year comparative window: 1 January of five years ago through today.
+    //
+    // Five, not three, because of the SPREAD rather than the average. Three similar
+    // seasons gave a standard deviation of 0.06 where the true spread is nearer 0.21,
+    // which made an ordinary year read as a five-sigma collapse. Three samples cannot
+    // estimate a spread, and the difference and season-to-date charts are only as
+    // honest as the normal they are measured against — a running total amplifies a
+    // thin baseline rather than averaging it away. Widened 2026-09-20; the reasoning
+    // is from the 2026-08-22 review, where this was written and never shipped.
+    //
+    // It is a rolling window on purpose: hardcoding a start year made the window, the
+    // Earth Engine query and the response payload grow without bound every year.
+    // REVIEW MODE (?year=YYYY). Replays a past season as though it were the current
+    // one: that year plus the five before it, ending on 31 December instead of today.
+    // The client needs no special handling — it already treats the LATEST year in the
+    // payload as "current", so the charts, the baseline label and the season-to-date
+    // total all follow from the window alone.
+    //
+    // Built for Ron to check the index against seasons he actually remembers, which is
+    // the validation the project has no other source for. Earliest usable year is
+    // bounded by Sentinel-2, not by us: dense coverage starts around 2017, so a year
+    // needing five prior years cannot reach further back than about 2022.
+    const thisYear = new Date().getFullYear();
+    const reviewYear = (() => {
+      if (!yearRaw) return null;
+      const y = parseInt(String(yearRaw), 10);
+      if (isNaN(y) || y < 2022 || y >= thisYear) return null;
+      return y;
+    })();
+
+    const anchorYear = reviewYear ?? thisYear;
+    const startDate = `${anchorYear - 5}-01-01`;
+    const endDate = reviewYear
+      ? `${reviewYear}-12-31`
+      : new Date().toISOString().slice(0, 10);
 
     // Per-phase timing so a slow load can be diagnosed. Only meaningful on a
     // fresh (cache-bypassing) request — a CDN hit returns these numbers from the
@@ -230,7 +265,7 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    const result = runV2Pipeline(bands, weather.days, lat, paramOverrides);
+    const result = runV2Pipeline(bands, weather.days, lat, paramOverrides, reviewYear ? endDate : undefined);
     const pipelineMs = Date.now() - pipeStart;
     const serverTotalMs = Date.now() - t0;
 

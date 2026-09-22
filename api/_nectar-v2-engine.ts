@@ -63,6 +63,20 @@ interface V2Params {
   dormLo: number; dormHi: number; tWin: number;
   rateLag: number;
   wFall: number; dpLo: number; dpHi: number; fallWidth: number;
+  // Growing-degree-day gate. Temperature LEVEL cannot tell a warm December from a
+  // warm May, and both open the warmth ramp; accumulated heat can, because December
+  // has none banked behind it. gddOpen is the accumulation (from 1 January, base
+  // gddBase) at which the gate is fully open. Set gddOpen to 0 to disable it.
+  gddBase: number; gddOpen: number;
+  // gddWindow: 0 accumulates from 1 January (resets with the calendar). Any positive
+  // value accumulates over a TRAILING window of that many days instead, which closes
+  // the gate in a cold December as well as a cold January and makes no assumption
+  // about which months are winter — the southern hemisphere gets the same treatment.
+  gddWindow: number;
+  // gddPost: apply the gate to the SMOOTHED index as well as the raw one. Without it
+  // the smoother carries a high December across the year boundary, which is what left
+  // a visible January peak even with the gate on.
+  gddPost: number;
 }
 
 const DEFAULTS: V2Params = {
@@ -76,6 +90,28 @@ const DEFAULTS: V2Params = {
   dormLo: 38, dormHi: 58, tWin: 14,
   rateLag: 24,
   wFall: 0.7, dpLo: 45, dpHi: 55, fallWidth: 26,
+  // HEAT GATE. The index is multiplied by a gate that opens as growing degree days
+  // accumulate over a TRAILING 30 DAYS (base 50F), fully open at 200. Ron: "No GDD,
+  // no flow."
+  //
+  // Recent heat, not heat since January. A calendar reset fixed January but left
+  // December wide open — by December a site has a full year banked — and a warm
+  // December then bled across the year boundary through the smoother. A trailing
+  // window asks whether heat is arriving NOW, which is false in both months and true
+  // in autumn, so the chamisa flow survives.
+  //
+  // Window LENGTH is the whole trick. 90 days was tried first and made January worse
+  // (mean 6, peak 20): in January a 90-day window still contains autumn heat. 30 days
+  // does not. Do not lengthen it without re-scoring.
+  //
+  // Scored on three real seasons: all 11 ground-truth checks pass, Tijeras December
+  // 2025 goes 7 -> 0 and January 2026 0 -> 0, the September chamisa flow holds at 42,
+  // and South Valley spring is unchanged to slightly higher. Tighter settings
+  // (30d/300, 45d/450) start eating the spring flow — Tijeras May 28 -> 12.
+  //
+  // gddPost applies the gate to the SMOOTHED series too. Without it the smoother
+  // carries a high December across 1 January whatever the gate says.
+  gddBase: 50, gddOpen: 200, gddWindow: 30, gddPost: 1,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -204,7 +240,11 @@ export function runV2Pipeline(
   records: MultiBandRecord[],
   weatherMap: Record<string, WeatherDay>,
   lat: number,
-  params: Partial<V2Params> = {}
+  params: Partial<V2Params> = {},
+  // Last date the series should cover (YYYY-MM-DD). Omitted for a live request, which
+  // runs to today; set when replaying a past season, so the timeline stops at the end
+  // of that year instead of forward-filling to the present.
+  windowEnd?: string
 ): V2EngineResult {
   const P: V2Params = { ...DEFAULTS, ...params };
 
@@ -215,14 +255,23 @@ export function runV2Pipeline(
   };
   if (records.length === 0) return empty;
 
-  // Daily timeline from first observed scene to today.
-  // Extends past the last satellite observation so EWMA carries forward to the current date
-  // (interpBand forward-fills the last known value for days with no new scene).
+  // Daily timeline from the first observed scene to today — or to the end of the
+  // requested window, when one is given.
+  //
+  // Extending past the last observation is deliberate for a live request: scenes arrive
+  // every few days, so the EWMA has to carry forward to today (interpBand forward-fills
+  // the last known value for days with no new scene).
+  //
+  // It is WRONG for a historical window. Asked for 2017-2022, the timeline ran to the
+  // real today and forward-filled the final 2022 scene across nearly four years, so the
+  // client — which takes the latest year in the payload as "current" — labelled the chart
+  // 2026 and averaged 2017-2025 as the baseline. windowEnd stops that.
   const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
   const startT = new Date(sorted[0].date + 'T00:00').getTime();
   const lastObsT = new Date(sorted[sorted.length - 1].date + 'T00:00').getTime();
   const todayT  = new Date(new Date().toISOString().slice(0, 10) + 'T00:00').getTime();
-  const endT    = Math.max(lastObsT, todayT);
+  const capT    = windowEnd ? new Date(windowEnd + 'T00:00').getTime() : todayT;
+  const endT    = Math.min(Math.max(lastObsT, capT), capT);
   const dailyTs: number[] = [];
   for (let t = startT; t <= endT; t += DAY_MS) dailyTs.push(t);
   const N = dailyTs.length;
@@ -286,13 +335,50 @@ export function runV2Pipeline(
   const tSm    = trailingMean(tmeanRaw, P.tWin);
   const warmth = tSm.map(t => t == null ? 1 : clamp((t - P.dormLo) / (P.dormHi - P.dormLo), 0, 1));
 
+  // Growing degree days accumulated from 1 January of each date's own year, so the
+  // total resets with the calendar rather than running away across the series. A warm
+  // spell in December sits on an empty account and the gate stays shut; the same
+  // temperature in autumn sits on a whole summer of banked heat and it stays open.
+  const gddGate: number[] = (() => {
+    if (!P.gddOpen) return dates.map(() => 1);
+    const daily = dates.map((_, i) => {
+      const t = tmeanRaw[i];
+      return t == null ? 0 : Math.max(0, t - P.gddBase);
+    });
+
+    if (P.gddWindow > 0) {
+      // Trailing window: no month is special, in either hemisphere.
+      let acc = 0;
+      return daily.map((v, i) => {
+        acc += v;
+        if (i >= P.gddWindow) acc -= daily[i - P.gddWindow];
+        return clamp(acc / P.gddOpen, 0, 1);
+      });
+    }
+
+    let year = '';
+    let acc = 0;
+    return dates.map((d, i) => {
+      const y = d.slice(0, 4);
+      if (y !== year) { year = y; acc = 0; }
+      acc += daily[i];
+      return clamp(acc / P.gddOpen, 0, 1);
+    });
+  })();
+
+  const seasonGate = warmth.map((w, i) => w * gddGate[i]);
+
   // Moisture applied as a gentle multiplier (floor 0.7 caps the penalty at -30% in
   // bone-dry conditions). NDWI leads NDVI, so this nudges the index earlier/later
   // than greenness alone would.
-  const indexRaw = indexWithFall.map((v, i) => v * warmth[i] * moist[i]);
+  const indexRaw = indexWithFall.map((v, i) => v * seasonGate[i] * moist[i]);
 
   // EWMA for live smoothed value; local-poly for slope (SG-equivalent, uses future pts for history)
-  const idxEwma         = ewmaArr(indexRaw, P.alpha);
+  const idxEwmaRaw      = ewmaArr(indexRaw, P.alpha);
+  // Re-apply the gate after smoothing when asked: the EWMA has a memory of days, so a
+  // high December leaks across 1 January even when the gate has slammed shut on the
+  // input. Gating the output too makes the shut gate mean what it says.
+  const idxEwma         = P.gddPost ? idxEwmaRaw.map((v, i) => v * gddGate[i]) : idxEwmaRaw;
   // The slope must describe the series the beekeeper is LOOKING AT.
   //
   // It was computed from indexRaw while the chart, the phase test and the NFI all use

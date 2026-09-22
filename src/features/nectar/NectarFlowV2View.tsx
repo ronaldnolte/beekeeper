@@ -102,6 +102,28 @@ export const NectarFlowV2View: React.FC = () => {
   const [isEnlarged, setIsEnlarged] = useState(false);
   // The old DETAILS sub-tab, now a panel behind the (i) on the chart.
   const [showDetails, setShowDetails] = useState(false);
+
+  /**
+   * REVIEW MODE — Ron's, not the users'.
+   *
+   * Replays a past season as though it were the current one, so the index can be
+   * checked against a year somebody actually remembers. That is the only
+   * validation this project has that does not come from a fixture file.
+   *
+   * Hidden unless the URL carries ?review=1, so it cannot appear for a user and
+   * does not need removing before a release. The year list is bounded by
+   * Sentinel-2, not by choice: dense coverage starts around 2017, and each year
+   * needs the five before it, so nothing earlier than 2022 can be replayed.
+   */
+  const reviewEnabled = typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('review') === '1';
+  const [reviewYear, setReviewYear] = useState<number | null>(null);
+  const reviewYears = (() => {
+    const thisYear = new Date().getFullYear();
+    const out: number[] = [];
+    for (let y = thisYear - 1; y >= 2022; y--) out.push(y);
+    return out;
+  })();
   const [containerWidth, setContainerWidth] = useState(320);
   const [chartHeight, setChartHeight] = useState(300);
   // Resolved lat/lng actually sent to the API (post zip-geocoding). Shown next to
@@ -120,8 +142,11 @@ export const NectarFlowV2View: React.FC = () => {
     const compute = () => {
       const el = contentRef.current;
       if (!el) return;
-      // reserve = content padding + readout strip + weekly toggle + nav clearance + chart chrome
-      setChartHeight(Math.max(220, el.clientHeight - 255));
+      // reserve = content padding + readout strip + nav clearance + chart chrome,
+      // plus ~130 for the difference chart and ~120 for season-to-date, both
+      // stacked under the main one. The main chart yields; the panel never
+      // overflows.
+      setChartHeight(Math.max(150, el.clientHeight - 505));
     };
     compute();
     window.addEventListener('resize', compute);
@@ -186,6 +211,8 @@ export const NectarFlowV2View: React.FC = () => {
         const params = new URLSearchParams({
           lat: lat.toFixed(4), lng: lng.toFixed(4),
         });
+        // Review mode: replay a past season as though it were the current one.
+        if (reviewYear) params.set('year', String(reviewYear));
         // Cache control: the refresh button forces a fresh fetch that bypasses the
         // Vercel CDN + browser cache (unique URL); normal loads use a per-day key so
         // repeat visits within a day stay fast but data still refreshes daily.
@@ -234,7 +261,7 @@ export const NectarFlowV2View: React.FC = () => {
       // Skip on an intentional cancel so we don't stomp the superseding load's state.
       if (!externalSignal?.aborted) setLoading(false);
     }
-  }, [selectedApiaryId]);
+  }, [selectedApiaryId, reviewYear]);   // refetch when the review year changes
 
   useEffect(() => {
     const controller = new AbortController();
@@ -742,6 +769,237 @@ export const NectarFlowV2View: React.FC = () => {
     );
   };
 
+  /**
+   * The difference chart: this year minus the five-year average, on a zero line.
+   *
+   * The main chart answers "how much forage is there". This one answers "is that
+   * more or less than usual", which is the question a beekeeper is actually
+   * asking when they look at a season — and the one the absolute number hides.
+   * An index of 40 means nothing until you know whether normal is 20 or 80.
+   *
+   * Deliberately plain: no gridlines, no month labels, no hover. It shares the
+   * main chart's padding and day-of-year mapping, so the two line up column for
+   * column and read as one picture. Everything it does not draw is something
+   * the chart above already says.
+   */
+  const renderDeviationSvg = (width: number, height: number) => {
+    const paddingLeft = 40;      // identical to the main chart, or the two drift
+    const paddingRight = 15;
+    const paddingTop = 8;
+    const paddingBottom = 8;
+    const chartWidth = width - paddingLeft - paddingRight;
+    const chartHeight = height - paddingTop - paddingBottom;
+
+    const baseByDay: Record<number, number> = {};
+    historyBase.forEach((h) => { baseByDay[getDayOfYear(h.date)] = h.forage_index_smoothed; });
+
+    // Only days where BOTH series have a value can be differenced. The current
+    // year stops at today, so the chart simply ends there rather than pretending.
+    const series = historyCurrent
+      .filter((h: any) => h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed))
+      .map((h: any) => {
+        const day = getDayOfYear(h.date);
+        const base = baseByDay[day];
+        if (base === undefined) return null;
+        return { x: paddingLeft + (day / 365) * chartWidth, diff: h.forage_index_smoothed - base };
+      })
+      .filter(Boolean) as { x: number; diff: number }[];
+
+    if (series.length < 2) return null;
+
+    // Symmetric scale, so above and below the line are directly comparable.
+    // Rounded up to the next 10 points and floored at 10, so a quiet year does
+    // not get magnified into drama by an over-tight axis.
+    const peak = Math.max(...series.map((p) => Math.abs(p.diff)));
+    const span = Math.max(0.1, Math.ceil(peak * 10) / 10);
+    const zeroY = paddingTop + chartHeight / 2;
+    const yFor = (diff: number) => zeroY - (diff / span) * (chartHeight / 2);
+
+    // Split into runs of one sign, interpolating the crossing so the shading
+    // meets the zero line exactly instead of overshooting it.
+    type Run = { sign: number; pts: { x: number; y: number }[] };
+    const runs: Run[] = [];
+    let current: Run | null = null;
+    for (let i = 0; i < series.length; i++) {
+      const p = series[i];
+      const sign = p.diff >= 0 ? 1 : -1;
+      if (!current || current.sign !== sign) {
+        if (current && i > 0) {
+          const prev = series[i - 1];
+          const t = Math.abs(prev.diff) / (Math.abs(prev.diff) + Math.abs(p.diff) || 1);
+          const crossX = prev.x + (p.x - prev.x) * t;
+          current.pts.push({ x: crossX, y: zeroY });
+          runs.push(current);
+          current = { sign, pts: [{ x: crossX, y: zeroY }] };
+        } else {
+          current = { sign, pts: [] };
+        }
+      }
+      current.pts.push({ x: p.x, y: yFor(p.diff) });
+    }
+    if (current && current.pts.length > 1) runs.push(current);
+
+    const label = (v: number) => `${v > 0 ? '+' : ''}${Math.round(v * 100)}`;
+
+    return (
+      <svg width={width} height={height} className="block">
+        {runs.map((run, i) => {
+          const first = run.pts[0];
+          const last = run.pts[run.pts.length - 1];
+          const d = `M ${first.x},${zeroY} L ` + run.pts.map((p) => `${p.x},${p.y}`).join(' L ') + ` L ${last.x},${zeroY} Z`;
+          return (
+            <path
+              key={i}
+              d={d}
+              fill={run.sign > 0 ? 'var(--color-good)' : 'var(--color-bad-bright)'}
+              fillOpacity="0.45"
+            />
+          );
+        })}
+
+        {/* The zero line is the whole point, so it is drawn over the shading. */}
+        <line x1={paddingLeft} y1={zeroY} x2={width - paddingRight} y2={zeroY} stroke="#5b5b7a" strokeWidth="1" />
+
+        <text x={paddingLeft - 6} y={paddingTop + 8} textAnchor="end" fontSize="8" fontWeight="bold" fill="#2ECC71">
+          {label(span)}
+        </text>
+        <text x={paddingLeft - 6} y={zeroY + 3} textAnchor="end" fontSize="8" fontWeight="bold" fill="#8b8ba5">0</text>
+        <text x={paddingLeft - 6} y={height - paddingBottom} textAnchor="end" fontSize="8" fontWeight="bold" fill="#E8695B">
+          {label(-span)}
+        </text>
+      </svg>
+    );
+  };
+
+  /**
+   * Season to date: the running total of the daily differences above.
+   *
+   * The difference chart shows green and red areas; this is that area
+   * accumulated. A line drifting steadily down means EVERY day has been a
+   * little below normal — invisible day by day, decisive over a season. It is
+   * the question the other two charts only hint at: not "is today poor" but
+   * "has this year been poor".
+   *
+   * TWO HONEST LIMITS, and they are why the label says "compared with a normal
+   * year" and never "total":
+   *
+   * 1. A running sum AMPLIFIES BIAS. Day-to-day noise cancels out; a systematic
+   *    offset does not. The baseline is an average of prior years by day-of-year
+   *    with gaps forward-filled, so a steady 2-point lean compounds into a
+   *    500-point "surplus" across a season that is pure artefact. The longer the
+   *    year runs, the more confident and the more wrong it can look.
+   * 2. THE UNITS ARE ABSTRACT — index points x days. This is not pounds of
+   *    honey, and if it were ever labelled a total it would be read as such.
+   */
+  const renderSeasonTotalSvg = (width: number, height: number) => {
+    const paddingLeft = 40;      // identical to the other two, or they drift apart
+    const paddingRight = 15;
+    const paddingTop = 8;
+    const paddingBottom = 8;
+    const chartWidth = width - paddingLeft - paddingRight;
+    const chartHeight = height - paddingTop - paddingBottom;
+
+    const baseByDay: Record<number, number> = {};
+    historyBase.forEach((h) => { baseByDay[getDayOfYear(h.date)] = h.forage_index_smoothed; });
+
+    let running = 0;
+    const series = historyCurrent
+      .filter((h: any) => h.forage_index_smoothed !== null && !isNaN(h.forage_index_smoothed))
+      .map((h: any) => {
+        const day = getDayOfYear(h.date);
+        const base = baseByDay[day];
+        if (base === undefined) return null;
+        // Points, not fractions: a day 0.1 above normal adds 10, which keeps the
+        // callout a number a person can hold in their head.
+        running += (h.forage_index_smoothed - base) * 100;
+        return { x: paddingLeft + (day / 365) * chartWidth, total: running };
+      })
+      .filter(Boolean) as { x: number; total: number }[];
+
+    if (series.length < 2) return null;
+
+    const peak = Math.max(...series.map((p) => Math.abs(p.total)), 1);
+    const span = Math.ceil(peak / 50) * 50;      // round to a readable step
+    const zeroY = paddingTop + chartHeight / 2;
+    const yFor = (total: number) => zeroY - (total / span) * (chartHeight / 2);
+
+    type Run = { sign: number; pts: { x: number; y: number }[] };
+    const runs: Run[] = [];
+    let current: Run | null = null;
+    for (let i = 0; i < series.length; i++) {
+      const p = series[i];
+      const sign = p.total >= 0 ? 1 : -1;
+      if (!current || current.sign !== sign) {
+        if (current && i > 0) {
+          const prev = series[i - 1];
+          const t = Math.abs(prev.total) / (Math.abs(prev.total) + Math.abs(p.total) || 1);
+          const crossX = prev.x + (p.x - prev.x) * t;
+          current.pts.push({ x: crossX, y: zeroY });
+          runs.push(current);
+          current = { sign, pts: [{ x: crossX, y: zeroY }] };
+        } else {
+          current = { sign, pts: [] };
+        }
+      }
+      current.pts.push({ x: p.x, y: yFor(p.total) });
+    }
+    if (current && current.pts.length > 1) runs.push(current);
+
+    const last = series[series.length - 1];
+    const finalTotal = Math.round(last.total);
+    const up = finalTotal >= 0;
+
+    return (
+      <svg width={width} height={height} className="block">
+        {runs.map((run, i) => {
+          const first = run.pts[0];
+          const end = run.pts[run.pts.length - 1];
+          const d = `M ${first.x},${zeroY} L ` + run.pts.map((p) => `${p.x},${p.y}`).join(' L ') + ` L ${end.x},${zeroY} Z`;
+          return (
+            <path key={i} d={d} fill={run.sign > 0 ? 'var(--color-good)' : 'var(--color-bad-bright)'} fillOpacity="0.35" />
+          );
+        })}
+
+        {/* The line itself, over the fill — this chart is read as a trajectory,
+            not as an area, so the edge matters more than it does above. */}
+        <path
+          d={'M ' + series.map((p) => `${p.x},${yFor(p.total)}`).join(' L ')}
+          fill="none"
+          stroke={up ? 'var(--color-good)' : 'var(--color-bad-bright)'}
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+
+        <line x1={paddingLeft} y1={zeroY} x2={width - paddingRight} y2={zeroY} stroke="#5b5b7a" strokeWidth="1" />
+        <circle cx={last.x} cy={yFor(last.total)} r="2.5" fill={up ? '#2ECC71' : '#E8695B'} stroke="#0f0f20" strokeWidth="0.8" />
+
+        <text x={paddingLeft - 6} y={paddingTop + 8} textAnchor="end" fontSize="8" fontWeight="bold" fill="#8b8ba5">
+          +{span}
+        </text>
+        <text x={paddingLeft - 6} y={zeroY + 3} textAnchor="end" fontSize="8" fontWeight="bold" fill="#8b8ba5">0</text>
+        <text x={paddingLeft - 6} y={height - paddingBottom} textAnchor="end" fontSize="8" fontWeight="bold" fill="#8b8ba5">
+          -{span}
+        </text>
+      </svg>
+    );
+  };
+
+  /** The season-to-date figure on its own, for the caption line. */
+  const seasonToDate = (() => {
+    const baseByDay: Record<number, number> = {};
+    historyBase.forEach((h) => { baseByDay[getDayOfYear(h.date)] = h.forage_index_smoothed; });
+    let running = 0;
+    let counted = 0;
+    historyCurrent.forEach((h: any) => {
+      if (h.forage_index_smoothed === null || isNaN(h.forage_index_smoothed)) return;
+      const base = baseByDay[getDayOfYear(h.date)];
+      if (base === undefined) return;
+      running += (h.forage_index_smoothed - base) * 100;
+      counted += 1;
+    });
+    return counted > 1 ? Math.round(running) : null;
+  })();
+
   return (
     // Page furniture is light like the rest of the app; the chart panel and its
     // fullscreen view stay dark on purpose — see the comment at the chart.
@@ -770,6 +1028,21 @@ export const NectarFlowV2View: React.FC = () => {
             </span>
           )}
           <ChevronDown size={14} className="text-[var(--color-text-muted)] flex-shrink-0 pointer-events-none" />
+
+          {/* Review mode only — see the note on reviewEnabled. Never shown to users. */}
+          {reviewEnabled && (
+            <select
+              value={reviewYear ?? ''}
+              onChange={(e) => setReviewYear(e.target.value ? parseInt(e.target.value, 10) : null)}
+              className="ml-2 shrink-0 rounded-lg border-2 border-[var(--color-primary)] bg-[var(--color-primary-wash)] px-2 py-0.5 text-[11px] font-black text-[var(--color-primary-ink)] outline-none"
+              title="Replay a past season as though it were the current one"
+            >
+              <option value="">This season</option>
+              {reviewYears.map((y) => (
+                <option key={y} value={y}>{y} season</option>
+              ))}
+            </select>
+          )}
         </div>
       )}
 
@@ -852,6 +1125,41 @@ export const NectarFlowV2View: React.FC = () => {
                     </button>
                   </div>
                   {renderChartSvg(containerWidth, chartHeight)}
+
+                  {/* Difference from normal, directly beneath and sharing the
+                      x-axis. Placed inside the same panel on purpose: it is a
+                      second reading of one season, not a second chart. */}
+                  <div className="mt-1 border-t border-[#222240] pt-2">
+                    <div className="mb-1 flex items-baseline gap-2 pl-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                        Difference from normal
+                      </span>
+                      <span className="text-[9px] text-slate-500">
+                        {currentYear} vs {baseYearLabel}
+                      </span>
+                    </div>
+                    {renderDeviationSvg(containerWidth, 96)}
+                  </div>
+
+                  {/* Season to date — the running total of the differences above.
+                      The wording avoids "total": the units are index points times
+                      days, which is a comparison, not a yield. */}
+                  {seasonToDate !== null && (
+                    <div className="mt-1 border-t border-[#222240] pt-2">
+                      <div className="mb-1 flex items-baseline gap-2 pl-1">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+                          Season to date
+                        </span>
+                        <span
+                          className="text-[10px] font-black"
+                          style={{ color: seasonToDate >= 0 ? '#2ECC71' : '#E8695B' }}
+                        >
+                          {seasonToDate >= 0 ? 'running above' : 'running below'} a normal year
+                        </span>
+                      </div>
+                      {renderSeasonTotalSvg(containerWidth, 88)}
+                    </div>
+                  )}
                 </>
               ) : (
                 <p className="text-xs text-slate-500 text-center py-10">Insufficient history for trend line</p>
@@ -1093,10 +1401,34 @@ export const NectarFlowV2View: React.FC = () => {
                 const across = isPortrait ? window.innerHeight : window.innerWidth;
                 const down = isPortrait ? window.innerWidth : window.innerHeight;
                 const RESERVED = 168; // title + legend/status + padding + gaps
-                return renderChartSvg(
-                  Math.max(300, across - 48),
-                  Math.max(140, down - RESERVED),
-                  true
+                const w = Math.max(300, across - 48);
+                // The difference chart comes with the main one into fullscreen —
+                // they are one picture, and going full screen is exactly when a
+                // beekeeper is looking hard at the season. It takes a fixed slice
+                // and the main chart keeps the rest.
+                const devH = 84;
+                const seasonH = seasonToDate !== null ? 72 : 0;
+                const mainH = Math.max(140, down - RESERVED - devH - seasonH - 36);
+                return (
+                  // The parent centres its children in a row, so the charts go
+                  // inside one column or they would sit side by side.
+                  <div className="flex flex-col">
+                    {renderChartSvg(w, mainH, true)}
+                    <div className="mt-1 border-t border-[#222240] pt-1.5">
+                      <div className="mb-0.5 pl-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                        Difference from normal
+                      </div>
+                      {renderDeviationSvg(w, devH)}
+                    </div>
+                    {seasonToDate !== null && (
+                      <div className="mt-1 border-t border-[#222240] pt-1.5">
+                        <div className="mb-0.5 pl-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                          Season to date
+                        </div>
+                        {renderSeasonTotalSvg(w, seasonH)}
+                      </div>
+                    )}
+                  </div>
                 );
               })()}
             </div>

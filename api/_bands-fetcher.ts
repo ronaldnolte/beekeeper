@@ -71,7 +71,25 @@ export async function fetchMultiBands(
   const geom = ee.Geometry.Point([lon, lat]).buffer(radiusKm * 1000);
   const col = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
     .filterBounds(geom)
-    .filterDate(startDate, endDate);
+    .filterDate(startDate, endDate)
+    // Drop scenes whose declared footprint is impossible.
+    //
+    // On 2026-09-21 a scene appeared in the catalogue — 20260921T081631_
+    // 20260921T082016_T39WXT, an Arctic tile off Novaya Zemlya — carrying a
+    // footprint area of 9.22e18 km², which is 2^63: an overflow sentinel, not
+    // a measurement. A footprint that size intersects every point on Earth, so
+    // filterBounds handed it to every yard we look at, and reduceRegion then
+    // had to express a New Mexico circle in that scene's UTM zone 39 grid.
+    // Reprojected 155 degrees of longitude away, the circle smeared across
+    // 1.4 billion pixels and blew the maxPixels ceiling — one bad row in
+    // Google's catalogue took the whole nectar report down, worldwide.
+    //
+    // A real Sentinel-2 tile is 110 km square, so about 12,100 km². The ceiling
+    // here is four times that: comfortably above any honest scene, far below a
+    // corrupt one. Cheap to compute (1 km error tolerance) and it guards the
+    // next such row too, wherever it lands.
+    .map((img: any) => img.set('footprint_km2', img.geometry().area(1000).divide(1e6)))
+    .filter(ee.Filter.lt('footprint_km2', 50_000));
 
   const processed = col.map((image: any) => {
     const dateStr = image.date().format('YYYY-MM-dd');
