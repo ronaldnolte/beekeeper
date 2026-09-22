@@ -100,6 +100,58 @@ export const NectarFlowV2View: React.FC = () => {
 
   // Enlarged Landscape Modal State
   const [isEnlarged, setIsEnlarged] = useState(false);
+
+  /**
+   * Ask the browser for true full screen when the chart is enlarged.
+   *
+   * On a phone held sideways, the address bar and the Android status bar
+   * together take close to a fifth of the height — which is the exact dimension
+   * three stacked charts are starving for. The Fullscreen API hands it back.
+   *
+   * It has to be called from the tap itself; a request made a moment later is
+   * rejected as untrusted. iOS Safari on iPhone does not implement it at all,
+   * so both calls are guarded and failure is silent — the modal opens either
+   * way, just without the extra room. In the packaged Android app there is no
+   * browser chrome to reclaim and this is a no-op.
+   */
+  const enterFullscreen = () => {
+    const el = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+    };
+    const req = el.requestFullscreen ?? el.webkitRequestFullscreen;
+    if (!req) return;
+    try { Promise.resolve(req.call(el)).catch(() => {}); } catch { /* unsupported */ }
+  };
+  const exitFullscreen = () => {
+    const d = document as Document & {
+      webkitFullscreenElement?: Element | null;
+      webkitExitFullscreen?: () => Promise<void> | void;
+    };
+    if (!d.fullscreenElement && !d.webkitFullscreenElement) return;
+    const exit = d.exitFullscreen ?? d.webkitExitFullscreen;
+    if (!exit) return;
+    try { Promise.resolve(exit.call(d)).catch(() => {}); } catch { /* unsupported */ }
+  };
+
+  /**
+   * The enlarged charts measure the viewport at render time, so they have to be
+   * told when it changes — the phone rotating, or the browser chrome sliding
+   * away as full screen takes hold a frame or two after the tap. Without this
+   * they keep whatever dimensions they were born with and clip.
+   */
+  const [viewportTick, setViewportTick] = useState(0);
+  useEffect(() => {
+    if (!isEnlarged) return;
+    const bump = () => setViewportTick(t => t + 1);
+    window.addEventListener('resize', bump);
+    window.addEventListener('orientationchange', bump);
+    document.addEventListener('fullscreenchange', bump);
+    return () => {
+      window.removeEventListener('resize', bump);
+      window.removeEventListener('orientationchange', bump);
+      document.removeEventListener('fullscreenchange', bump);
+    };
+  }, [isEnlarged]);
   // The old DETAILS sub-tab, now a panel behind the (i) on the chart.
   const [showDetails, setShowDetails] = useState(false);
 
@@ -1116,7 +1168,7 @@ export const NectarFlowV2View: React.FC = () => {
                       <Info size={15} />
                     </button>
                     <button
-                      onClick={() => setIsEnlarged(true)}
+                      onClick={() => { setIsEnlarged(true); enterFullscreen(); }}
                       className="p-2 bg-[#1b1b36]/80 hover:bg-[#2b2b54] border border-[#2b2b54] rounded-lg text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center justify-center"
                       title="Full screen"
                       aria-label="Full screen"
@@ -1380,6 +1432,7 @@ export const NectarFlowV2View: React.FC = () => {
               </div>
               <button
                 onClick={() => {
+                  exitFullscreen();
                   setIsEnlarged(false);
                   setHoveredIndex(null);
                 }}
@@ -1400,19 +1453,35 @@ export const NectarFlowV2View: React.FC = () => {
                 const isPortrait = window.innerHeight > window.innerWidth;
                 const across = isPortrait ? window.innerHeight : window.innerWidth;
                 const down = isPortrait ? window.innerWidth : window.innerHeight;
-                const RESERVED = 168; // title + legend/status + padding + gaps
                 const w = Math.max(300, across - 48);
-                // The difference chart comes with the main one into fullscreen —
-                // they are one picture, and going full screen is exactly when a
-                // beekeeper is looking hard at the season. It takes a fixed slice
-                // and the main chart keeps the rest.
-                const devH = 84;
-                const seasonH = seasonToDate !== null ? 72 : 0;
-                const mainH = Math.max(140, down - RESERVED - devH - seasonH - 36);
+
+                // SHARE the height out; never hand it out in fixed lumps.
+                //
+                // The old sum was `max(140, down - 168 - 84 - 72 - 36)`, which
+                // needs 500px of height before the main chart gets anything
+                // beyond its 140px floor. A phone in landscape has closer to
+                // 360. So the floor always won, the three charts always added
+                // up to more than the screen, and the parent — which centres
+                // its children and hides the overflow — quietly cropped the top
+                // and bottom off the main chart. Ron photographed exactly that
+                // on 2026-09-21: a sliver of the season, and the -60 label on
+                // the difference chart sliced in half.
+                //
+                // Proportions instead. Whatever height exists gets divided, so a
+                // short screen shrinks all three together rather than starving
+                // the one that matters most, and nothing ever exceeds the box.
+                const hasSeason = seasonToDate !== null;
+                // Title row, legend strip, panel padding, gaps — plus the little
+                // caption and divider above each secondary chart.
+                const RESERVED = 126 + (hasSeason ? 48 : 24);
+                const avail = Math.max(180, down - RESERVED);
+                const mainH = Math.round(avail * (hasSeason ? 0.56 : 0.72));
+                const devH = Math.round(avail * (hasSeason ? 0.24 : 0.28));
+                const seasonH = hasSeason ? avail - mainH - devH : 0;
                 return (
                   // The parent centres its children in a row, so the charts go
                   // inside one column or they would sit side by side.
-                  <div className="flex flex-col">
+                  <div className="flex flex-col" key={viewportTick}>
                     {renderChartSvg(w, mainH, true)}
                     <div className="mt-1 border-t border-[#222240] pt-1.5">
                       <div className="mb-0.5 pl-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
