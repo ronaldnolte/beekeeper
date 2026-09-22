@@ -134,23 +134,33 @@ export const NectarFlowV2View: React.FC = () => {
   };
 
   /**
-   * The enlarged charts measure the viewport at render time, so they have to be
-   * told when it changes — the phone rotating, or the browser chrome sliding
-   * away as full screen takes hold a frame or two after the tap. Without this
-   * they keep whatever dimensions they were born with and clip.
+   * MEASURE the space the enlarged charts have. Do not compute it.
+   *
+   * This started as `viewport height minus a constant` for the title, legend and
+   * padding. That constant was wrong twice — it missed the status strip along
+   * the bottom, so the season-to-date chart ran underneath it — and it would
+   * have gone wrong again the next time anything in this modal changed height.
+   *
+   * The box is already `flex-1 min-h-0`, so the browser has worked the answer
+   * out exactly: its own client height IS the space available. Read that and
+   * divide it up. Nothing left to guess, and it re-measures for free when the
+   * phone rotates or the browser chrome slides away after full screen takes.
+   *
+   * No feedback loop: the box takes its height from the flex row above it, not
+   * from these children, and it hides its overflow.
    */
-  const [viewportTick, setViewportTick] = useState(0);
+  const enlargedBoxRef = useRef<HTMLDivElement>(null);
+  const [enlargedBox, setEnlargedBox] = useState<{ w: number; h: number } | null>(null);
   useEffect(() => {
     if (!isEnlarged) return;
-    const bump = () => setViewportTick(t => t + 1);
-    window.addEventListener('resize', bump);
-    window.addEventListener('orientationchange', bump);
-    document.addEventListener('fullscreenchange', bump);
-    return () => {
-      window.removeEventListener('resize', bump);
-      window.removeEventListener('orientationchange', bump);
-      document.removeEventListener('fullscreenchange', bump);
-    };
+    const el = enlargedBoxRef.current;
+    if (!el) return;
+    // observe() delivers the current size straight away, so there is no need to
+    // measure by hand first — and measuring in the effect body would be a
+    // synchronous setState, which cascades renders.
+    const ro = new ResizeObserver(() => setEnlargedBox({ w: el.clientWidth, h: el.clientHeight }));
+    ro.observe(el);
+    return () => { ro.disconnect(); setEnlargedBox(null); };
   }, [isEnlarged]);
   // The old DETAILS sub-tab, now a panel behind the (i) on the chart.
   const [showDetails, setShowDetails] = useState(false);
@@ -1442,7 +1452,7 @@ export const NectarFlowV2View: React.FC = () => {
               </button>
             </div>
 
-            <div className="flex-1 min-h-0 flex items-center justify-center bg-[#0d0d1a] border border-[#20203c] rounded-2xl p-3 overflow-hidden">
+            <div ref={enlargedBoxRef} className="flex-1 min-h-0 flex items-center justify-center bg-[#0d0d1a] border border-[#20203c] rounded-2xl p-3 overflow-hidden">
               {(() => {
                 // In portrait the whole panel is rotated, so the space available
                 // ACROSS the chart is the viewport's width, and DOWN it is the
@@ -1450,38 +1460,36 @@ export const NectarFlowV2View: React.FC = () => {
                 // and status strip, the padding and the gaps — the chart used to
                 // take a flat 60% of the viewport and push the footer clean off
                 // the screen, where nothing could scroll it back.
-                const isPortrait = window.innerHeight > window.innerWidth;
-                const across = isPortrait ? window.innerHeight : window.innerWidth;
-                const down = isPortrait ? window.innerWidth : window.innerHeight;
-                const w = Math.max(300, across - 48);
+                // Nothing renders until the box has been measured — one frame,
+                // and it saves every guess about how tall the furniture is.
+                if (!enlargedBox) return null;
 
-                // SHARE the height out; never hand it out in fixed lumps.
-                //
-                // The old sum was `max(140, down - 168 - 84 - 72 - 36)`, which
-                // needs 500px of height before the main chart gets anything
-                // beyond its 140px floor. A phone in landscape has closer to
-                // 360. So the floor always won, the three charts always added
-                // up to more than the screen, and the parent — which centres
-                // its children and hides the overflow — quietly cropped the top
-                // and bottom off the main chart. Ron photographed exactly that
-                // on 2026-09-21: a sliver of the season, and the -60 label on
-                // the difference chart sliced in half.
-                //
-                // Proportions instead. Whatever height exists gets divided, so a
-                // short screen shrinks all three together rather than starving
-                // the one that matters most, and nothing ever exceeds the box.
                 const hasSeason = seasonToDate !== null;
-                // Title row, legend strip, panel padding, gaps — plus the little
-                // caption and divider above each secondary chart.
-                const RESERVED = 126 + (hasSeason ? 48 : 24);
-                const avail = Math.max(180, down - RESERVED);
-                const mainH = Math.round(avail * (hasSeason ? 0.56 : 0.72));
-                const devH = Math.round(avail * (hasSeason ? 0.24 : 0.28));
+                // clientWidth/clientHeight include the box's own padding, and
+                // the box is p-3 — 12px on every side. Take it off both ways or
+                // the charts overflow by exactly that much.
+                const PAD = 24;
+                const w = Math.max(300, enlargedBox.w - PAD);
+                // Each secondary chart carries a caption and a divider above it:
+                // margin, border, padding and a 9px line, about 25px the charts
+                // themselves never see.
+                const CAPTION = 25 * (hasSeason ? 2 : 1);
+                // SHARE the height out; never hand it out in fixed lumps. The
+                // old sum needed 500px before the main chart cleared its 140px
+                // floor, and a phone in landscape has about 360 — so the three
+                // charts always totalled more than the box, and the box centres
+                // its children and hides the overflow. Ron photographed the
+                // result twice on 2026-09-21: first the season cropped top and
+                // bottom, then the season-to-date chart running under the status
+                // strip. Proportions shrink all three together instead.
+                const avail = Math.max(150, enlargedBox.h - PAD - CAPTION);
+                const mainH = Math.round(avail * (hasSeason ? 0.52 : 0.72));
+                const devH = Math.round(avail * (hasSeason ? 0.25 : 0.28));
                 const seasonH = hasSeason ? avail - mainH - devH : 0;
                 return (
                   // The parent centres its children in a row, so the charts go
                   // inside one column or they would sit side by side.
-                  <div className="flex flex-col" key={viewportTick}>
+                  <div className="flex flex-col">
                     {renderChartSvg(w, mainH, true)}
                     <div className="mt-1 border-t border-[#222240] pt-1.5">
                       <div className="mb-0.5 pl-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
