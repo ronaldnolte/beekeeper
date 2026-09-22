@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { X, Camera, Mic, Download, MapPin, Sparkles } from 'lucide-react';
+import { X, MapPin, Sparkles, LineChart, Snowflake } from 'lucide-react';
 
 // Bump this string whenever there's new content worth announcing. Anyone whose
 // stored value doesn't match sees the modal once, then it's marked as read.
 // Kept as a content id (not the app version) so a release with nothing
 // user-facing to say doesn't have to trigger the popup.
 // Bumping this shows the modal once more to everyone who has already dismissed
-// it. Earned here: the pin nudge is new, and it is the one item that asks the
-// reader to go and do something.
-export const WHATS_NEW_VERSION = '2026-08-apiary-coordinates-2';
+// it. Earned here: the nectar index now returns DIFFERENT NUMBERS than it did
+// yesterday — winter reads zero and "normal" is a five-year average — and a
+// reading that changes under someone without explanation is worse than no
+// reading at all.
+export const WHATS_NEW_VERSION = '2026-09-nectar-charts';
 const SEEN_KEY = 'beek_whats_new_seen';
 
 // One-time "What's New" modal. Self-managing: on mount it checks localStorage
@@ -73,21 +75,21 @@ export const WhatsNewModal: React.FC = () => {
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-4 text-sm custom-scrollbar">
           <Feature
+            icon={<LineChart size={20} />}
+            title="Two new charts under Nectar Flow"
+            body="The top chart still shows this season against the years behind it. Below it now sits the difference — green where you are running ahead of normal, red where you are behind — and under that, a season-to-date total that adds those daily differences up. The first tells you about today. The second tells you how the whole year has gone, which is the question most of us are actually asking in September."
+          />
+          <Feature
+            icon={<Snowflake size={20} />}
+            title="Winter reads zero now, and 'normal' means five years"
+            body="Two changes to the index itself, so the numbers will not match what you saw last week. First: a warm January day used to show a little nectar. Greenness alone cannot tell evergreen from a flow, so it was counting sunshine the bees could not use — it now waits for real accumulated warmth before it reads anything. Second: your normal is averaged over five past seasons instead of three. Three good years in a row made an ordinary season look like a collapse."
+          />
+          <Feature
             icon={<MapPin size={20} />}
             accent
-            eyebrow="Do this first — takes a minute"
+            eyebrow="If you haven't yet — takes a minute"
             title="Pin your apiaries on the map, or Nectar Flow is guessing"
             body="Without a pin, we read the satellite at the centre of your ZIP code — which can be miles from your hives, and in hill country lands on the wrong side of a ridge entirely. That is a different set of plants, a different water table, and a forage reading that is not yours. Open each apiary, tap Edit, and drop a pin on your actual hive stand. A few seconds per apiary, and every reading after that is about your bees instead of somebody else's."
-          />
-          <Feature
-            icon={<><Camera size={20} /><Mic size={20} /></>}
-            title="Photos & voice notes on inspections"
-            body="You can now attach photos and voice notes to any inspection. Snap a picture of brood, queen cells, or anything you want to remember — or record a quick voice note instead of typing it all out. Look for the camera and microphone on the inspection screen."
-          />
-          <Feature
-            icon={<Download size={20} />}
-            title="Export your records for safe keeping"
-            body="Save any inspection as a PDF report, and export your photos to your device. It's a great way to keep your own backup of your records and images — for safe keeping, or to share them."
           />
           {/* Testers on the packaged Android build. Hidden on web/PWA, which
               updates itself on every visit.
