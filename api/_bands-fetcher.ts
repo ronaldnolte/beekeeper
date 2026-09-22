@@ -28,6 +28,31 @@ export interface MultiBandRecord {
   ndwi: number;
 }
 
+/**
+ * The MGRS tile names that could plausibly cover a point — its own UTM zone and
+ * latitude band, plus one of each either side.
+ *
+ * Sentinel-2 tile names read like `13SCU`: zone 13, band S, then the 100km
+ * square. Zones are 6 degrees of longitude, bands 8 degrees of latitude from
+ * 80S. Tiles overlap their neighbours by about 10km, so a yard near a boundary
+ * is genuinely imaged from the next zone or band along — hence the margin of
+ * one in each direction, which is nine prefixes. Two zones away is not a
+ * real tile, it is a corrupt row.
+ *
+ * Zones wrap at the antimeridian (60 -> 1); bands do not (they stop at the
+ * poles).
+ */
+function mgrsPrefixes(lat: number, lon: number): string[] {
+  const BANDS = 'CDEFGHJKLMNPQRSTUVWX'; // no I or O — too like 1 and 0
+  const zone = Math.floor((lon + 180) / 6) + 1;
+  const band = Math.floor((lat + 80) / 8);
+  const zones = [zone - 1, zone, zone + 1].map(z => ((z - 1 + 60) % 60) + 1);
+  const bands = [band - 1, band, band + 1].filter(b => b >= 0 && b < BANDS.length);
+  const out: string[] = [];
+  for (const z of zones) for (const b of bands) out.push(`${z}${BANDS[b]}`);
+  return out;
+}
+
 let isEEInitialized = false;
 
 function initEarthEngine(): Promise<void> {
@@ -72,24 +97,26 @@ export async function fetchMultiBands(
   const col = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
     .filterBounds(geom)
     .filterDate(startDate, endDate)
-    // Drop scenes whose declared footprint is impossible.
+    // Keep only scenes from a tile that could actually be overhead.
     //
-    // On 2026-09-21 a scene appeared in the catalogue — 20260921T081631_
-    // 20260921T082016_T39WXT, an Arctic tile off Novaya Zemlya — carrying a
-    // footprint area of 9.22e18 km², which is 2^63: an overflow sentinel, not
-    // a measurement. A footprint that size intersects every point on Earth, so
-    // filterBounds handed it to every yard we look at, and reduceRegion then
-    // had to express a New Mexico circle in that scene's UTM zone 39 grid.
-    // Reprojected 155 degrees of longitude away, the circle smeared across
-    // 1.4 billion pixels and blew the maxPixels ceiling — one bad row in
-    // Google's catalogue took the whole nectar report down, worldwide.
+    // WHY THIS EXISTS. On 2026-09-21 a scene appeared in the catalogue —
+    // 20260921T081631_20260921T082016_T39WXT, an Arctic tile off Novaya Zemlya
+    // — declaring a footprint of 2^63 km², which evaluates to Infinity: an
+    // overflow, not a measurement. A footprint that size intersects every point
+    // on Earth, so filterBounds handed it to every yard we look at, and
+    // reduceRegion then had to express a New Mexico circle in that scene's UTM
+    // zone 39 grid. Reprojected 155 degrees of longitude away, the circle
+    // smeared across 1.4 billion pixels and blew the maxPixels ceiling. One bad
+    // row in Google's catalogue took every nectar report on Earth down.
     //
-    // A real Sentinel-2 tile is 110 km square, so about 12,100 km². The ceiling
-    // here is four times that: comfortably above any honest scene, far below a
-    // corrupt one. Cheap to compute (1 km error tolerance) and it guards the
-    // next such row too, wherever it lands.
-    .map((img: any) => img.set('footprint_km2', img.geometry().area(1000).divide(1e6)))
-    .filter(ee.Filter.lt('footprint_km2', 50_000));
+    // WHY BY TILE NAME. The first version of this guard measured each scene's
+    // area and dropped anything absurd. Correct, and too slow: it put a
+    // geometry computation on all ~900 scenes in the five-year window, and this
+    // request already runs close to the client's 60-second patience. MGRS_TILE
+    // is metadata that is already sitting there, so this costs nothing.
+    .filter(ee.Filter.or(
+      ...mgrsPrefixes(lat, lon).map(p => ee.Filter.stringStartsWith('MGRS_TILE', p))
+    ));
 
   const processed = col.map((image: any) => {
     const dateStr = image.date().format('YYYY-MM-dd');
