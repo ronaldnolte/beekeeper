@@ -149,6 +149,10 @@ export const NectarFlowV2View: React.FC = () => {
    * No feedback loop: the box takes its height from the flex row above it, not
    * from these children, and it hides its overflow.
    */
+  /** Which secondary chart the enlarged view is showing. Full screen only — the
+   *  inline view still stacks both, where there is the scroll room for it. */
+  const [secondaryChart, setSecondaryChart] = useState<'difference' | 'season'>('difference');
+
   const enlargedBoxRef = useRef<HTMLDivElement>(null);
   const [enlargedBox, setEnlargedBox] = useState<{ w: number; h: number } | null>(null);
   useEffect(() => {
@@ -1470,41 +1474,51 @@ export const NectarFlowV2View: React.FC = () => {
                 // the charts overflow by exactly that much.
                 const PAD = 24;
                 const w = Math.max(300, enlargedBox.w - PAD);
-                // Each secondary chart carries a caption and a divider above it:
-                // margin, border, padding and a 9px line, about 25px the charts
-                // themselves never see.
-                const CAPTION = 25 * (hasSeason ? 2 : 1);
-                // SHARE the height out; never hand it out in fixed lumps. The
-                // old sum needed 500px before the main chart cleared its 140px
-                // floor, and a phone in landscape has about 360 — so the three
-                // charts always totalled more than the box, and the box centres
-                // its children and hides the overflow. Ron photographed the
-                // result twice on 2026-09-21: first the season cropped top and
-                // bottom, then the season-to-date chart running under the status
-                // strip. Proportions shrink all three together instead.
-                const avail = Math.max(150, enlargedBox.h - PAD - CAPTION);
-                const mainH = Math.round(avail * (hasSeason ? 0.52 : 0.72));
-                const devH = Math.round(avail * (hasSeason ? 0.25 : 0.28));
-                const seasonH = hasSeason ? avail - mainH - devH : 0;
+                // ONE secondary chart at a time, chosen by the tabs.
+                //
+                // Both of them stacked did fit, once the height was measured
+                // rather than guessed — but fitting is not the same as being
+                // readable. Each was left about 60px for a curve that swings
+                // from -1400 to +1400, which is a line, not a shape you can
+                // read (Ron, 2026-09-21). Showing one gives it everything the
+                // other was using, and neither is a chart you watch at the same
+                // moment as the other: the difference answers "how is today",
+                // the season-to-date answers "how has the year gone".
+                const TABS = 27; // tab row + divider + margins
+                const avail = Math.max(150, enlargedBox.h - PAD - TABS);
+                const mainH = Math.round(avail * 0.55);
+                const secondaryH = avail - mainH;
+                const showSeason = hasSeason && secondaryChart === 'season';
                 return (
                   // The parent centres its children in a row, so the charts go
                   // inside one column or they would sit side by side.
                   <div className="flex flex-col">
                     {renderChartSvg(w, mainH, true)}
                     <div className="mt-1 border-t border-[#222240] pt-1.5">
-                      <div className="mb-0.5 pl-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
-                        Difference from normal
+                      <div className="mb-0.5 flex items-center gap-1.5 pl-1">
+                        {([
+                          ['difference', 'Difference from normal'],
+                          ['season', 'Season to date'],
+                        ] as const)
+                          .filter(([key]) => key === 'difference' || hasSeason)
+                          .map(([key, label]) => (
+                            <button
+                              key={key}
+                              onClick={() => setSecondaryChart(key)}
+                              className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-colors cursor-pointer ${
+                                (key === 'season') === showSeason
+                                  ? 'bg-[var(--color-primary)] text-[#0d0d1a]'
+                                  : 'bg-[#1b1b36] border border-[#2b2b54] text-slate-400 hover:text-white'
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
                       </div>
-                      {renderDeviationSvg(w, devH)}
+                      {showSeason
+                        ? renderSeasonTotalSvg(w, secondaryH)
+                        : renderDeviationSvg(w, secondaryH)}
                     </div>
-                    {seasonToDate !== null && (
-                      <div className="mt-1 border-t border-[#222240] pt-1.5">
-                        <div className="mb-0.5 pl-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
-                          Season to date
-                        </div>
-                        {renderSeasonTotalSvg(w, seasonH)}
-                      </div>
-                    )}
                   </div>
                 );
               })()}
