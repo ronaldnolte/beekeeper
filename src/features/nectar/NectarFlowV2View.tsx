@@ -100,6 +100,72 @@ export const NectarFlowV2View: React.FC = () => {
 
   // Enlarged Landscape Modal State
   const [isEnlarged, setIsEnlarged] = useState(false);
+
+  /**
+   * Ask the browser for true full screen when the chart is enlarged.
+   *
+   * On a phone held sideways, the address bar and the Android status bar
+   * together take close to a fifth of the height — which is the exact dimension
+   * three stacked charts are starving for. The Fullscreen API hands it back.
+   *
+   * It has to be called from the tap itself; a request made a moment later is
+   * rejected as untrusted. iOS Safari on iPhone does not implement it at all,
+   * so both calls are guarded and failure is silent — the modal opens either
+   * way, just without the extra room. In the packaged Android app there is no
+   * browser chrome to reclaim and this is a no-op.
+   */
+  const enterFullscreen = () => {
+    const el = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+    };
+    const req = el.requestFullscreen ?? el.webkitRequestFullscreen;
+    if (!req) return;
+    try { Promise.resolve(req.call(el)).catch(() => {}); } catch { /* unsupported */ }
+  };
+  const exitFullscreen = () => {
+    const d = document as Document & {
+      webkitFullscreenElement?: Element | null;
+      webkitExitFullscreen?: () => Promise<void> | void;
+    };
+    if (!d.fullscreenElement && !d.webkitFullscreenElement) return;
+    const exit = d.exitFullscreen ?? d.webkitExitFullscreen;
+    if (!exit) return;
+    try { Promise.resolve(exit.call(d)).catch(() => {}); } catch { /* unsupported */ }
+  };
+
+  /**
+   * MEASURE the space the enlarged charts have. Do not compute it.
+   *
+   * This started as `viewport height minus a constant` for the title, legend and
+   * padding. That constant was wrong twice — it missed the status strip along
+   * the bottom, so the season-to-date chart ran underneath it — and it would
+   * have gone wrong again the next time anything in this modal changed height.
+   *
+   * The box is already `flex-1 min-h-0`, so the browser has worked the answer
+   * out exactly: its own client height IS the space available. Read that and
+   * divide it up. Nothing left to guess, and it re-measures for free when the
+   * phone rotates or the browser chrome slides away after full screen takes.
+   *
+   * No feedback loop: the box takes its height from the flex row above it, not
+   * from these children, and it hides its overflow.
+   */
+  /** Which secondary chart the enlarged view is showing. Full screen only — the
+   *  inline view still stacks both, where there is the scroll room for it. */
+  const [secondaryChart, setSecondaryChart] = useState<'difference' | 'season'>('difference');
+
+  const enlargedBoxRef = useRef<HTMLDivElement>(null);
+  const [enlargedBox, setEnlargedBox] = useState<{ w: number; h: number } | null>(null);
+  useEffect(() => {
+    if (!isEnlarged) return;
+    const el = enlargedBoxRef.current;
+    if (!el) return;
+    // observe() delivers the current size straight away, so there is no need to
+    // measure by hand first — and measuring in the effect body would be a
+    // synchronous setState, which cascades renders.
+    const ro = new ResizeObserver(() => setEnlargedBox({ w: el.clientWidth, h: el.clientHeight }));
+    ro.observe(el);
+    return () => { ro.disconnect(); setEnlargedBox(null); };
+  }, [isEnlarged]);
   // The old DETAILS sub-tab, now a panel behind the (i) on the chart.
   const [showDetails, setShowDetails] = useState(false);
 
@@ -1116,7 +1182,7 @@ export const NectarFlowV2View: React.FC = () => {
                       <Info size={15} />
                     </button>
                     <button
-                      onClick={() => setIsEnlarged(true)}
+                      onClick={() => { setIsEnlarged(true); enterFullscreen(); }}
                       className="p-2 bg-[#1b1b36]/80 hover:bg-[#2b2b54] border border-[#2b2b54] rounded-lg text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center justify-center"
                       title="Full screen"
                       aria-label="Full screen"
@@ -1380,6 +1446,7 @@ export const NectarFlowV2View: React.FC = () => {
               </div>
               <button
                 onClick={() => {
+                  exitFullscreen();
                   setIsEnlarged(false);
                   setHoveredIndex(null);
                 }}
@@ -1389,7 +1456,7 @@ export const NectarFlowV2View: React.FC = () => {
               </button>
             </div>
 
-            <div className="flex-1 min-h-0 flex items-center justify-center bg-[#0d0d1a] border border-[#20203c] rounded-2xl p-3 overflow-hidden">
+            <div ref={enlargedBoxRef} className="flex-1 min-h-0 flex items-center justify-center bg-[#0d0d1a] border border-[#20203c] rounded-2xl p-3 overflow-hidden">
               {(() => {
                 // In portrait the whole panel is rotated, so the space available
                 // ACROSS the chart is the viewport's width, and DOWN it is the
@@ -1397,37 +1464,61 @@ export const NectarFlowV2View: React.FC = () => {
                 // and status strip, the padding and the gaps — the chart used to
                 // take a flat 60% of the viewport and push the footer clean off
                 // the screen, where nothing could scroll it back.
-                const isPortrait = window.innerHeight > window.innerWidth;
-                const across = isPortrait ? window.innerHeight : window.innerWidth;
-                const down = isPortrait ? window.innerWidth : window.innerHeight;
-                const RESERVED = 168; // title + legend/status + padding + gaps
-                const w = Math.max(300, across - 48);
-                // The difference chart comes with the main one into fullscreen —
-                // they are one picture, and going full screen is exactly when a
-                // beekeeper is looking hard at the season. It takes a fixed slice
-                // and the main chart keeps the rest.
-                const devH = 84;
-                const seasonH = seasonToDate !== null ? 72 : 0;
-                const mainH = Math.max(140, down - RESERVED - devH - seasonH - 36);
+                // Nothing renders until the box has been measured — one frame,
+                // and it saves every guess about how tall the furniture is.
+                if (!enlargedBox) return null;
+
+                const hasSeason = seasonToDate !== null;
+                // clientWidth/clientHeight include the box's own padding, and
+                // the box is p-3 — 12px on every side. Take it off both ways or
+                // the charts overflow by exactly that much.
+                const PAD = 24;
+                const w = Math.max(300, enlargedBox.w - PAD);
+                // ONE secondary chart at a time, chosen by the tabs.
+                //
+                // Both of them stacked did fit, once the height was measured
+                // rather than guessed — but fitting is not the same as being
+                // readable. Each was left about 60px for a curve that swings
+                // from -1400 to +1400, which is a line, not a shape you can
+                // read (Ron, 2026-09-21). Showing one gives it everything the
+                // other was using, and neither is a chart you watch at the same
+                // moment as the other: the difference answers "how is today",
+                // the season-to-date answers "how has the year gone".
+                const TABS = 27; // tab row + divider + margins
+                const avail = Math.max(150, enlargedBox.h - PAD - TABS);
+                const mainH = Math.round(avail * 0.55);
+                const secondaryH = avail - mainH;
+                const showSeason = hasSeason && secondaryChart === 'season';
                 return (
                   // The parent centres its children in a row, so the charts go
                   // inside one column or they would sit side by side.
                   <div className="flex flex-col">
                     {renderChartSvg(w, mainH, true)}
                     <div className="mt-1 border-t border-[#222240] pt-1.5">
-                      <div className="mb-0.5 pl-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
-                        Difference from normal
+                      <div className="mb-0.5 flex items-center gap-1.5 pl-1">
+                        {([
+                          ['difference', 'Difference from normal'],
+                          ['season', 'Season to date'],
+                        ] as const)
+                          .filter(([key]) => key === 'difference' || hasSeason)
+                          .map(([key, label]) => (
+                            <button
+                              key={key}
+                              onClick={() => setSecondaryChart(key)}
+                              className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-colors cursor-pointer ${
+                                (key === 'season') === showSeason
+                                  ? 'bg-[var(--color-primary)] text-[#0d0d1a]'
+                                  : 'bg-[#1b1b36] border border-[#2b2b54] text-slate-400 hover:text-white'
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
                       </div>
-                      {renderDeviationSvg(w, devH)}
+                      {showSeason
+                        ? renderSeasonTotalSvg(w, secondaryH)
+                        : renderDeviationSvg(w, secondaryH)}
                     </div>
-                    {seasonToDate !== null && (
-                      <div className="mt-1 border-t border-[#222240] pt-1.5">
-                        <div className="mb-0.5 pl-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
-                          Season to date
-                        </div>
-                        {renderSeasonTotalSvg(w, seasonH)}
-                      </div>
-                    )}
                   </div>
                 );
               })()}
