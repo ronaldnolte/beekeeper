@@ -1,0 +1,177 @@
+{
+ "site": {
+  "name": "tijeras",
+  "lat": 35.1065,
+  "lon": -106.3623
+ },
+ "windowEnd": "2026-09-25",
+ "timezone": "UTC",
+ "days": 2094,
+ "firstDate": "2021-01-01",
+ "lastDate": "2026-09-25",
+ "sceneRecords": 1545,
+ "headline": {
+  "nfi": 29,
+  "phase": "TRENDING_UP",
+  "status": "Trending Up",
+  "trend_direction": "rising",
+  "slope": 0.02039848083815658,
+  "v2": {
+   "greenness": 0.314,
+   "vigor": 0.531,
+   "moisture": 0.75,
+   "warmth": 1,
+   "fall_term": 0.05,
+   "rate_norm": 0.81
+  }
+ },
+ "groundTruth": {
+  "monthly": {
+   "Jan": 0,
+   "Feb": 0,
+   "Mar": 0,
+   "Apr": 1,
+   "May": 9,
+   "Jun": 3,
+   "Jul": 14,
+   "Aug": 15,
+   "Sep": 24,
+   "Oct": 25,
+   "Nov": 2,
+   "Dec": 0
+  },
+  "byYear": {
+   "2021": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 1,
+    "May": 5,
+    "Jun": 6,
+    "Jul": 14,
+    "Aug": 31,
+    "Sep": 31,
+    "Oct": 14,
+    "Nov": 1,
+    "Dec": 0
+   },
+   "2022": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 1,
+    "May": 6,
+    "Jun": 2,
+    "Jul": 37,
+    "Aug": 35,
+    "Sep": 40,
+    "Oct": 6,
+    "Nov": 1,
+    "Dec": 0
+   },
+   "2023": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 0,
+    "May": 15,
+    "Jun": 20,
+    "Jul": 3,
+    "Aug": 11,
+    "Sep": 14,
+    "Oct": 31,
+    "Nov": 2,
+    "Dec": 0
+   },
+   "2024": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 1,
+    "May": 7,
+    "Jun": 5,
+    "Jul": 40,
+    "Aug": 17,
+    "Sep": 36,
+    "Oct": 3,
+    "Nov": 0,
+    "Dec": 0
+   },
+   "2025": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 1,
+    "May": 9,
+    "Jun": 3,
+    "Jul": 14,
+    "Aug": 15,
+    "Sep": 24,
+    "Oct": 25,
+    "Nov": 2,
+    "Dec": 0
+   },
+   "2026": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 0,
+    "May": 14,
+    "Jun": 9,
+    "Jul": 9,
+    "Aug": 20,
+    "Sep": 9,
+    "Oct": 0,
+    "Nov": 0,
+    "Dec": 0
+   }
+  },
+  "phaseSwitches": 23,
+  "phaseSwitchesTotal": 138,
+  "phaseCount": {
+   "DEARTH": 230,
+   "TRENDING_UP": 61,
+   "IN_FLOW": 6,
+   "TRENDING_DOWN": 52
+  },
+  "phaseCountTotal": {
+   "DEARTH": 1380,
+   "TRENDING_UP": 368,
+   "IN_FLOW": 37,
+   "TRENDING_DOWN": 309
+  },
+  "yearsSpanned": 6
+ },
+ "checks": [
+  {
+   "id": "tij-winter-dead",
+   "advisory": false,
+   "desc": "Dec-Feb essentially zero at 6539 ft",
+   "passing": true
+  },
+  {
+   "id": "tij-2026-spring-fail",
+   "advisory": false,
+   "desc": "Spring 2026 failed — 0.02in March rain, greenness fell",
+   "passing": false
+  },
+  {
+   "id": "tij-2026-summer-miss",
+   "advisory": true,
+   "desc": "Summer flow 2026 missed by the beekeeper — June must not show a flow",
+   "passing": true
+  },
+  {
+   "id": "tij-phase-stability",
+   "advisory": true,
+   "desc": "Phase switches <= 12/yr (advisory)",
+   "passing": false
+  },
+  {
+   "id": "tij-in-flow-reachable",
+   "advisory": true,
+   "desc": "IN_FLOW >= 20 days/yr (advisory)",
+   "passing": false
+  }
+ ]
+}

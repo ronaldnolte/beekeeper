@@ -1,0 +1,161 @@
+{
+ "site": {
+  "name": "murfreesboro",
+  "lat": 35.796343,
+  "lon": -86.373778
+ },
+ "windowEnd": "2026-09-25",
+ "timezone": "UTC",
+ "days": 1348,
+ "firstDate": "2023-01-17",
+ "lastDate": "2026-09-25",
+ "sceneRecords": 174,
+ "headline": {
+  "nfi": 67,
+  "phase": "TRENDING_UP",
+  "status": "Trending Up",
+  "trend_direction": "rising",
+  "slope": 0.011783015356602363,
+  "v2": {
+   "greenness": 0.622,
+   "vigor": 0.929,
+   "moisture": 0.998,
+   "warmth": 1,
+   "fall_term": 0.986,
+   "rate_norm": 0
+  }
+ },
+ "groundTruth": {
+  "monthly": {
+   "Jan": 0,
+   "Feb": 0,
+   "Mar": 11,
+   "Apr": 82,
+   "May": 31,
+   "Jun": 8,
+   "Jul": 9,
+   "Aug": 7,
+   "Sep": 40,
+   "Oct": 32,
+   "Nov": 1,
+   "Dec": 0
+  },
+  "byYear": {
+   "2023": {
+    "Jan": 0,
+    "Feb": 2,
+    "Mar": 25,
+    "Apr": 57,
+    "May": 44,
+    "Jun": 3,
+    "Jul": 7,
+    "Aug": 9,
+    "Sep": 33,
+    "Oct": 27,
+    "Nov": 1,
+    "Dec": 0
+   },
+   "2024": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 15,
+    "Apr": 66,
+    "May": 29,
+    "Jun": 12,
+    "Jul": 0,
+    "Aug": 13,
+    "Sep": 43,
+    "Oct": 27,
+    "Nov": 17,
+    "Dec": 3
+   },
+   "2025": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 11,
+    "Apr": 82,
+    "May": 31,
+    "Jun": 8,
+    "Jul": 9,
+    "Aug": 7,
+    "Sep": 40,
+    "Oct": 32,
+    "Nov": 1,
+    "Dec": 0
+   },
+   "2026": {
+    "Jan": 1,
+    "Feb": 0,
+    "Mar": 55,
+    "Apr": 43,
+    "May": 28,
+    "Jun": 15,
+    "Jul": 3,
+    "Aug": 14,
+    "Sep": 49,
+    "Oct": 0,
+    "Nov": 0,
+    "Dec": 0
+   }
+  },
+  "phaseSwitches": 18,
+  "phaseSwitchesTotal": 71,
+  "phaseCount": {
+   "DEARTH": 138,
+   "TRENDING_UP": 111,
+   "TRENDING_DOWN": 82,
+   "IN_FLOW": 7
+  },
+  "phaseCountTotal": {
+   "DEARTH": 550,
+   "TRENDING_UP": 444,
+   "TRENDING_DOWN": 326,
+   "IN_FLOW": 28
+  },
+  "yearsSpanned": 4
+ },
+ "checks": [
+  {
+   "id": "tn-winter-dormant",
+   "advisory": false,
+   "desc": "Dec-Feb dormant",
+   "passing": true
+  },
+  {
+   "id": "tn-spring-flow",
+   "advisory": false,
+   "desc": "Mar-May spring flow is the seasonal high",
+   "passing": true
+  },
+  {
+   "id": "tn-summer-dearth",
+   "advisory": false,
+   "desc": "Jul-Aug midsummer dearth, well below the spring flow",
+   "passing": true
+  },
+  {
+   "id": "tn-fall-goldenrod",
+   "advisory": false,
+   "desc": "Sep-Oct goldenrod rises back above the summer dearth",
+   "passing": true
+  },
+  {
+   "id": "tn-2026-july-empty",
+   "advisory": false,
+   "desc": "July 2026 a hard dearth — both hives empty, feeding started",
+   "passing": true
+  },
+  {
+   "id": "tn-phase-stability",
+   "advisory": true,
+   "desc": "Phase switches <= 12/yr",
+   "passing": false
+  },
+  {
+   "id": "tn-in-flow-reachable",
+   "advisory": true,
+   "desc": "IN_FLOW >= 20 days/yr",
+   "passing": false
+  }
+ ]
+}

@@ -1,0 +1,149 @@
+{
+ "site": {
+  "name": "tijeras",
+  "lat": 35.1065,
+  "lon": -106.3623
+ },
+ "windowEnd": "2026-08-20",
+ "timezone": "UTC",
+ "days": 1323,
+ "firstDate": "2023-01-06",
+ "lastDate": "2026-08-20",
+ "sceneRecords": 424,
+ "headline": {
+  "nfi": 8,
+  "phase": "TRENDING_DOWN",
+  "status": "Trending Down",
+  "trend_direction": "falling",
+  "slope": -0.03278042645408513,
+  "v2": {
+   "greenness": 0.354,
+   "vigor": 0.36,
+   "moisture": 0.7,
+   "warmth": 1,
+   "fall_term": 0,
+   "rate_norm": 0
+  }
+ },
+ "groundTruth": {
+  "monthly": {
+   "Jan": 0,
+   "Feb": 0,
+   "Mar": 0,
+   "Apr": 0,
+   "May": 25,
+   "Jun": 4,
+   "Jul": 16,
+   "Aug": 16,
+   "Sep": 42,
+   "Oct": 21,
+   "Nov": 1,
+   "Dec": 0
+  },
+  "byYear": {
+   "2023": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 1,
+    "May": 29,
+    "Jun": 30,
+    "Jul": 0,
+    "Aug": 11,
+    "Sep": 36,
+    "Oct": 38,
+    "Nov": 5,
+    "Dec": 0
+   },
+   "2024": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 0,
+    "May": 11,
+    "Jun": 6,
+    "Jul": 11,
+    "Aug": 24,
+    "Sep": 42,
+    "Oct": 9,
+    "Nov": 5,
+    "Dec": 0
+   },
+   "2025": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 0,
+    "May": 25,
+    "Jun": 4,
+    "Jul": 16,
+    "Aug": 16,
+    "Sep": 42,
+    "Oct": 21,
+    "Nov": 1,
+    "Dec": 0
+   },
+   "2026": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 0,
+    "May": 8,
+    "Jun": 25,
+    "Jul": 8,
+    "Aug": 27,
+    "Sep": 0,
+    "Oct": 0,
+    "Nov": 0,
+    "Dec": 0
+   }
+  },
+  "phaseSwitches": 19,
+  "phaseSwitchesTotal": 74,
+  "phaseCount": {
+   "DEARTH": 209,
+   "TRENDING_UP": 68,
+   "TRENDING_DOWN": 50,
+   "IN_FLOW": 4
+  },
+  "phaseCountTotal": {
+   "DEARTH": 837,
+   "TRENDING_UP": 271,
+   "TRENDING_DOWN": 201,
+   "IN_FLOW": 14
+  },
+  "yearsSpanned": 4
+ },
+ "checks": [
+  {
+   "id": "tij-winter-dead",
+   "advisory": false,
+   "desc": "Dec-Feb essentially zero at 6539 ft",
+   "passing": true
+  },
+  {
+   "id": "tij-2026-spring-fail",
+   "advisory": false,
+   "desc": "Spring 2026 failed — 0.02in March rain, greenness fell",
+   "passing": true
+  },
+  {
+   "id": "tij-2026-summer-miss",
+   "advisory": true,
+   "desc": "Summer flow 2026 missed by the beekeeper — June must not show a flow",
+   "passing": false
+  },
+  {
+   "id": "tij-phase-stability",
+   "advisory": true,
+   "desc": "Phase switches <= 12/yr (advisory)",
+   "passing": false
+  },
+  {
+   "id": "tij-in-flow-reachable",
+   "advisory": true,
+   "desc": "IN_FLOW >= 20 days/yr (advisory)",
+   "passing": false
+  }
+ ]
+}

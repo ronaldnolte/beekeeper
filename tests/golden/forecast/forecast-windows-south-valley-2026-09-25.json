@@ -1,0 +1,2146 @@
+[
+ {
+  "date": "2026-09-25",
+  "hour": 6,
+  "scoreV2": 6,
+  "classification": "Viable",
+  "tempF": 60.4,
+  "windMph": 2,
+  "cloud": 36,
+  "precipProb": 9,
+  "pressureHpa": 1015.1,
+  "pressureDelta3hr": 0.466666666666697,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 1,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 76,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 7,
+  "scoreV2": 6,
+  "classification": "Viable",
+  "tempF": 58.3,
+  "windMph": 0.3,
+  "cloud": 49,
+  "precipProb": 7,
+  "pressureHpa": 1015,
+  "pressureDelta3hr": 0.7666666666666515,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 1,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 62,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 8,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 58.5,
+  "windMph": 0.2,
+  "cloud": 7,
+  "precipProb": 7,
+  "pressureHpa": 1015.5,
+  "pressureDelta3hr": 0.933333333333394,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 70,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 9,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 62.1,
+  "windMph": 3.2,
+  "cloud": 1,
+  "precipProb": 9,
+  "pressureHpa": 1015.9,
+  "pressureDelta3hr": 0.16666666666662877,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 79,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 10,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 66,
+  "windMph": 2,
+  "cloud": 1,
+  "precipProb": 9,
+  "pressureHpa": 1015.8,
+  "pressureDelta3hr": -1.2000000000000455,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 90,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 11,
+  "scoreV2": 9,
+  "classification": "Optimal",
+  "tempF": 70.1,
+  "windMph": 2.7,
+  "cloud": 4,
+  "precipProb": 8,
+  "pressureHpa": 1016.2,
+  "pressureDelta3hr": -2.6333333333333258,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 94,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 12,
+  "scoreV2": 9,
+  "classification": "Optimal",
+  "tempF": 73.6,
+  "windMph": 2.5,
+  "cloud": 19,
+  "precipProb": 8,
+  "pressureHpa": 1015.6,
+  "pressureDelta3hr": -3.2000000000000455,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 94,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 13,
+  "scoreV2": 8,
+  "classification": "Optimal",
+  "tempF": 74.8,
+  "windMph": 4.9,
+  "cloud": 35,
+  "precipProb": 7,
+  "pressureHpa": 1014.5,
+  "pressureDelta3hr": -2.6666666666666288,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 1,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 91,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 14,
+  "scoreV2": 9,
+  "classification": "Optimal",
+  "tempF": 75.9,
+  "windMph": 6.2,
+  "cloud": 20,
+  "precipProb": 7,
+  "pressureHpa": 1013.1,
+  "pressureDelta3hr": -1.066666666666606,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 95,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 15,
+  "scoreV2": 8,
+  "classification": "Optimal",
+  "tempF": 77,
+  "windMph": 5.6,
+  "cloud": 33,
+  "precipProb": 17,
+  "pressureHpa": 1012.1,
+  "pressureDelta3hr": 0.6000000000000227,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 1,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 88,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 16,
+  "scoreV2": 5,
+  "classification": "Viable",
+  "tempF": 75.6,
+  "windMph": 9.3,
+  "cloud": 100,
+  "precipProb": 28,
+  "pressureHpa": 1011.7,
+  "pressureDelta3hr": 1.7666666666665378,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 73,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 17,
+  "scoreV2": 5,
+  "classification": "Viable",
+  "tempF": 73.1,
+  "windMph": 8.4,
+  "cloud": 88,
+  "precipProb": 31,
+  "pressureHpa": 1013,
+  "pressureDelta3hr": 1.7333333333333485,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 70,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-25",
+  "hour": 18,
+  "scoreV2": 1,
+  "classification": "Inadvisable",
+  "tempF": 65.9,
+  "windMph": 8.1,
+  "cloud": 100,
+  "precipProb": 54,
+  "pressureHpa": 1013.7,
+  "pressureDelta3hr": 1.566666666666606,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 0,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered",
+   "Too close to sunset (must start at least 1 hour before sunset at 6:59pm to allow foragers to return)"
+  ],
+  "legacyScoreV1": 62,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)"
+  ],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 6,
+  "scoreV2": 6,
+  "classification": "Inadvisable",
+  "tempF": 55.5,
+  "windMph": 1.9,
+  "cloud": 0,
+  "precipProb": 0,
+  "pressureHpa": 1015.3,
+  "pressureDelta3hr": 0.10000000000002274,
+  "breakdownV2": {
+   "Temperature": 0,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Brood Chill Threshold Triggered (Temp < 57°F / 14°C)"
+  ],
+  "legacyScoreV1": 63,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 7,
+  "scoreV2": 6,
+  "classification": "Inadvisable",
+  "tempF": 54.8,
+  "windMph": 2.2,
+  "cloud": 0,
+  "precipProb": 1,
+  "pressureHpa": 1015.8,
+  "pressureDelta3hr": -0.2999999999999545,
+  "breakdownV2": {
+   "Temperature": 0,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Brood Chill Threshold Triggered (Temp < 57°F / 14°C)"
+  ],
+  "legacyScoreV1": 52,
+  "legacyIssuesV1": [
+   "Too Cold (< 55°F)"
+  ],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 8,
+  "scoreV2": 4,
+  "classification": "Inadvisable",
+  "tempF": 57,
+  "windMph": 1.2,
+  "cloud": 2,
+  "precipProb": 0,
+  "pressureHpa": 1015.9,
+  "pressureDelta3hr": -0.5666666666667197,
+  "breakdownV2": {
+   "Temperature": 0,
+   "Time of Day": 0,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Bees not awake (temperature 1 hour ago was 55°F, must be 55°F+ for at least 1 hour)"
+  ],
+  "legacyScoreV1": 73,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 9,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 60.7,
+  "windMph": 1.4,
+  "cloud": 2,
+  "precipProb": 0,
+  "pressureHpa": 1016.2,
+  "pressureDelta3hr": -1.1999999999999318,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 82,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 10,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 64.2,
+  "windMph": 0.3,
+  "cloud": 3,
+  "precipProb": 0,
+  "pressureHpa": 1016.6,
+  "pressureDelta3hr": -2.1666666666667425,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 82,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 11,
+  "scoreV2": 8,
+  "classification": "Optimal",
+  "tempF": 67.6,
+  "windMph": 0.9,
+  "cloud": 43,
+  "precipProb": 0,
+  "pressureHpa": 1016.7,
+  "pressureDelta3hr": -3.0666666666667197,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 1,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 80,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 12,
+  "scoreV2": 9,
+  "classification": "Optimal",
+  "tempF": 70.9,
+  "windMph": 2,
+  "cloud": 26,
+  "precipProb": 0,
+  "pressureHpa": 1016.4,
+  "pressureDelta3hr": -3.3333333333333712,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 94,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 13,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 74.1,
+  "windMph": 3.4,
+  "cloud": 99,
+  "precipProb": 0,
+  "pressureHpa": 1015.7,
+  "pressureDelta3hr": -2.900000000000091,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 83,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 14,
+  "scoreV2": 9,
+  "classification": "Optimal",
+  "tempF": 76.2,
+  "windMph": 4.4,
+  "cloud": 25,
+  "precipProb": 0,
+  "pressureHpa": 1014.7,
+  "pressureDelta3hr": -1.8666666666665606,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 97,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 15,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 77.7,
+  "windMph": 5.6,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1013.8,
+  "pressureDelta3hr": -0.7333333333332348,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 84,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 16,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 77.7,
+  "windMph": 7.5,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1013,
+  "pressureDelta3hr": 0.36666666666678793,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 84,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 17,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 77.7,
+  "windMph": 6.3,
+  "cloud": 97,
+  "precipProb": 0,
+  "pressureHpa": 1012.3,
+  "pressureDelta3hr": 1.099999999999909,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 84,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-26",
+  "hour": 18,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 76.7,
+  "windMph": 5.4,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1012.2,
+  "pressureDelta3hr": 1.4999999999997726,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 0,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Too close to sunset (must start at least 1 hour before sunset at 6:57pm to allow foragers to return)"
+  ],
+  "legacyScoreV1": 84,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 6,
+  "scoreV2": 4,
+  "classification": "Inadvisable",
+  "tempF": 55.2,
+  "windMph": 4.3,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1014.2,
+  "pressureDelta3hr": 0.10000000000013642,
+  "breakdownV2": {
+   "Temperature": 0,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Brood Chill Threshold Triggered (Temp < 57°F / 14°C)"
+  ],
+  "legacyScoreV1": 49,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 7,
+  "scoreV2": 4,
+  "classification": "Inadvisable",
+  "tempF": 55,
+  "windMph": 4.3,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1014.8,
+  "pressureDelta3hr": 0.06666666666683341,
+  "breakdownV2": {
+   "Temperature": 0,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Brood Chill Threshold Triggered (Temp < 57°F / 14°C)"
+  ],
+  "legacyScoreV1": 49,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 8,
+  "scoreV2": 5,
+  "classification": "Viable",
+  "tempF": 57.5,
+  "windMph": 2.5,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1014.9,
+  "pressureDelta3hr": -0.4333333333331666,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 59,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 9,
+  "scoreV2": 5,
+  "classification": "Viable",
+  "tempF": 63.2,
+  "windMph": 4.4,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1014.8,
+  "pressureDelta3hr": -1.3666666666666742,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 73,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 10,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 69.1,
+  "windMph": 3.8,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1013.6,
+  "pressureDelta3hr": -2.300000000000068,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 79,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 11,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 74,
+  "windMph": 1.8,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1012.6,
+  "pressureDelta3hr": -2.7666666666666515,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 83,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 12,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 76.6,
+  "windMph": 3.8,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1010.5,
+  "pressureDelta3hr": -1.900000000000091,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 86,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 13,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 78.4,
+  "windMph": 5,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1007.9,
+  "pressureDelta3hr": -0.1999999999999318,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 86,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 14,
+  "scoreV2": 5,
+  "classification": "Viable",
+  "tempF": 80.2,
+  "windMph": 8.3,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1006.7,
+  "pressureDelta3hr": 1.8333333333332575,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 79,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 15,
+  "scoreV2": 5,
+  "classification": "Viable",
+  "tempF": 81.3,
+  "windMph": 7.7,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1005.8,
+  "pressureDelta3hr": 2.800000000000068,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 79,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 16,
+  "scoreV2": 5,
+  "classification": "Viable",
+  "tempF": 81.5,
+  "windMph": 4.1,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1005.1,
+  "pressureDelta3hr": 2.599999999999909,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 81,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 17,
+  "scoreV2": 5,
+  "classification": "Viable",
+  "tempF": 82.4,
+  "windMph": 5.3,
+  "cloud": 100,
+  "precipProb": 0,
+  "pressureHpa": 1004.6,
+  "pressureDelta3hr": 1.866666666666788,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 79,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-27",
+  "hour": 18,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 82.2,
+  "windMph": 8.2,
+  "cloud": 76,
+  "precipProb": 0,
+  "pressureHpa": 1005,
+  "pressureDelta3hr": 1.0666666666667197,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 0,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Too close to sunset (must start at least 1 hour before sunset at 6:56pm to allow foragers to return)"
+  ],
+  "legacyScoreV1": 79,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 6,
+  "scoreV2": 6,
+  "classification": "Viable",
+  "tempF": 68.7,
+  "windMph": 14.2,
+  "cloud": 100,
+  "precipProb": 15,
+  "pressureHpa": 1007.5,
+  "pressureDelta3hr": 0.8999999999998636,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 1
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 64,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 7,
+  "scoreV2": 5,
+  "classification": "Viable",
+  "tempF": 67.1,
+  "windMph": 13,
+  "cloud": 33,
+  "precipProb": 43,
+  "pressureHpa": 1007.9,
+  "pressureDelta3hr": 0.6333333333332121,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 1,
+   "Wind Speed": 1
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 68,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 8,
+  "scoreV2": 6,
+  "classification": "Viable",
+  "tempF": 67.1,
+  "windMph": 13.5,
+  "cloud": 13,
+  "precipProb": 43,
+  "pressureHpa": 1008.2,
+  "pressureDelta3hr": 0.33333333333337123,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 1
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 71,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 9,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 69.4,
+  "windMph": 12.3,
+  "cloud": 37,
+  "precipProb": 43,
+  "pressureHpa": 1007.5,
+  "pressureDelta3hr": 0,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 1,
+   "Wind Speed": 1
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 68,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 10,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 72.1,
+  "windMph": 9.4,
+  "cloud": 83,
+  "precipProb": 43,
+  "pressureHpa": 1006.7,
+  "pressureDelta3hr": -0.2333333333332348,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 67,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 11,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 73.9,
+  "windMph": 4.3,
+  "cloud": 100,
+  "precipProb": 43,
+  "pressureHpa": 1006,
+  "pressureDelta3hr": -0.20000000000015916,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 69,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 12,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 75.5,
+  "windMph": 3.2,
+  "cloud": 100,
+  "precipProb": 43,
+  "pressureHpa": 1005.5,
+  "pressureDelta3hr": -0.13333333333332575,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 72,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 13,
+  "scoreV2": 7,
+  "classification": "Inadvisable",
+  "tempF": 76.6,
+  "windMph": 6.4,
+  "cloud": 100,
+  "precipProb": 77,
+  "pressureHpa": 1005.3,
+  "pressureDelta3hr": 0,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 69,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)"
+  ],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 14,
+  "scoreV2": 7,
+  "classification": "Inadvisable",
+  "tempF": 75.9,
+  "windMph": 5.7,
+  "cloud": 100,
+  "precipProb": 77,
+  "pressureHpa": 1005,
+  "pressureDelta3hr": 0.13333333333332575,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 69,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)"
+  ],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 15,
+  "scoreV2": 6,
+  "classification": "Inadvisable",
+  "tempF": 69.6,
+  "windMph": 13.8,
+  "cloud": 100,
+  "precipProb": 77,
+  "pressureHpa": 1006.1,
+  "pressureDelta3hr": 0.5,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 1
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 56,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 16,
+  "scoreV2": 4,
+  "classification": "Inadvisable",
+  "tempF": 66.3,
+  "windMph": 13.7,
+  "cloud": 100,
+  "precipProb": 77,
+  "pressureHpa": 1006.3,
+  "pressureDelta3hr": 1.1333333333333258,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 1
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 56,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 17,
+  "scoreV2": 3,
+  "classification": "Inadvisable",
+  "tempF": 64.2,
+  "windMph": 6.4,
+  "cloud": 100,
+  "precipProb": 77,
+  "pressureHpa": 1006.8,
+  "pressureDelta3hr": 1.533333333333303,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 51,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-28",
+  "hour": 18,
+  "scoreV2": 3,
+  "classification": "Inadvisable",
+  "tempF": 64.4,
+  "windMph": 7.4,
+  "cloud": 100,
+  "precipProb": 77,
+  "pressureHpa": 1007.3,
+  "pressureDelta3hr": 1.3000000000000682,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 0,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered",
+   "Too close to sunset (must start at least 1 hour before sunset at 6:54pm to allow foragers to return)"
+  ],
+  "legacyScoreV1": 51,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 6,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 62.4,
+  "windMph": 4.1,
+  "cloud": 100,
+  "precipProb": 84,
+  "pressureHpa": 1005.2,
+  "pressureDelta3hr": 0.5,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 53,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 7,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 62.2,
+  "windMph": 8.1,
+  "cloud": 100,
+  "precipProb": 80,
+  "pressureHpa": 1005.7,
+  "pressureDelta3hr": 0.3000000000000682,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 51,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 8,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 61.1,
+  "windMph": 8.5,
+  "cloud": 100,
+  "precipProb": 80,
+  "pressureHpa": 1005.4,
+  "pressureDelta3hr": -0.03333333333330302,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 51,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 9,
+  "scoreV2": 4,
+  "classification": "Inadvisable",
+  "tempF": 61.1,
+  "windMph": 10.6,
+  "cloud": 100,
+  "precipProb": 80,
+  "pressureHpa": 1006.1,
+  "pressureDelta3hr": -0.13333333333343944,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 1
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 45,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rain Showers"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 10,
+  "scoreV2": 4,
+  "classification": "Inadvisable",
+  "tempF": 60.9,
+  "windMph": 12,
+  "cloud": 100,
+  "precipProb": 80,
+  "pressureHpa": 1006.1,
+  "pressureDelta3hr": -0.13333333333343944,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 1
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 45,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rain Showers"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 11,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 60.8,
+  "windMph": 8.3,
+  "cloud": 100,
+  "precipProb": 80,
+  "pressureHpa": 1005.4,
+  "pressureDelta3hr": -0.09999999999990905,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 51,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 12,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 61.1,
+  "windMph": 8.8,
+  "cloud": 100,
+  "precipProb": 80,
+  "pressureHpa": 1004,
+  "pressureDelta3hr": 0.6333333333334394,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 51,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 13,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 62.2,
+  "windMph": 5.9,
+  "cloud": 100,
+  "precipProb": 78,
+  "pressureHpa": 1003.6,
+  "pressureDelta3hr": 1.2000000000001592,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 56,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 14,
+  "scoreV2": 3,
+  "classification": "Inadvisable",
+  "tempF": 61.8,
+  "windMph": 2.1,
+  "cloud": 100,
+  "precipProb": 78,
+  "pressureHpa": 1003.6,
+  "pressureDelta3hr": 1.566666666666606,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 53,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 15,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 59.7,
+  "windMph": 2.6,
+  "cloud": 100,
+  "precipProb": 78,
+  "pressureHpa": 1003.5,
+  "pressureDelta3hr": 1.2333333333333485,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 44,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 16,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 59.3,
+  "windMph": 4.7,
+  "cloud": 100,
+  "precipProb": 78,
+  "pressureHpa": 1003,
+  "pressureDelta3hr": 1.099999999999909,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 44,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 17,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 60,
+  "windMph": 8.1,
+  "cloud": 100,
+  "precipProb": 78,
+  "pressureHpa": 1002.8,
+  "pressureDelta3hr": 1.1000000000000227,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 51,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-29",
+  "hour": 18,
+  "scoreV2": 3,
+  "classification": "Inadvisable",
+  "tempF": 60,
+  "windMph": 6.7,
+  "cloud": 100,
+  "precipProb": 78,
+  "pressureHpa": 1003.3,
+  "pressureDelta3hr": 0.8666666666666742,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 0,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered",
+   "Too close to sunset (must start at least 1 hour before sunset at 6:53pm to allow foragers to return)"
+  ],
+  "legacyScoreV1": 51,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rain Showers"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 6,
+  "scoreV2": 4,
+  "classification": "Inadvisable",
+  "tempF": 59.1,
+  "windMph": 10.4,
+  "cloud": 100,
+  "precipProb": 52,
+  "pressureHpa": 1004.6,
+  "pressureDelta3hr": 0.03333333333330302,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 1
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 36,
+  "legacyIssuesV1": [
+   "Rain Likely (> 49%)",
+   "Raining"
+  ],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 7,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 59,
+  "windMph": 8.7,
+  "cloud": 100,
+  "precipProb": 42,
+  "pressureHpa": 1005.2,
+  "pressureDelta3hr": -0.43333333333339397,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 43,
+  "legacyIssuesV1": [],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 8,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 59,
+  "windMph": 6.7,
+  "cloud": 100,
+  "precipProb": 42,
+  "pressureHpa": 1005.9,
+  "pressureDelta3hr": -1.2000000000000455,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 43,
+  "legacyIssuesV1": [],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 9,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 59.1,
+  "windMph": 5.5,
+  "cloud": 100,
+  "precipProb": 42,
+  "pressureHpa": 1006.4,
+  "pressureDelta3hr": -1.533333333333303,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 43,
+  "legacyIssuesV1": [],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 10,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 59.2,
+  "windMph": 3.8,
+  "cloud": 100,
+  "precipProb": 42,
+  "pressureHpa": 1006.7,
+  "pressureDelta3hr": -1.566666666666606,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 45,
+  "legacyIssuesV1": [],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 11,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 59.4,
+  "windMph": 2.2,
+  "cloud": 100,
+  "precipProb": 42,
+  "pressureHpa": 1006.7,
+  "pressureDelta3hr": -1.2000000000001592,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 45,
+  "legacyIssuesV1": [],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 12,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 59.5,
+  "windMph": 3.1,
+  "cloud": 100,
+  "precipProb": 42,
+  "pressureHpa": 1006.7,
+  "pressureDelta3hr": -0.8000000000000682,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 45,
+  "legacyIssuesV1": [],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 13,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 59.5,
+  "windMph": 5.2,
+  "cloud": 100,
+  "precipProb": 35,
+  "pressureHpa": 1006.5,
+  "pressureDelta3hr": -0.33333333333337123,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 46,
+  "legacyIssuesV1": [],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 14,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 59.4,
+  "windMph": 7.4,
+  "cloud": 100,
+  "precipProb": 35,
+  "pressureHpa": 1006.1,
+  "pressureDelta3hr": 0.10000000000002274,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 46,
+  "legacyIssuesV1": [],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 15,
+  "scoreV2": 5,
+  "classification": "Inadvisable",
+  "tempF": 59.3,
+  "windMph": 9,
+  "cloud": 100,
+  "precipProb": 35,
+  "pressureHpa": 1005.9,
+  "pressureDelta3hr": 0.43333333333339397,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Active Precipitation Triggered"
+  ],
+  "legacyScoreV1": 46,
+  "legacyIssuesV1": [],
+  "condition": "Rainy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 16,
+  "scoreV2": 5,
+  "classification": "Viable",
+  "tempF": 59.4,
+  "windMph": 9.6,
+  "cloud": 100,
+  "precipProb": 35,
+  "pressureHpa": 1005.9,
+  "pressureDelta3hr": 0.5666666666667197,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 46,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 17,
+  "scoreV2": 4,
+  "classification": "Viable",
+  "tempF": 59.4,
+  "windMph": 10.1,
+  "cloud": 100,
+  "precipProb": 35,
+  "pressureHpa": 1005.9,
+  "pressureDelta3hr": 0.46666666666692436,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 0,
+   "Wind Speed": 1
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 40,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-09-30",
+  "hour": 18,
+  "scoreV2": 2,
+  "classification": "Inadvisable",
+  "tempF": 59.3,
+  "windMph": 10.1,
+  "cloud": 100,
+  "precipProb": 35,
+  "pressureHpa": 1006.1,
+  "pressureDelta3hr": 0.16666666666662877,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 0,
+   "Sky Condition": 0,
+   "Wind Speed": 1
+  },
+  "issuesV2": [
+   "Too close to sunset (must start at least 1 hour before sunset at 6:51pm to allow foragers to return)"
+  ],
+  "legacyScoreV1": 40,
+  "legacyIssuesV1": [],
+  "condition": "Partly Cloudy"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 6,
+  "scoreV2": 6,
+  "classification": "Inadvisable",
+  "tempF": 55.2,
+  "windMph": 2.7,
+  "cloud": 0,
+  "precipProb": 10,
+  "pressureHpa": 1008.8,
+  "pressureDelta3hr": -0.13333333333343944,
+  "breakdownV2": {
+   "Temperature": 0,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Brood Chill Threshold Triggered (Temp < 57°F / 14°C)"
+  ],
+  "legacyScoreV1": 60,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 7,
+  "scoreV2": 6,
+  "classification": "Inadvisable",
+  "tempF": 55.9,
+  "windMph": 2.9,
+  "cloud": 0,
+  "precipProb": 4,
+  "pressureHpa": 1009.1,
+  "pressureDelta3hr": -0.6333333333333258,
+  "breakdownV2": {
+   "Temperature": 0,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Brood Chill Threshold Triggered (Temp < 57°F / 14°C)"
+  ],
+  "legacyScoreV1": 60,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 8,
+  "scoreV2": 6,
+  "classification": "Viable",
+  "tempF": 57,
+  "windMph": 3.1,
+  "cloud": 0,
+  "precipProb": 4,
+  "pressureHpa": 1009.4,
+  "pressureDelta3hr": -1.066666666666606,
+  "breakdownV2": {
+   "Temperature": 0,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 70,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 9,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 58.8,
+  "windMph": 3.5,
+  "cloud": 0,
+  "precipProb": 4,
+  "pressureHpa": 1009.3,
+  "pressureDelta3hr": -1.2666666666665378,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 70,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 10,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 61.5,
+  "windMph": 3.8,
+  "cloud": 0,
+  "precipProb": 4,
+  "pressureHpa": 1008.5,
+  "pressureDelta3hr": -1.2999999999999545,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 84,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 11,
+  "scoreV2": 7,
+  "classification": "Optimal",
+  "tempF": 64.7,
+  "windMph": 4.3,
+  "cloud": 0,
+  "precipProb": 4,
+  "pressureHpa": 1007.4,
+  "pressureDelta3hr": -1,
+  "breakdownV2": {
+   "Temperature": 1,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 84,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 12,
+  "scoreV2": 9,
+  "classification": "Optimal",
+  "tempF": 67.8,
+  "windMph": 4.6,
+  "cloud": 0,
+  "precipProb": 4,
+  "pressureHpa": 1006.1,
+  "pressureDelta3hr": -0.466666666666697,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 90,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 13,
+  "scoreV2": 9,
+  "classification": "Optimal",
+  "tempF": 70.5,
+  "windMph": 4.4,
+  "cloud": 0,
+  "precipProb": 1,
+  "pressureHpa": 1004.7,
+  "pressureDelta3hr": 0.13333333333343944,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 94,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 14,
+  "scoreV2": 9,
+  "classification": "Optimal",
+  "tempF": 73.1,
+  "windMph": 4.1,
+  "cloud": 0,
+  "precipProb": 1,
+  "pressureHpa": 1003.3,
+  "pressureDelta3hr": 0.6999999999999318,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 94,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 15,
+  "scoreV2": 9,
+  "classification": "Optimal",
+  "tempF": 75,
+  "windMph": 4,
+  "cloud": 0,
+  "precipProb": 1,
+  "pressureHpa": 1002.2,
+  "pressureDelta3hr": 1.1000000000000227,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 92,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 16,
+  "scoreV2": 9,
+  "classification": "Optimal",
+  "tempF": 76.2,
+  "windMph": 3.7,
+  "cloud": 0,
+  "precipProb": 1,
+  "pressureHpa": 1001.6,
+  "pressureDelta3hr": 1.2333333333332348,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 92,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 17,
+  "scoreV2": 9,
+  "classification": "Optimal",
+  "tempF": 77,
+  "windMph": 4.3,
+  "cloud": 0,
+  "precipProb": 1,
+  "pressureHpa": 1001.4,
+  "pressureDelta3hr": 1.033333333333303,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 2,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [],
+  "legacyScoreV1": 92,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ },
+ {
+  "date": "2026-10-01",
+  "hour": 18,
+  "scoreV2": 7,
+  "classification": "Inadvisable",
+  "tempF": 76.8,
+  "windMph": 5.4,
+  "cloud": 0,
+  "precipProb": 1,
+  "pressureHpa": 1001.7,
+  "pressureDelta3hr": 0.533333333333303,
+  "breakdownV2": {
+   "Temperature": 3,
+   "Time of Day": 0,
+   "Sky Condition": 2,
+   "Wind Speed": 2
+  },
+  "issuesV2": [
+   "Too close to sunset (must start at least 1 hour before sunset at 6:50pm to allow foragers to return)"
+  ],
+  "legacyScoreV1": 90,
+  "legacyIssuesV1": [],
+  "condition": "Clear"
+ }
+]

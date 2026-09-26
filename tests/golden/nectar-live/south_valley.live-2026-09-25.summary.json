@@ -1,0 +1,183 @@
+{
+ "site": {
+  "name": "south_valley",
+  "lat": 35.0385,
+  "lon": -106.7066
+ },
+ "windowEnd": "2026-09-25",
+ "timezone": "UTC",
+ "days": 2094,
+ "firstDate": "2021-01-01",
+ "lastDate": "2026-09-25",
+ "sceneRecords": 823,
+ "headline": {
+  "nfi": 29,
+  "phase": "IN_FLOW",
+  "status": "In Flow",
+  "trend_direction": "rising",
+  "slope": 0.023755717662365446,
+  "v2": {
+   "greenness": 0.122,
+   "vigor": 0.153,
+   "moisture": 0.77,
+   "warmth": 1,
+   "fall_term": 0.432,
+   "rate_norm": 0
+  }
+ },
+ "groundTruth": {
+  "monthly": {
+   "Jan": 0,
+   "Feb": 0,
+   "Mar": 0,
+   "Apr": 31,
+   "May": 53,
+   "Jun": 28,
+   "Jul": 13,
+   "Aug": 11,
+   "Sep": 28,
+   "Oct": 45,
+   "Nov": 2,
+   "Dec": 0
+  },
+  "byYear": {
+   "2021": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 12,
+    "May": 58,
+    "Jun": 24,
+    "Jul": 10,
+    "Aug": 19,
+    "Sep": 42,
+    "Oct": 14,
+    "Nov": 0,
+    "Dec": 0
+   },
+   "2022": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 18,
+    "May": 50,
+    "Jun": 26,
+    "Jul": 58,
+    "Aug": 34,
+    "Sep": 20,
+    "Oct": 5,
+    "Nov": 1,
+    "Dec": 0
+   },
+   "2023": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 7,
+    "May": 66,
+    "Jun": 15,
+    "Jul": 7,
+    "Aug": 13,
+    "Sep": 12,
+    "Oct": 43,
+    "Nov": 1,
+    "Dec": 0
+   },
+   "2024": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 16,
+    "May": 61,
+    "Jun": 3,
+    "Jul": 53,
+    "Aug": 42,
+    "Sep": 27,
+    "Oct": 8,
+    "Nov": 0,
+    "Dec": 0
+   },
+   "2025": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 0,
+    "Apr": 31,
+    "May": 53,
+    "Jun": 28,
+    "Jul": 13,
+    "Aug": 11,
+    "Sep": 28,
+    "Oct": 45,
+    "Nov": 2,
+    "Dec": 0
+   },
+   "2026": {
+    "Jan": 0,
+    "Feb": 0,
+    "Mar": 8,
+    "Apr": 53,
+    "May": 25,
+    "Jun": 20,
+    "Jul": 2,
+    "Aug": 5,
+    "Sep": 14,
+    "Oct": 0,
+    "Nov": 0,
+    "Dec": 0
+   }
+  },
+  "phaseSwitches": 28,
+  "phaseSwitchesTotal": 165,
+  "phaseCount": {
+   "DEARTH": 190,
+   "TRENDING_UP": 85,
+   "TRENDING_DOWN": 66,
+   "IN_FLOW": 9
+  },
+  "phaseCountTotal": {
+   "DEARTH": 1139,
+   "TRENDING_UP": 508,
+   "TRENDING_DOWN": 396,
+   "IN_FLOW": 51
+  },
+  "yearsSpanned": 6
+ },
+ "checks": [
+  {
+   "id": "sv-winter-dead",
+   "advisory": false,
+   "desc": "Dec-Feb essentially zero (winter dearth, no forage)",
+   "passing": true
+  },
+  {
+   "id": "sv-may-flow",
+   "advisory": false,
+   "desc": "May spring flow is a local peak",
+   "passing": true
+  },
+  {
+   "id": "sv-fall-chamisa",
+   "advisory": false,
+   "desc": "Sep-Oct chamisa/rabbitbrush fall flow",
+   "passing": true
+  },
+  {
+   "id": "sv-monsoon-varies",
+   "advisory": false,
+   "desc": "Jul-Aug differs across years (2024 monsoon vs 2026 dry Rio Grande)",
+   "passing": true
+  },
+  {
+   "id": "sv-phase-stability",
+   "advisory": true,
+   "desc": "Phase switches <= 12/yr",
+   "passing": false
+  },
+  {
+   "id": "sv-in-flow-reachable",
+   "advisory": true,
+   "desc": "IN_FLOW >= 20 days/yr",
+   "passing": false
+  }
+ ]
+}

@@ -1,0 +1,110 @@
+[
+ {
+  "site": "south_valley",
+  "variant": "fixture-end",
+  "windowEnd": "2026-08-25",
+  "nfi": 3,
+  "phase": "DEARTH",
+  "trend": "flat",
+  "slope": -0.00046575330711606783,
+  "phaseSwitchesPerYear": 22,
+  "checks": [
+   "sv-winter-dead=true",
+   "sv-may-flow=true",
+   "sv-fall-chamisa=true",
+   "sv-monsoon-varies=true",
+   "sv-phase-stability(adv)=false",
+   "sv-in-flow-reachable(adv)=false"
+  ]
+ },
+ {
+  "site": "south_valley",
+  "variant": "to-2026-09-25",
+  "windowEnd": "2026-09-25",
+  "nfi": 0,
+  "phase": "DEARTH",
+  "trend": "flat",
+  "slope": -0.00009998749910029944,
+  "phaseSwitchesPerYear": 22,
+  "checks": [
+   "sv-winter-dead=true",
+   "sv-may-flow=true",
+   "sv-fall-chamisa=true",
+   "sv-monsoon-varies=true",
+   "sv-phase-stability(adv)=false",
+   "sv-in-flow-reachable(adv)=false"
+  ]
+ },
+ {
+  "site": "murfreesboro",
+  "variant": "fixture-end",
+  "windowEnd": "2026-08-20",
+  "nfi": 11,
+  "phase": "TRENDING_UP",
+  "trend": "falling",
+  "slope": -0.003674015139473253,
+  "phaseSwitchesPerYear": 18,
+  "checks": [
+   "tn-winter-dormant=true",
+   "tn-spring-flow=true",
+   "tn-summer-dearth=true",
+   "tn-fall-goldenrod=true",
+   "tn-2026-july-empty=true",
+   "tn-phase-stability(adv)=false",
+   "tn-in-flow-reachable(adv)=false"
+  ]
+ },
+ {
+  "site": "murfreesboro",
+  "variant": "to-2026-09-25",
+  "windowEnd": "2026-09-25",
+  "nfi": 67,
+  "phase": "TRENDING_UP",
+  "trend": "rising",
+  "slope": 0.011783015356602363,
+  "phaseSwitchesPerYear": 18,
+  "checks": [
+   "tn-winter-dormant=true",
+   "tn-spring-flow=true",
+   "tn-summer-dearth=true",
+   "tn-fall-goldenrod=true",
+   "tn-2026-july-empty=true",
+   "tn-phase-stability(adv)=false",
+   "tn-in-flow-reachable(adv)=false"
+  ]
+ },
+ {
+  "site": "tijeras",
+  "variant": "fixture-end",
+  "windowEnd": "2026-08-20",
+  "nfi": 8,
+  "phase": "TRENDING_DOWN",
+  "trend": "falling",
+  "slope": -0.03278042645408513,
+  "phaseSwitchesPerYear": 19,
+  "checks": [
+   "tij-winter-dead=true",
+   "tij-2026-spring-fail=true",
+   "tij-2026-summer-miss(adv)=false",
+   "tij-phase-stability(adv)=false",
+   "tij-in-flow-reachable(adv)=false"
+  ]
+ },
+ {
+  "site": "tijeras",
+  "variant": "to-2026-09-25",
+  "windowEnd": "2026-09-25",
+  "nfi": 9,
+  "phase": "IN_FLOW",
+  "trend": "flat",
+  "slope": -0.00019368893401765268,
+  "phaseSwitchesPerYear": 20,
+  "checks": [
+   "tij-winter-dead=true",
+   "tij-2026-spring-fail=true",
+   "tij-2026-summer-miss(adv)=false",
+   "tij-phase-stability(adv)=false",
+   "tij-in-flow-reachable(adv)=false"
+  ]
+ }
+]

@@ -1,0 +1,56 @@
+[
+ {
+  "site": "south_valley",
+  "variant": "live-2026-09-25",
+  "windowEnd": "2026-09-25",
+  "nfi": 29,
+  "phase": "IN_FLOW",
+  "trend": "rising",
+  "slope": 0.023755717662365446,
+  "phaseSwitchesPerYear": 28,
+  "checks": [
+   "sv-winter-dead=true",
+   "sv-may-flow=true",
+   "sv-fall-chamisa=true",
+   "sv-monsoon-varies=true",
+   "sv-phase-stability(adv)=false",
+   "sv-in-flow-reachable(adv)=false"
+  ]
+ },
+ {
+  "site": "murfreesboro",
+  "variant": "live-2026-09-25",
+  "windowEnd": "2026-09-25",
+  "nfi": 49,
+  "phase": "IN_FLOW",
+  "trend": "rising",
+  "slope": 0.004116082999509168,
+  "phaseSwitchesPerYear": 31,
+  "checks": [
+   "tn-winter-dormant=true",
+   "tn-spring-flow=false",
+   "tn-summer-dearth=true",
+   "tn-fall-goldenrod=true",
+   "tn-2026-july-empty=false",
+   "tn-phase-stability(adv)=false",
+   "tn-in-flow-reachable(adv)=false"
+  ]
+ },
+ {
+  "site": "tijeras",
+  "variant": "live-2026-09-25",
+  "windowEnd": "2026-09-25",
+  "nfi": 29,
+  "phase": "TRENDING_UP",
+  "trend": "rising",
+  "slope": 0.02039848083815658,
+  "phaseSwitchesPerYear": 23,
+  "checks": [
+   "tij-winter-dead=true",
+   "tij-2026-spring-fail=false",
+   "tij-2026-summer-miss(adv)=true",
+   "tij-phase-stability(adv)=false",
+   "tij-in-flow-reachable(adv)=false"
+  ]
+ }
+]

@@ -1,0 +1,3694 @@
+{
+ "currentYear": 2026,
+ "baseYearLabel": "2023-2025 Avg",
+ "yAxisMax": 1,
+ "differenceAxisSpan": 0.7,
+ "seasonToDateAxisSpan": 1250,
+ "seasonToDate": 516,
+ "seasonToDateCaption": "running above a normal year",
+ "normalByDayOfYear": [
+  {
+   "day": 0,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 1,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 2,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 3,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 4,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 5,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 6,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 7,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 8,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 9,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 10,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 11,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 12,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 13,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 14,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 15,
+   "normal": 0,
+   "samples": 2
+  },
+  {
+   "day": 16,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 17,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 18,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 19,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 20,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 21,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 22,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 23,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 24,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 25,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 26,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 27,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 28,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 29,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 30,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 31,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 32,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 33,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 34,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 35,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 36,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 37,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 38,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 39,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 40,
+   "normal": 0.0003333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 41,
+   "normal": 0.0006666666666666666,
+   "samples": 3
+  },
+  {
+   "day": 42,
+   "normal": 0.001,
+   "samples": 3
+  },
+  {
+   "day": 43,
+   "normal": 0.0013333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 44,
+   "normal": 0.0016666666666666668,
+   "samples": 3
+  },
+  {
+   "day": 45,
+   "normal": 0.0029999999999999996,
+   "samples": 3
+  },
+  {
+   "day": 46,
+   "normal": 0.004333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 47,
+   "normal": 0.004333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 48,
+   "normal": 0.004333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 49,
+   "normal": 0.004666666666666667,
+   "samples": 3
+  },
+  {
+   "day": 50,
+   "normal": 0.005999999999999999,
+   "samples": 3
+  },
+  {
+   "day": 51,
+   "normal": 0.007333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 52,
+   "normal": 0.010666666666666666,
+   "samples": 3
+  },
+  {
+   "day": 53,
+   "normal": 0.016,
+   "samples": 3
+  },
+  {
+   "day": 54,
+   "normal": 0.019,
+   "samples": 3
+  },
+  {
+   "day": 55,
+   "normal": 0.021333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 56,
+   "normal": 0.024333333333333332,
+   "samples": 3
+  },
+  {
+   "day": 57,
+   "normal": 0.032,
+   "samples": 3
+  },
+  {
+   "day": 58,
+   "normal": 0.04,
+   "samples": 3
+  },
+  {
+   "day": 59,
+   "normal": 0.051,
+   "samples": 3
+  },
+  {
+   "day": 60,
+   "normal": 0.06266666666666666,
+   "samples": 3
+  },
+  {
+   "day": 61,
+   "normal": 0.078,
+   "samples": 3
+  },
+  {
+   "day": 62,
+   "normal": 0.08800000000000001,
+   "samples": 3
+  },
+  {
+   "day": 63,
+   "normal": 0.09833333333333333,
+   "samples": 3
+  },
+  {
+   "day": 64,
+   "normal": 0.11599999999999999,
+   "samples": 3
+  },
+  {
+   "day": 65,
+   "normal": 0.12933333333333333,
+   "samples": 3
+  },
+  {
+   "day": 66,
+   "normal": 0.13966666666666666,
+   "samples": 3
+  },
+  {
+   "day": 67,
+   "normal": 0.14633333333333334,
+   "samples": 3
+  },
+  {
+   "day": 68,
+   "normal": 0.146,
+   "samples": 3
+  },
+  {
+   "day": 69,
+   "normal": 0.14633333333333334,
+   "samples": 3
+  },
+  {
+   "day": 70,
+   "normal": 0.14933333333333332,
+   "samples": 3
+  },
+  {
+   "day": 71,
+   "normal": 0.15133333333333335,
+   "samples": 3
+  },
+  {
+   "day": 72,
+   "normal": 0.156,
+   "samples": 3
+  },
+  {
+   "day": 73,
+   "normal": 0.16666666666666666,
+   "samples": 3
+  },
+  {
+   "day": 74,
+   "normal": 0.17600000000000002,
+   "samples": 3
+  },
+  {
+   "day": 75,
+   "normal": 0.17266666666666663,
+   "samples": 3
+  },
+  {
+   "day": 76,
+   "normal": 0.17200000000000001,
+   "samples": 3
+  },
+  {
+   "day": 77,
+   "normal": 0.18000000000000002,
+   "samples": 3
+  },
+  {
+   "day": 78,
+   "normal": 0.18133333333333335,
+   "samples": 3
+  },
+  {
+   "day": 79,
+   "normal": 0.18266666666666667,
+   "samples": 3
+  },
+  {
+   "day": 80,
+   "normal": 0.18566666666666667,
+   "samples": 3
+  },
+  {
+   "day": 81,
+   "normal": 0.20200000000000004,
+   "samples": 3
+  },
+  {
+   "day": 82,
+   "normal": 0.208,
+   "samples": 3
+  },
+  {
+   "day": 83,
+   "normal": 0.2133333333333333,
+   "samples": 3
+  },
+  {
+   "day": 84,
+   "normal": 0.22766666666666668,
+   "samples": 3
+  },
+  {
+   "day": 85,
+   "normal": 0.244,
+   "samples": 3
+  },
+  {
+   "day": 86,
+   "normal": 0.24500000000000002,
+   "samples": 3
+  },
+  {
+   "day": 87,
+   "normal": 0.23700000000000002,
+   "samples": 3
+  },
+  {
+   "day": 88,
+   "normal": 0.25633333333333336,
+   "samples": 3
+  },
+  {
+   "day": 89,
+   "normal": 0.2816666666666667,
+   "samples": 3
+  },
+  {
+   "day": 90,
+   "normal": 0.3153333333333333,
+   "samples": 3
+  },
+  {
+   "day": 91,
+   "normal": 0.37000000000000005,
+   "samples": 3
+  },
+  {
+   "day": 92,
+   "normal": 0.426,
+   "samples": 3
+  },
+  {
+   "day": 93,
+   "normal": 0.459,
+   "samples": 3
+  },
+  {
+   "day": 94,
+   "normal": 0.48500000000000004,
+   "samples": 3
+  },
+  {
+   "day": 95,
+   "normal": 0.49866666666666665,
+   "samples": 3
+  },
+  {
+   "day": 96,
+   "normal": 0.5066666666666667,
+   "samples": 3
+  },
+  {
+   "day": 97,
+   "normal": 0.5216666666666666,
+   "samples": 3
+  },
+  {
+   "day": 98,
+   "normal": 0.5606666666666666,
+   "samples": 3
+  },
+  {
+   "day": 99,
+   "normal": 0.5963333333333333,
+   "samples": 3
+  },
+  {
+   "day": 100,
+   "normal": 0.642,
+   "samples": 3
+  },
+  {
+   "day": 101,
+   "normal": 0.6786666666666666,
+   "samples": 3
+  },
+  {
+   "day": 102,
+   "normal": 0.7086666666666667,
+   "samples": 3
+  },
+  {
+   "day": 103,
+   "normal": 0.723,
+   "samples": 3
+  },
+  {
+   "day": 104,
+   "normal": 0.7476666666666668,
+   "samples": 3
+  },
+  {
+   "day": 105,
+   "normal": 0.7673333333333333,
+   "samples": 3
+  },
+  {
+   "day": 106,
+   "normal": 0.7836666666666666,
+   "samples": 3
+  },
+  {
+   "day": 107,
+   "normal": 0.799,
+   "samples": 3
+  },
+  {
+   "day": 108,
+   "normal": 0.8136666666666666,
+   "samples": 3
+  },
+  {
+   "day": 109,
+   "normal": 0.8283333333333335,
+   "samples": 3
+  },
+  {
+   "day": 110,
+   "normal": 0.8393333333333333,
+   "samples": 3
+  },
+  {
+   "day": 111,
+   "normal": 0.8466666666666667,
+   "samples": 3
+  },
+  {
+   "day": 112,
+   "normal": 0.8493333333333334,
+   "samples": 3
+  },
+  {
+   "day": 113,
+   "normal": 0.848,
+   "samples": 3
+  },
+  {
+   "day": 114,
+   "normal": 0.8436666666666666,
+   "samples": 3
+  },
+  {
+   "day": 115,
+   "normal": 0.8356666666666666,
+   "samples": 3
+  },
+  {
+   "day": 116,
+   "normal": 0.8213333333333334,
+   "samples": 3
+  },
+  {
+   "day": 117,
+   "normal": 0.801,
+   "samples": 3
+  },
+  {
+   "day": 118,
+   "normal": 0.7760000000000001,
+   "samples": 3
+  },
+  {
+   "day": 119,
+   "normal": 0.747,
+   "samples": 3
+  },
+  {
+   "day": 120,
+   "normal": 0.7143333333333333,
+   "samples": 3
+  },
+  {
+   "day": 121,
+   "normal": 0.6796666666666668,
+   "samples": 3
+  },
+  {
+   "day": 122,
+   "normal": 0.6429999999999999,
+   "samples": 3
+  },
+  {
+   "day": 123,
+   "normal": 0.606,
+   "samples": 3
+  },
+  {
+   "day": 124,
+   "normal": 0.5700000000000001,
+   "samples": 3
+  },
+  {
+   "day": 125,
+   "normal": 0.5383333333333332,
+   "samples": 3
+  },
+  {
+   "day": 126,
+   "normal": 0.5099999999999999,
+   "samples": 3
+  },
+  {
+   "day": 127,
+   "normal": 0.48366666666666663,
+   "samples": 3
+  },
+  {
+   "day": 128,
+   "normal": 0.45999999999999996,
+   "samples": 3
+  },
+  {
+   "day": 129,
+   "normal": 0.4376666666666667,
+   "samples": 3
+  },
+  {
+   "day": 130,
+   "normal": 0.4166666666666667,
+   "samples": 3
+  },
+  {
+   "day": 131,
+   "normal": 0.39633333333333337,
+   "samples": 3
+  },
+  {
+   "day": 132,
+   "normal": 0.37666666666666665,
+   "samples": 3
+  },
+  {
+   "day": 133,
+   "normal": 0.3566666666666667,
+   "samples": 3
+  },
+  {
+   "day": 134,
+   "normal": 0.33866666666666667,
+   "samples": 3
+  },
+  {
+   "day": 135,
+   "normal": 0.321,
+   "samples": 3
+  },
+  {
+   "day": 136,
+   "normal": 0.304,
+   "samples": 3
+  },
+  {
+   "day": 137,
+   "normal": 0.28633333333333333,
+   "samples": 3
+  },
+  {
+   "day": 138,
+   "normal": 0.2693333333333333,
+   "samples": 3
+  },
+  {
+   "day": 139,
+   "normal": 0.253,
+   "samples": 3
+  },
+  {
+   "day": 140,
+   "normal": 0.238,
+   "samples": 3
+  },
+  {
+   "day": 141,
+   "normal": 0.22399999999999998,
+   "samples": 3
+  },
+  {
+   "day": 142,
+   "normal": 0.211,
+   "samples": 3
+  },
+  {
+   "day": 143,
+   "normal": 0.19899999999999998,
+   "samples": 3
+  },
+  {
+   "day": 144,
+   "normal": 0.18733333333333335,
+   "samples": 3
+  },
+  {
+   "day": 145,
+   "normal": 0.1743333333333333,
+   "samples": 3
+  },
+  {
+   "day": 146,
+   "normal": 0.15966666666666665,
+   "samples": 3
+  },
+  {
+   "day": 147,
+   "normal": 0.145,
+   "samples": 3
+  },
+  {
+   "day": 148,
+   "normal": 0.13233333333333333,
+   "samples": 3
+  },
+  {
+   "day": 149,
+   "normal": 0.12100000000000001,
+   "samples": 3
+  },
+  {
+   "day": 150,
+   "normal": 0.11033333333333334,
+   "samples": 3
+  },
+  {
+   "day": 151,
+   "normal": 0.10099999999999999,
+   "samples": 3
+  },
+  {
+   "day": 152,
+   "normal": 0.09266666666666666,
+   "samples": 3
+  },
+  {
+   "day": 153,
+   "normal": 0.08533333333333333,
+   "samples": 3
+  },
+  {
+   "day": 154,
+   "normal": 0.08,
+   "samples": 3
+  },
+  {
+   "day": 155,
+   "normal": 0.07666666666666667,
+   "samples": 3
+  },
+  {
+   "day": 156,
+   "normal": 0.075,
+   "samples": 3
+  },
+  {
+   "day": 157,
+   "normal": 0.07500000000000001,
+   "samples": 3
+  },
+  {
+   "day": 158,
+   "normal": 0.07633333333333334,
+   "samples": 3
+  },
+  {
+   "day": 159,
+   "normal": 0.07733333333333334,
+   "samples": 3
+  },
+  {
+   "day": 160,
+   "normal": 0.07766666666666668,
+   "samples": 3
+  },
+  {
+   "day": 161,
+   "normal": 0.07633333333333334,
+   "samples": 3
+  },
+  {
+   "day": 162,
+   "normal": 0.07400000000000001,
+   "samples": 3
+  },
+  {
+   "day": 163,
+   "normal": 0.07133333333333335,
+   "samples": 3
+  },
+  {
+   "day": 164,
+   "normal": 0.06833333333333334,
+   "samples": 3
+  },
+  {
+   "day": 165,
+   "normal": 0.06533333333333334,
+   "samples": 3
+  },
+  {
+   "day": 166,
+   "normal": 0.06233333333333333,
+   "samples": 3
+  },
+  {
+   "day": 167,
+   "normal": 0.05833333333333334,
+   "samples": 3
+  },
+  {
+   "day": 168,
+   "normal": 0.05433333333333334,
+   "samples": 3
+  },
+  {
+   "day": 169,
+   "normal": 0.053,
+   "samples": 3
+  },
+  {
+   "day": 170,
+   "normal": 0.05533333333333334,
+   "samples": 3
+  },
+  {
+   "day": 171,
+   "normal": 0.062,
+   "samples": 3
+  },
+  {
+   "day": 172,
+   "normal": 0.071,
+   "samples": 3
+  },
+  {
+   "day": 173,
+   "normal": 0.08433333333333333,
+   "samples": 3
+  },
+  {
+   "day": 174,
+   "normal": 0.10033333333333333,
+   "samples": 3
+  },
+  {
+   "day": 175,
+   "normal": 0.10966666666666668,
+   "samples": 3
+  },
+  {
+   "day": 176,
+   "normal": 0.10999999999999999,
+   "samples": 3
+  },
+  {
+   "day": 177,
+   "normal": 0.10500000000000002,
+   "samples": 3
+  },
+  {
+   "day": 178,
+   "normal": 0.09766666666666668,
+   "samples": 3
+  },
+  {
+   "day": 179,
+   "normal": 0.09000000000000001,
+   "samples": 3
+  },
+  {
+   "day": 180,
+   "normal": 0.083,
+   "samples": 3
+  },
+  {
+   "day": 181,
+   "normal": 0.078,
+   "samples": 3
+  },
+  {
+   "day": 182,
+   "normal": 0.07866666666666666,
+   "samples": 3
+  },
+  {
+   "day": 183,
+   "normal": 0.08033333333333333,
+   "samples": 3
+  },
+  {
+   "day": 184,
+   "normal": 0.083,
+   "samples": 3
+  },
+  {
+   "day": 185,
+   "normal": 0.082,
+   "samples": 3
+  },
+  {
+   "day": 186,
+   "normal": 0.079,
+   "samples": 3
+  },
+  {
+   "day": 187,
+   "normal": 0.07533333333333332,
+   "samples": 3
+  },
+  {
+   "day": 188,
+   "normal": 0.07200000000000001,
+   "samples": 3
+  },
+  {
+   "day": 189,
+   "normal": 0.06966666666666667,
+   "samples": 3
+  },
+  {
+   "day": 190,
+   "normal": 0.06799999999999999,
+   "samples": 3
+  },
+  {
+   "day": 191,
+   "normal": 0.06566666666666666,
+   "samples": 3
+  },
+  {
+   "day": 192,
+   "normal": 0.063,
+   "samples": 3
+  },
+  {
+   "day": 193,
+   "normal": 0.059666666666666666,
+   "samples": 3
+  },
+  {
+   "day": 194,
+   "normal": 0.056666666666666664,
+   "samples": 3
+  },
+  {
+   "day": 195,
+   "normal": 0.055,
+   "samples": 3
+  },
+  {
+   "day": 196,
+   "normal": 0.054,
+   "samples": 3
+  },
+  {
+   "day": 197,
+   "normal": 0.05333333333333334,
+   "samples": 3
+  },
+  {
+   "day": 198,
+   "normal": 0.05333333333333334,
+   "samples": 3
+  },
+  {
+   "day": 199,
+   "normal": 0.053,
+   "samples": 3
+  },
+  {
+   "day": 200,
+   "normal": 0.052333333333333336,
+   "samples": 3
+  },
+  {
+   "day": 201,
+   "normal": 0.050666666666666665,
+   "samples": 3
+  },
+  {
+   "day": 202,
+   "normal": 0.04833333333333334,
+   "samples": 3
+  },
+  {
+   "day": 203,
+   "normal": 0.045000000000000005,
+   "samples": 3
+  },
+  {
+   "day": 204,
+   "normal": 0.04033333333333333,
+   "samples": 3
+  },
+  {
+   "day": 205,
+   "normal": 0.034999999999999996,
+   "samples": 3
+  },
+  {
+   "day": 206,
+   "normal": 0.029333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 207,
+   "normal": 0.02466666666666667,
+   "samples": 3
+  },
+  {
+   "day": 208,
+   "normal": 0.021333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 209,
+   "normal": 0.018333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 210,
+   "normal": 0.016333333333333335,
+   "samples": 3
+  },
+  {
+   "day": 211,
+   "normal": 0.015000000000000001,
+   "samples": 3
+  },
+  {
+   "day": 212,
+   "normal": 0.014,
+   "samples": 3
+  },
+  {
+   "day": 213,
+   "normal": 0.013666666666666667,
+   "samples": 3
+  },
+  {
+   "day": 214,
+   "normal": 0.013333333333333334,
+   "samples": 3
+  },
+  {
+   "day": 215,
+   "normal": 0.013666666666666666,
+   "samples": 3
+  },
+  {
+   "day": 216,
+   "normal": 0.014333333333333332,
+   "samples": 3
+  },
+  {
+   "day": 217,
+   "normal": 0.015666666666666666,
+   "samples": 3
+  },
+  {
+   "day": 218,
+   "normal": 0.017,
+   "samples": 3
+  },
+  {
+   "day": 219,
+   "normal": 0.019666666666666666,
+   "samples": 3
+  },
+  {
+   "day": 220,
+   "normal": 0.022333333333333334,
+   "samples": 3
+  },
+  {
+   "day": 221,
+   "normal": 0.025333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 222,
+   "normal": 0.029666666666666664,
+   "samples": 3
+  },
+  {
+   "day": 223,
+   "normal": 0.037333333333333336,
+   "samples": 3
+  },
+  {
+   "day": 224,
+   "normal": 0.048666666666666664,
+   "samples": 3
+  },
+  {
+   "day": 225,
+   "normal": 0.06066666666666667,
+   "samples": 3
+  },
+  {
+   "day": 226,
+   "normal": 0.07433333333333332,
+   "samples": 3
+  },
+  {
+   "day": 227,
+   "normal": 0.08833333333333333,
+   "samples": 3
+  },
+  {
+   "day": 228,
+   "normal": 0.10166666666666667,
+   "samples": 3
+  },
+  {
+   "day": 229,
+   "normal": 0.11433333333333334,
+   "samples": 3
+  },
+  {
+   "day": 230,
+   "normal": 0.126,
+   "samples": 3
+  },
+  {
+   "day": 231,
+   "normal": 0.136,
+   "samples": 3
+  },
+  {
+   "day": 232,
+   "normal": 0.14533333333333331,
+   "samples": 3
+  },
+  {
+   "day": 233,
+   "normal": 0.15433333333333332,
+   "samples": 3
+  },
+  {
+   "day": 234,
+   "normal": 0.16233333333333333,
+   "samples": 3
+  },
+  {
+   "day": 235,
+   "normal": 0.171,
+   "samples": 3
+  },
+  {
+   "day": 236,
+   "normal": 0.17900000000000002,
+   "samples": 3
+  },
+  {
+   "day": 237,
+   "normal": 0.18633333333333335,
+   "samples": 3
+  },
+  {
+   "day": 238,
+   "normal": 0.19233333333333333,
+   "samples": 3
+  },
+  {
+   "day": 239,
+   "normal": 0.19799999999999998,
+   "samples": 3
+  },
+  {
+   "day": 240,
+   "normal": 0.20366666666666666,
+   "samples": 3
+  },
+  {
+   "day": 241,
+   "normal": 0.209,
+   "samples": 3
+  },
+  {
+   "day": 242,
+   "normal": 0.21433333333333335,
+   "samples": 3
+  },
+  {
+   "day": 243,
+   "normal": 0.219,
+   "samples": 3
+  },
+  {
+   "day": 244,
+   "normal": 0.22266666666666668,
+   "samples": 3
+  },
+  {
+   "day": 245,
+   "normal": 0.226,
+   "samples": 3
+  },
+  {
+   "day": 246,
+   "normal": 0.2293333333333333,
+   "samples": 3
+  },
+  {
+   "day": 247,
+   "normal": 0.23399999999999999,
+   "samples": 3
+  },
+  {
+   "day": 248,
+   "normal": 0.2416666666666667,
+   "samples": 3
+  },
+  {
+   "day": 249,
+   "normal": 0.251,
+   "samples": 3
+  },
+  {
+   "day": 250,
+   "normal": 0.26233333333333336,
+   "samples": 3
+  },
+  {
+   "day": 251,
+   "normal": 0.27499999999999997,
+   "samples": 3
+  },
+  {
+   "day": 252,
+   "normal": 0.289,
+   "samples": 3
+  },
+  {
+   "day": 253,
+   "normal": 0.30433333333333334,
+   "samples": 3
+  },
+  {
+   "day": 254,
+   "normal": 0.321,
+   "samples": 3
+  },
+  {
+   "day": 255,
+   "normal": 0.33899999999999997,
+   "samples": 3
+  },
+  {
+   "day": 256,
+   "normal": 0.3566666666666667,
+   "samples": 3
+  },
+  {
+   "day": 257,
+   "normal": 0.37433333333333335,
+   "samples": 3
+  },
+  {
+   "day": 258,
+   "normal": 0.39233333333333337,
+   "samples": 3
+  },
+  {
+   "day": 259,
+   "normal": 0.4093333333333333,
+   "samples": 3
+  },
+  {
+   "day": 260,
+   "normal": 0.4263333333333333,
+   "samples": 3
+  },
+  {
+   "day": 261,
+   "normal": 0.4426666666666667,
+   "samples": 3
+  },
+  {
+   "day": 262,
+   "normal": 0.4586666666666666,
+   "samples": 3
+  },
+  {
+   "day": 263,
+   "normal": 0.4736666666666667,
+   "samples": 3
+  },
+  {
+   "day": 264,
+   "normal": 0.48733333333333334,
+   "samples": 3
+  },
+  {
+   "day": 265,
+   "normal": 0.5,
+   "samples": 3
+  },
+  {
+   "day": 266,
+   "normal": 0.5113333333333333,
+   "samples": 3
+  },
+  {
+   "day": 267,
+   "normal": 0.521,
+   "samples": 3
+  },
+  {
+   "day": 268,
+   "normal": 0.5303333333333334,
+   "samples": 3
+  },
+  {
+   "day": 269,
+   "normal": 0.539,
+   "samples": 3
+  },
+  {
+   "day": 270,
+   "normal": 0.546,
+   "samples": 3
+  },
+  {
+   "day": 271,
+   "normal": 0.5483333333333333,
+   "samples": 3
+  },
+  {
+   "day": 272,
+   "normal": 0.5459999999999999,
+   "samples": 3
+  },
+  {
+   "day": 273,
+   "normal": 0.5419999999999999,
+   "samples": 3
+  },
+  {
+   "day": 274,
+   "normal": 0.5363333333333333,
+   "samples": 3
+  },
+  {
+   "day": 275,
+   "normal": 0.5293333333333333,
+   "samples": 3
+  },
+  {
+   "day": 276,
+   "normal": 0.5196666666666666,
+   "samples": 3
+  },
+  {
+   "day": 277,
+   "normal": 0.5076666666666667,
+   "samples": 3
+  },
+  {
+   "day": 278,
+   "normal": 0.49433333333333335,
+   "samples": 3
+  },
+  {
+   "day": 279,
+   "normal": 0.47933333333333333,
+   "samples": 3
+  },
+  {
+   "day": 280,
+   "normal": 0.4633333333333333,
+   "samples": 3
+  },
+  {
+   "day": 281,
+   "normal": 0.4466666666666667,
+   "samples": 3
+  },
+  {
+   "day": 282,
+   "normal": 0.428,
+   "samples": 3
+  },
+  {
+   "day": 283,
+   "normal": 0.4076666666666667,
+   "samples": 3
+  },
+  {
+   "day": 284,
+   "normal": 0.38566666666666666,
+   "samples": 3
+  },
+  {
+   "day": 285,
+   "normal": 0.36233333333333334,
+   "samples": 3
+  },
+  {
+   "day": 286,
+   "normal": 0.337,
+   "samples": 3
+  },
+  {
+   "day": 287,
+   "normal": 0.313,
+   "samples": 3
+  },
+  {
+   "day": 288,
+   "normal": 0.2893333333333334,
+   "samples": 3
+  },
+  {
+   "day": 289,
+   "normal": 0.26466666666666666,
+   "samples": 3
+  },
+  {
+   "day": 290,
+   "normal": 0.241,
+   "samples": 3
+  },
+  {
+   "day": 291,
+   "normal": 0.21833333333333335,
+   "samples": 3
+  },
+  {
+   "day": 292,
+   "normal": 0.19699999999999998,
+   "samples": 3
+  },
+  {
+   "day": 293,
+   "normal": 0.17600000000000002,
+   "samples": 3
+  },
+  {
+   "day": 294,
+   "normal": 0.15566666666666668,
+   "samples": 3
+  },
+  {
+   "day": 295,
+   "normal": 0.13633333333333333,
+   "samples": 3
+  },
+  {
+   "day": 296,
+   "normal": 0.11733333333333333,
+   "samples": 3
+  },
+  {
+   "day": 297,
+   "normal": 0.10033333333333333,
+   "samples": 3
+  },
+  {
+   "day": 298,
+   "normal": 0.08600000000000001,
+   "samples": 3
+  },
+  {
+   "day": 299,
+   "normal": 0.07366666666666667,
+   "samples": 3
+  },
+  {
+   "day": 300,
+   "normal": 0.06366666666666666,
+   "samples": 3
+  },
+  {
+   "day": 301,
+   "normal": 0.05466666666666666,
+   "samples": 3
+  },
+  {
+   "day": 302,
+   "normal": 0.04666666666666667,
+   "samples": 3
+  },
+  {
+   "day": 303,
+   "normal": 0.03966666666666666,
+   "samples": 3
+  },
+  {
+   "day": 304,
+   "normal": 0.03333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 305,
+   "normal": 0.027666666666666662,
+   "samples": 3
+  },
+  {
+   "day": 306,
+   "normal": 0.02266666666666667,
+   "samples": 3
+  },
+  {
+   "day": 307,
+   "normal": 0.018666666666666665,
+   "samples": 3
+  },
+  {
+   "day": 308,
+   "normal": 0.015666666666666666,
+   "samples": 3
+  },
+  {
+   "day": 309,
+   "normal": 0.013666666666666666,
+   "samples": 3
+  },
+  {
+   "day": 310,
+   "normal": 0.011999999999999999,
+   "samples": 3
+  },
+  {
+   "day": 311,
+   "normal": 0.011000000000000001,
+   "samples": 3
+  },
+  {
+   "day": 312,
+   "normal": 0.01,
+   "samples": 3
+  },
+  {
+   "day": 313,
+   "normal": 0.009,
+   "samples": 3
+  },
+  {
+   "day": 314,
+   "normal": 0.008333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 315,
+   "normal": 0.007333333333333334,
+   "samples": 3
+  },
+  {
+   "day": 316,
+   "normal": 0.008666666666666666,
+   "samples": 3
+  },
+  {
+   "day": 317,
+   "normal": 0.012666666666666668,
+   "samples": 3
+  },
+  {
+   "day": 318,
+   "normal": 0.017666666666666667,
+   "samples": 3
+  },
+  {
+   "day": 319,
+   "normal": 0.024000000000000004,
+   "samples": 3
+  },
+  {
+   "day": 320,
+   "normal": 0.031,
+   "samples": 3
+  },
+  {
+   "day": 321,
+   "normal": 0.03933333333333334,
+   "samples": 3
+  },
+  {
+   "day": 322,
+   "normal": 0.04933333333333333,
+   "samples": 3
+  },
+  {
+   "day": 323,
+   "normal": 0.063,
+   "samples": 3
+  },
+  {
+   "day": 324,
+   "normal": 0.08233333333333333,
+   "samples": 3
+  },
+  {
+   "day": 325,
+   "normal": 0.10833333333333334,
+   "samples": 3
+  },
+  {
+   "day": 326,
+   "normal": 0.13266666666666668,
+   "samples": 3
+  },
+  {
+   "day": 327,
+   "normal": 0.14933333333333335,
+   "samples": 3
+  },
+  {
+   "day": 328,
+   "normal": 0.158,
+   "samples": 3
+  },
+  {
+   "day": 329,
+   "normal": 0.16033333333333333,
+   "samples": 3
+  },
+  {
+   "day": 330,
+   "normal": 0.155,
+   "samples": 3
+  },
+  {
+   "day": 331,
+   "normal": 0.14433333333333334,
+   "samples": 3
+  },
+  {
+   "day": 332,
+   "normal": 0.13,
+   "samples": 3
+  },
+  {
+   "day": 333,
+   "normal": 0.11333333333333334,
+   "samples": 3
+  },
+  {
+   "day": 334,
+   "normal": 0.09566666666666666,
+   "samples": 3
+  },
+  {
+   "day": 335,
+   "normal": 0.07866666666666666,
+   "samples": 3
+  },
+  {
+   "day": 336,
+   "normal": 0.06433333333333334,
+   "samples": 3
+  },
+  {
+   "day": 337,
+   "normal": 0.05266666666666667,
+   "samples": 3
+  },
+  {
+   "day": 338,
+   "normal": 0.042666666666666665,
+   "samples": 3
+  },
+  {
+   "day": 339,
+   "normal": 0.03166666666666667,
+   "samples": 3
+  },
+  {
+   "day": 340,
+   "normal": 0.02266666666666667,
+   "samples": 3
+  },
+  {
+   "day": 341,
+   "normal": 0.016333333333333335,
+   "samples": 3
+  },
+  {
+   "day": 342,
+   "normal": 0.011999999999999999,
+   "samples": 3
+  },
+  {
+   "day": 343,
+   "normal": 0.009333333333333334,
+   "samples": 3
+  },
+  {
+   "day": 344,
+   "normal": 0.007,
+   "samples": 3
+  },
+  {
+   "day": 345,
+   "normal": 0.005333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 346,
+   "normal": 0.004666666666666667,
+   "samples": 3
+  },
+  {
+   "day": 347,
+   "normal": 0.004,
+   "samples": 3
+  },
+  {
+   "day": 348,
+   "normal": 0.0033333333333333335,
+   "samples": 3
+  },
+  {
+   "day": 349,
+   "normal": 0.0023333333333333335,
+   "samples": 3
+  },
+  {
+   "day": 350,
+   "normal": 0.0023333333333333335,
+   "samples": 3
+  },
+  {
+   "day": 351,
+   "normal": 0.0016666666666666668,
+   "samples": 3
+  },
+  {
+   "day": 352,
+   "normal": 0.0013333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 353,
+   "normal": 0.001,
+   "samples": 3
+  },
+  {
+   "day": 354,
+   "normal": 0.0006666666666666666,
+   "samples": 3
+  },
+  {
+   "day": 355,
+   "normal": 0.0003333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 356,
+   "normal": 0.0003333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 357,
+   "normal": 0.0003333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 358,
+   "normal": 0.0003333333333333333,
+   "samples": 3
+  },
+  {
+   "day": 359,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 360,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 361,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 362,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 363,
+   "normal": 0,
+   "samples": 3
+  },
+  {
+   "day": 364,
+   "normal": 0,
+   "samples": 4
+  }
+ ],
+ "currentYearDaily": [
+  {
+   "date": "2026-01-01",
+   "day": 0,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-02",
+   "day": 1,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-03",
+   "day": 2,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-04",
+   "day": 3,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-05",
+   "day": 4,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-06",
+   "day": 5,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-07",
+   "day": 6,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-08",
+   "day": 7,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-09",
+   "day": 8,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-10",
+   "day": 9,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-11",
+   "day": 10,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-12",
+   "day": 11,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 0
+  },
+  {
+   "date": "2026-01-13",
+   "day": 12,
+   "current": 0.001,
+   "normal": 0,
+   "difference": 0.001,
+   "seasonToDate": 0.1
+  },
+  {
+   "date": "2026-01-14",
+   "day": 13,
+   "current": 0.007,
+   "normal": 0,
+   "difference": 0.007,
+   "seasonToDate": 0.8
+  },
+  {
+   "date": "2026-01-15",
+   "day": 14,
+   "current": 0.018,
+   "normal": 0,
+   "difference": 0.018,
+   "seasonToDate": 2.5999999999999996
+  },
+  {
+   "date": "2026-01-16",
+   "day": 15,
+   "current": 0.028,
+   "normal": 0,
+   "difference": 0.028,
+   "seasonToDate": 5.4
+  },
+  {
+   "date": "2026-01-17",
+   "day": 16,
+   "current": 0.035,
+   "normal": 0,
+   "difference": 0.035,
+   "seasonToDate": 8.9
+  },
+  {
+   "date": "2026-01-18",
+   "day": 17,
+   "current": 0.04,
+   "normal": 0,
+   "difference": 0.04,
+   "seasonToDate": 12.9
+  },
+  {
+   "date": "2026-01-19",
+   "day": 18,
+   "current": 0.041,
+   "normal": 0,
+   "difference": 0.041,
+   "seasonToDate": 17
+  },
+  {
+   "date": "2026-01-20",
+   "day": 19,
+   "current": 0.037,
+   "normal": 0,
+   "difference": 0.037,
+   "seasonToDate": 20.7
+  },
+  {
+   "date": "2026-01-21",
+   "day": 20,
+   "current": 0.032,
+   "normal": 0,
+   "difference": 0.032,
+   "seasonToDate": 23.9
+  },
+  {
+   "date": "2026-01-22",
+   "day": 21,
+   "current": 0.024,
+   "normal": 0,
+   "difference": 0.024,
+   "seasonToDate": 26.299999999999997
+  },
+  {
+   "date": "2026-01-23",
+   "day": 22,
+   "current": 0.018,
+   "normal": 0,
+   "difference": 0.018,
+   "seasonToDate": 28.099999999999998
+  },
+  {
+   "date": "2026-01-24",
+   "day": 23,
+   "current": 0.013,
+   "normal": 0,
+   "difference": 0.013,
+   "seasonToDate": 29.4
+  },
+  {
+   "date": "2026-01-25",
+   "day": 24,
+   "current": 0.009,
+   "normal": 0,
+   "difference": 0.009,
+   "seasonToDate": 30.299999999999997
+  },
+  {
+   "date": "2026-01-26",
+   "day": 25,
+   "current": 0.006,
+   "normal": 0,
+   "difference": 0.006,
+   "seasonToDate": 30.9
+  },
+  {
+   "date": "2026-01-27",
+   "day": 26,
+   "current": 0.003,
+   "normal": 0,
+   "difference": 0.003,
+   "seasonToDate": 31.2
+  },
+  {
+   "date": "2026-01-28",
+   "day": 27,
+   "current": 0.003,
+   "normal": 0,
+   "difference": 0.003,
+   "seasonToDate": 31.5
+  },
+  {
+   "date": "2026-01-29",
+   "day": 28,
+   "current": 0.002,
+   "normal": 0,
+   "difference": 0.002,
+   "seasonToDate": 31.7
+  },
+  {
+   "date": "2026-01-30",
+   "day": 29,
+   "current": 0.002,
+   "normal": 0,
+   "difference": 0.002,
+   "seasonToDate": 31.9
+  },
+  {
+   "date": "2026-01-31",
+   "day": 30,
+   "current": 0.002,
+   "normal": 0,
+   "difference": 0.002,
+   "seasonToDate": 32.1
+  },
+  {
+   "date": "2026-02-01",
+   "day": 31,
+   "current": 0.001,
+   "normal": 0,
+   "difference": 0.001,
+   "seasonToDate": 32.2
+  },
+  {
+   "date": "2026-02-02",
+   "day": 32,
+   "current": 0.001,
+   "normal": 0,
+   "difference": 0.001,
+   "seasonToDate": 32.300000000000004
+  },
+  {
+   "date": "2026-02-03",
+   "day": 33,
+   "current": 0.001,
+   "normal": 0,
+   "difference": 0.001,
+   "seasonToDate": 32.400000000000006
+  },
+  {
+   "date": "2026-02-04",
+   "day": 34,
+   "current": 0.001,
+   "normal": 0,
+   "difference": 0.001,
+   "seasonToDate": 32.50000000000001
+  },
+  {
+   "date": "2026-02-05",
+   "day": 35,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 32.50000000000001
+  },
+  {
+   "date": "2026-02-06",
+   "day": 36,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 32.50000000000001
+  },
+  {
+   "date": "2026-02-07",
+   "day": 37,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 32.50000000000001
+  },
+  {
+   "date": "2026-02-08",
+   "day": 38,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 32.50000000000001
+  },
+  {
+   "date": "2026-02-09",
+   "day": 39,
+   "current": 0,
+   "normal": 0,
+   "difference": 0,
+   "seasonToDate": 32.50000000000001
+  },
+  {
+   "date": "2026-02-10",
+   "day": 40,
+   "current": 0,
+   "normal": 0.0003333333333333333,
+   "difference": -0.0003333333333333333,
+   "seasonToDate": 32.466666666666676
+  },
+  {
+   "date": "2026-02-11",
+   "day": 41,
+   "current": 0,
+   "normal": 0.0006666666666666666,
+   "difference": -0.0006666666666666666,
+   "seasonToDate": 32.400000000000006
+  },
+  {
+   "date": "2026-02-12",
+   "day": 42,
+   "current": 0,
+   "normal": 0.001,
+   "difference": -0.001,
+   "seasonToDate": 32.300000000000004
+  },
+  {
+   "date": "2026-02-13",
+   "day": 43,
+   "current": 0,
+   "normal": 0.0013333333333333333,
+   "difference": -0.0013333333333333333,
+   "seasonToDate": 32.16666666666667
+  },
+  {
+   "date": "2026-02-14",
+   "day": 44,
+   "current": 0,
+   "normal": 0.0016666666666666668,
+   "difference": -0.0016666666666666668,
+   "seasonToDate": 32.00000000000001
+  },
+  {
+   "date": "2026-02-15",
+   "day": 45,
+   "current": 0,
+   "normal": 0.0029999999999999996,
+   "difference": -0.0029999999999999996,
+   "seasonToDate": 31.700000000000006
+  },
+  {
+   "date": "2026-02-16",
+   "day": 46,
+   "current": 0,
+   "normal": 0.004333333333333333,
+   "difference": -0.004333333333333333,
+   "seasonToDate": 31.266666666666673
+  },
+  {
+   "date": "2026-02-17",
+   "day": 47,
+   "current": 0,
+   "normal": 0.004333333333333333,
+   "difference": -0.004333333333333333,
+   "seasonToDate": 30.83333333333334
+  },
+  {
+   "date": "2026-02-18",
+   "day": 48,
+   "current": 0,
+   "normal": 0.004333333333333333,
+   "difference": -0.004333333333333333,
+   "seasonToDate": 30.400000000000006
+  },
+  {
+   "date": "2026-02-19",
+   "day": 49,
+   "current": 0,
+   "normal": 0.004666666666666667,
+   "difference": -0.004666666666666667,
+   "seasonToDate": 29.93333333333334
+  },
+  {
+   "date": "2026-02-20",
+   "day": 50,
+   "current": 0,
+   "normal": 0.005999999999999999,
+   "difference": -0.005999999999999999,
+   "seasonToDate": 29.33333333333334
+  },
+  {
+   "date": "2026-02-21",
+   "day": 51,
+   "current": 0.001,
+   "normal": 0.007333333333333333,
+   "difference": -0.006333333333333333,
+   "seasonToDate": 28.700000000000006
+  },
+  {
+   "date": "2026-02-22",
+   "day": 52,
+   "current": 0.002,
+   "normal": 0.010666666666666666,
+   "difference": -0.008666666666666666,
+   "seasonToDate": 27.83333333333334
+  },
+  {
+   "date": "2026-02-23",
+   "day": 53,
+   "current": 0.003,
+   "normal": 0.016,
+   "difference": -0.013000000000000001,
+   "seasonToDate": 26.53333333333334
+  },
+  {
+   "date": "2026-02-24",
+   "day": 54,
+   "current": 0.005,
+   "normal": 0.019,
+   "difference": -0.013999999999999999,
+   "seasonToDate": 25.13333333333334
+  },
+  {
+   "date": "2026-02-25",
+   "day": 55,
+   "current": 0.007,
+   "normal": 0.021333333333333333,
+   "difference": -0.014333333333333333,
+   "seasonToDate": 23.700000000000006
+  },
+  {
+   "date": "2026-02-26",
+   "day": 56,
+   "current": 0.011,
+   "normal": 0.024333333333333332,
+   "difference": -0.013333333333333332,
+   "seasonToDate": 22.366666666666674
+  },
+  {
+   "date": "2026-02-27",
+   "day": 57,
+   "current": 0.014,
+   "normal": 0.032,
+   "difference": -0.018000000000000002,
+   "seasonToDate": 20.566666666666674
+  },
+  {
+   "date": "2026-02-28",
+   "day": 58,
+   "current": 0.02,
+   "normal": 0.04,
+   "difference": -0.02,
+   "seasonToDate": 18.566666666666674
+  },
+  {
+   "date": "2026-03-01",
+   "day": 59,
+   "current": 0.029,
+   "normal": 0.051,
+   "difference": -0.021999999999999995,
+   "seasonToDate": 16.366666666666674
+  },
+  {
+   "date": "2026-03-02",
+   "day": 60,
+   "current": 0.041,
+   "normal": 0.06266666666666666,
+   "difference": -0.02166666666666666,
+   "seasonToDate": 14.200000000000008
+  },
+  {
+   "date": "2026-03-03",
+   "day": 61,
+   "current": 0.059,
+   "normal": 0.078,
+   "difference": -0.019000000000000003,
+   "seasonToDate": 12.300000000000008
+  },
+  {
+   "date": "2026-03-04",
+   "day": 62,
+   "current": 0.09,
+   "normal": 0.08800000000000001,
+   "difference": 0.001999999999999988,
+   "seasonToDate": 12.500000000000007
+  },
+  {
+   "date": "2026-03-05",
+   "day": 63,
+   "current": 0.136,
+   "normal": 0.09833333333333333,
+   "difference": 0.03766666666666668,
+   "seasonToDate": 16.266666666666676
+  },
+  {
+   "date": "2026-03-06",
+   "day": 64,
+   "current": 0.201,
+   "normal": 0.11599999999999999,
+   "difference": 0.08500000000000002,
+   "seasonToDate": 24.76666666666668
+  },
+  {
+   "date": "2026-03-07",
+   "day": 65,
+   "current": 0.293,
+   "normal": 0.12933333333333333,
+   "difference": 0.16366666666666665,
+   "seasonToDate": 41.13333333333335
+  },
+  {
+   "date": "2026-03-08",
+   "day": 66,
+   "current": 0.388,
+   "normal": 0.13966666666666666,
+   "difference": 0.24833333333333335,
+   "seasonToDate": 65.96666666666668
+  },
+  {
+   "date": "2026-03-09",
+   "day": 67,
+   "current": 0.463,
+   "normal": 0.14633333333333334,
+   "difference": 0.31666666666666665,
+   "seasonToDate": 97.63333333333335
+  },
+  {
+   "date": "2026-03-10",
+   "day": 68,
+   "current": 0.527,
+   "normal": 0.146,
+   "difference": 0.381,
+   "seasonToDate": 135.73333333333335
+  },
+  {
+   "date": "2026-03-11",
+   "day": 69,
+   "current": 0.581,
+   "normal": 0.14633333333333334,
+   "difference": 0.43466666666666665,
+   "seasonToDate": 179.20000000000002
+  },
+  {
+   "date": "2026-03-12",
+   "day": 70,
+   "current": 0.628,
+   "normal": 0.14933333333333332,
+   "difference": 0.4786666666666667,
+   "seasonToDate": 227.0666666666667
+  },
+  {
+   "date": "2026-03-13",
+   "day": 71,
+   "current": 0.667,
+   "normal": 0.15133333333333335,
+   "difference": 0.5156666666666667,
+   "seasonToDate": 278.6333333333334
+  },
+  {
+   "date": "2026-03-14",
+   "day": 72,
+   "current": 0.701,
+   "normal": 0.156,
+   "difference": 0.5449999999999999,
+   "seasonToDate": 333.1333333333334
+  },
+  {
+   "date": "2026-03-15",
+   "day": 73,
+   "current": 0.73,
+   "normal": 0.16666666666666666,
+   "difference": 0.5633333333333334,
+   "seasonToDate": 389.4666666666667
+  },
+  {
+   "date": "2026-03-16",
+   "day": 74,
+   "current": 0.755,
+   "normal": 0.17600000000000002,
+   "difference": 0.579,
+   "seasonToDate": 447.3666666666667
+  },
+  {
+   "date": "2026-03-17",
+   "day": 75,
+   "current": 0.777,
+   "normal": 0.17266666666666663,
+   "difference": 0.6043333333333334,
+   "seasonToDate": 507.8
+  },
+  {
+   "date": "2026-03-18",
+   "day": 76,
+   "current": 0.785,
+   "normal": 0.17200000000000001,
+   "difference": 0.613,
+   "seasonToDate": 569.1
+  },
+  {
+   "date": "2026-03-19",
+   "day": 77,
+   "current": 0.775,
+   "normal": 0.18000000000000002,
+   "difference": 0.595,
+   "seasonToDate": 628.6
+  },
+  {
+   "date": "2026-03-20",
+   "day": 78,
+   "current": 0.764,
+   "normal": 0.18133333333333335,
+   "difference": 0.5826666666666667,
+   "seasonToDate": 686.8666666666667
+  },
+  {
+   "date": "2026-03-21",
+   "day": 79,
+   "current": 0.757,
+   "normal": 0.18266666666666667,
+   "difference": 0.5743333333333334,
+   "seasonToDate": 744.3
+  },
+  {
+   "date": "2026-03-22",
+   "day": 80,
+   "current": 0.76,
+   "normal": 0.18566666666666667,
+   "difference": 0.5743333333333334,
+   "seasonToDate": 801.7333333333333
+  },
+  {
+   "date": "2026-03-23",
+   "day": 81,
+   "current": 0.762,
+   "normal": 0.20200000000000004,
+   "difference": 0.5599999999999999,
+   "seasonToDate": 857.7333333333333
+  },
+  {
+   "date": "2026-03-24",
+   "day": 82,
+   "current": 0.757,
+   "normal": 0.208,
+   "difference": 0.549,
+   "seasonToDate": 912.6333333333333
+  },
+  {
+   "date": "2026-03-25",
+   "day": 83,
+   "current": 0.745,
+   "normal": 0.2133333333333333,
+   "difference": 0.5316666666666667,
+   "seasonToDate": 965.8
+  },
+  {
+   "date": "2026-03-26",
+   "day": 84,
+   "current": 0.731,
+   "normal": 0.22766666666666668,
+   "difference": 0.5033333333333333,
+   "seasonToDate": 1016.1333333333333
+  },
+  {
+   "date": "2026-03-27",
+   "day": 85,
+   "current": 0.71,
+   "normal": 0.244,
+   "difference": 0.46599999999999997,
+   "seasonToDate": 1062.7333333333333
+  },
+  {
+   "date": "2026-03-28",
+   "day": 86,
+   "current": 0.683,
+   "normal": 0.24500000000000002,
+   "difference": 0.43800000000000006,
+   "seasonToDate": 1106.5333333333333
+  },
+  {
+   "date": "2026-03-29",
+   "day": 87,
+   "current": 0.65,
+   "normal": 0.23700000000000002,
+   "difference": 0.41300000000000003,
+   "seasonToDate": 1147.8333333333333
+  },
+  {
+   "date": "2026-03-30",
+   "day": 88,
+   "current": 0.613,
+   "normal": 0.25633333333333336,
+   "difference": 0.35666666666666663,
+   "seasonToDate": 1183.5
+  },
+  {
+   "date": "2026-03-31",
+   "day": 89,
+   "current": 0.571,
+   "normal": 0.2816666666666667,
+   "difference": 0.2893333333333333,
+   "seasonToDate": 1212.4333333333334
+  },
+  {
+   "date": "2026-04-01",
+   "day": 90,
+   "current": 0.531,
+   "normal": 0.3153333333333333,
+   "difference": 0.21566666666666673,
+   "seasonToDate": 1234
+  },
+  {
+   "date": "2026-04-02",
+   "day": 91,
+   "current": 0.493,
+   "normal": 0.37000000000000005,
+   "difference": 0.12299999999999994,
+   "seasonToDate": 1246.3
+  },
+  {
+   "date": "2026-04-03",
+   "day": 92,
+   "current": 0.459,
+   "normal": 0.426,
+   "difference": 0.03300000000000003,
+   "seasonToDate": 1249.6
+  },
+  {
+   "date": "2026-04-04",
+   "day": 93,
+   "current": 0.426,
+   "normal": 0.459,
+   "difference": -0.03300000000000003,
+   "seasonToDate": 1246.3
+  },
+  {
+   "date": "2026-04-05",
+   "day": 94,
+   "current": 0.394,
+   "normal": 0.48500000000000004,
+   "difference": -0.09100000000000003,
+   "seasonToDate": 1237.2
+  },
+  {
+   "date": "2026-04-06",
+   "day": 95,
+   "current": 0.363,
+   "normal": 0.49866666666666665,
+   "difference": -0.13566666666666666,
+   "seasonToDate": 1223.6333333333334
+  },
+  {
+   "date": "2026-04-07",
+   "day": 96,
+   "current": 0.333,
+   "normal": 0.5066666666666667,
+   "difference": -0.1736666666666667,
+   "seasonToDate": 1206.2666666666669
+  },
+  {
+   "date": "2026-04-08",
+   "day": 97,
+   "current": 0.306,
+   "normal": 0.5216666666666666,
+   "difference": -0.21566666666666662,
+   "seasonToDate": 1184.7000000000003
+  },
+  {
+   "date": "2026-04-09",
+   "day": 98,
+   "current": 0.28,
+   "normal": 0.5606666666666666,
+   "difference": -0.2806666666666666,
+   "seasonToDate": 1156.6333333333337
+  },
+  {
+   "date": "2026-04-10",
+   "day": 99,
+   "current": 0.256,
+   "normal": 0.5963333333333333,
+   "difference": -0.34033333333333327,
+   "seasonToDate": 1122.6000000000004
+  },
+  {
+   "date": "2026-04-11",
+   "day": 100,
+   "current": 0.245,
+   "normal": 0.642,
+   "difference": -0.397,
+   "seasonToDate": 1082.9000000000003
+  },
+  {
+   "date": "2026-04-12",
+   "day": 101,
+   "current": 0.249,
+   "normal": 0.6786666666666666,
+   "difference": -0.42966666666666664,
+   "seasonToDate": 1039.9333333333336
+  },
+  {
+   "date": "2026-04-13",
+   "day": 102,
+   "current": 0.264,
+   "normal": 0.7086666666666667,
+   "difference": -0.44466666666666665,
+   "seasonToDate": 995.4666666666669
+  },
+  {
+   "date": "2026-04-14",
+   "day": 103,
+   "current": 0.284,
+   "normal": 0.723,
+   "difference": -0.439,
+   "seasonToDate": 951.566666666667
+  },
+  {
+   "date": "2026-04-15",
+   "day": 104,
+   "current": 0.307,
+   "normal": 0.7476666666666668,
+   "difference": -0.4406666666666668,
+   "seasonToDate": 907.5000000000002
+  },
+  {
+   "date": "2026-04-16",
+   "day": 105,
+   "current": 0.33,
+   "normal": 0.7673333333333333,
+   "difference": -0.4373333333333333,
+   "seasonToDate": 863.7666666666669
+  },
+  {
+   "date": "2026-04-17",
+   "day": 106,
+   "current": 0.355,
+   "normal": 0.7836666666666666,
+   "difference": -0.42866666666666664,
+   "seasonToDate": 820.9000000000002
+  },
+  {
+   "date": "2026-04-18",
+   "day": 107,
+   "current": 0.381,
+   "normal": 0.799,
+   "difference": -0.41800000000000004,
+   "seasonToDate": 779.1000000000003
+  },
+  {
+   "date": "2026-04-19",
+   "day": 108,
+   "current": 0.411,
+   "normal": 0.8136666666666666,
+   "difference": -0.4026666666666667,
+   "seasonToDate": 738.8333333333336
+  },
+  {
+   "date": "2026-04-20",
+   "day": 109,
+   "current": 0.443,
+   "normal": 0.8283333333333335,
+   "difference": -0.38533333333333347,
+   "seasonToDate": 700.3000000000003
+  },
+  {
+   "date": "2026-04-21",
+   "day": 110,
+   "current": 0.483,
+   "normal": 0.8393333333333333,
+   "difference": -0.3563333333333333,
+   "seasonToDate": 664.666666666667
+  },
+  {
+   "date": "2026-04-22",
+   "day": 111,
+   "current": 0.515,
+   "normal": 0.8466666666666667,
+   "difference": -0.33166666666666667,
+   "seasonToDate": 631.5000000000003
+  },
+  {
+   "date": "2026-04-23",
+   "day": 112,
+   "current": 0.536,
+   "normal": 0.8493333333333334,
+   "difference": -0.31333333333333335,
+   "seasonToDate": 600.166666666667
+  },
+  {
+   "date": "2026-04-24",
+   "day": 113,
+   "current": 0.555,
+   "normal": 0.848,
+   "difference": -0.2929999999999999,
+   "seasonToDate": 570.866666666667
+  },
+  {
+   "date": "2026-04-25",
+   "day": 114,
+   "current": 0.575,
+   "normal": 0.8436666666666666,
+   "difference": -0.2686666666666666,
+   "seasonToDate": 544.0000000000003
+  },
+  {
+   "date": "2026-04-26",
+   "day": 115,
+   "current": 0.593,
+   "normal": 0.8356666666666666,
+   "difference": -0.2426666666666666,
+   "seasonToDate": 519.7333333333337
+  },
+  {
+   "date": "2026-04-27",
+   "day": 116,
+   "current": 0.603,
+   "normal": 0.8213333333333334,
+   "difference": -0.21833333333333338,
+   "seasonToDate": 497.9000000000004
+  },
+  {
+   "date": "2026-04-28",
+   "day": 117,
+   "current": 0.608,
+   "normal": 0.801,
+   "difference": -0.19300000000000006,
+   "seasonToDate": 478.60000000000036
+  },
+  {
+   "date": "2026-04-29",
+   "day": 118,
+   "current": 0.607,
+   "normal": 0.7760000000000001,
+   "difference": -0.16900000000000015,
+   "seasonToDate": 461.70000000000033
+  },
+  {
+   "date": "2026-04-30",
+   "day": 119,
+   "current": 0.602,
+   "normal": 0.747,
+   "difference": -0.14500000000000002,
+   "seasonToDate": 447.20000000000033
+  },
+  {
+   "date": "2026-05-01",
+   "day": 120,
+   "current": 0.593,
+   "normal": 0.7143333333333333,
+   "difference": -0.1213333333333333,
+   "seasonToDate": 435.066666666667
+  },
+  {
+   "date": "2026-05-02",
+   "day": 121,
+   "current": 0.581,
+   "normal": 0.6796666666666668,
+   "difference": -0.09866666666666679,
+   "seasonToDate": 425.20000000000033
+  },
+  {
+   "date": "2026-05-03",
+   "day": 122,
+   "current": 0.567,
+   "normal": 0.6429999999999999,
+   "difference": -0.07599999999999996,
+   "seasonToDate": 417.6000000000003
+  },
+  {
+   "date": "2026-05-04",
+   "day": 123,
+   "current": 0.55,
+   "normal": 0.606,
+   "difference": -0.05599999999999994,
+   "seasonToDate": 412.00000000000034
+  },
+  {
+   "date": "2026-05-05",
+   "day": 124,
+   "current": 0.531,
+   "normal": 0.5700000000000001,
+   "difference": -0.039000000000000035,
+   "seasonToDate": 408.10000000000036
+  },
+  {
+   "date": "2026-05-06",
+   "day": 125,
+   "current": 0.513,
+   "normal": 0.5383333333333332,
+   "difference": -0.025333333333333208,
+   "seasonToDate": 405.56666666666706
+  },
+  {
+   "date": "2026-05-07",
+   "day": 126,
+   "current": 0.496,
+   "normal": 0.5099999999999999,
+   "difference": -0.013999999999999901,
+   "seasonToDate": 404.1666666666671
+  },
+  {
+   "date": "2026-05-08",
+   "day": 127,
+   "current": 0.482,
+   "normal": 0.48366666666666663,
+   "difference": -0.0016666666666666496,
+   "seasonToDate": 404.0000000000004
+  },
+  {
+   "date": "2026-05-09",
+   "day": 128,
+   "current": 0.468,
+   "normal": 0.45999999999999996,
+   "difference": 0.008000000000000063,
+   "seasonToDate": 404.8000000000004
+  },
+  {
+   "date": "2026-05-10",
+   "day": 129,
+   "current": 0.454,
+   "normal": 0.4376666666666667,
+   "difference": 0.01633333333333331,
+   "seasonToDate": 406.43333333333374
+  },
+  {
+   "date": "2026-05-11",
+   "day": 130,
+   "current": 0.435,
+   "normal": 0.4166666666666667,
+   "difference": 0.018333333333333313,
+   "seasonToDate": 408.26666666666705
+  },
+  {
+   "date": "2026-05-12",
+   "day": 131,
+   "current": 0.407,
+   "normal": 0.39633333333333337,
+   "difference": 0.010666666666666602,
+   "seasonToDate": 409.3333333333337
+  },
+  {
+   "date": "2026-05-13",
+   "day": 132,
+   "current": 0.367,
+   "normal": 0.37666666666666665,
+   "difference": -0.009666666666666657,
+   "seasonToDate": 408.3666666666671
+  },
+  {
+   "date": "2026-05-14",
+   "day": 133,
+   "current": 0.32,
+   "normal": 0.3566666666666667,
+   "difference": -0.03666666666666668,
+   "seasonToDate": 404.7000000000004
+  },
+  {
+   "date": "2026-05-15",
+   "day": 134,
+   "current": 0.271,
+   "normal": 0.33866666666666667,
+   "difference": -0.06766666666666665,
+   "seasonToDate": 397.93333333333374
+  },
+  {
+   "date": "2026-05-16",
+   "day": 135,
+   "current": 0.227,
+   "normal": 0.321,
+   "difference": -0.094,
+   "seasonToDate": 388.53333333333376
+  },
+  {
+   "date": "2026-05-17",
+   "day": 136,
+   "current": 0.195,
+   "normal": 0.304,
+   "difference": -0.10899999999999999,
+   "seasonToDate": 377.6333333333338
+  },
+  {
+   "date": "2026-05-18",
+   "day": 137,
+   "current": 0.171,
+   "normal": 0.28633333333333333,
+   "difference": -0.11533333333333332,
+   "seasonToDate": 366.1000000000005
+  },
+  {
+   "date": "2026-05-19",
+   "day": 138,
+   "current": 0.149,
+   "normal": 0.2693333333333333,
+   "difference": -0.12033333333333332,
+   "seasonToDate": 354.0666666666672
+  },
+  {
+   "date": "2026-05-20",
+   "day": 139,
+   "current": 0.128,
+   "normal": 0.253,
+   "difference": -0.125,
+   "seasonToDate": 341.5666666666672
+  },
+  {
+   "date": "2026-05-21",
+   "day": 140,
+   "current": 0.11,
+   "normal": 0.238,
+   "difference": -0.128,
+   "seasonToDate": 328.76666666666716
+  },
+  {
+   "date": "2026-05-22",
+   "day": 141,
+   "current": 0.095,
+   "normal": 0.22399999999999998,
+   "difference": -0.12899999999999998,
+   "seasonToDate": 315.8666666666672
+  },
+  {
+   "date": "2026-05-23",
+   "day": 142,
+   "current": 0.082,
+   "normal": 0.211,
+   "difference": -0.129,
+   "seasonToDate": 302.9666666666672
+  },
+  {
+   "date": "2026-05-24",
+   "day": 143,
+   "current": 0.072,
+   "normal": 0.19899999999999998,
+   "difference": -0.127,
+   "seasonToDate": 290.2666666666672
+  },
+  {
+   "date": "2026-05-25",
+   "day": 144,
+   "current": 0.064,
+   "normal": 0.18733333333333335,
+   "difference": -0.12333333333333335,
+   "seasonToDate": 277.9333333333339
+  },
+  {
+   "date": "2026-05-26",
+   "day": 145,
+   "current": 0.058,
+   "normal": 0.1743333333333333,
+   "difference": -0.11633333333333332,
+   "seasonToDate": 266.3000000000006
+  },
+  {
+   "date": "2026-05-27",
+   "day": 146,
+   "current": 0.055,
+   "normal": 0.15966666666666665,
+   "difference": -0.10466666666666666,
+   "seasonToDate": 255.8333333333339
+  },
+  {
+   "date": "2026-05-28",
+   "day": 147,
+   "current": 0.053,
+   "normal": 0.145,
+   "difference": -0.092,
+   "seasonToDate": 246.63333333333392
+  },
+  {
+   "date": "2026-05-29",
+   "day": 148,
+   "current": 0.052,
+   "normal": 0.13233333333333333,
+   "difference": -0.08033333333333334,
+   "seasonToDate": 238.6000000000006
+  },
+  {
+   "date": "2026-05-30",
+   "day": 149,
+   "current": 0.052,
+   "normal": 0.12100000000000001,
+   "difference": -0.069,
+   "seasonToDate": 231.70000000000059
+  },
+  {
+   "date": "2026-05-31",
+   "day": 150,
+   "current": 0.052,
+   "normal": 0.11033333333333334,
+   "difference": -0.05833333333333334,
+   "seasonToDate": 225.86666666666724
+  },
+  {
+   "date": "2026-06-01",
+   "day": 151,
+   "current": 0.053,
+   "normal": 0.10099999999999999,
+   "difference": -0.047999999999999994,
+   "seasonToDate": 221.06666666666723
+  },
+  {
+   "date": "2026-06-02",
+   "day": 152,
+   "current": 0.056,
+   "normal": 0.09266666666666666,
+   "difference": -0.03666666666666666,
+   "seasonToDate": 217.40000000000057
+  },
+  {
+   "date": "2026-06-03",
+   "day": 153,
+   "current": 0.063,
+   "normal": 0.08533333333333333,
+   "difference": -0.02233333333333333,
+   "seasonToDate": 215.16666666666725
+  },
+  {
+   "date": "2026-06-04",
+   "day": 154,
+   "current": 0.076,
+   "normal": 0.08,
+   "difference": -0.0040000000000000036,
+   "seasonToDate": 214.76666666666725
+  },
+  {
+   "date": "2026-06-05",
+   "day": 155,
+   "current": 0.095,
+   "normal": 0.07666666666666667,
+   "difference": 0.018333333333333326,
+   "seasonToDate": 216.6000000000006
+  },
+  {
+   "date": "2026-06-06",
+   "day": 156,
+   "current": 0.123,
+   "normal": 0.075,
+   "difference": 0.048,
+   "seasonToDate": 221.4000000000006
+  },
+  {
+   "date": "2026-06-07",
+   "day": 157,
+   "current": 0.153,
+   "normal": 0.07500000000000001,
+   "difference": 0.07799999999999999,
+   "seasonToDate": 229.2000000000006
+  },
+  {
+   "date": "2026-06-08",
+   "day": 158,
+   "current": 0.182,
+   "normal": 0.07633333333333334,
+   "difference": 0.10566666666666666,
+   "seasonToDate": 239.76666666666728
+  },
+  {
+   "date": "2026-06-09",
+   "day": 159,
+   "current": 0.207,
+   "normal": 0.07733333333333334,
+   "difference": 0.12966666666666665,
+   "seasonToDate": 252.73333333333395
+  },
+  {
+   "date": "2026-06-10",
+   "day": 160,
+   "current": 0.228,
+   "normal": 0.07766666666666668,
+   "difference": 0.15033333333333332,
+   "seasonToDate": 267.7666666666673
+  },
+  {
+   "date": "2026-06-11",
+   "day": 161,
+   "current": 0.244,
+   "normal": 0.07633333333333334,
+   "difference": 0.16766666666666666,
+   "seasonToDate": 284.5333333333339
+  },
+  {
+   "date": "2026-06-12",
+   "day": 162,
+   "current": 0.254,
+   "normal": 0.07400000000000001,
+   "difference": 0.18,
+   "seasonToDate": 302.5333333333339
+  },
+  {
+   "date": "2026-06-13",
+   "day": 163,
+   "current": 0.258,
+   "normal": 0.07133333333333335,
+   "difference": 0.18666666666666665,
+   "seasonToDate": 321.2000000000006
+  },
+  {
+   "date": "2026-06-14",
+   "day": 164,
+   "current": 0.256,
+   "normal": 0.06833333333333334,
+   "difference": 0.18766666666666665,
+   "seasonToDate": 339.96666666666727
+  },
+  {
+   "date": "2026-06-15",
+   "day": 165,
+   "current": 0.249,
+   "normal": 0.06533333333333334,
+   "difference": 0.18366666666666664,
+   "seasonToDate": 358.33333333333394
+  },
+  {
+   "date": "2026-06-16",
+   "day": 166,
+   "current": 0.238,
+   "normal": 0.06233333333333333,
+   "difference": 0.17566666666666667,
+   "seasonToDate": 375.9000000000006
+  },
+  {
+   "date": "2026-06-17",
+   "day": 167,
+   "current": 0.225,
+   "normal": 0.05833333333333334,
+   "difference": 0.16666666666666666,
+   "seasonToDate": 392.5666666666673
+  },
+  {
+   "date": "2026-06-18",
+   "day": 168,
+   "current": 0.211,
+   "normal": 0.05433333333333334,
+   "difference": 0.15666666666666665,
+   "seasonToDate": 408.233333333334
+  },
+  {
+   "date": "2026-06-19",
+   "day": 169,
+   "current": 0.195,
+   "normal": 0.053,
+   "difference": 0.14200000000000002,
+   "seasonToDate": 422.43333333333396
+  },
+  {
+   "date": "2026-06-20",
+   "day": 170,
+   "current": 0.179,
+   "normal": 0.05533333333333334,
+   "difference": 0.12366666666666665,
+   "seasonToDate": 434.80000000000064
+  },
+  {
+   "date": "2026-06-21",
+   "day": 171,
+   "current": 0.163,
+   "normal": 0.062,
+   "difference": 0.101,
+   "seasonToDate": 444.90000000000066
+  },
+  {
+   "date": "2026-06-22",
+   "day": 172,
+   "current": 0.147,
+   "normal": 0.071,
+   "difference": 0.076,
+   "seasonToDate": 452.5000000000007
+  },
+  {
+   "date": "2026-06-23",
+   "day": 173,
+   "current": 0.13,
+   "normal": 0.08433333333333333,
+   "difference": 0.045666666666666675,
+   "seasonToDate": 457.06666666666734
+  },
+  {
+   "date": "2026-06-24",
+   "day": 174,
+   "current": 0.111,
+   "normal": 0.10033333333333333,
+   "difference": 0.010666666666666672,
+   "seasonToDate": 458.133333333334
+  },
+  {
+   "date": "2026-06-25",
+   "day": 175,
+   "current": 0.091,
+   "normal": 0.10966666666666668,
+   "difference": -0.01866666666666668,
+   "seasonToDate": 456.26666666666733
+  },
+  {
+   "date": "2026-06-26",
+   "day": 176,
+   "current": 0.075,
+   "normal": 0.10999999999999999,
+   "difference": -0.03499999999999999,
+   "seasonToDate": 452.76666666666733
+  },
+  {
+   "date": "2026-06-27",
+   "day": 177,
+   "current": 0.061,
+   "normal": 0.10500000000000002,
+   "difference": -0.044000000000000025,
+   "seasonToDate": 448.36666666666736
+  },
+  {
+   "date": "2026-06-28",
+   "day": 178,
+   "current": 0.05,
+   "normal": 0.09766666666666668,
+   "difference": -0.04766666666666668,
+   "seasonToDate": 443.6000000000007
+  },
+  {
+   "date": "2026-06-29",
+   "day": 179,
+   "current": 0.041,
+   "normal": 0.09000000000000001,
+   "difference": -0.04900000000000001,
+   "seasonToDate": 438.7000000000007
+  },
+  {
+   "date": "2026-06-30",
+   "day": 180,
+   "current": 0.034,
+   "normal": 0.083,
+   "difference": -0.049,
+   "seasonToDate": 433.80000000000075
+  },
+  {
+   "date": "2026-07-01",
+   "day": 181,
+   "current": 0.028,
+   "normal": 0.078,
+   "difference": -0.05,
+   "seasonToDate": 428.80000000000075
+  },
+  {
+   "date": "2026-07-02",
+   "day": 182,
+   "current": 0.023,
+   "normal": 0.07866666666666666,
+   "difference": -0.05566666666666666,
+   "seasonToDate": 423.2333333333341
+  },
+  {
+   "date": "2026-07-03",
+   "day": 183,
+   "current": 0.019,
+   "normal": 0.08033333333333333,
+   "difference": -0.06133333333333332,
+   "seasonToDate": 417.10000000000076
+  },
+  {
+   "date": "2026-07-04",
+   "day": 184,
+   "current": 0.015,
+   "normal": 0.083,
+   "difference": -0.068,
+   "seasonToDate": 410.30000000000075
+  },
+  {
+   "date": "2026-07-05",
+   "day": 185,
+   "current": 0.013,
+   "normal": 0.082,
+   "difference": -0.069,
+   "seasonToDate": 403.4000000000008
+  },
+  {
+   "date": "2026-07-06",
+   "day": 186,
+   "current": 0.01,
+   "normal": 0.079,
+   "difference": -0.069,
+   "seasonToDate": 396.5000000000008
+  },
+  {
+   "date": "2026-07-07",
+   "day": 187,
+   "current": 0.008,
+   "normal": 0.07533333333333332,
+   "difference": -0.06733333333333333,
+   "seasonToDate": 389.76666666666745
+  },
+  {
+   "date": "2026-07-08",
+   "day": 188,
+   "current": 0.007,
+   "normal": 0.07200000000000001,
+   "difference": -0.065,
+   "seasonToDate": 383.26666666666745
+  },
+  {
+   "date": "2026-07-09",
+   "day": 189,
+   "current": 0.006,
+   "normal": 0.06966666666666667,
+   "difference": -0.06366666666666666,
+   "seasonToDate": 376.9000000000008
+  },
+  {
+   "date": "2026-07-10",
+   "day": 190,
+   "current": 0.005,
+   "normal": 0.06799999999999999,
+   "difference": -0.06299999999999999,
+   "seasonToDate": 370.60000000000076
+  },
+  {
+   "date": "2026-07-11",
+   "day": 191,
+   "current": 0.004,
+   "normal": 0.06566666666666666,
+   "difference": -0.06166666666666666,
+   "seasonToDate": 364.4333333333341
+  },
+  {
+   "date": "2026-07-12",
+   "day": 192,
+   "current": 0.003,
+   "normal": 0.063,
+   "difference": -0.06,
+   "seasonToDate": 358.4333333333341
+  },
+  {
+   "date": "2026-07-13",
+   "day": 193,
+   "current": 0.003,
+   "normal": 0.059666666666666666,
+   "difference": -0.056666666666666664,
+   "seasonToDate": 352.7666666666674
+  },
+  {
+   "date": "2026-07-14",
+   "day": 194,
+   "current": 0.002,
+   "normal": 0.056666666666666664,
+   "difference": -0.05466666666666666,
+   "seasonToDate": 347.30000000000075
+  },
+  {
+   "date": "2026-07-15",
+   "day": 195,
+   "current": 0.002,
+   "normal": 0.055,
+   "difference": -0.053,
+   "seasonToDate": 342.00000000000074
+  },
+  {
+   "date": "2026-07-16",
+   "day": 196,
+   "current": 0.002,
+   "normal": 0.054,
+   "difference": -0.052,
+   "seasonToDate": 336.80000000000075
+  },
+  {
+   "date": "2026-07-17",
+   "day": 197,
+   "current": 0.002,
+   "normal": 0.05333333333333334,
+   "difference": -0.051333333333333335,
+   "seasonToDate": 331.6666666666674
+  },
+  {
+   "date": "2026-07-18",
+   "day": 198,
+   "current": 0.006,
+   "normal": 0.05333333333333334,
+   "difference": -0.04733333333333334,
+   "seasonToDate": 326.9333333333341
+  },
+  {
+   "date": "2026-07-19",
+   "day": 199,
+   "current": 0.014,
+   "normal": 0.053,
+   "difference": -0.039,
+   "seasonToDate": 323.0333333333341
+  },
+  {
+   "date": "2026-07-20",
+   "day": 200,
+   "current": 0.024,
+   "normal": 0.052333333333333336,
+   "difference": -0.028333333333333335,
+   "seasonToDate": 320.2000000000008
+  },
+  {
+   "date": "2026-07-21",
+   "day": 201,
+   "current": 0.035,
+   "normal": 0.050666666666666665,
+   "difference": -0.015666666666666662,
+   "seasonToDate": 318.6333333333341
+  },
+  {
+   "date": "2026-07-22",
+   "day": 202,
+   "current": 0.046,
+   "normal": 0.04833333333333334,
+   "difference": -0.00233333333333334,
+   "seasonToDate": 318.4000000000008
+  },
+  {
+   "date": "2026-07-23",
+   "day": 203,
+   "current": 0.056,
+   "normal": 0.045000000000000005,
+   "difference": 0.010999999999999996,
+   "seasonToDate": 319.5000000000008
+  },
+  {
+   "date": "2026-07-24",
+   "day": 204,
+   "current": 0.065,
+   "normal": 0.04033333333333333,
+   "difference": 0.02466666666666667,
+   "seasonToDate": 321.96666666666744
+  },
+  {
+   "date": "2026-07-25",
+   "day": 205,
+   "current": 0.072,
+   "normal": 0.034999999999999996,
+   "difference": 0.037,
+   "seasonToDate": 325.6666666666674
+  },
+  {
+   "date": "2026-07-26",
+   "day": 206,
+   "current": 0.079,
+   "normal": 0.029333333333333333,
+   "difference": 0.049666666666666665,
+   "seasonToDate": 330.63333333333406
+  },
+  {
+   "date": "2026-07-27",
+   "day": 207,
+   "current": 0.083,
+   "normal": 0.02466666666666667,
+   "difference": 0.058333333333333334,
+   "seasonToDate": 336.4666666666674
+  },
+  {
+   "date": "2026-07-28",
+   "day": 208,
+   "current": 0.086,
+   "normal": 0.021333333333333333,
+   "difference": 0.06466666666666666,
+   "seasonToDate": 342.933333333334
+  },
+  {
+   "date": "2026-07-29",
+   "day": 209,
+   "current": 0.088,
+   "normal": 0.018333333333333333,
+   "difference": 0.06966666666666665,
+   "seasonToDate": 349.90000000000066
+  },
+  {
+   "date": "2026-07-30",
+   "day": 210,
+   "current": 0.088,
+   "normal": 0.016333333333333335,
+   "difference": 0.07166666666666666,
+   "seasonToDate": 357.06666666666734
+  },
+  {
+   "date": "2026-07-31",
+   "day": 211,
+   "current": 0.09,
+   "normal": 0.015000000000000001,
+   "difference": 0.075,
+   "seasonToDate": 364.56666666666734
+  },
+  {
+   "date": "2026-08-01",
+   "day": 212,
+   "current": 0.095,
+   "normal": 0.014,
+   "difference": 0.081,
+   "seasonToDate": 372.66666666666737
+  },
+  {
+   "date": "2026-08-02",
+   "day": 213,
+   "current": 0.103,
+   "normal": 0.013666666666666667,
+   "difference": 0.08933333333333332,
+   "seasonToDate": 381.6000000000007
+  },
+  {
+   "date": "2026-08-03",
+   "day": 214,
+   "current": 0.115,
+   "normal": 0.013333333333333334,
+   "difference": 0.10166666666666667,
+   "seasonToDate": 391.7666666666674
+  },
+  {
+   "date": "2026-08-04",
+   "day": 215,
+   "current": 0.131,
+   "normal": 0.013666666666666666,
+   "difference": 0.11733333333333335,
+   "seasonToDate": 403.50000000000074
+  },
+  {
+   "date": "2026-08-05",
+   "day": 216,
+   "current": 0.146,
+   "normal": 0.014333333333333332,
+   "difference": 0.13166666666666665,
+   "seasonToDate": 416.6666666666674
+  },
+  {
+   "date": "2026-08-06",
+   "day": 217,
+   "current": 0.157,
+   "normal": 0.015666666666666666,
+   "difference": 0.14133333333333334,
+   "seasonToDate": 430.80000000000075
+  },
+  {
+   "date": "2026-08-07",
+   "day": 218,
+   "current": 0.163,
+   "normal": 0.017,
+   "difference": 0.14600000000000002,
+   "seasonToDate": 445.4000000000008
+  },
+  {
+   "date": "2026-08-08",
+   "day": 219,
+   "current": 0.162,
+   "normal": 0.019666666666666666,
+   "difference": 0.14233333333333334,
+   "seasonToDate": 459.6333333333341
+  },
+  {
+   "date": "2026-08-09",
+   "day": 220,
+   "current": 0.156,
+   "normal": 0.022333333333333334,
+   "difference": 0.13366666666666666,
+   "seasonToDate": 473.0000000000008
+  },
+  {
+   "date": "2026-08-10",
+   "day": 221,
+   "current": 0.147,
+   "normal": 0.025333333333333333,
+   "difference": 0.12166666666666666,
+   "seasonToDate": 485.1666666666675
+  },
+  {
+   "date": "2026-08-11",
+   "day": 222,
+   "current": 0.137,
+   "normal": 0.029666666666666664,
+   "difference": 0.10733333333333335,
+   "seasonToDate": 495.90000000000083
+  },
+  {
+   "date": "2026-08-12",
+   "day": 223,
+   "current": 0.127,
+   "normal": 0.037333333333333336,
+   "difference": 0.08966666666666667,
+   "seasonToDate": 504.86666666666747
+  },
+  {
+   "date": "2026-08-13",
+   "day": 224,
+   "current": 0.117,
+   "normal": 0.048666666666666664,
+   "difference": 0.06833333333333334,
+   "seasonToDate": 511.7000000000008
+  },
+  {
+   "date": "2026-08-14",
+   "day": 225,
+   "current": 0.11,
+   "normal": 0.06066666666666667,
+   "difference": 0.04933333333333333,
+   "seasonToDate": 516.6333333333341
+  },
+  {
+   "date": "2026-08-15",
+   "day": 226,
+   "current": 0.105,
+   "normal": 0.07433333333333332,
+   "difference": 0.030666666666666675,
+   "seasonToDate": 519.7000000000008
+  },
+  {
+   "date": "2026-08-16",
+   "day": 227,
+   "current": 0.102,
+   "normal": 0.08833333333333333,
+   "difference": 0.01366666666666666,
+   "seasonToDate": 521.0666666666675
+  },
+  {
+   "date": "2026-08-17",
+   "day": 228,
+   "current": 0.102,
+   "normal": 0.10166666666666667,
+   "difference": 0.0003333333333333244,
+   "seasonToDate": 521.1000000000008
+  },
+  {
+   "date": "2026-08-18",
+   "day": 229,
+   "current": 0.104,
+   "normal": 0.11433333333333334,
+   "difference": -0.010333333333333347,
+   "seasonToDate": 520.0666666666675
+  },
+  {
+   "date": "2026-08-19",
+   "day": 230,
+   "current": 0.107,
+   "normal": 0.126,
+   "difference": -0.019000000000000003,
+   "seasonToDate": 518.1666666666675
+  },
+  {
+   "date": "2026-08-20",
+   "day": 231,
+   "current": 0.112,
+   "normal": 0.136,
+   "difference": -0.024000000000000007,
+   "seasonToDate": 515.7666666666676
+  }
+ ]
+}

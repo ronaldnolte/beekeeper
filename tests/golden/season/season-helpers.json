@@ -1,0 +1,228 @@
+{
+ "dayLength": [
+  {
+   "lat": -33.87,
+   "doy": 1,
+   "dayLengthHours": 14.208433384742897
+  },
+  {
+   "lat": -33.87,
+   "doy": 80,
+   "dayLengthHours": 12.036125667661471
+  },
+  {
+   "lat": -33.87,
+   "doy": 172,
+   "dayLengthHours": 9.743073499396674
+  },
+  {
+   "lat": -33.87,
+   "doy": 266,
+   "dayLengthHours": 12.090300358005846
+  },
+  {
+   "lat": -33.87,
+   "doy": 355,
+   "dayLengthHours": 14.256926500603326
+  },
+  {
+   "lat": 0,
+   "doy": 1,
+   "dayLengthHours": 12
+  },
+  {
+   "lat": 0,
+   "doy": 80,
+   "dayLengthHours": 12
+  },
+  {
+   "lat": 0,
+   "doy": 172,
+   "dayLengthHours": 12
+  },
+  {
+   "lat": 0,
+   "doy": 266,
+   "dayLengthHours": 12
+  },
+  {
+   "lat": 0,
+   "doy": 355,
+   "dayLengthHours": 12
+  },
+  {
+   "lat": 35.04,
+   "doy": 1,
+   "dayLengthHours": 9.689688106500835
+  },
+  {
+   "lat": 35.04,
+   "doy": 80,
+   "dayLengthHours": 11.962257730211862
+  },
+  {
+   "lat": 35.04,
+   "doy": 172,
+   "dayLengthHours": 14.361186175878524
+  },
+  {
+   "lat": 35.04,
+   "doy": 266,
+   "dayLengthHours": 11.905658585862609
+  },
+  {
+   "lat": 35.04,
+   "doy": 355,
+   "dayLengthHours": 9.638813824121478
+  },
+  {
+   "lat": 45,
+   "doy": 1,
+   "dayLengthHours": 8.648987273340193
+  },
+  {
+   "lat": 45,
+   "doy": 80,
+   "dayLengthHours": 11.94617823739863
+  },
+  {
+   "lat": 45,
+   "doy": 172,
+   "dayLengthHours": 15.427612245368241
+  },
+  {
+   "lat": 45,
+   "doy": 266,
+   "dayLengthHours": 11.865462960177402
+  },
+  {
+   "lat": 45,
+   "doy": 355,
+   "dayLengthHours": 8.572387754631759
+  },
+  {
+   "lat": 69.65,
+   "doy": 1,
+   "dayLengthHours": 0
+  },
+  {
+   "lat": 69.65,
+   "doy": 80,
+   "dayLengthHours": 11.854882642682371
+  },
+  {
+   "lat": 69.65,
+   "doy": 172,
+   "dayLengthHours": 24
+  },
+  {
+   "lat": 69.65,
+   "doy": 266,
+   "dayLengthHours": 11.637154586903115
+  },
+  {
+   "lat": 69.65,
+   "doy": 355,
+   "dayLengthHours": 0
+  }
+ ],
+ "chartDayOfYear": [
+  {
+   "date": "2025-01-01",
+   "chartDayOfYear": 0
+  },
+  {
+   "date": "2025-03-08",
+   "chartDayOfYear": 66
+  },
+  {
+   "date": "2025-03-09",
+   "chartDayOfYear": 67
+  },
+  {
+   "date": "2025-08-25",
+   "chartDayOfYear": 236
+  },
+  {
+   "date": "2025-11-02",
+   "chartDayOfYear": 305
+  },
+  {
+   "date": "2025-12-31",
+   "chartDayOfYear": 364
+  },
+  {
+   "date": "2024-02-29",
+   "chartDayOfYear": 59
+  },
+  {
+   "date": "2024-12-30",
+   "chartDayOfYear": 364
+  },
+  {
+   "date": "2024-12-31",
+   "chartDayOfYear": 364
+  }
+ ],
+ "daysLengthening": [
+  {
+   "date": "2026-08-27",
+   "lat": 35.04,
+   "daysLengthening": false
+  },
+  {
+   "date": "2026-04-15",
+   "lat": 35.04,
+   "daysLengthening": true
+  },
+  {
+   "date": "2026-06-10",
+   "lat": 35.04,
+   "daysLengthening": true
+  },
+  {
+   "date": "2026-07-05",
+   "lat": 35.04,
+   "daysLengthening": false
+  },
+  {
+   "date": "2026-08-27",
+   "lat": -33.87,
+   "daysLengthening": true
+  }
+ ],
+ "fallCenter": [
+  {
+   "lat": 20,
+   "fallCenterDayOfYear": 286
+  },
+  {
+   "lat": 25,
+   "fallCenterDayOfYear": 282
+  },
+  {
+   "lat": 30,
+   "fallCenterDayOfYear": 274
+  },
+  {
+   "lat": 35,
+   "fallCenterDayOfYear": 266
+  },
+  {
+   "lat": 40,
+   "fallCenterDayOfYear": 258
+  },
+  {
+   "lat": 45,
+   "fallCenterDayOfYear": 250
+  },
+  {
+   "lat": 50,
+   "fallCenterDayOfYear": 242
+  },
+  {
+   "lat": 55,
+   "fallCenterDayOfYear": 234
+  }
+ ]
+}
