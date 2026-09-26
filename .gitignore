@@ -1,0 +1,15 @@
+# Secrets — never committed
+.env
+.env.*
+!.env.example
+.env-archive/
+*.jks
+keystore.properties
+service-account*.json
+
+# Build output and dependencies
+node_modules/
+dist/
+coverage/
+android/app/build/
+android/.gradle/
