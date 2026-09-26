@@ -9,11 +9,10 @@
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true,
-    "allowImportingTsExtensions": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "types": ["node", "vite/client"]
   },
-  "include": ["src", "config", "shared", "tests", "vite.config.ts", "vitest.config.ts"]
+  "include": ["src", "config", "shared", "api", "scripts", "tests", "vite.config.ts", "vitest.config.ts"]
 }

@@ -1,6 +1,6 @@
 // Nectar chart maths (client) — FORMULAS §4. Input: the API's full_history (3-dp values).
 
-import { clamp } from './math';
+import { clamp } from './math.js';
 
 export interface HistoryPoint {
   date: string;

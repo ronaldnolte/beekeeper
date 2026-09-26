@@ -1,7 +1,7 @@
 // Nectar Flow Index engine, V2 — FORMULAS §3. A pure function of satellite records, daily
 // weather and latitude. Do not "improve" anything here without re-scoring against golden/.
 
-import { addDays, dayMs, dayOfYear, dayRange, todayUtc } from './dates';
+import { addDays, dayMs, dayOfYear, dayRange, todayUtc } from './dates.js';
 import {
   centredQuadraticSlope,
   clamp,
@@ -10,7 +10,7 @@ import {
   round3,
   trailingMean,
   trailingSlope,
-} from './math';
+} from './math.js';
 
 /** Bump whenever a formula changes, so cached results are invalidated (DESIGN-REQUIREMENTS §1). */
 export const ENGINE_VERSION = 'v2-2026-09-21';

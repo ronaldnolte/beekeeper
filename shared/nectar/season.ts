@@ -1,8 +1,8 @@
 // Season helpers — FORMULAS §8. Not shown on screen yet; kept for the fall-bloom-window
 // requirement (DESIGN-REQUIREMENTS §5).
 
-import { clamp } from './math';
-import { dayOfYear } from './dates';
+import { clamp } from './math.js';
+import { dayOfYear } from './dates.js';
 
 /** Day length in hours at latitude φ (degrees) on day of year n. */
 export function dayLengthHours(lat: number, n: number): number {
@@ -18,4 +18,4 @@ export function daysLengthening(date: string, lat: number): boolean {
   return dayLengthHours(lat, n + 3) > dayLengthHours(lat, n - 3);
 }
 
-export { fallCentre } from './engine';
+export { fallCentre } from './engine.js';
