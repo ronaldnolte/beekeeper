@@ -15,6 +15,8 @@ import type { View } from './views';
 
 // Heavy screens load on demand (SCAR S-UI-13).
 const NectarScreen = lazy(() => import('../screens/nectar/NectarScreen'));
+const ForecastScreen = lazy(() => import('../screens/forecast/ForecastScreen'));
+const AskAIScreen = lazy(() => import('../screens/askai/AskAIScreen'));
 
 function ScreenLoader() {
   return (
@@ -29,6 +31,10 @@ function screenFor(view: View): ReactNode {
   switch (view) {
     case 'NECTAR_FLOW':
       return <NectarScreen />;
+    case 'FORECAST':
+      return <ForecastScreen />;
+    case 'ASK_AI':
+      return <AskAIScreen />;
     default:
       return <Placeholder view={view} />;
   }
@@ -60,7 +66,7 @@ export function App() {
         onAvatar={() => navigate('PROFILE', { keepRecord: false })}
       />
       {/* Every screen change fades in over 380 ms — a fade, never a slide (SCAR S-UI-7). */}
-      <main key={view} className={`flex-1 animate-screen ${showNav ? 'pb-32' : ''}`}>
+      <main key={view} className={`flex-1 animate-screen ${showNav && view !== 'ASK_AI' ? 'pb-32' : ''}`}>
         <Suspense fallback={<ScreenLoader />}>{screenFor(view)}</Suspense>
       </main>
       {showNav && <BottomNav />}
