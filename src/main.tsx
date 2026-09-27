@@ -1,7 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './index.css';
-import { MilestoneZero } from './MilestoneZero';
+import { AppProvider } from './app/store';
+import { App } from './app/App';
 
 // SPEC A §2 step 2: register the service worker after window load (web only).
 if ('serviceWorker' in navigator) {
@@ -10,8 +12,14 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+const queryClient = new QueryClient();
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MilestoneZero />
+    <QueryClientProvider client={queryClient}>
+      <AppProvider>
+        <App />
+      </AppProvider>
+    </QueryClientProvider>
   </StrictMode>,
 );

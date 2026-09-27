@@ -46,3 +46,88 @@ body {
   color: var(--color-text);
   font-family: var(--font-sans);
 }
+
+/* ---- Components (SPEC F §2) ---- */
+
+@utility card {
+  background: var(--color-card-bg);
+  color: var(--color-card-text);
+  border: 1px solid var(--color-card-border);
+  border-radius: 1.25rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+@utility btn-honey {
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 900;
+  background: linear-gradient(135deg, #f5b731 0%, #e99b1a 50%, #c47f0a 100%);
+  box-shadow: 0 4px 20px var(--color-primary-glow), 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: transform var(--duration-fast) var(--ease-app), box-shadow var(--duration-fast) var(--ease-app);
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+    box-shadow: 0 2px 10px var(--color-primary-glow), 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+/* ---- Motion (SPEC F §3) — every animation uses these ---- */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes thinking {
+  0%, 100% { opacity: 0.25; }
+  40% { opacity: 1; }
+}
+
+@utility animate-screen {
+  animation: fade-in var(--duration-slow) var(--ease-app) both;
+}
+@utility animate-rise-in {
+  animation: rise-in var(--duration-slow) var(--ease-app) both;
+}
+@utility animate-sheet-in {
+  animation: sheet-in var(--duration-slow) var(--ease-app) both;
+}
+@utility animate-slide-in {
+  animation: slide-in var(--duration-base) var(--ease-app) both;
+}
+@utility animate-fade-quick {
+  animation: fade-in var(--duration-base) var(--ease-app) both;
+}
+
+/* Anyone with "reduce motion" gets effectively no animation or transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
