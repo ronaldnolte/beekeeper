@@ -40,6 +40,12 @@
   --duration-slow: 380ms;
 }
 
+/* Always reserve the scrollbar's space so content never jumps sideways when a page grows
+   or shrinks past the window height. */
+html {
+  scrollbar-gutter: stable;
+}
+
 /* The body is the navy shell; screens paint cream on top (SPEC F §1). */
 body {
   background: var(--color-shell);
