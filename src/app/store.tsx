@@ -146,6 +146,20 @@ function useAppStore() {
     (apiary: Apiary | null) => update(s => ({ ...s, selectedApiaryId: apiary?.id ?? null, apiaryName: apiary?.name ?? null })),
     [update],
   );
+  /** Tapping an apiary: its own hive list (single-apiary mode, header "Hives"). */
+  const openApiaryHives = useCallback(
+    (apiary: Apiary) =>
+      update(
+        s => ({ ...s, view: 'SELECT_HIVE', selectedApiaryId: apiary.id, apiaryName: apiary.name, selectedHiveId: null, selectedRecord: null, isUnified: false }),
+        { view: 'SELECT_HIVE' },
+      ),
+    [update],
+  );
+  /** Tapping a hive: Hive Detail. */
+  const openHive = useCallback(
+    (hiveId: string) => update(s => ({ ...s, view: 'HIVE_DETAIL', selectedHiveId: hiveId, selectedRecord: null }), { view: 'HIVE_DETAIL' }),
+    [update],
+  );
   const selectHive = useCallback((hiveId: string | null) => update(s => ({ ...s, selectedHiveId: hiveId })), [update]);
   const selectRecord = useCallback((record: SelectedRecord | null) => update(s => ({ ...s, selectedRecord: record })), [update]);
 
@@ -227,12 +241,14 @@ function useAppStore() {
       openApiariesTab,
       openHivesTab,
       selectApiary,
+      openApiaryHives,
+      openHive,
       selectHive,
       selectRecord,
       reloadNavData,
       signOut,
     }),
-    [state, navigate, goBack, openApiariesTab, openHivesTab, selectApiary, selectHive, selectRecord, reloadNavData, signOut],
+    [state, navigate, goBack, openApiariesTab, openHivesTab, selectApiary, openApiaryHives, openHive, selectHive, selectRecord, reloadNavData, signOut],
   );
 }
 

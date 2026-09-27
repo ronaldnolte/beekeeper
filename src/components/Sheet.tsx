@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { Overlay } from './Overlay';
 
 interface Props {
   open: boolean;
@@ -24,6 +25,7 @@ export function Sheet({ open, onClose, title, children, variant = 'amber', maxHe
 
   if (!open) return null;
   return (
+    <Overlay>
     <div
       className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-quick"
       onClick={() => !closeDisabled && onClose()}
@@ -44,5 +46,6 @@ export function Sheet({ open, onClose, title, children, variant = 'amber', maxHe
         <div className="flex-1 overflow-y-auto">{children}</div>
       </div>
     </div>
+    </Overlay>
   );
 }

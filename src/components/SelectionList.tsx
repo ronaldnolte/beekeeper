@@ -1,7 +1,7 @@
 // Shared selection list and card — SPEC B §11 (screenshot B05).
 
 import { useState, type ReactNode } from 'react';
-import { ChevronRight, MoreVertical, Pencil, Search, type LucideIcon } from 'lucide-react';
+import { ChevronRight, MoreVertical, Pencil, Search, Trash2, type LucideIcon } from 'lucide-react';
 import { Spinner } from './Chrome';
 
 export interface SelectionItem {
@@ -76,29 +76,32 @@ function SelectionCard<T extends SelectionItem>({
   onDelete?: (item: T) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const side = "w-11 h-11 shrink-0 rounded-2xl bg-card-bg border border-card-border shadow-sm flex items-center justify-center text-text-muted";
   return (
     <div>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={() => onSelect(item)} className="card flex-1 min-w-0 flex items-center gap-4 p-4 text-left active:scale-[0.99] transition-transform">
+        <button type="button" onClick={() => onSelect(item)} className="card flex-1 min-w-0 flex items-center gap-4 p-4 min-h-[78px] text-left active:scale-[0.99] transition-transform">
           <span className="w-11 h-11 shrink-0 rounded-xl bg-primary-wash text-primary-ink flex items-center justify-center">
             <Icon size={22} />
           </span>
           <span className="flex-1 min-w-0">
-            <span className="flex items-center gap-2">
-              <span className="font-bold text-text truncate">{item.title}</span>
-              {item.badge}
-            </span>
-            {item.subtitle && <span className="block text-sm text-text-muted truncate">{item.subtitle}</span>}
+            <span className="block font-bold text-text truncate">{item.title}</span>
+            {(item.badge || item.subtitle) && (
+              <span className="mt-0.5 flex items-center gap-3">
+                {item.badge}
+                {item.subtitle && <span className="text-sm text-text-muted">{item.subtitle}</span>}
+              </span>
+            )}
           </span>
           <ChevronRight size={20} className="shrink-0 text-text-muted" />
         </button>
         {/* Delete lives behind a three-dot menu (accidental taps, SCAR S-UI-2). */}
         {onDelete ? (
-          <button type="button" aria-label="More actions" onClick={() => setMenuOpen(o => !o)} className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-text-muted">
+          <button type="button" aria-label="More actions" aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)} className={side}>
             <MoreVertical size={20} />
           </button>
         ) : onEdit ? (
-          <button type="button" aria-label="Edit" onClick={() => onEdit(item)} className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-text-muted">
+          <button type="button" aria-label="Edit" onClick={() => onEdit(item)} className={side}>
             <Pencil size={18} />
           </button>
         ) : null}
@@ -106,12 +109,20 @@ function SelectionCard<T extends SelectionItem>({
       {menuOpen && onDelete && (
         <div className="flex gap-2 mt-2 animate-fade-quick">
           {onEdit && (
-            <button type="button" onClick={() => (setMenuOpen(false), onEdit(item))} className="flex-1 h-10 rounded-xl bg-primary-wash text-primary-ink font-bold">
-              Edit
+            <button
+              type="button"
+              onClick={() => (setMenuOpen(false), onEdit(item))}
+              className="flex-1 h-11 rounded-2xl border border-primary-faint bg-primary-wash text-primary-ink font-bold flex items-center justify-center gap-2"
+            >
+              <Pencil size={16} /> Edit
             </button>
           )}
-          <button type="button" onClick={() => (setMenuOpen(false), onDelete(item))} className="flex-1 h-10 rounded-xl bg-bad text-white font-bold">
-            Delete
+          <button
+            type="button"
+            onClick={() => (setMenuOpen(false), onDelete(item))}
+            className="flex-1 h-11 rounded-2xl border border-red-200 bg-red-50 text-red-600 font-bold flex items-center justify-center gap-2"
+          >
+            <Trash2 size={16} /> Delete
           </button>
         </div>
       )}

@@ -7,6 +7,7 @@ import type { NectarResponse, Phase } from './data';
 import { DifferenceChart, MainChart, SeasonChart } from './Charts';
 import { Legend, PhaseChip, SatelliteLine } from './Readout';
 import { PANEL, monDayOfChartDay, pct } from './style';
+import { Overlay } from '../../components/Overlay';
 
 /** Ask the browser for real full screen — must run inside the tap (silently ignored if unsupported). */
 export function requestBrowserFullscreen() {
@@ -87,6 +88,7 @@ export function FullScreen({ apiaryName, data, model, onClose }: { apiaryName: s
   const cellStyle = { background: '#16162c', border: `1px solid ${PANEL.border}` };
 
   return (
+    <Overlay>
     <div className="fixed inset-0 z-[200] overflow-hidden" style={{ background: '#07070d' }} role="dialog" aria-modal="true" aria-label="Nectar index full screen">
       <div className="absolute top-0 left-0 flex flex-col gap-2 p-4 overflow-y-auto" style={frame}>
         <div className="flex items-center gap-3 pb-2 border-b" style={{ borderColor: PANEL.border }}>
@@ -174,5 +176,6 @@ export function FullScreen({ apiaryName, data, model, onClose }: { apiaryName: s
         </div>
       </div>
     </div>
+    </Overlay>
   );
 }

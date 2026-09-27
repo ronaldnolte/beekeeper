@@ -4,9 +4,11 @@ import type { ReactNode } from 'react';
 import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import type { InspectionWindow } from '../../../shared/forecast/scoring';
 import { TIER, hourLabel } from './style';
+import { Overlay } from '../../components/Overlay';
 
 function GlassDialog({ onClose, label, children }: { onClose: () => void; label: string; children: ReactNode }) {
   return (
+    <Overlay>
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-quick" onClick={onClose}>
       <div
         role="dialog"
@@ -18,6 +20,7 @@ function GlassDialog({ onClose, label, children }: { onClose: () => void; label:
         {children}
       </div>
     </div>
+    </Overlay>
   );
 }
 

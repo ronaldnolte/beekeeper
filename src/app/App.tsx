@@ -17,6 +17,9 @@ import type { View } from './views';
 const NectarScreen = lazy(() => import('../screens/nectar/NectarScreen'));
 const ForecastScreen = lazy(() => import('../screens/forecast/ForecastScreen'));
 const AskAIScreen = lazy(() => import('../screens/askai/AskAIScreen'));
+const ApiariesScreen = lazy(() => import('../screens/apiaries/ApiariesScreen'));
+const HivesScreen = lazy(() => import('../screens/hives/HivesScreen'));
+const HiveDetailScreen = lazy(() => import('../screens/hives/HiveDetailScreen'));
 
 function ScreenLoader() {
   return (
@@ -35,6 +38,12 @@ function screenFor(view: View): ReactNode {
       return <ForecastScreen />;
     case 'ASK_AI':
       return <AskAIScreen />;
+    case 'SELECT_APIARY':
+      return <ApiariesScreen />;
+    case 'SELECT_HIVE':
+      return <HivesScreen />;
+    case 'HIVE_DETAIL':
+      return <HiveDetailScreen />;
     default:
       return <Placeholder view={view} />;
   }
