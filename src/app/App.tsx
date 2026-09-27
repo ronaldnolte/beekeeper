@@ -1,15 +1,38 @@
 // The app frame — SPEC A §2–§5, §12.
 
+import { lazy, Suspense, type ReactNode } from 'react';
 import { useApp } from './store';
 import { BOTTOM_NAV_VIEWS, headerTitle } from './views';
 import { Header } from '../components/Header';
 import { BottomNav } from '../components/BottomNav';
-import { FullScreenLoader, GestureStrip } from '../components/Chrome';
+import { FullScreenLoader, GestureStrip, Spinner } from '../components/Chrome';
 import { WhatsNew } from '../components/WhatsNew';
 import { AuthScreen } from '../screens/auth/AuthScreen';
 import { UpdatePasswordScreen } from '../screens/auth/UpdatePasswordScreen';
 import { BetaSignupScreen } from '../screens/auth/BetaSignupScreen';
 import { Placeholder } from '../screens/Placeholder';
+import type { View } from './views';
+
+// Heavy screens load on demand (SCAR S-UI-13).
+const NectarScreen = lazy(() => import('../screens/nectar/NectarScreen'));
+
+function ScreenLoader() {
+  return (
+    <div className="flex flex-col items-center gap-3 py-16 text-text-muted">
+      <Spinner />
+      <p>Loading...</p>
+    </div>
+  );
+}
+
+function screenFor(view: View): ReactNode {
+  switch (view) {
+    case 'NECTAR_FLOW':
+      return <NectarScreen />;
+    default:
+      return <Placeholder view={view} />;
+  }
+}
 
 export function App() {
   const { state, navigate } = useApp();
@@ -38,7 +61,7 @@ export function App() {
       />
       {/* Every screen change fades in over 380 ms — a fade, never a slide (SCAR S-UI-7). */}
       <main key={view} className={`flex-1 animate-screen ${showNav ? 'pb-32' : ''}`}>
-        <Placeholder view={view} />
+        <Suspense fallback={<ScreenLoader />}>{screenFor(view)}</Suspense>
       </main>
       {showNav && <BottomNav />}
       <WhatsNew />
