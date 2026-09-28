@@ -38,3 +38,5 @@ oddities to fix one at a time afterwards, each as its own small change.
 2. Nectar number box sits above the main chart instead of hiding its top (Ron, 2026-09-27).
 3. Readout strip keeps one height and the page reserves scrollbar space, so hovering the
    chart no longer shifts the page sideways (Ron, 2026-09-27).
+4. Photos & Voice bottom bar: the buttons share the width so they fit on a phone instead of
+   running off the edge (2026-09-27).

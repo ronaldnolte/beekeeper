@@ -20,6 +20,12 @@ const AskAIScreen = lazy(() => import('../screens/askai/AskAIScreen'));
 const ApiariesScreen = lazy(() => import('../screens/apiaries/ApiariesScreen'));
 const HivesScreen = lazy(() => import('../screens/hives/HivesScreen'));
 const HiveDetailScreen = lazy(() => import('../screens/hives/HiveDetailScreen'));
+const InspectionScreen = lazy(() => import('../screens/records/InspectionScreen'));
+const PhotosVoiceScreen = lazy(() => import('../screens/records/PhotosVoiceScreen'));
+const InterventionScreen = lazy(() => import('../screens/records/InterventionScreen'));
+const VarroaScreen = lazy(() => import('../screens/records/VarroaScreen'));
+const TaskScreen = lazy(() => import('../screens/records/TaskScreen'));
+const DashboardScreen = lazy(() => import('../screens/dashboard/DashboardScreen'));
 
 function ScreenLoader() {
   return (
@@ -44,6 +50,18 @@ function screenFor(view: View): ReactNode {
       return <HivesScreen />;
     case 'HIVE_DETAIL':
       return <HiveDetailScreen />;
+    case 'INSPECTION_FORM':
+      return <InspectionScreen />;
+    case 'INSPECTION_PLUS':
+      return <PhotosVoiceScreen />;
+    case 'INTERVENTION_FORM':
+      return <InterventionScreen />;
+    case 'VARROA_FORM':
+      return <VarroaScreen />;
+    case 'TASK_FORM':
+      return <TaskScreen />;
+    case 'DASHBOARD':
+      return <DashboardScreen />;
     default:
       return <Placeholder view={view} />;
   }

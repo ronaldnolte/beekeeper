@@ -5,18 +5,6 @@ import { useApp } from '../app/store';
 import type { View } from '../app/views';
 
 const COMING: Partial<Record<View, { name: string; milestone: number }>> = {
-  DASHBOARD: { name: 'Dashboard', milestone: 7 },
-  SELECT_APIARY: { name: 'My Apiaries', milestone: 6 },
-  SELECT_HIVE: { name: 'Hives', milestone: 6 },
-  HIVE_DETAIL: { name: 'Hive Detail', milestone: 6 },
-  INSPECTION_FORM: { name: 'Inspection', milestone: 7 },
-  INSPECTION_PLUS: { name: 'Photos & Voice', milestone: 7 },
-  INTERVENTION_FORM: { name: 'Intervention', milestone: 7 },
-  VARROA_FORM: { name: 'Varroa', milestone: 7 },
-  TASK_FORM: { name: 'Task', milestone: 7 },
-  FORECAST: { name: 'Forecast', milestone: 5 },
-  NECTAR_FLOW: { name: 'Nectar Flow', milestone: 4 },
-  ASK_AI: { name: 'Ask AI', milestone: 5 },
   ROADMAP: { name: 'Roadmap', milestone: 8 },
   PROFILE: { name: 'Your Profile', milestone: 8 },
 };

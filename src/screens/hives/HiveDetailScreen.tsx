@@ -22,7 +22,7 @@ export function HiveActionBar() {
     ['Inspection', ClipboardList, () => open('INSPECTION_FORM')],
     ['Intervention', PlusCircle, () => open('INTERVENTION_FORM')],
     ['Varroa', Microscope, () => open('VARROA_FORM')],
-    // The task sheet arrives in Milestone 7; until then this opens the Task placeholder.
+    // Opens the task sheet with this hive as the default.
     ['Task', AlertTriangle, () => open('TASK_FORM')],
   ];
   return (
