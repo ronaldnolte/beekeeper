@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "audit:login": "node scripts/audit-login.mjs",
+    "audit:capture": "node scripts/audit-capture.mjs",
+    "audit:pairs": "node scripts/audit-pairs.mjs"
   },
   "dependencies": {
     "@google/earthengine": "^1.7.45",
@@ -24,6 +27,7 @@
     "xhr2": "^0.2.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/leaflet": "^1.9.22",
     "@types/node": "^26.6.3",

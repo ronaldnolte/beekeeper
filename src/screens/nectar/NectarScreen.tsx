@@ -50,7 +50,7 @@ function LoadingCard({ startedAt }: { startedAt: number }) {
     return () => clearInterval(t);
   }, []);
   return (
-    <div className="flex items-center justify-center min-h-[60vh] px-2">
+    <div className="flex items-center justify-center min-h-[calc(100vh-190px)] px-2">
       <div className="card w-full p-12 text-center">
         <Spinner className="w-12 h-12 mx-auto" />
         <h2 className="mt-6 text-lg leading-7 font-bold text-primary-ink">Analyzing satellite imagery…</h2>
@@ -105,7 +105,8 @@ export default function NectarScreen() {
     );
   }
 
-  const showTopBar = apiaries.length > 1;
+  // The live app shows the apiary bar only once a load has finished (screenshot B06).
+  const showTopBar = apiaries.length > 1 && load.kind !== 'loading';
   const thisYear = new Date().getFullYear();
   const reviewYears = Array.from({ length: Math.max(0, thisYear - 1 - 2022 + 1) }, (_, i) => thisYear - 1 - i);
   const chartW = Math.max(0, panelWidth);
@@ -125,7 +126,7 @@ export default function NectarScreen() {
                   setHoverDay(null);
                   selectApiary(apiaries.find(a => a.id === e.target.value) ?? null);
                 }}
-                className="appearance-none bg-transparent font-medium text-text outline-none min-w-0 flex-1 truncate pr-2"
+                className="appearance-none bg-transparent text-[15px] font-medium text-text outline-none min-w-0 flex-1 truncate pr-2"
               >
                 {apiaries.map(a => (
                   <option key={a.id} value={a.id}>

@@ -15,7 +15,7 @@ const fullReload = () => window.location.reload();
 export function CreateButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <div className="fixed inset-x-0 z-40 flex justify-center px-4 pointer-events-none" style={{ bottom: 'calc(96px + env(safe-area-inset-bottom))' }}>
-      <button type="button" onClick={onClick} className="pointer-events-auto btn-honey w-full max-w-[240px] h-12 text-base flex items-center justify-center gap-2">
+      <button type="button" onClick={onClick} className="pointer-events-auto btn-honey w-full max-w-[240px] h-12 text-sm flex items-center justify-center gap-2">
         <Plus size={20} /> {label}
       </button>
     </div>
@@ -39,10 +39,10 @@ export default function ApiariesScreen() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-5 pb-20">
+    <div className="max-w-2xl mx-auto px-4 pt-4 pb-20">
       <h2 className="text-xl font-black text-text">My Apiaries</h2>
-      <p className="mt-1 text-sm text-text-muted">Select a yard location to manage your hives.</p>
-      <div className="mt-8">
+      <p className="mt-1 text-[13px] text-text-muted">Select a yard location to manage your hives.</p>
+      <div className="mt-6">
         <SelectionList
           items={state.apiaries.map(a => ({ id: a.id, title: a.name, subtitle: apiarySubtitle(a) }))}
           icon={MapPin}

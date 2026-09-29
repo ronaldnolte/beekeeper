@@ -16,7 +16,7 @@ const CHIP: Record<string, string> = {
 function StatusChip({ status }: { status: string | null }) {
   const s = status ?? 'pending';
   return (
-    <span className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide ${CHIP[s] ?? 'bg-gray-100 text-gray-600'}`}>
+    <span className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${CHIP[s] ?? 'bg-gray-100 text-gray-600'}`}>
       {s === 'completed' ? <CheckCircle2 size={14} /> : s === 'pending' ? <Clock size={14} /> : null}
       {s}
     </span>
@@ -108,17 +108,17 @@ export default function RoadmapScreen() {
     <div className="max-w-2xl mx-auto px-4 pt-4 pb-40">
       <div className="rounded-3xl border-2 border-primary/30 bg-[#FFFBF0] px-5 py-6 flex items-center justify-between gap-3 shadow-sm">
         <div>
-          <h1 className="text-[26px] font-black leading-tight text-primary-ink">Feedback &amp; Roadmap</h1>
+          <h1 className="text-[22px] font-black leading-tight text-primary-ink">Feedback &amp; Roadmap</h1>
           <p className="mt-1 text-sm font-black uppercase tracking-wider text-primary-ink">Community driven</p>
         </div>
-        <button type="button" onClick={() => setSubmitting(true)} className="shrink-0 min-h-[64px] w-[34%] max-w-[170px] rounded-2xl bg-primary px-3 text-white text-lg font-black shadow-md flex items-center justify-center gap-2">
+        <button type="button" onClick={() => setSubmitting(true)} className="shrink-0 min-h-[64px] w-[34%] max-w-[170px] rounded-2xl bg-primary px-3 text-white text-sm font-black shadow-md flex items-center justify-center gap-2">
           <Lightbulb size={18} /> Submit Idea
         </button>
       </div>
 
       <div className="mt-6 mb-4 flex items-center justify-between px-1">
         <h2 className="text-sm font-black uppercase tracking-wider text-text-muted">Community requests</h2>
-        <span className="rounded-full bg-white/80 px-4 py-1.5 text-sm font-bold text-text-muted">Sorted by Votes</span>
+        <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-text-muted">Sorted by Votes</span>
       </div>
 
       {items === null ? (
@@ -149,7 +149,7 @@ export default function RoadmapScreen() {
                   <h3 className="text-lg font-black leading-snug text-text min-w-0">{item.title}</h3>
                   <StatusChip status={item.status} />
                 </div>
-                {item.description && <p className="mt-2 whitespace-pre-wrap leading-relaxed text-text-muted">{item.description}</p>}
+                {item.description && <p className="mt-2 text-[13px] whitespace-pre-wrap leading-relaxed text-text-muted">{item.description}</p>}
                 {isAdmin && (
                   <div className="mt-4 flex flex-wrap items-center gap-2">
                     <span className="text-xs font-black uppercase tracking-wider text-text-muted">Admin · Set:</span>

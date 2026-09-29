@@ -18,11 +18,11 @@ export function SatelliteLine({ satellite }: { satellite: NectarResponse['satell
   if (!satellite?.last_image) return null;
   return (
     <p
-      className="flex items-start gap-2 text-[13px] leading-snug"
+      className="flex items-start gap-2 text-[11px] leading-snug"
       style={{ color: '#a3a6c8' }}
       title="Passes are orbital and happen on schedule. Whether one produces usable data depends on cloud cover over your yard."
     >
-      <Satellite size={14} className="shrink-0 mt-0.5" />
+      <Satellite size={12} className="shrink-0 mt-0.5" />
       <span>
         Satellite: last image <strong className="text-white">{monDay(satellite.last_image)}</strong>
         {satellite.next_pass && (
@@ -39,7 +39,7 @@ export function SatelliteLine({ satellite }: { satellite: NectarResponse['satell
 
 export function Legend({ model, current = '(current)' }: { model: ChartModel; current?: string }) {
   return (
-    <span className="flex items-center gap-4 text-[15px] text-[#d6d8ee]">
+    <span className="flex items-center gap-3 text-[11px] text-[#d6d8ee]">
       <span className="flex items-center gap-2">
         <span className="w-4 h-[3px] rounded-full" style={{ background: NORMAL_BLUE }} />
         {model.baseYearLabel}
@@ -67,8 +67,8 @@ export function ReadoutStrip({ model, data, hoverDay }: { model: ChartModel; dat
   return (
     <div className="grid rounded-2xl px-4 py-3.5 text-xs" style={{ background: PANEL.strip, border: `1px solid ${PANEL.border}` }}>
       <div style={layer} className={hovering ? "invisible" : ""} aria-hidden={hovering}>
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="flex items-center gap-1 font-mono text-[9px]" style={{ color: "#6b6f95" }}>
               <Timer size={10} /> {__BUILD_TIME__}
             </span>
@@ -84,15 +84,15 @@ export function ReadoutStrip({ model, data, hoverDay }: { model: ChartModel; dat
         </div>
       </div>
       <div style={layer} className={hovering ? "" : "invisible"} aria-hidden={!hovering} aria-live="polite">
-        <p className="text-sm font-black text-white">{monDayOfChartDay(day)}</p>
-        <div className="mt-1 flex flex-wrap items-center gap-x-6 gap-y-2 text-[#c7c9e0]">
+        <p className="text-[13px] font-black text-white">{monDayOfChartDay(day)}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-[#c7c9e0]">
           <span>
             {model.baseYearLabel}: <strong style={{ color: "#3b82f6" }}>{pct(normal)}</strong>
           </span>
           <span>
             {model.currentYear}: <strong style={{ color: phase ? phaseColour(phase) : undefined }}>{pct(cur?.value)}</strong>
           </span>
-          {phase && <PhaseChip phase={phase} />}
+          {phase && <PhaseChip phase={phase} className="!text-[11px] !px-2.5" />}
         </div>
       </div>
     </div>

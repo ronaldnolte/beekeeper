@@ -22,7 +22,7 @@ const ICONS: Record<string, LucideIcon> = {
 export function FormCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
     <div className="card p-4">
-      <h3 className="flex items-center gap-3 mb-4 text-lg font-bold text-text">
+      <h3 className="flex items-center gap-2.5 mb-3 text-sm font-bold text-text">
         <span aria-hidden="true" className="w-6 flex justify-center">
           {icon}
         </span>
@@ -33,14 +33,14 @@ export function FormCard({ icon, title, children }: { icon: ReactNode; title: st
   );
 }
 
-export const dateInput = 'w-full h-12 rounded-2xl bg-white/70 px-4 text-lg font-bold text-primary outline-none focus:ring-4 focus:ring-primary-ring';
+export const dateInput = 'w-full h-12 rounded-2xl bg-white/70 px-4 text-base font-bold text-primary outline-none focus:ring-4 focus:ring-primary-ring';
 export const notesInput = 'w-full rounded-2xl bg-white/70 px-4 py-3 text-base text-text outline-none focus:ring-4 focus:ring-primary-ring placeholder:text-text-muted resize-y';
 
 /** Bottom bar of the intervention and varroa forms: Cancel, trash (edit only), Save/Update. */
 export function FormActions({ editing, busy, onCancel, onDelete, onSave }: { editing: boolean; busy: boolean; onCancel: () => void; onDelete: () => void; onSave: () => void }) {
   return (
     <BottomBar gap="gap-3">
-      <button type="button" onClick={onCancel} disabled={busy} className="w-[30%] h-[60px] rounded-2xl bg-white shadow-sm text-lg font-bold text-text disabled:opacity-60">
+      <button type="button" onClick={onCancel} disabled={busy} className="w-[30%] h-[60px] rounded-2xl bg-white shadow-sm text-sm font-bold text-text disabled:opacity-60">
         Cancel
       </button>
       {editing && (
@@ -107,8 +107,8 @@ function InterventionForm({ onDone }: { onDone: (toHive: boolean) => void }) {
                 onClick={() => setType(value)}
                 className={`h-[72px] rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 font-bold transition-colors ${on ? tone : 'border-transparent bg-white/70 text-text-muted'}`}
               >
-                <Icon size={24} />
-                <span className="text-sm">{label}</span>
+                <Icon size={22} />
+                <span className="text-[11px]">{label}</span>
               </button>
             );
           })}
@@ -148,7 +148,7 @@ export default function InterventionScreen() {
         <InterventionForm key={state.selectedRecord?.id ?? 'new'} onDone={done} />
       ) : (
         <>
-          <button type="button" onClick={() => setAdding(true)} disabled={!hiveId} className="w-full h-[60px] rounded-3xl bg-primary text-white text-2xl font-black shadow-md disabled:opacity-60">
+          <button type="button" onClick={() => setAdding(true)} disabled={!hiveId} className="w-full h-[58px] rounded-3xl bg-primary text-white text-lg font-black shadow-md disabled:opacity-60">
             + Add Intervention
           </button>
           <div className="mt-5">

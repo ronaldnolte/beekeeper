@@ -14,7 +14,7 @@ function GlassDialog({ onClose, label, children }: { onClose: () => void; label:
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[2rem] bg-[#f3f1ee]/90 backdrop-blur-xl border border-white/70 shadow-2xl p-5 animate-sheet-in"
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-[1.5rem] bg-[#f3f1ee]/90 backdrop-blur-xl border border-white/70 shadow-2xl p-5 animate-sheet-in"
         onClick={e => e.stopPropagation()}
       >
         {children}
@@ -41,10 +41,10 @@ function Header({ title, children, onClose }: { title: string; children?: ReactN
 function Tile({ label, value, pts, max, alert }: { label: string; value: string; pts: number; max: number; alert?: boolean }) {
   return (
     <div className={`rounded-2xl bg-white px-3.5 py-3 ${alert ? 'border-2 border-red-500' : 'border-2 border-transparent'}`}>
-      <p className="text-[11px] font-medium uppercase tracking-wider text-text-muted">{label}</p>
+      <p className="text-[10px] font-medium uppercase tracking-wider text-text-muted">{label}</p>
       <div className="mt-0.5 flex items-baseline justify-between">
-        <span className="text-lg text-text">{value}</span>
-        <span className="text-sm font-bold text-text-muted">
+        <span className="text-sm text-text">{value}</span>
+        <span className="text-[11px] font-bold text-text-muted">
           {pts}/{max}
         </span>
       </div>
@@ -62,19 +62,19 @@ export function CellDetail({ w, onClose }: { w: InspectionWindow; onClose: () =>
   return (
     <GlassDialog onClose={onClose} label="Inspection Window Details">
       <Header title="Inspection Window Details" onClose={onClose}>
-        <p className="mt-1 font-bold uppercase tracking-wide text-text-muted">
+        <p className="mt-1 text-sm font-bold uppercase tracking-wide text-text-muted">
           {longDate} <span className="ml-1.5 text-primary-ink">{hourLabel(w.hour)}</span>
         </p>
       </Header>
 
       <div className={`relative mt-4 rounded-3xl ${tier.bg} py-4 text-center text-white shadow-md overflow-hidden`}>
-        <span aria-hidden="true" className="absolute right-4 top-2 text-5xl font-black text-white/10">
+        <span aria-hidden="true" className="absolute right-3 top-2 text-4xl font-black text-white/10">
           V2
         </span>
-        <p className="text-6xl font-black tabular-nums">
+        <p className="text-[44px] leading-tight font-black tabular-nums">
           {w.scoreV2} / 9
         </p>
-        <p className="mt-1 font-black uppercase">{tier.label}</p>
+        <p className="text-sm font-black uppercase">{tier.label}</p>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
@@ -84,7 +84,7 @@ export function CellDetail({ w, onClose }: { w: InspectionWindow; onClose: () =>
         <Tile label="Wind Speed" value={`${Math.round(w.windMph)}mph`} pts={w.breakdownV2['Wind Speed']} max={2} alert={w.windMph > 18} />
       </div>
 
-      <div className="mt-4 rounded-2xl bg-white px-3.5 py-3 flex justify-between gap-3">
+      <div className="mt-4 rounded-2xl bg-white px-3.5 py-3 flex justify-between gap-3 text-xs">
         <div>
           <p className="font-bold text-text-muted">Barometric Pressure</p>
           <p className="font-bold text-text">{w.pressureHpa.toFixed(1)} hPa</p>
@@ -103,19 +103,19 @@ export function CellDetail({ w, onClose }: { w: InspectionWindow; onClose: () =>
           <p className="flex items-center gap-2 font-black">
             <AlertTriangle size={18} /> Tripped Fail-Safes:
           </p>
-          <ul className="mt-1 list-disc pl-6 text-sm font-medium space-y-0.5">
+          <ul className="mt-1 list-disc pl-6 text-xs font-medium space-y-0.5">
             {w.issuesV2.map(i => (
               <li key={i}>{i}</li>
             ))}
           </ul>
         </div>
       ) : moderate ? (
-        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800">
           Warning: Moderate pressure drop detected (possible storm front approaching). Keep inspection brief!
         </div>
       ) : (
-        <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 px-3 py-3 flex items-center gap-2 text-sm font-bold text-green-700">
-          <CheckCircle2 size={18} className="shrink-0" /> Fail-safes cleared! Inspection is safe to conduct.
+        <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 px-3 py-3 flex items-center gap-2 text-xs font-bold text-green-700">
+          <CheckCircle2 size={14} className="shrink-0" /> Fail-safes cleared! Inspection is safe to conduct.
         </div>
       )}
     </GlassDialog>
@@ -144,9 +144,9 @@ export function ScoringGuide({ onClose }: { onClose: () => void }) {
   return (
     <GlassDialog onClose={onClose} label="How Scores are Calculated">
       <Header title="How Scores are Calculated" onClose={onClose}>
-        <p className="mt-1 text-xs font-black uppercase tracking-wider text-text-muted">Optimal conditions for hive inspections</p>
+        <p className="mt-1 text-[11px] font-black uppercase tracking-wider text-text-muted">Optimal conditions for hive inspections</p>
       </Header>
-      <p className="mt-4 text-sm text-text-muted leading-relaxed">
+      <p className="mt-4 text-xs text-text-muted leading-relaxed">
         The V2 suitability score (0-9) is calculated using a weighted points scoring matrix. High scores indicate ideal conditions for opening the hive with minimal stress to the colony.
       </p>
 
@@ -155,21 +155,21 @@ export function ScoringGuide({ onClose }: { onClose: () => void }) {
         {RULES.map(([label, pts, desc, detail]) => (
           <div key={label} className="rounded-2xl bg-white p-3.5">
             <div className="flex items-center justify-between">
-              <span className="font-black text-text">{label}</span>
+              <span className="text-sm font-black text-text">{label}</span>
               <span className="rounded-full bg-primary-wash px-2.5 py-0.5 text-xs font-black text-primary-ink">{pts}</span>
             </div>
-            <p className="mt-1 text-sm text-text-muted">{desc}</p>
-            <p className="mt-1.5 font-mono text-[11px] text-text">{detail}</p>
+            <p className="mt-1 text-xs text-text-muted">{desc}</p>
+            <p className="mt-1.5 font-mono text-[10px] text-text">{detail}</p>
           </div>
         ))}
       </div>
 
       <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3.5 text-red-800">
-        <p className="font-black">Safety Fail-Safes (Forces Red Cell Abort)</p>
-        <p className="mt-1 text-sm">
+        <p className="text-sm font-black">Safety Fail-Safes (Forces Red Cell Abort)</p>
+        <p className="mt-1 text-xs">
           If any of these conditions evaluate to TRUE, execution is immediately aborted (classification: <strong>Inadvisable / Red Cell</strong>) and points default to 0:
         </p>
-        <ul className="mt-2 list-disc pl-5 text-sm space-y-1">
+        <ul className="mt-2 list-disc pl-5 text-xs space-y-1">
           {FAILSAFES.map(([name, text]) => (
             <li key={name}>
               <strong>{name}</strong> {text}
@@ -179,9 +179,9 @@ export function ScoringGuide({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="mt-3 rounded-2xl border border-blue-200 bg-blue-50 p-3.5 text-blue-900">
-        <p className="font-black">Storm Front Tracking</p>
+        <p className="text-sm font-black">Storm Front Tracking</p>
         {/* The literal asterisks are shown on screen today (not rendered as Markdown). */}
-        <p className="mt-1 text-sm">
+        <p className="mt-1 text-xs">
           A moderate 3-hour pressure drop (between 1.5 and 4.0 hPa) does not completely abort the inspection, but it applies a **-2 point penalty** to reflect the approaching weather disturbance.
         </p>
       </div>

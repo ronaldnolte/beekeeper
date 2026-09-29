@@ -78,28 +78,28 @@ function InspectionForm() {
     <div className="space-y-4">
       <CardSection>
         <SectionTitle icon="📅">Date</SectionTitle>
-        <input type="date" value={day} onChange={e => setDay(e.target.value)} className="w-full h-12 rounded-2xl bg-white/70 px-4 text-lg font-bold text-primary outline-none focus:ring-4 focus:ring-primary-ring" />
-        <div className="mt-5">
+        <input type="date" value={day} onChange={e => setDay(e.target.value)} className="w-full h-10 rounded-2xl bg-white/70 px-4 text-sm font-bold text-primary outline-none focus:ring-4 focus:ring-primary-ring" />
+        <div className="mt-3">
           <SectionTitle icon="📝">Notes</SectionTitle>
           <textarea
             value={f.observations ?? ''}
             onChange={e => set({ observations: e.target.value })}
             placeholder="Tap here to add field notes..."
             rows={1}
-            className="w-full min-h-12 rounded-2xl bg-white/70 px-4 py-3 text-base text-text outline-none focus:ring-4 focus:ring-primary-ring placeholder:text-text-muted resize-y"
+            className="w-full min-h-9 rounded-2xl bg-white/70 px-3.5 py-2 text-[13px] text-text outline-none focus:ring-4 focus:ring-primary-ring placeholder:text-text-muted resize-y"
           />
         </div>
       </CardSection>
 
       {id && (
-        <button type="button" onClick={openPhotos} className="w-full h-[42px] rounded-3xl border-2 border-dashed border-primary/40 text-primary font-black flex items-center justify-center gap-2">
-          <Camera size={20} /> Photos &amp; Voice
+        <button type="button" onClick={openPhotos} className="w-full h-[42px] rounded-3xl border-2 border-dashed border-primary/40 text-primary text-sm font-black flex items-center justify-center gap-2">
+          <Camera size={16} /> Photos &amp; Voice
           {count > 0 && <span className="ml-1 rounded-full bg-primary px-2 py-0.5 text-xs text-white">{count}</span>}
         </button>
       )}
       {id && (
-        <button type="button" onClick={() => setExportOpen(true)} className="w-full h-[42px] rounded-3xl bg-card-bg border border-card-border shadow-sm font-black text-text flex items-center justify-center gap-3">
-          <Share2 size={20} /> Export / Share
+        <button type="button" onClick={() => setExportOpen(true)} className="w-full h-[42px] rounded-3xl bg-card-bg border border-card-border shadow-sm text-sm font-black text-text flex items-center justify-center gap-3">
+          <Share2 size={16} /> Export / Share
         </button>
       )}
 
@@ -119,7 +119,7 @@ function InspectionForm() {
       </CardSection>
 
       <CardSection className="space-y-4">
-        <p className="text-sm font-black uppercase tracking-wider text-text-muted">Stores</p>
+        <p className="text-[11px] font-black uppercase tracking-wider text-text-muted">Stores</p>
         <div>
           <SectionTitle icon="🍯">Honey</SectionTitle>
           <PillGroup label="Honey" options={STORES} value={f.honey_stores} onChange={v => set({ honey_stores: v })} />
@@ -170,7 +170,7 @@ export default function InspectionScreen() {
         <InspectionForm key={rec!.id} />
       ) : (
         <>
-          <button type="button" onClick={() => void add()} disabled={starting || !hiveId} className="w-full h-[60px] rounded-3xl bg-primary text-white text-2xl font-black shadow-md disabled:opacity-60">
+          <button type="button" onClick={() => void add()} disabled={starting || !hiveId} className="w-full h-[58px] rounded-3xl bg-primary text-white text-lg font-black shadow-md disabled:opacity-60">
             + Add Inspection
           </button>
           <div className="mt-5">

@@ -70,9 +70,9 @@ export default function AskAIScreen() {
 
   return (
     <div className="flex flex-col bg-[#fcfaf9]" style={{ height: 'calc(100dvh - 76px - env(safe-area-inset-top) - 96px - env(safe-area-inset-bottom))' }}>
-      <div className="shrink-0 bg-white/90 border-b border-divider shadow-sm px-4 py-4 text-center">
-        <h2 className="flex items-center justify-center gap-3 text-2xl font-black text-text">
-          <Sparkles size={24} className="text-primary" /> Ask AI
+      <div className="shrink-0 bg-white/90 border-b border-divider shadow-sm px-4 py-3.5 text-center">
+        <h2 className="flex items-center justify-center gap-2 text-xl font-black text-text">
+          <Sparkles size={18} className="text-primary" /> Ask AI
         </h2>
         {apiary && apiaries.length > 1 ? (
           <div className="relative inline-flex items-center mt-0.5">
@@ -80,7 +80,7 @@ export default function AskAIScreen() {
               aria-label="Apiary"
               value={apiary.id}
               onChange={e => selectApiary(apiaries.find(a => a.id === e.target.value) ?? null)}
-              className="appearance-none bg-transparent text-sm font-bold text-text-muted pr-8 pl-2 outline-none"
+              className="appearance-none bg-transparent text-[11px] font-bold text-text-muted pr-7 pl-2 outline-none"
             >
               {apiaries.map(a => (
                 <option key={a.id} value={a.id}>
@@ -88,12 +88,12 @@ export default function AskAIScreen() {
                 </option>
               ))}
             </select>
-            <ChevronDown size={16} className="absolute right-1 text-text-muted pointer-events-none" />
+            <ChevronDown size={13} className="absolute right-1 text-text-muted pointer-events-none" />
           </div>
         ) : apiary ? (
-          <p className="mt-0.5 text-sm font-bold text-text-muted">{apiary.name}</p>
+          <p className="mt-0.5 text-[11px] font-bold text-text-muted">{apiary.name}</p>
         ) : (
-          <p className="mt-1 text-xs font-black uppercase tracking-[0.2em] text-text-muted">Powered by Gemini</p>
+          <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.15em] text-text-muted">Powered by Gemini</p>
         )}
       </div>
 
@@ -106,17 +106,17 @@ export default function AskAIScreen() {
               <ApiaryButtonsCard apiaries={apiaries} subtitle="Choose an apiary to ask AI about." onPick={selectApiary} />
             </div>
           ) : messages.length === 0 ? (
-            <div className="pt-8 text-center">
+            <div className="pt-6 text-center">
               <div className="mx-auto w-16 h-16 rounded-full bg-primary-wash flex items-center justify-center">
                 <Sparkles size={32} className="text-primary" />
               </div>
-              <h3 className="mt-5 text-xl font-black text-text">Your AI Beekeeper</h3>
-              <p className="mt-4 text-lg leading-relaxed text-text-muted">
+              <h3 className="mt-5 text-lg font-black text-text">Your AI Beekeeper</h3>
+              <p className="mt-3 px-6 text-base leading-relaxed text-text-muted">
                 Ask me anything about your hives! I automatically know your location, current weather, and hive types to give you the best advice.
               </p>
-              <div className="mt-8 flex flex-col items-center gap-2">
+              <div className="mt-7 flex flex-col items-center gap-2">
                 {EXAMPLES.map(q => (
-                  <span key={q} className="rounded-full bg-white px-4 py-2.5 text-sm font-bold text-text-muted shadow-sm">
+                  <span key={q} className="rounded-full bg-white px-4 py-2 text-xs font-bold text-text-muted shadow-sm">
                     {q}
                   </span>
                 ))}
@@ -159,7 +159,7 @@ export default function AskAIScreen() {
               disabled={waiting}
               placeholder="Ask about your bees..."
               aria-label="Ask about your bees"
-              className="flex-1 min-w-0 h-11 bg-transparent text-lg outline-none placeholder:text-text-muted disabled:opacity-60"
+              className="flex-1 min-w-0 h-10 bg-transparent text-base outline-none placeholder:text-text-muted disabled:opacity-60"
             />
             <button
               type="submit"

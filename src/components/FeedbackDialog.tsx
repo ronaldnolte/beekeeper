@@ -18,30 +18,30 @@ export function DialogFrame({ icon: Icon, title, onClose, children }: { icon: Lu
       <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-quick" onClick={onClose}>
         <div role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-3xl bg-[#ebe8e3] shadow-2xl animate-sheet-in" onClick={e => e.stopPropagation()}>
           <div className="flex items-center justify-between bg-primary px-5 py-4 text-white">
-            <h2 className="flex items-center gap-3 text-xl font-black">
-              <Icon size={24} /> {title}
+            <h2 className="flex items-center gap-2.5 text-[17px] font-black">
+              <Icon size={20} /> {title}
             </h2>
             <button type="button" aria-label="Close" onClick={onClose} className="p-1">
               <X size={24} />
             </button>
           </div>
-          <div className="px-6 py-6">{children}</div>
+          <div className="px-6 py-5">{children}</div>
         </div>
       </div>
     </Overlay>
   );
 }
 
-export const dialogLabel = 'block mb-2 text-sm font-black uppercase tracking-wider text-text-muted';
-export const dialogField = 'w-full rounded-2xl bg-white px-4 text-lg font-bold text-text outline-none focus:ring-4 focus:ring-primary-ring placeholder:text-text-muted';
+export const dialogLabel = 'block mb-2 text-[11px] font-black uppercase tracking-wider text-text-muted';
+export const dialogField = 'w-full rounded-2xl bg-white px-4 text-[15px] font-bold text-text outline-none focus:ring-4 focus:ring-primary-ring placeholder:text-text-muted';
 
 export function DialogActions({ onCancel, label, disabled, onSubmit }: { onCancel: () => void; label: string; disabled: boolean; onSubmit: () => void }) {
   return (
     <div className="mt-6 flex gap-3">
-      <button type="button" onClick={onCancel} className="flex-1 h-14 text-lg font-black text-text-muted">
+      <button type="button" onClick={onCancel} className="flex-1 h-14 text-[15px] font-black text-text-muted">
         Cancel
       </button>
-      <button type="button" onClick={onSubmit} disabled={disabled} className="flex-[2] h-14 rounded-2xl bg-[#8d5b3a] text-white text-lg font-black shadow-md flex items-center justify-center gap-3 disabled:opacity-60">
+      <button type="button" onClick={onSubmit} disabled={disabled} className="flex-[2] h-14 rounded-2xl bg-[#8d5b3a] text-white text-[15px] font-black shadow-md flex items-center justify-center gap-3 disabled:opacity-60">
         {label} <Send size={20} />
       </button>
     </div>
@@ -76,23 +76,23 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
       ) : (
         <>
           <div className="rounded-2xl border-2 border-primary/30 bg-primary-wash p-5">
-            <p className="flex items-center gap-2 text-lg font-black text-primary-ink">
+            <p className="flex items-center gap-2 text-[15px] font-black text-primary-ink">
               Have a Feature Idea? <Lightbulb size={20} className="text-primary" />
             </p>
-            <p className="mt-2 font-bold text-primary-ink">Vote on existing requests or submit your own ideas to our public roadmap.</p>
+            <p className="mt-2 text-[13px] font-bold text-primary-ink">Vote on existing requests or submit your own ideas to our public roadmap.</p>
             <button
               type="button"
               onClick={() => {
                 onClose();
                 navigate('ROADMAP', { keepRecord: false });
               }}
-              className="mt-4 w-full h-[52px] rounded-2xl border-2 border-primary bg-white/80 text-lg font-black text-primary-ink"
+              className="mt-4 w-full h-[52px] rounded-2xl border-2 border-primary bg-white/80 text-[15px] font-black text-primary-ink"
             >
               View Roadmap &amp; Vote →
             </button>
           </div>
 
-          <div className="my-6 flex items-center gap-4 text-sm font-black uppercase tracking-wider text-text-muted">
+          <div className="my-5 flex items-center gap-4 text-[13px] font-black uppercase tracking-wider text-text-muted">
             <span className="flex-1 border-t border-divider" /> Or private message <span className="flex-1 border-t border-divider" />
           </div>
 

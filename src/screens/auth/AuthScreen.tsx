@@ -75,7 +75,7 @@ export function AuthScreen() {
         <form onSubmit={submit} className="px-6 pt-6 pb-6">
           <Logo size={96} />
           <h1 className="mt-3 text-center text-2xl font-black text-text">Beekeeper</h1>
-          <p className="mt-1 text-center text-[15px] text-text-muted">Manage your top-bar hives with ease.</p>
+          <p className="mt-1 text-center text-sm text-text-muted">Manage your top-bar hives with ease.</p>
 
           <div className="mt-8 space-y-4">
             {error && <ErrorBox>{error}</ErrorBox>}
@@ -124,7 +124,7 @@ export function AuthScreen() {
               </div>
             )}
 
-            <button type="submit" disabled={busy} className="btn-honey w-full h-[60px] text-lg flex items-center justify-center gap-2">
+            <button type="submit" disabled={busy} className="btn-honey w-full h-[58px] text-lg flex items-center justify-center gap-2">
               {busy ? LABELS[mode].busy : LABELS[mode].idle}
               {!busy && <ArrowRight size={20} />}
             </button>

@@ -7,7 +7,7 @@ import type { LucideIcon } from 'lucide-react';
 export function AuthCard({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`relative w-full max-w-md rounded-[2rem] border border-white/80 bg-[#FAF8F4]/95 shadow-[0_8px_40px_rgba(0,0,0,0.08)] overflow-hidden ${className}`}
+      className={`relative w-full max-w-md rounded-[1.25rem] border border-white/80 bg-[#FAF8F4]/95 shadow-[0_4px_24px_rgba(0,0,0,0.07)] overflow-hidden ${className}`}
     >
       <div
         aria-hidden="true"
@@ -54,7 +54,7 @@ export function IconInput({
 
 export function ErrorBox({ children }: { children: ReactNode }) {
   return (
-    <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm font-bold text-red-500">
+    <div role="alert" className="rounded-2xl border border-[#f9b8b8] bg-[#fde3e3] px-4 py-4 text-sm font-bold text-[#ef6363]">
       {children}
     </div>
   );

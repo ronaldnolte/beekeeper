@@ -38,7 +38,7 @@ export function Sheet({ open, onClose, title, children, variant = 'amber', maxHe
         onClick={e => e.stopPropagation()}
       >
         <div className={`flex items-center justify-between px-4 py-4 ${variant === 'amber' ? 'bg-primary text-white' : 'text-text'}`}>
-          <h2 className={`font-black ${variant === 'amber' ? 'text-lg' : 'text-xl'}`}>{title}</h2>
+          <h2 className={`font-black ${variant === 'amber' ? 'text-lg' : 'text-base'}`}>{title}</h2>
           <button type="button" aria-label="Close" disabled={closeDisabled} onClick={onClose} className="p-1 disabled:opacity-40">
             <X size={24} />
           </button>

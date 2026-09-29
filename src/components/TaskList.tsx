@@ -29,14 +29,14 @@ function TaskRow({ t, onToggle, onOpen }: { t: TaskWithPlace; onToggle: () => vo
       </button>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className={`font-bold truncate ${done ? 'line-through text-text-muted' : 'text-text'}`}>{t.title}</p>
+          <p className={`text-sm font-bold truncate ${done ? 'line-through text-text-muted' : 'text-text'}`}>{t.title}</p>
           {t.priority === 'high' && !done && (
             <span className="shrink-0 flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black text-red-600">
               <AlertTriangle size={11} /> HIGH
             </span>
           )}
         </div>
-        <div className="mt-1 flex items-center gap-3 text-sm text-text-muted">
+        <div className="mt-1 flex items-center gap-3 text-xs text-text-muted">
           <span className="truncate">{placeLine(t)}</span>
           {due && (
             <span className={`shrink-0 flex items-center gap-1 ${overdue ? 'text-red-600 font-bold' : ''}`}>
@@ -106,27 +106,27 @@ export function TaskPanel({ hiveId, apiaryId, heading, subheading, listTitle, op
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-3 mb-6">
+      <div className="flex items-start justify-between gap-3 mb-5">
         <div>
-          <h2 className="text-xl font-black text-text">{heading}</h2>
-          <p className="mt-1 text-text-muted">{subheading}</p>
+          <h2 className="text-lg font-black text-text">{heading}</h2>
+          <p className="mt-0.5 text-xs text-text-muted">{subheading}</p>
         </div>
-        <button type="button" onClick={() => setSheet({ task: null })} className="shrink-0 h-[38px] px-4 rounded-full bg-card-bg border border-card-border shadow-sm font-bold text-text flex items-center gap-2">
-          <Plus size={18} /> New Task
+        <button type="button" onClick={() => setSheet({ task: null })} className="shrink-0 h-[38px] px-4 rounded-full bg-card-bg border border-card-border shadow-sm text-xs font-bold text-text flex items-center gap-2">
+          <Plus size={15} /> New Task
         </button>
       </div>
 
       <div className="flex items-center justify-between gap-3 mb-4 px-1">
         <div className="flex items-center gap-3">
-          <h3 className="text-xl font-bold text-text whitespace-nowrap">{listTitle}</h3>
+          <h3 className="text-lg font-bold text-text whitespace-nowrap">{listTitle}</h3>
           {visible.length > 3 && (
             <button type="button" onClick={() => setShowAll(s => !s)} className="h-8 px-3 rounded-full border-2 border-primary-faint bg-white/80 text-xs font-black text-primary-ink">
               {showAll ? 'Show Less' : `Show All (${visible.length})`}
             </button>
           )}
         </div>
-        <label className="flex items-center gap-2 text-text-muted shrink-0">
-          <input type="checkbox" checked={showCompleted} onChange={e => setShowCompleted(e.target.checked)} className="w-5 h-5 accent-[var(--color-primary)]" />
+        <label className="flex items-center gap-2 text-xs text-text-muted shrink-0">
+          <input type="checkbox" checked={showCompleted} onChange={e => setShowCompleted(e.target.checked)} className="w-3.5 h-3.5 accent-[var(--color-primary)]" />
           Show Completed
         </label>
       </div>
@@ -135,7 +135,7 @@ export function TaskPanel({ hiveId, apiaryId, heading, subheading, listTitle, op
           <Spinner />
         </div>
       ) : visible.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-divider bg-white/30 px-6 py-10 text-center text-lg text-text-muted">No tasks found. You're all caught up!</div>
+        <div className="rounded-2xl border border-dashed border-divider bg-white/30 px-6 py-10 text-center text-sm text-text-muted">No tasks found. You're all caught up!</div>
       ) : (
         <div className="space-y-3">
           {shown.map(t => (

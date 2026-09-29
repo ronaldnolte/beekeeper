@@ -13,7 +13,7 @@ export function StatusBadge({ status }: { status?: string | null }) {
   const s = status || 'Active';
   const active = s === 'Active';
   return (
-    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-black uppercase tracking-wider ${active ? 'bg-green-100 text-green-700' : 'bg-primary-wash text-primary-ink'}`}>
+    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${active ? 'bg-green-100 text-green-700' : 'bg-primary-wash text-primary-ink'}`}>
       {s}
     </span>
   );
@@ -43,9 +43,9 @@ export default function HivesScreen() {
   const shown = unified && filter ? all.filter(h => h.apiary_id === filter) : all;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-5 pb-20">
+    <div className="max-w-2xl mx-auto px-4 pt-4 pb-20">
       <h2 className="text-xl font-black text-text">{unified ? 'My Hives' : 'Select a Hive'}</h2>
-      <p className="mt-1 text-sm text-text-muted">{unified ? 'Quickly access any of your hives.' : 'Choose a hive to inspect or manage.'}</p>
+      <p className="mt-1 text-[13px] text-text-muted">{unified ? 'Quickly access any of your hives.' : 'Choose a hive to inspect or manage.'}</p>
 
       {unified && state.hives.length > 5 && (
         <div className="mt-5 -mx-4 px-4 flex gap-2 overflow-x-auto pb-1">
@@ -54,7 +54,7 @@ export default function HivesScreen() {
               key={p.id ?? 'all'}
               type="button"
               onClick={() => setFilter(p.id)}
-              className={`shrink-0 h-9 px-4 rounded-full text-sm font-bold whitespace-nowrap ${filter === p.id ? 'bg-primary text-white' : 'bg-white/70 text-text-muted'}`}
+              className={`shrink-0 h-8 px-4 rounded-full text-xs font-bold whitespace-nowrap ${filter === p.id ? 'bg-primary text-white' : 'bg-white/70 text-text-muted'}`}
             >
               {p.label}
             </button>
@@ -62,7 +62,7 @@ export default function HivesScreen() {
         </div>
       )}
 
-      <div className="mt-8">
+      <div className="mt-6">
         <SelectionList
           loading={!unified && single === null}
           items={shown.map(h => ({

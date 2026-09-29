@@ -85,11 +85,11 @@ function SelectionCard<T extends SelectionItem>({
             <Icon size={22} />
           </span>
           <span className="flex-1 min-w-0">
-            <span className="block font-bold text-text truncate">{item.title}</span>
+            <span className="block text-[15px] font-bold text-text truncate">{item.title}</span>
             {(item.badge || item.subtitle) && (
               <span className="mt-0.5 flex items-center gap-3">
                 {item.badge}
-                {item.subtitle && <span className="text-sm text-text-muted">{item.subtitle}</span>}
+                {item.subtitle && <span className="text-[13px] text-text-muted">{item.subtitle}</span>}
               </span>
             )}
           </span>
@@ -112,7 +112,7 @@ function SelectionCard<T extends SelectionItem>({
             <button
               type="button"
               onClick={() => (setMenuOpen(false), onEdit(item))}
-              className="flex-1 h-11 rounded-2xl border border-primary-faint bg-primary-wash text-primary-ink font-bold flex items-center justify-center gap-2"
+              className="flex-1 h-11 rounded-2xl border border-primary-faint bg-primary-wash text-primary-ink text-sm font-bold flex items-center justify-center gap-2"
             >
               <Pencil size={16} /> Edit
             </button>
@@ -120,7 +120,7 @@ function SelectionCard<T extends SelectionItem>({
           <button
             type="button"
             onClick={() => (setMenuOpen(false), onDelete(item))}
-            className="flex-1 h-11 rounded-2xl border border-red-200 bg-red-50 text-red-600 font-bold flex items-center justify-center gap-2"
+            className="flex-1 h-11 rounded-2xl border border-red-200 bg-red-50 text-red-600 text-sm font-bold flex items-center justify-center gap-2"
           >
             <Trash2 size={16} /> Delete
           </button>

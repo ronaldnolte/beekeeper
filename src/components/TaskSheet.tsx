@@ -4,7 +4,16 @@ import { useState } from 'react';
 import { AlertTriangle, Calendar, Save, Trash2 } from 'lucide-react';
 import { Sheet } from './Sheet';
 import { Spinner } from './Chrome';
-import { Label, TextArea, TextInput } from './Form';
+import { TextArea, TextInput } from './Form';
+
+/** The task sheet's labels are smaller than the other record sheets' (screenshots B36, B37). */
+function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
+  return (
+    <label htmlFor={htmlFor} className="block mb-2 text-xs font-black uppercase tracking-wider text-text-muted">
+      {children}
+    </label>
+  );
+}
 import { useApp } from '../app/store';
 import { defaultDueDay, deleteTask, dueDateIso, dueDay, saveTask, type Task } from '../lib/records';
 
@@ -25,7 +34,7 @@ function Choice({ on, children, onClick }: { on: boolean; children: React.ReactN
       type="button"
       aria-pressed={on}
       onClick={onClick}
-      className={`flex-1 h-12 rounded-2xl border border-white/60 font-black flex items-center justify-center gap-2 ${on ? 'bg-primary text-white' : 'bg-white/70 text-text-muted'}`}
+      className={`flex-1 h-12 rounded-2xl border border-white/60 text-sm font-black flex items-center justify-center gap-2 ${on ? 'bg-primary text-white' : 'bg-white/70 text-text-muted'}`}
     >
       {children}
     </button>
@@ -77,11 +86,11 @@ function TaskForm({ task, onClose, onSaved, defaultHiveId, defaultApiaryId }: Om
 
   return (
     <>
-      <div className="px-4 pt-5 pb-4 space-y-6">
+      <div className="px-4 pt-5 pb-4 space-y-5">
         {error && <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-600">⚠️ {error}</div>}
         <div>
           <Label htmlFor="task-title">Task title</Label>
-          <TextInput id="task-title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Order bee packages, check for mites..." className="!h-[54px]" />
+          <TextInput id="task-title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Order bee packages, check for mites..." className="!h-[52px] !text-[15px]" />
         </div>
         {editing && (
           <div>
@@ -98,26 +107,26 @@ function TaskForm({ task, onClose, onSaved, defaultHiveId, defaultApiaryId }: Om
             <Choice on={priority === 'low'} onClick={() => setPriority('low')}>Low</Choice>
             <Choice on={priority === 'medium'} onClick={() => setPriority('medium')}>Medium</Choice>
             <Choice on={priority === 'high'} onClick={() => setPriority('high')}>
-              <AlertTriangle size={18} /> High
+              <AlertTriangle size={15} /> High
             </Choice>
           </div>
         </div>
         <div>
           <Label htmlFor="task-due">Due date</Label>
           <div className="relative">
-            <Calendar size={22} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            <Calendar size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             <input
               id="task-due"
               type="date"
               value={day}
               onChange={e => setDay(e.target.value)}
-              className="w-full h-12 rounded-2xl bg-white/70 border border-white/60 pl-14 pr-4 text-lg font-bold text-primary outline-none focus:ring-4 focus:ring-primary-ring"
+              className="w-full h-12 rounded-2xl bg-white/70 border border-white/60 pl-12 pr-4 text-base font-bold text-primary outline-none focus:ring-4 focus:ring-primary-ring"
             />
           </div>
         </div>
         <div>
           <Label htmlFor="task-desc">Description</Label>
-          <TextArea id="task-desc" rows={3} value={description} onChange={e => setDescription(e.target.value)} placeholder="Add any extra details..." />
+          <TextArea id="task-desc" rows={3} value={description} onChange={e => setDescription(e.target.value)} placeholder="Add any extra details..." className="!text-[15px]" />
         </div>
       </div>
       <div className="sticky bottom-0 flex gap-3 border-t border-divider bg-bg px-4 py-4">

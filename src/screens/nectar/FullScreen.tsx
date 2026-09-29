@@ -93,7 +93,7 @@ export function FullScreen({ apiaryName, data, model, onClose }: { apiaryName: s
       <div className="absolute top-0 left-0 flex flex-col gap-2 p-4 overflow-y-auto" style={frame}>
         <div className="flex items-center gap-3 pb-2 border-b" style={{ borderColor: PANEL.border }}>
           <TrendIcon size={20} className="text-primary shrink-0" />
-          <h2 className="flex-1 min-w-0 truncate font-black uppercase tracking-wider text-primary text-lg">{apiaryName} — Nectar Index Trend</h2>
+          <h2 className="flex-1 min-w-0 truncate font-black uppercase tracking-wider text-primary text-[15px]">{apiaryName} — Nectar Index Trend</h2>
           <button type="button" onClick={close} aria-label="Close full screen" className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white" style={{ background: '#24243e', border: `1px solid ${PANEL.border}` }}>
             <X size={20} />
           </button>
@@ -127,7 +127,7 @@ export function FullScreen({ apiaryName, data, model, onClose }: { apiaryName: s
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 px-1">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-1">
           <Legend model={model} current="" />
           <SatelliteLine satellite={data.satellite} />
         </div>
@@ -137,15 +137,15 @@ export function FullScreen({ apiaryName, data, model, onClose }: { apiaryName: s
             <>
               <div className="px-2 py-1 min-w-[90px]">
                 <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: PANEL.label }}>Calendar day</p>
-                <p className="font-black text-white">{monDayOfChartDay(hoverDay)}</p>
+                <p className="text-[13px] font-black text-white">{monDayOfChartDay(hoverDay)}</p>
               </div>
               <div className={cell} style={cellStyle}>
                 <p className="text-[10px] font-black text-white">{model.baseYearLabel} NFI:</p>
-                <p className="font-black" style={{ color: '#3b82f6' }}>{pct(hoverNormal)}</p>
+                <p className="text-xs font-black" style={{ color: '#3b82f6' }}>{pct(hoverNormal)}</p>
               </div>
               <div className={cell} style={cellStyle}>
                 <p className="text-[10px] font-black text-white">{model.currentYear} NFI:</p>
-                <p className="font-black text-primary">{pct(hoverCur?.value)}</p>
+                <p className="text-xs font-black text-primary">{pct(hoverCur?.value)}</p>
               </div>
               <div className="px-2 py-1">
                 <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: PANEL.label }}>{model.currentYear} phase</p>
@@ -156,16 +156,16 @@ export function FullScreen({ apiaryName, data, model, onClose }: { apiaryName: s
             <>
               <div className="px-2 py-1 min-w-[90px]">
                 <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: PANEL.label }}>Latest status</p>
-                <p className="font-black text-white">{direction} trend</p>
+                <p className="text-[13px] font-black text-white">{direction} trend</p>
               </div>
               <div className={cell} style={cellStyle}>
-                <p className="text-white text-sm">Nectar: <strong>{data.nfi}</strong></p>
+                <p className="text-white text-xs">Nectar: <strong>{data.nfi}</strong></p>
               </div>
               <div className={cell} style={cellStyle}>
-                <p className="text-white text-sm">Rate: <strong>{pct(data.v2.rate_norm)}</strong></p>
+                <p className="text-white text-xs">Rate: <strong>{pct(data.v2.rate_norm)}</strong></p>
               </div>
               <div className={cell} style={cellStyle}>
-                <p className="text-white text-sm">Warmth: <strong>{pct(data.v2.warmth)}</strong></p>
+                <p className="text-white text-xs">Warmth: <strong>{pct(data.v2.warmth)}</strong></p>
               </div>
               <div className="px-2 py-1">
                 <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: PANEL.label }}>Current phase</p>

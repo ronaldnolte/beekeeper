@@ -14,12 +14,12 @@ function SnapshotButton({ dirty, saving, onSave }: { dirty: boolean; saving: boo
     );
   }
   return dirty ? (
-    <button type="button" onClick={onSave} className="h-11 px-4 rounded-2xl bg-primary text-white font-bold flex items-center gap-2 shadow-md whitespace-nowrap">
-      <Camera size={18} /> Save Snapshot
+    <button type="button" onClick={onSave} className="h-9 px-3.5 rounded-xl bg-primary text-white text-[13px] font-bold flex items-center gap-2 shadow-md whitespace-nowrap">
+      <Camera size={14} /> Save Snapshot
     </button>
   ) : (
-    <span className="h-11 px-4 rounded-2xl bg-gray-200 text-gray-600 font-bold flex items-center gap-2 whitespace-nowrap">
-      <Camera size={18} /> Saved
+    <span className="h-9 px-3.5 rounded-xl bg-gray-200 text-gray-600 text-[13px] font-bold flex items-center gap-2 whitespace-nowrap">
+      <Camera size={14} /> Saved
     </span>
   );
 }
@@ -55,7 +55,7 @@ export function TopBarVisualizer({ hiveId, initial, onSaved }: { hiveId: string;
   return (
     <div className="card">
       <div className="px-6 py-5 bg-white/70">
-        <h3 className="text-sm font-black uppercase tracking-wider text-text-muted">Top Bar Config</h3>
+        <h3 className="text-[11px] font-black uppercase tracking-wider text-text-muted">Top Bar Config</h3>
         <div className="mt-3 flex items-center gap-2">
           <button type="button" aria-label="Remove last bar" disabled={bars.length <= 1} onClick={() => setBars(bs => bs.slice(0, -1))} className="w-9 h-9 rounded-xl bg-white flex items-center justify-center disabled:opacity-40">
             <Minus size={16} />
@@ -86,7 +86,7 @@ export function TopBarVisualizer({ hiveId, initial, onSaved }: { hiveId: string;
       </div>
       <div className="grid grid-cols-3 gap-2 px-6 pb-5">
         {BAR_STATUSES.map(s => (
-          <span key={s} className="flex items-center gap-2 text-[11px] font-bold uppercase text-text-muted">
+          <span key={s} className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
             <span className="w-3 h-3 rounded-sm border border-black/15" style={{ background: BAR_COLOUR[s] }} />
             {s.replace(/_/g, ' ')}
           </span>
@@ -119,7 +119,7 @@ export function LangstrothVisualizer({ hiveId, initial, onSaved }: { hiveId: str
     <>
       <div className="card">
         <div className="flex items-center justify-between gap-3 px-6 py-5 bg-white/70">
-          <h3 className="text-sm font-black uppercase tracking-wider text-text-muted">Vertical Stack</h3>
+          <h3 className="text-[11px] font-black uppercase tracking-wider text-text-muted">Vertical Stack</h3>
           <SnapshotButton dirty={dirty} saving={saving} onSave={() => void save(stack, 'stack', () => setBaseline(JSON.stringify(stack)))} />
         </div>
         <div className="bg-[#fdfaf5] px-6 py-6">
@@ -164,7 +164,7 @@ export function LangstrothVisualizer({ hiveId, initial, onSaved }: { hiveId: str
       </div>
 
       <div className="card px-5 py-5">
-        <h3 className="text-sm font-black uppercase tracking-wider text-text-muted">Parts Palette (Tap to Add)</h3>
+        <h3 className="text-[11px] font-black uppercase tracking-wider text-text-muted">Parts Palette (Tap to Add)</h3>
         <div className="mt-4 space-y-2">
           {(
             [

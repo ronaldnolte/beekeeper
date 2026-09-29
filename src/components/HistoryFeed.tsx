@@ -95,27 +95,27 @@ function FeedCard({ item, onTap }: { item: FeedItem; onTap: () => void }) {
     border = colour;
     headline = <span style={{ color: colour }}>Mite Test: {pct.toFixed(1)}% Load</span>;
   }
-  if (item.kind === 'inspection') headline = <span className="text-primary-ink">Inspection</span>;
+  if (item.kind === 'inspection') headline = <span className="text-text">Inspection</span>;
   const body = (r.observations as string) || (r.description as string) || (r.notes as string);
   const bars = item.kind === 'snapshot' ? parseBars(r.bars) : null;
-  const chip = 'rounded-full bg-white/80 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-text-muted';
+  const chip = 'rounded-full bg-white/80 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-text-muted';
 
   return (
     <button
       type="button"
       onClick={onTap}
-      className="w-full text-left rounded-[1.75rem] bg-card-bg border-2 shadow-sm p-5 flex items-start gap-3 active:scale-[0.99] transition-transform"
-      style={{ borderColor: item.kind === 'snapshot' ? '#93c5fd' : 'rgba(255,255,255,0.6)', borderLeft: `6px solid ${border}` }}
+      className="w-full text-left rounded-2xl bg-card-bg border shadow-sm px-4 py-3.5 flex items-start gap-3 active:scale-[0.99] transition-transform"
+      style={{ borderColor: border, borderLeft: `5px solid ${border}` }}
     >
       <div className="flex-1 min-w-0">
-        {headline && <p className="font-black leading-snug">{headline}</p>}
-        <p className={`text-sm font-bold text-text-muted ${headline ? 'mt-0.5' : ''}`}>{date}</p>
+        {headline && <p className="text-[15px] font-black leading-snug">{headline}</p>}
+        <p className={`text-xs font-bold text-text-muted ${headline ? 'mt-0.5' : ''}`}>{date}</p>
         {bars && (
           <div className="mt-3 rounded-2xl bg-white/80 py-4">
             <MiniConfig bars={bars} />
           </div>
         )}
-        {body && <p className="mt-2 text-sm text-text line-clamp-2">{body}</p>}
+        {body && <p className="mt-2 text-[13px] text-text line-clamp-2">{body}</p>}
         {item.kind === 'varroa' && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             <span className={chip}>Bees: {String(r.bee_count)}</span>
@@ -163,7 +163,7 @@ export function HistoryFeed({ hiveId, filter, title, hideCompletedTasks, refresh
   }, [hiveId, filter, refreshKey, bump]);
 
   if (items === null) return <div className="rounded-[1.75rem] border-2 border-dashed border-divider bg-card-bg p-8 text-center text-text-muted">Loading history...</div>;
-  if (items.length === 0) return <div className="rounded-[1.75rem] border-2 border-dashed border-divider bg-card-bg p-10 text-center text-lg text-text-muted">No recent history found.</div>;
+  if (items.length === 0) return <div className="rounded-[1.75rem] border-2 border-dashed border-divider bg-card-bg p-10 text-center text-base text-text-muted">No recent history found.</div>;
 
   const completed = items.filter(i => i.kind === 'task' && i.row.status === 'completed');
   const visible = hideCompletedTasks && !showCompleted ? items.filter(i => !(i.kind === 'task' && i.row.status === 'completed')) : items;
@@ -184,16 +184,16 @@ export function HistoryFeed({ hiveId, filter, title, hideCompletedTasks, refresh
   return (
     <div>
       <div className="flex items-center justify-between gap-3 mb-4">
-        <h3 className="text-sm font-black uppercase tracking-wider text-text-muted">{title ?? DEFAULT_TITLE[filter]}</h3>
+        <h3 className="text-[13px] font-black uppercase tracking-wider text-text-muted">{title ?? DEFAULT_TITLE[filter]}</h3>
         <div className="flex items-center gap-3">
           {hideCompletedTasks && completed.length > 0 && (
-            <label className="flex items-center gap-2 text-sm text-text-muted">
+            <label className="flex items-center gap-2 text-xs text-text-muted">
               <input type="checkbox" checked={showCompleted} onChange={e => setShowCompleted(e.target.checked)} className="w-4 h-4 accent-[var(--color-primary)]" />
               Show Completed ({completed.length})
             </label>
           )}
           {visible.length > 3 && (
-            <button type="button" onClick={() => setShowAll(s => !s)} className="shrink-0 h-9 px-4 rounded-full border-2 border-primary-faint bg-white/80 text-sm font-black text-primary-ink">
+            <button type="button" onClick={() => setShowAll(s => !s)} className="shrink-0 h-8 px-3.5 rounded-full border-2 border-primary-faint bg-white/80 text-xs font-black text-primary-ink">
               {showAll ? 'Show Less' : `Show All (${visible.length})`}
             </button>
           )}

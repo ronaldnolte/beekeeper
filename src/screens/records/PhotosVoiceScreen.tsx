@@ -171,8 +171,8 @@ export default function PhotosVoiceScreen() {
     <div className="max-w-2xl mx-auto px-2.5 pt-2 pb-36">
       <RecordTabs active="INSPECTION_PLUS" />
       <div className="flex items-center justify-between px-1 mb-4">
-        <h2 className="text-lg font-black uppercase tracking-wide text-text-muted">Photos &amp; Voice</h2>
-        <span className="text-sm font-bold text-text-muted">
+        <h2 className="text-sm font-black uppercase tracking-wide text-text-muted">Photos &amp; Voice</h2>
+        <span className="text-xs font-bold text-text-muted">
           {photos.length}/{PHOTO_CAP} photos
         </span>
       </div>
@@ -184,10 +184,10 @@ export default function PhotosVoiceScreen() {
           <Spinner />
         </div>
       ) : topLevel.length === 0 ? (
-        <div className="py-12 text-center text-text-muted">
-          <ImagePlus size={56} className="mx-auto opacity-40" />
-          <p className="mt-4 text-lg font-black">No attachments yet</p>
-          <p className="mt-1">Take a photo, choose one, or record a voice note below.</p>
+        <div className="py-10 text-center text-text-muted">
+          <ImagePlus size={40} className="mx-auto opacity-40" />
+          <p className="mt-3 text-[15px] font-black">No attachments yet</p>
+          <p className="mt-1 text-[13px]">Take a photo, choose one, or record a voice note below.</p>
         </div>
       ) : (
         <div className="space-y-3">

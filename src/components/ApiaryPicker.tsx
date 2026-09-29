@@ -4,9 +4,9 @@ import type { Apiary } from '../lib/supabase';
 
 export function ApiaryButtonsCard({ apiaries, subtitle, onPick }: { apiaries: Apiary[]; subtitle: string; onPick: (a: Apiary) => void }) {
   return (
-    <div className="rounded-[2rem] bg-white/90 shadow-[0_8px_30px_rgba(0,0,0,0.06)] px-8 py-10 text-center">
+    <div className="rounded-[1.6rem] bg-white/90 shadow-[0_8px_30px_rgba(0,0,0,0.06)] px-8 py-10 text-center">
       <h2 className="text-lg font-black text-text">Select Apiary</h2>
-      <p className="mt-2 text-sm text-text-muted">{subtitle}</p>
+      <p className="mt-1.5 text-xs text-text-muted">{subtitle}</p>
       <div className="mt-6 space-y-2">
         {apiaries.map(a => (
           <button
@@ -25,7 +25,7 @@ export function ApiaryButtonsCard({ apiaries, subtitle, onPick }: { apiaries: Ap
 
 export function EmptyApiariesCard({ message }: { message: string }) {
   return (
-    <div className="rounded-[2rem] bg-white/90 shadow-[0_8px_30px_rgba(0,0,0,0.06)] px-8 py-10 text-center">
+    <div className="rounded-[1.6rem] bg-white/90 shadow-[0_8px_30px_rgba(0,0,0,0.06)] px-8 py-10 text-center">
       <h2 className="text-xl font-black text-text">No Apiaries Found</h2>
       <p className="mt-2 text-text-muted">{message}</p>
     </div>

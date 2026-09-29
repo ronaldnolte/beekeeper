@@ -90,8 +90,8 @@ export default function HiveDetailScreen() {
         <span className="absolute left-0 inset-y-0 w-1.5 bg-primary" aria-hidden="true" />
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-xl sm:text-2xl font-black text-text truncate">{hive.name}</h2>
-            <p className="mt-1 text-sm font-bold uppercase tracking-wide text-text-muted">TYPE: {hive.type || 'Standard TBH'}</p>
+            <h2 className="text-lg sm:text-2xl font-black text-text truncate">{hive.name}</h2>
+            <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-text-muted">TYPE: {hive.type || 'Standard TBH'}</p>
           </div>
           <StatusBadge />
         </div>
@@ -99,7 +99,7 @@ export default function HiveDetailScreen() {
 
       {hive.notes && (
         <div className="card px-6 py-5">
-          <h3 className="text-sm font-black uppercase tracking-wider text-text-muted">Notes</h3>
+          <h3 className="text-[11px] font-black uppercase tracking-wider text-text-muted">Notes</h3>
           <p className="mt-2 whitespace-pre-wrap text-text">{hive.notes}</p>
         </div>
       )}

@@ -73,12 +73,12 @@ export function UpdatePasswordScreen() {
     return (
       <div className={page} style={background}>
         <AuthCard className="animate-rise-in">
-          <div className="px-6 py-12 text-center">
+          <div className="px-6 py-7 text-center">
             <div className="text-5xl animate-pulse" aria-hidden="true">
               🔑
             </div>
-            <h1 className="mt-4 text-xl font-bold text-text">Verifying security link...</h1>
-            <p className="mt-3 text-text-muted">Please wait</p>
+            <h1 className="mt-3 text-lg font-bold text-text">Verifying security link...</h1>
+            <p className="mt-2 text-sm text-text-muted">Please wait</p>
           </div>
         </AuthCard>
       </div>
@@ -86,7 +86,7 @@ export function UpdatePasswordScreen() {
   }
 
   return (
-    <div className={`${page} relative`} style={background}>
+    <div className="min-h-screen relative flex justify-center px-4 pt-20 pb-4" style={background}>
       <button
         type="button"
         onClick={() => navigate('AUTH', { keepRecord: false })}
@@ -98,13 +98,13 @@ export function UpdatePasswordScreen() {
           <X size={14} strokeWidth={3} />
         </span>
       </button>
-      <AuthCard className="animate-rise-in min-h-[calc(100vh-10rem)] flex flex-col justify-center">
+      <AuthCard className="animate-rise-in min-h-[calc(100vh-6rem)] self-start flex flex-col justify-center">
         <form onSubmit={submit} className="px-6 py-10">
           <div className="text-center text-5xl" aria-hidden="true">
             🔐
           </div>
           <h1 className="mt-4 text-center text-2xl font-black text-text">Set New Password</h1>
-          <p className="mt-2 text-center text-text-muted">Enter your new secure password below.</p>
+          <p className="mt-2 text-center text-sm text-text-muted">Enter your new secure password below.</p>
           <div className="mt-8 space-y-5">
             <div>
               <FieldLabel htmlFor="new-password">New Password</FieldLabel>
@@ -114,7 +114,7 @@ export function UpdatePasswordScreen() {
               <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
               <IconInput id="confirm-password" type="password" variant="outlined" icon={Lock} placeholder="Re-type password" autoComplete="new-password" value={confirm} onChange={e => setConfirm(e.target.value)} />
             </div>
-            {error && <div className="text-center [&_[role=alert]]:text-red-700 [&_[role=alert]]:text-[15px]"><ErrorBox>{error}</ErrorBox></div>}
+            {error && <div className="text-center [&_[role=alert]]:text-red-700 [&_[role=alert]]:text-[13px] [&_[role=alert]]:bg-[#fff1f2] [&_[role=alert]]:border-[#fbd5da]"><ErrorBox>{error}</ErrorBox></div>}
             {message && <MessageBox>{message}</MessageBox>}
             <button
               type="submit"

@@ -29,8 +29,8 @@ function SeasonChart({ tests, requeens }: { tests: VarroaTest[]; requeens: strin
   const legend = 'flex items-center gap-1.5';
   return (
     <div className="card p-4">
-      <h3 className="text-sm font-black uppercase tracking-wider text-text-muted">Mite load by season (rolling)</h3>
-      <svg viewBox={`0 0 ${CHART_W} ${PLOT_H + LABEL_H}`} className="w-full mt-6 overflow-visible" role="img" aria-label="Mite load by season">
+      <h3 className="text-[11px] font-black uppercase tracking-wider text-text-muted">Mite load by season (rolling)</h3>
+      <svg viewBox={`0 0 ${CHART_W} ${PLOT_H + LABEL_H}`} className="w-full mt-5 overflow-visible" role="img" aria-label="Mite load by season">
         {columns.map((c, i) => {
           const prev = columns[i - 1];
           return (
@@ -61,18 +61,18 @@ function SeasonChart({ tests, requeens }: { tests: VarroaTest[]; requeens: strin
           );
         })}
       </svg>
-      <div className="mt-4 pt-4 border-t border-divider flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm font-bold text-text-muted">
+      <div className="mt-4 pt-4 border-t border-divider flex flex-wrap justify-center gap-x-3 gap-y-2 text-[10px] font-bold text-text-muted">
         <span className={legend}>
           <span className="text-red-500 tracking-[-0.1em]">- -</span> Threshold
         </span>
         <span className={legend}>
-          <span className="w-3 h-3 rounded-full bg-[#10B981]" /> OK
+          <span className="w-2 h-2 rounded-full bg-[#10B981]" /> OK
         </span>
         <span className={legend}>
-          <span className="w-3 h-3 rounded-full bg-[#F59E0B]" /> Above Limit
+          <span className="w-2 h-2 rounded-full bg-[#F59E0B]" /> Above Limit
         </span>
         <span className={legend}>
-          <span className="w-3 h-3 rounded-full bg-[#EF4444]" /> Critical
+          <span className="w-2 h-2 rounded-full bg-[#EF4444]" /> Critical
         </span>
         {anyRequeen && <span className={legend}>👑 Requeen</span>}
       </div>
@@ -85,13 +85,13 @@ function TestCard({ t, onTap }: { t: VarroaTest; onTap: () => void }) {
   const tone = TONE[status];
   const date = new Date(t.tested_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   return (
-    <button type="button" onClick={onTap} className="w-full text-left rounded-[1.75rem] bg-card-bg border-2 shadow-sm pl-5 pr-3 py-4 flex items-center gap-2" style={{ borderColor: tone.border, borderLeftWidth: 6 }}>
+    <button type="button" onClick={onTap} className="w-full text-left rounded-2xl bg-card-bg border-2 shadow-sm pl-4 pr-3 py-3 flex items-center gap-2" style={{ borderColor: tone.border, borderLeftWidth: 6 }}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2.5">
-          <span className="text-lg font-black text-text whitespace-nowrap">{date}</span>
-          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide truncate ${tone.chip}`}>{status}</span>
+          <span className="text-sm font-black text-text whitespace-nowrap">{date}</span>
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide truncate ${tone.chip}`}>{status}</span>
         </div>
-        <p className="mt-1 text-xs font-bold uppercase text-text-muted space-x-2.5 whitespace-nowrap">
+        <p className="mt-1 text-[10px] font-bold uppercase text-text-muted space-x-2 whitespace-nowrap">
           <span>
             Mites: <b className="text-text">{t.mite_count}</b>
           </span>
@@ -102,13 +102,13 @@ function TestCard({ t, onTap }: { t: VarroaTest; onTap: () => void }) {
             HBHC limit: <b className="text-text">{t.threshold}%</b>
           </span>
         </p>
-        {t.notes && <p className="mt-1 text-sm italic text-text-muted truncate">"{t.notes}"</p>}
+        {t.notes && <p className="mt-1 text-xs italic text-text-muted truncate">"{t.notes}"</p>}
       </div>
       <div className="shrink-0 text-right">
-        <p className="text-2xl font-black" style={{ color: tone.value }}>
+        <p className="text-[15px] font-black" style={{ color: tone.value }}>
           {miteLoad(t.mite_count, t.bee_count).toFixed(2)}%
         </p>
-        <p className="text-xs font-bold uppercase tracking-wider text-text-muted">Mite load</p>
+        <p className="text-[9px] font-bold uppercase tracking-wider text-text-muted">Mite load</p>
       </div>
       <EditPencil />
     </button>
@@ -163,14 +163,14 @@ function VarroaForm({ test, onDone }: { test: VarroaTest | null; onDone: () => v
     }
   };
 
-  const numberInput = 'w-full h-[52px] rounded-2xl bg-white/70 px-4 text-lg font-bold text-text outline-none focus:ring-4 focus:ring-primary-ring';
+  const numberInput = 'w-full h-[52px] rounded-2xl bg-white/70 px-4 text-[15px] font-bold text-text outline-none focus:ring-4 focus:ring-primary-ring';
 
   return (
     <div className="space-y-4">
-      <FormCard icon={<Calendar size={22} className="text-primary" />} title="Test Date">
+      <FormCard icon={<Calendar size={18} className="text-primary" />} title="Test Date">
         <input type="date" aria-label="Test date" value={day} onChange={e => setDay(e.target.value)} className={dateInput} />
       </FormCard>
-      <FormCard icon={<Microscope size={22} className="text-primary" />} title="Sample Findings">
+      <FormCard icon={<Microscope size={18} className="text-primary" />} title="Sample Findings">
         <div className="grid grid-cols-2 gap-4">
           <label className="block">
             <span className="block mb-2 text-xs font-black uppercase tracking-wider text-text-muted"># of bees</span>
@@ -182,22 +182,22 @@ function VarroaForm({ test, onDone }: { test: VarroaTest | null; onDone: () => v
           </label>
         </div>
       </FormCard>
-      <div className={`rounded-3xl border-2 px-4 py-4 flex items-start justify-between ${tone.panel}`} aria-live="polite">
+      <div className={`rounded-2xl border-2 px-4 py-3.5 flex items-start justify-between ${tone.panel}`} aria-live="polite">
         <div>
-          <p className="text-xs font-black uppercase tracking-wider text-text-muted">Mite load</p>
-          <p className="text-3xl font-black" style={{ color: tone.value }}>
+          <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">Mite load</p>
+          <p className="text-[22px] font-black" style={{ color: tone.value }}>
             {load.toFixed(2)}%
           </p>
         </div>
         <div className="text-center">
-          <p className="text-xs font-black uppercase tracking-wider text-text-muted">HBHC limit</p>
-          <p className="text-2xl font-black text-text">{threshold}%</p>
+          <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">HBHC limit</p>
+          <p className="text-lg font-black text-text">{threshold}%</p>
         </div>
-        <p className={`flex items-center gap-1.5 text-lg font-black ${tone.text}`}>
+        <p className={`flex items-center gap-1.5 text-sm font-black ${tone.text}`}>
           {status === 'OK' ? <Check size={22} /> : <AlertTriangle size={22} />} {status}
         </p>
       </div>
-      <p className="flex gap-2 px-2 text-xs text-text-muted">
+      <p className="flex gap-2 px-2 text-[10px] text-text-muted">
         <Info size={14} className="shrink-0 mt-0.5" /> Guidelines recommend maintaining a load below 2–3% depending on season.
       </p>
       <FormCard icon="📝" title="Notes (optional)">
@@ -242,12 +242,12 @@ export default function VarroaScreen() {
         <div className="space-y-5">
           <div className="card px-4 py-5 flex items-center justify-between gap-2" style={{ backgroundImage: HONEYCOMB }}>
             <div className="min-w-0">
-              <h2 className="flex items-center gap-2 text-lg font-black text-text whitespace-nowrap">
+              <h2 className="flex items-center gap-2 text-[17px] font-black text-text whitespace-nowrap">
                 <Microscope size={22} className="text-primary shrink-0" /> Varroa Mite Testing
               </h2>
-              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-text-muted">Honey bee health coalition standards</p>
+              <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-text-muted">Honey bee health coalition standards</p>
             </div>
-            <button type="button" onClick={() => setAdding(true)} disabled={!hiveId} className="shrink-0 w-[30%] max-w-[200px] min-h-[52px] rounded-full bg-primary px-3 py-2 text-sm text-white font-black shadow-md">
+            <button type="button" onClick={() => setAdding(true)} disabled={!hiveId} className="shrink-0 w-[30%] max-w-[200px] min-h-[48px] rounded-full bg-primary px-3 py-2 text-xs text-white font-black shadow-md">
               + Add Mite Test
             </button>
           </div>
@@ -260,7 +260,7 @@ export default function VarroaScreen() {
             <>
               {tests.length > 0 && <SeasonChart tests={tests} requeens={requeens} />}
               <div>
-                <h3 className="mb-3 px-1 text-sm font-black uppercase tracking-wider text-text-muted">Recorded mite tests</h3>
+                <h3 className="mb-3 px-1 text-xs font-black uppercase tracking-wider text-text-muted">Recorded mite tests</h3>
                 {tests.length === 0 ? (
                   <div className="rounded-[1.75rem] border-2 border-dashed border-divider bg-card-bg p-8 text-center text-text-muted">No mite tests recorded for this hive yet.</div>
                 ) : (

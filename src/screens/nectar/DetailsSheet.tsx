@@ -15,8 +15,8 @@ const weeklyDate = (d: string) => new Date(d).toLocaleDateString('en-US', { mont
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11px] font-black uppercase tracking-wider text-text-muted">{label}</p>
-      <div className="text-2xl font-black text-text tabular-nums leading-8">{children}</div>
+      <p className="text-[10px] font-black uppercase tracking-wider text-text-muted">{label}</p>
+      <div className="text-[22px] font-black text-text tabular-nums leading-8">{children}</div>
     </div>
   );
 }
@@ -55,10 +55,10 @@ export function DetailsSheet({ open, onClose, data, model }: { open: boolean; on
     <Sheet open={open} onClose={onClose} title="Behind this number" variant="plain" maxHeight="85vh">
       <div className="px-4 pb-6 space-y-4">
         <div className="rounded-[20px] bg-[#f8f6f2] shadow-sm p-5">
-          <button type="button" onClick={() => setExpanded(e => !e)} className="w-full flex items-center gap-3 pb-4 border-b border-divider" aria-expanded={expanded}>
-            <Activity size={20} className="text-primary" />
-            <span className="flex-1 text-left font-black uppercase tracking-widest text-primary">Today at a glance</span>
-            {expanded ? <ChevronUp size={20} className="text-text-muted" /> : <ChevronDown size={20} className="text-text-muted" />}
+          <button type="button" onClick={() => setExpanded(e => !e)} className="w-full flex items-center gap-3 pb-3 border-b border-divider" aria-expanded={expanded}>
+            <Activity size={16} className="text-primary" />
+            <span className="flex-1 text-left text-[13px] font-black uppercase tracking-widest text-primary">Today at a glance</span>
+            {expanded ? <ChevronUp size={16} className="text-text-muted" /> : <ChevronDown size={16} className="text-text-muted" />}
           </button>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-4">
@@ -76,7 +76,7 @@ export function DetailsSheet({ open, onClose, data, model }: { open: boolean; on
           {expanded && (
             <div className="mt-5 border-t border-divider">
               {rows.map(([label, v]) => (
-                <div key={label} className="flex justify-between py-3 border-b border-divider">
+                <div key={label} className="flex justify-between py-2 text-xs border-b border-divider">
                   <span className="text-text">{label}</span>
                   <span className="font-black tabular-nums">{pctRound(v)}</span>
                 </div>
@@ -85,13 +85,13 @@ export function DetailsSheet({ open, onClose, data, model }: { open: boolean; on
           )}
 
           <button type="button" onClick={() => setWeeklyOpen(o => !o)} className="w-full flex items-center justify-between px-2 pt-2" aria-expanded={weeklyOpen}>
-            <span className="text-sm font-black uppercase tracking-wider text-text-muted">{model.currentYear} weekly values</span>
+            <span className="text-[11px] font-black uppercase tracking-wider text-text-muted">{model.currentYear} weekly values</span>
             {weeklyOpen ? <ChevronUp size={18} className="text-text-muted" /> : <ChevronDown size={18} className="text-text-muted" />}
           </button>
           {weeklyOpen && (
             <div className="mt-3 rounded-2xl border border-divider bg-white/70 px-3">
               {weekly.map(w => (
-                <div key={w.date} className="flex justify-between py-2.5 border-b border-divider last:border-b-0">
+                <div key={w.date} className="flex justify-between py-2 text-xs border-b border-divider last:border-b-0">
                   <span>{weeklyDate(w.date)}</span>
                   <span className="font-black tabular-nums">{pctRound(w.value)}</span>
                 </div>
@@ -101,22 +101,22 @@ export function DetailsSheet({ open, onClose, data, model }: { open: boolean; on
         </div>
 
         <div className="rounded-[20px] bg-[#f8f6f2] shadow-sm p-5">
-          <button type="button" onClick={() => setTips(t => !t)} className="w-full flex items-center gap-3 pb-4 border-b border-divider" aria-expanded={tips}>
-            <Sparkles size={20} className="text-primary" />
-            <span className="flex-1 text-left font-black uppercase tracking-widest text-primary">Index components</span>
-            {tips ? <ChevronUp size={20} className="text-text-muted" /> : <ChevronDown size={20} className="text-text-muted" />}
+          <button type="button" onClick={() => setTips(t => !t)} className="w-full flex items-center gap-3 pb-3 border-b border-divider" aria-expanded={tips}>
+            <Sparkles size={16} className="text-primary" />
+            <span className="flex-1 text-left text-[13px] font-black uppercase tracking-widest text-primary">Index components</span>
+            {tips ? <ChevronUp size={16} className="text-text-muted" /> : <ChevronDown size={16} className="text-text-muted" />}
           </button>
-          <div className="pt-4 space-y-3">
+          <div className="pt-4 space-y-5">
             {bars.map(([label, v, colour, tip]) => (
               <div key={label}>
                 <div className="flex justify-between items-baseline">
-                  <span className="font-bold text-text">
+                  <span className="text-xs font-bold text-text">
                     {label}
                     {tips && <span className="ml-2 text-xs font-normal text-text-muted">{tip}</span>}
                   </span>
-                  <span className="font-black text-primary tabular-nums">{pctRound(v)}</span>
+                  <span className="text-xs font-black text-primary tabular-nums">{pctRound(v)}</span>
                 </div>
-                <div className="mt-1.5 h-2.5 rounded-full bg-divider overflow-hidden">
+                <div className="mt-1.5 h-2 rounded-full bg-divider overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, v * 100))}%`, background: colour }} />
                 </div>
               </div>

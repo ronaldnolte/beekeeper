@@ -41,8 +41,8 @@ export function BetaSignupScreen() {
     <div className="min-h-screen bg-bg flex items-center justify-center px-4 py-10">
       <AuthCard className="animate-rise-in">
         <div className="px-6 pt-6 pb-8">
-          <button type="button" onClick={() => navigate('AUTH', { keepRecord: false })} className="flex items-center gap-2 text-text-muted font-bold">
-            <ArrowLeft size={18} /> Back to Login
+          <button type="button" onClick={() => navigate('AUTH', { keepRecord: false })} className="flex items-center gap-1.5 text-xs text-text-muted font-bold">
+            <ArrowLeft size={14} /> Back to Login
           </button>
 
           {done ? (
@@ -62,8 +62,8 @@ export function BetaSignupScreen() {
                 <Logo size={80} />
               </div>
               <h1 className="mt-3 text-center text-2xl font-black text-text">Join the Beta</h1>
-              <p className="mt-1 text-center text-[15px] text-text-muted">Get early access to Beekeeper on Android.</p>
-              <p className="mt-6 text-text-muted leading-relaxed">
+              <p className="mt-1 text-center text-xs text-text-muted">Get early access to Beekeeper on Android.</p>
+              <p className="mt-6 text-xs text-text-muted leading-relaxed">
                 Enter your Google Account email address. We will add your account to our approved tester list and notify you.
               </p>
               <div className="mt-5 space-y-4">
@@ -83,7 +83,7 @@ export function BetaSignupScreen() {
                   onChange={e => setWebsite(e.target.value)}
                   style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, opacity: 0 }}
                 />
-                <button type="submit" disabled={busy} className="btn-honey w-full h-14 text-lg flex items-center justify-center gap-2">
+                <button type="submit" disabled={busy} className="btn-honey w-full h-14 text-base flex items-center justify-center gap-2">
                   {busy ? 'Submitting...' : '🚀 Request Beta Access'}
                   {!busy && <ArrowRight size={20} />}
                 </button>

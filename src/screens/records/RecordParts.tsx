@@ -82,7 +82,7 @@ export function CardSection({ children, className = '' }: { children: ReactNode;
 
 export function SectionTitle({ icon, children }: { icon?: string; children: ReactNode }) {
   return (
-    <h3 className="flex items-center gap-3 mb-3 text-sm font-black uppercase tracking-wider text-text-muted">
+    <h3 className="flex items-center gap-2 mb-2 text-xs font-black uppercase tracking-wider text-text-muted">
       {icon && <span aria-hidden="true">{icon}</span>}
       {children}
     </h3>
@@ -102,7 +102,7 @@ export function PillGroup({ options, value, onChange, label }: { options: readon
             role="radio"
             aria-checked={on}
             onClick={() => onChange(v)}
-            className={`flex-grow h-[34px] px-2.5 rounded-2xl border-2 text-sm font-bold transition-colors ${on ? 'border-primary bg-primary/15 text-primary' : 'border-transparent bg-white/70 text-text-muted'}`}
+            className={`flex-grow h-[30px] px-2 rounded-xl border-2 text-xs font-bold transition-colors ${on ? 'border-primary bg-primary/15 text-primary' : 'border-transparent bg-white/70 text-text-muted'}`}
           >
             {text}
           </button>
