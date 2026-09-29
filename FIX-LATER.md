@@ -20,7 +20,6 @@ oddities to fix one at a time afterwards, each as its own small change.
 - Ask AI says it knows your current weather (it doesn't); example bubbles don't respond to taps.
 - Nectar badge can say "Trending Up" next to "falling" (5-day vs 11-day slope).
 - Nectar weekly-values dates can show a day early west of London.
-- Task due dates show a day early west of London.
 - After about 5–6 pm in the US, a new inspection, intervention or mite test defaults to
   tomorrow's date.
 - Varroa season chart mixes tests from every year into the same months.
@@ -46,3 +45,5 @@ oddities to fix one at a time afterwards, each as its own small change.
    task list with the Dashboard's "+ New Task" button, instead of a blank new task.
 7. The Nectar chart's "today" dot pulse is larger and stronger so it is actually noticeable
    (Ron, 2026-09-28).
+8. Task due dates show the day that was picked (the stored UTC day) instead of a day early west
+   of London; "overdue" starts the day after the due day. Storage unchanged (Ron, 2026-09-28).

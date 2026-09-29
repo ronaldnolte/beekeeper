@@ -8,12 +8,12 @@ import { useApp } from '../app/store';
 import { Spinner } from './Chrome';
 import { EditPencil } from './EditPencil';
 import { TaskSheet } from './TaskSheet';
-import { loadTasks, placeLine, setTaskDone, type Task, type TaskWithPlace } from '../lib/records';
+import { dueDay, dueLabel, isOverdue, loadTasks, placeLine, setTaskDone, type Task, type TaskWithPlace } from '../lib/records';
 
 function TaskRow({ t, onToggle, onOpen }: { t: TaskWithPlace; onToggle: () => void; onOpen: () => void }) {
   const done = t.status === 'completed';
-  const due = t.due_date ? new Date(t.due_date) : null;
-  const overdue = !!due && due.getTime() < Date.now() && !done;
+  const due = t.due_date ? dueDay(t.due_date) : null;
+  const overdue = !!due && isOverdue(due) && !done;
   return (
     <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={e => e.key === 'Enter' && onOpen()} className="card flex items-center gap-3 px-4 py-4 cursor-pointer active:scale-[0.99] transition-transform">
       <button
@@ -40,7 +40,7 @@ function TaskRow({ t, onToggle, onOpen }: { t: TaskWithPlace; onToggle: () => vo
           <span className="truncate">{placeLine(t)}</span>
           {due && (
             <span className={`shrink-0 flex items-center gap-1 ${overdue ? 'text-red-600 font-bold' : ''}`}>
-              <Calendar size={13} /> {due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              <Calendar size={13} /> {dueLabel(due)}
             </span>
           )}
         </div>

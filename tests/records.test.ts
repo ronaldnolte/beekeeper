@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../src/lib/supabase', () => ({ supabase: {} }));
 const { buildVarroaChart } = await import('../src/lib/varroaChart');
-const { defaultDueDay, dueDateIso, placeLine, taskScope, thresholdForDay } = await import('../src/lib/records');
+const { defaultDueDay, dueDateIso, dueDay, isOverdue, placeLine, taskScope, thresholdForDay } = await import('../src/lib/records');
 
 describe('varroa season chart', () => {
   // Screenshot B33: three tests, viewed in September.
@@ -62,6 +62,12 @@ describe('tasks', () => {
     expect(dueDateIso('2026-10-02')).toBe('2026-10-02T00:00:00.000Z');
     expect(dueDateIso('')).toBeNull();
     expect(defaultDueDay(new Date(2026, 8, 25, 15))).toBe('2026-10-02');
+  });
+
+  it('shows the due day as picked and marks overdue by calendar day (change #8)', () => {
+    expect(dueDay('2026-10-05T00:00:00+00:00')).toBe('2026-10-05');
+    expect(isOverdue('2026-10-05', new Date(2026, 9, 5, 23))).toBe(false); // due today: not overdue
+    expect(isOverdue('2026-10-05', new Date(2026, 9, 6, 0, 1))).toBe(true);
   });
 
   it('names the place', () => {

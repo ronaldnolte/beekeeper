@@ -6,8 +6,7 @@ import { Sheet } from './Sheet';
 import { Spinner } from './Chrome';
 import { Label, TextArea, TextInput } from './Form';
 import { useApp } from '../app/store';
-import { defaultDueDay, deleteTask, dueDateIso, saveTask, type Task } from '../lib/records';
-import { utcDay } from '../lib/recordDates';
+import { defaultDueDay, deleteTask, dueDateIso, dueDay, saveTask, type Task } from '../lib/records';
 
 interface Props {
   open: boolean;
@@ -39,7 +38,7 @@ function TaskForm({ task, onClose, onSaved, defaultHiveId, defaultApiaryId }: Om
   const [title, setTitle] = useState(task?.title ?? '');
   const [status, setStatus] = useState(task?.status ?? 'pending');
   const [priority, setPriority] = useState(task?.priority ?? 'medium');
-  const [day, setDay] = useState(task ? (task.due_date ? utcDay(task.due_date) : '') : defaultDueDay());
+  const [day, setDay] = useState(task ? (task.due_date ? dueDay(task.due_date) : '') : defaultDueDay());
   const [description, setDescription] = useState(task?.description ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

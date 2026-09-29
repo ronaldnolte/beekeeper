@@ -75,6 +75,20 @@ export function taskScope(hiveId: string | null, apiaryId: string | null, stored
 /** Due dates are the chosen day at 00:00 UTC, or null when cleared. */
 export const dueDateIso = (day: string) => (day ? new Date(`${day}T00:00:00.000Z`).toISOString() : null);
 
+/**
+ * The due day as picked: the stored value's UTC calendar day, "YYYY-MM-DD" (deliberate change #8:
+ * the live app showed it in local time, a day early west of London).
+ */
+export const dueDay = (dueDate: string) => new Date(dueDate).toISOString().slice(0, 10);
+
+/** Short month + day of a due day in the device locale, e.g. "Oct 5". */
+export const dueLabel = (day: string) => new Date(`${day}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+/** Overdue once the due day is before today (device's calendar day). */
+export const isOverdue = (day: string, now = new Date()) => day < localDay(now);
+
+const localDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 /** "YYYY-MM-DD" of today + 7 days in the device's time zone. */
 export function defaultDueDay(now = new Date()): string {
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
