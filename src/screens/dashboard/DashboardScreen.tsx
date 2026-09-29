@@ -29,7 +29,7 @@ export default function DashboardScreen() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6">
-      <h1 className="text-[27px] leading-tight font-black text-text">
+      <h1 className="text-[25px] leading-tight font-black text-text">
         Welcome back, <span className="text-primary">Beekeeper</span>!
       </h1>
       <p className="mt-1 text-text-muted">Here is an overview of your apiaries and hives today.</p>

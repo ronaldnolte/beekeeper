@@ -10,7 +10,6 @@ import { WhatsNew } from '../components/WhatsNew';
 import { AuthScreen } from '../screens/auth/AuthScreen';
 import { UpdatePasswordScreen } from '../screens/auth/UpdatePasswordScreen';
 import { BetaSignupScreen } from '../screens/auth/BetaSignupScreen';
-import { Placeholder } from '../screens/Placeholder';
 import type { View } from './views';
 
 // Heavy screens load on demand (SCAR S-UI-13).
@@ -26,6 +25,8 @@ const InterventionScreen = lazy(() => import('../screens/records/InterventionScr
 const VarroaScreen = lazy(() => import('../screens/records/VarroaScreen'));
 const TaskScreen = lazy(() => import('../screens/records/TaskScreen'));
 const DashboardScreen = lazy(() => import('../screens/dashboard/DashboardScreen'));
+const ProfileScreen = lazy(() => import('../screens/profile/ProfileScreen'));
+const RoadmapScreen = lazy(() => import('../screens/roadmap/RoadmapScreen'));
 
 function ScreenLoader() {
   return (
@@ -62,8 +63,13 @@ function screenFor(view: View): ReactNode {
       return <TaskScreen />;
     case 'DASHBOARD':
       return <DashboardScreen />;
+    case 'PROFILE':
+      return <ProfileScreen />;
+    case 'ROADMAP':
+      return <RoadmapScreen />;
     default:
-      return <Placeholder view={view} />;
+      // STATUS_UPDATE_FORM: nothing links to it (SPEC B §19, copied dead feature).
+      return null;
   }
 }
 
