@@ -10,7 +10,8 @@ const pctRound = (v: number) => `${Math.round(v * 100)}%`;
 
 /** Date as the original shows it: parsed from YYYY-MM-DD (UTC) but displayed in local time,
  *  so it can read a day early west of UTC — kept on purpose (QUESTIONS #7). */
-const weeklyDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+// A calendar date: shown in UTC so it never shifts a day west of London (deliberate change #14).
+const weeklyDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (

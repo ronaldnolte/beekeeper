@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { Archive, Crown, Droplet, Hash, Pill, Save, Scissors, Trash2, Wrench, type LucideIcon } from 'lucide-react';
 import { useApp } from '../../app/store';
 import { HistoryFeed } from '../../components/HistoryFeed';
-import { noonLocalIso, utcDay } from '../../lib/recordDates';
+import { noonLocalIso, recordDay } from '../../lib/recordDates';
 import { INTERVENTION_TYPES, deleteIntervention, saveIntervention } from '../../lib/records';
 import { BottomBar, RecordTabs, ReturnToHiveBar } from './RecordParts';
 
@@ -59,7 +59,7 @@ function InterventionForm({ onDone }: { onDone: (toHive: boolean) => void }) {
   const { state } = useApp();
   const rec = state.selectedRecord?.kind === 'intervention' ? state.selectedRecord : null;
   const id = rec?.id ?? null;
-  const [day, setDay] = useState(() => utcDay(rec?.timestamp as string | undefined));
+  const [day, setDay] = useState(() => recordDay(rec?.timestamp as string | undefined));
   const [type, setType] = useState<string>((rec?.type as string) || 'feeding');
   const [details, setDetails] = useState((rec?.description as string) ?? '');
   const [busy, setBusy] = useState(false);

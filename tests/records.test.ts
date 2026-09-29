@@ -29,19 +29,20 @@ describe('varroa season chart', () => {
     const [novDec, janFeb, mar, , junAug] = chart.columns;
     expect(novDec.dot).toMatchObject({ colour: '#F59E0B', label: '1.3%' });
     expect(mar.dot).toMatchObject({ colour: '#EF4444', label: '1.7%' });
-    expect(junAug.dot).toMatchObject({ colour: '#10B981', label: '1.0%' });
+    expect(junAug.dot).toBeNull(); // Jun 2025 is more than 12 months before Sep 2026 (change #21)
     expect(janFeb.dot).toBeNull();
     expect(chart.columns.every(c => c.bar === null)).toBe(true);
     expect(mar.cx).toBeCloseTo(2.5 * (260 / 6), 9);
   });
 
-  it('draws a range bar for 2+ tests (min height 3) and groups months across years', () => {
+  it('draws a range bar for 2+ tests (min height 3); only the last 12 months count', () => {
     const c = buildVarroaChart(
       [
-        { tested_at: '2024-03-02T18:00:00Z', mite_pct: 0.5 },
+        { tested_at: '2024-03-05T18:00:00Z', mite_pct: 9 }, // too old: ignored
+        { tested_at: '2026-03-02T18:00:00Z', mite_pct: 0.5 },
         { tested_at: '2026-03-20T18:00:00Z', mite_pct: 0.52 },
       ],
-      ['2023-03-15T18:00:00Z'],
+      ['2026-03-15T18:00:00Z', '2023-06-15T18:00:00Z'],
       new Date('2026-09-25T12:00:00Z'),
     ).columns[2];
     expect(c.bar).toMatchObject({ w: 14, h: 3, fill: 'rgba(16,185,129,0.2)' });

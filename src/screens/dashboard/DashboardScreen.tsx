@@ -1,9 +1,10 @@
 // Dashboard — SPEC B §1 (screenshots B02, B37, B38). The task list is shared (TaskPanel).
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, ClipboardList, MapPin, type LucideIcon } from 'lucide-react';
 import { useApp } from '../../app/store';
 import { TaskPanel } from '../../components/TaskList';
+import { loadProfile } from '../../lib/profileData';
 
 function StatTile({ icon: Icon, colour, value, label, onClick }: { icon: LucideIcon; colour: string; value: string | number; label: string; onClick?: () => void }) {
   const body = (
@@ -26,11 +27,17 @@ function StatTile({ icon: Icon, colour, value, label, onClick }: { icon: LucideI
 export default function DashboardScreen() {
   const { state, openApiariesTab, openHivesTab } = useApp();
   const [todo, setTodo] = useState<number | null>(null);
+  // Deliberate change #20 (Ron, 2026-09-29): greet by the Profile name when one is saved.
+  const [name, setName] = useState<string | null>(null);
+  const userId = state.user?.id;
+  useEffect(() => {
+    if (userId) void loadProfile(userId).then(p => setName(p.display_name?.trim() || null));
+  }, [userId]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-4">
       <h1 className="text-2xl leading-tight font-black text-text">
-        Welcome back, <span className="text-primary">Beekeeper</span>!
+        Welcome back, <span className="text-primary">{name ?? 'Beekeeper'}</span>!
       </h1>
       <p className="mt-1 text-sm text-text-muted">Here is an overview of your apiaries and hives today.</p>
 

@@ -6,7 +6,7 @@ import { bearerToken, handleCors, methodNotAllowed } from './_http.js';
 import { getSignedInUser } from './_supabase.js';
 import { fetchSatellite } from './_satellite.js';
 import { fetchWeather } from './_weather.js';
-import { nextPass, runEngine, summarise } from '../shared/nectar/engine.js';
+import { runEngine, summarise, upcomingPass } from '../shared/nectar/engine.js';
 import { todayUtc } from '../shared/nectar/dates.js';
 
 // Old app builds show the raw body as their error (SCAR S-NEC-26).
@@ -86,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       satellite: {
         last_pass: passDates[passDates.length - 1] ?? null,
         last_image: records[records.length - 1].date,
-        next_pass: nextPass(passDates),
+        next_pass: upcomingPass(passDates, new Date().toISOString().slice(0, 10)),
         pass_count: passDates.length,
         image_count: records.length,
       },

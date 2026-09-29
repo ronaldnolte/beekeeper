@@ -117,3 +117,15 @@ describe('synthetic cases (golden/synthetic)', () => {
     }
   });
 });
+
+describe('upcoming pass (deliberate change #15)', () => {
+  it('rolls a stale projection forward past today, leaving a future one alone', async () => {
+    const { nextPass: np, upcomingPass } = await import('../shared/nectar/engine');
+    const passes = ['2026-09-02', '2026-09-07', '2026-09-12', '2026-09-17', '2026-09-22'];
+    expect(np(passes)).toBe('2026-09-27');
+    expect(upcomingPass(passes, '2026-09-20')).toBe('2026-09-27');
+    expect(upcomingPass(passes, '2026-09-27')).toBe('2026-10-02');
+    expect(upcomingPass(passes, '2026-10-05')).toBe('2026-10-07');
+    expect(upcomingPass(passes.slice(0, 3), '2026-10-05')).toBeNull();
+  });
+});

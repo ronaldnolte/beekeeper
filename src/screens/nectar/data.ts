@@ -51,7 +51,7 @@ export function useNectar(apiary: Apiary | null, reviewYear: number | null) {
           if (ctl.signal.aborted) return;
           const msg = (err as Error).message;
           // Missing location reads as the (sic) message the screen has always shown.
-          throw new Error(msg.startsWith('Apiary has no location') ? 'This apiary coordinates are missing. Please edit apiary first.' : msg);
+          throw new Error(msg.startsWith('Apiary has no location') ? "This apiary's coordinates are missing. Please edit the apiary first." : msg);
         }
         const coordMs = Date.now() - tCoords;
 
@@ -97,4 +97,16 @@ export function useNectar(apiary: Apiary | null, reviewYear: number | null) {
   }, [load]);
 
   return { state, reload: () => load(true) };
+}
+
+/**
+ * The direction shown beside the phase. Deliberate change #18 (Ron, 2026-09-29): the server's
+ * trend_direction uses an 11-day slope while the phase uses 5 days, so the live app could say
+ * "Trending Up" next to "falling". A trending phase now sets the direction; otherwise the
+ * server's value is shown. The response itself is unchanged (old phone builds read it).
+ */
+export function shownDirection(d: Pick<NectarResponse, 'phase' | 'trend_direction'>): 'rising' | 'falling' | 'flat' {
+  if (d.phase === 'TRENDING_UP') return 'rising';
+  if (d.phase === 'TRENDING_DOWN') return 'falling';
+  return d.trend_direction;
 }

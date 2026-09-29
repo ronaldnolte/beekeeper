@@ -12,7 +12,21 @@ import { TIER, hourLabel } from './style';
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const weekday = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay();
 
-type Load = { kind: 'loading' } | { kind: 'error'; message: string } | { kind: 'loaded'; windows: InspectionWindow[] };
+type Load = { kind: 'loading' } | { kind: 'error'; message: string } | { kind: 'loaded'; windows: InspectionWindow[]; sunrise: string[]; sunset: string[] };
+
+const minutesOf = (t: string) => +t.slice(11, 13) * 60 + +t.slice(14, 16);
+
+/**
+ * Deliberate change #10 (Ron, 2026-09-29): the grid shows the hours the sun is up — an hour is
+ * kept when, on at least one day shown, it starts after sunrise and before sunset. The live app
+ * showed the sunrise hour even when still dark ("6am" for a 6:59 sunrise) and dropped every
+ * hour less than an hour before sunset. Scores and colours are unchanged: a late-afternoon
+ * hour still shows red with its "too close to sunset" reason.
+ */
+export function daylightHours(hours: number[], sunrise: string[], sunset: string[]): number[] {
+  const kept = hours.filter(h => sunrise.some((rise, i) => h * 60 >= minutesOf(rise) && h * 60 < minutesOf(sunset[i] ?? `${rise.slice(0, 10)}T18:00`)));
+  return kept.length ? kept : hours;
+}
 
 export default function ForecastScreen() {
   const { state, selectApiary } = useApp();
@@ -45,7 +59,7 @@ export default function ForecastScreen() {
         const res = await fetch(FORECAST_URL(coords.lat, coords.lng), { signal: ctl.signal });
         if (!res.ok) throw new Error();
         const data = (await res.json()) as OpenMeteoForecast;
-        if (!ctl.signal.aborted) setLoad({ kind: 'loaded', windows: scoreForecast(data) });
+        if (!ctl.signal.aborted) setLoad({ kind: 'loaded', windows: scoreForecast(data), sunrise: data.daily.sunrise, sunset: data.daily.sunset });
       } catch {
         if (!ctl.signal.aborted) setLoad({ kind: 'error', message: 'Failed to load weather data' });
       }
@@ -56,15 +70,12 @@ export default function ForecastScreen() {
   const grid = useMemo(() => {
     if (load.kind !== 'loaded') return null;
     const dates = [...new Set(load.windows.map(w => w.date))].sort();
-    let hours = [...new Set(load.windows.map(w => w.hour))].sort((a, b) => a - b);
+    let hours = daylightHours([...new Set(load.windows.map(w => w.hour))].sort((a, b) => a - b), load.sunrise, load.sunset);
     const at = new Map(load.windows.map(w => [`${w.date} ${w.hour}`, w]));
-    // Trim rows from the bottom while, for every date, the hour is missing or too close to sunset.
+    // Trim rows from the bottom while no date has data for that hour.
     while (hours.length) {
       const h = hours[hours.length - 1];
-      const dead = dates.every(d => {
-        const w = at.get(`${d} ${h}`);
-        return !w || w.issuesV2.some(i => i.toLowerCase().includes('sunset'));
-      });
+      const dead = dates.every(d => !at.get(`${d} ${h}`));
       if (!dead) break;
       hours = hours.slice(0, -1);
     }

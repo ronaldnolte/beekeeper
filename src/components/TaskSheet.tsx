@@ -145,7 +145,7 @@ function TaskForm({ task, onClose, onSaved, defaultHiveId, defaultApiaryId }: Om
 
 export function TaskSheet({ open, onClose, task, ...rest }: Props) {
   return (
-    <Sheet open={open} onClose={onClose} title={task ? 'Edit Task' : 'New Task'}>
+    <Sheet open={open} onClose={onClose} title={task ? 'Edit Task' : 'New Task'} hintBottom={100}>
       <TaskForm key={task?.id ?? 'new'} task={task} onClose={onClose} {...rest} />
     </Sheet>
   );

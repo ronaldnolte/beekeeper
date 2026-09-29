@@ -1,5 +1,5 @@
-// "MITE LOAD BY SEASON (ROLLING)" geometry — FORMULAS §6. Tests are grouped by month only,
-// any year (a copied quirk — FIX-LATER).
+// "MITE LOAD BY SEASON (ROLLING)" geometry — FORMULAS §6. Tests from the last 12 months are
+// grouped by month (deliberate change #21; the live app mixed every year together).
 
 import { loadColour, periodsEndingWith } from '../../shared/varroa';
 
@@ -27,7 +27,12 @@ export interface ChartColumn {
 
 const monthOf = (iso: string) => new Date(iso).getMonth() + 1;
 
-export function buildVarroaChart(tests: ChartTest[], requeens: string[], now = new Date()) {
+export function buildVarroaChart(allTests: ChartTest[], allRequeens: string[], now = new Date()) {
+  // Deliberate change #21 (Ron, 2026-09-29): only the last 12 months, so each period shows this
+  // season's tests — the live app mixed every year into the same months.
+  const yearAgo = now.getTime() - 365 * 86_400_000;
+  const tests = allTests.filter(t => Date.parse(t.tested_at) > yearAgo);
+  const requeens = allRequeens.filter(r => Date.parse(r) > yearAgo);
   const periods = periodsEndingWith(now.getMonth() + 1);
   const stats = periods.map(p => {
     const inside = tests.filter(t => (p.months as readonly number[]).includes(monthOf(t.tested_at)));

@@ -7,7 +7,7 @@ import { SelectionList } from '../../components/SelectionList';
 import { Spinner } from '../../components/Chrome';
 import { apiarySubtitle } from '../../lib/location';
 import { buildChartModel } from '../../../shared/nectar/chart';
-import { useNectar } from './data';
+import { shownDirection, useNectar } from './data';
 import { DifferenceChart, MainChart, SeasonChart } from './Charts';
 import { ReadoutStrip } from './Readout';
 import { DetailsSheet } from './DetailsSheet';
@@ -110,7 +110,14 @@ export default function NectarScreen() {
   const thisYear = new Date().getFullYear();
   const reviewYears = Array.from({ length: Math.max(0, thisYear - 1 - 2022 + 1) }, (_, i) => thisYear - 1 - i);
   const chartW = Math.max(0, panelWidth);
-  const chartH = Math.max(150, vh - 76 - (showTopBar ? 40 : 0) - NAV_SPACE - 505);
+  // The live app's formula (max(150, scroll area − 505)) is for the whole main chart. The number
+  // box's band (deliberate change #2) comes out of that height, so the page still ends above
+  // the nav on a phone (Ron, 2026-09-29: the nav covered the satellite line).
+  const spare = vh - 76 - (showTopBar ? 40 : 0) - NAV_SPACE - 505;
+  const chartH = Math.max(150, spare) - OVERLAY_BAND;
+  // Short phones: the band has already taken what it can from the main chart, so the two
+  // lower charts give up 16 px each too, keeping the satellite line clear of the nav.
+  const compact = spare < 150;
 
   return (
     <div>
@@ -189,8 +196,8 @@ export default function NectarScreen() {
                     {PHASE_LABEL[load.data.phase]}
                   </span>
                   <span className="flex items-center gap-1 text-[11px] font-bold text-[#d6d8ee]">
-                    {load.data.trend_direction === 'rising' ? <TrendingUp size={12} /> : load.data.trend_direction === 'falling' ? <TrendingDown size={12} /> : <Minus size={12} />}
-                    {load.data.trend_direction.charAt(0).toUpperCase() + load.data.trend_direction.slice(1)}
+                    {shownDirection(load.data) === 'rising' ? <TrendingUp size={12} /> : shownDirection(load.data) === 'falling' ? <TrendingDown size={12} /> : <Minus size={12} />}
+                    {shownDirection(load.data).charAt(0).toUpperCase() + shownDirection(load.data).slice(1)}
                   </span>
                 </p>
               </div>
@@ -235,7 +242,7 @@ export default function NectarScreen() {
                       {model.currentYear} vs {model.baseYearLabel}
                     </span>
                   </p>
-                  <DifferenceChart model={model} width={chartW} height={96} />
+                  <DifferenceChart model={model} width={chartW} height={compact ? 80 : 96} />
                 </div>
               )}
 
@@ -249,7 +256,7 @@ export default function NectarScreen() {
                       {model.seasonToDateCaption}
                     </span>
                   </p>
-                  <SeasonChart model={model} width={chartW} height={88} />
+                  <SeasonChart model={model} width={chartW} height={compact ? 72 : 88} />
                 </div>
               )}
             </div>

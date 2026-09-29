@@ -75,7 +75,7 @@ export function AuthScreen() {
         <form onSubmit={submit} className="px-6 pt-6 pb-6">
           <Logo size={96} />
           <h1 className="mt-3 text-center text-2xl font-black text-text">Beekeeper</h1>
-          <p className="mt-1 text-center text-sm text-text-muted">Manage your top-bar hives with ease.</p>
+          <p className="mt-1 text-center text-sm text-text-muted">Manage your bees with ease.</p>
 
           <div className="mt-8 space-y-4">
             {error && <ErrorBox>{error}</ErrorBox>}

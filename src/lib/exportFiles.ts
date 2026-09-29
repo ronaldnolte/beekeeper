@@ -4,7 +4,7 @@ import { supabase } from './supabase';
 import { BUCKET, listAttachments, type Attachment } from './attachments';
 import { toJpeg } from './imagePipeline';
 import { BROOD, QUEEN, STORES, TEMPERAMENT, labelOf } from './inspections';
-import { utcDay } from './recordDates';
+import { recordDay } from './recordDates';
 
 type Delivery = 'shared' | 'downloaded' | 'cancelled';
 
@@ -55,7 +55,7 @@ async function fetchStored(path: string): Promise<Blob> {
 export async function savePhotos(inspectionId: string, hiveName: string | null, timestamp: string | undefined): Promise<{ result: Delivery; count: number }> {
   const photos = (await listAttachments(inspectionId)).filter(a => a.kind === 'photo' && a.storage_path);
   if (!photos.length) throw new Error('This inspection has no photos to save.');
-  const date = utcDay(timestamp);
+  const date = recordDay(timestamp);
   const files: { blob: Blob; name: string }[] = [];
   for (let i = 0; i < photos.length; i++) {
     // One at a time to keep memory flat on low-end phones.
@@ -68,7 +68,7 @@ export async function savePhotos(inspectionId: string, hiveName: string | null, 
 export async function saveSinglePhoto(a: Attachment, hiveName: string | null, timestamp: string | undefined) {
   if (!a.storage_path) return;
   const { blob } = await toJpeg(await fetchStored(a.storage_path), 4096, 0.92);
-  await deliver([{ blob, name: `photo-${photoSlug(hiveName)}-${utcDay(timestamp)}.jpg` }], 'Inspection photo');
+  await deliver([{ blob, name: `photo-${photoSlug(hiveName)}-${recordDay(timestamp)}.jpg` }], 'Inspection photo');
 }
 
 // ---------- PDF ----------
@@ -200,6 +200,6 @@ export async function buildReport(inspectionId: string): Promise<Delivery> {
     }
   }
 
-  const name = `inspection-${slug(hive?.name ?? null) || 'hive'}-${utcDay(insp.timestamp)}.pdf`;
+  const name = `inspection-${slug(hive?.name ?? null) || 'hive'}-${recordDay(insp.timestamp)}.pdf`;
   return deliver([{ blob: doc.output('blob'), name }], 'Inspection Report');
 }

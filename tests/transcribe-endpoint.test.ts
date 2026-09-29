@@ -29,7 +29,7 @@ vi.mock('../api/_gemini.js', async () => {
 
 process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test';
 const { default: handler, INSTRUCTION } = await import('../api/transcribe.js');
-const { noonLocalIso, utcDay } = await import('../src/lib/recordDates');
+const { noonLocalIso, recordDay } = await import('../src/lib/recordDates');
 
 async function post(body: unknown) {
   const out = { status: 0, body: undefined as unknown };
@@ -70,8 +70,9 @@ describe('POST /api/transcribe', () => {
 });
 
 describe('record dates (SPEC B §14)', () => {
-  it('shows the UTC calendar day and saves noon local time', () => {
-    expect(utcDay('2026-06-05T23:30:00Z')).toBe('2026-06-05');
+  it('shows the local calendar day and saves noon local time (change #13)', () => {
+    expect(recordDay(noonLocalIso('2026-06-05'))).toBe('2026-06-05'); // round trip
+    expect(recordDay('2026-06-05T23:30:00Z')).toBe('2026-06-05'); // tests run in UTC
     expect(new Date(noonLocalIso('2026-06-05')).getHours()).toBe(12);
   });
 });

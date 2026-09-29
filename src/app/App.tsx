@@ -7,6 +7,7 @@ import { Header } from '../components/Header';
 import { BottomNav } from '../components/BottomNav';
 import { FullScreenLoader, GestureStrip, Spinner } from '../components/Chrome';
 import { WhatsNew } from '../components/WhatsNew';
+import { MoreBelow } from '../components/MoreBelow';
 import { AuthScreen } from '../screens/auth/AuthScreen';
 import { UpdatePasswordScreen } from '../screens/auth/UpdatePasswordScreen';
 import { BetaSignupScreen } from '../screens/auth/BetaSignupScreen';
@@ -103,6 +104,8 @@ export function App() {
         <Suspense fallback={<ScreenLoader />}>{screenFor(view)}</Suspense>
       </main>
       {showNav && <BottomNav />}
+      {/* Just above the nav pill / record bottom bars (all ≈ 90 px tall). */}
+      <MoreBelow key={`more-below-${view}`} className="fixed left-1/2 -translate-x-1/2 z-[45]" style={{ bottom: 'calc(104px + env(safe-area-inset-bottom))' }} />
       <WhatsNew />
       <GestureStrip />
     </div>

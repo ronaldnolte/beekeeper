@@ -48,7 +48,15 @@ function VoiceBody({ a, urls, onChanged }: { a: Attachment; urls: Record<string,
                 <em className="text-text-muted">{a.transcript_status === 'failed' ? 'Couldn’t transcribe — play the audio, or type the text.' : 'No speech detected — tap edit to type the text.'}</em>
               )}
             </p>
-            <button type="button" onClick={() => setEditing(true)} className="shrink-0 text-sm font-bold text-primary-ink">
+            <button
+              type="button"
+              onClick={() => {
+                // Start from the current transcript: it usually arrives after this note first rendered.
+                setText(a.transcript ?? '');
+                setEditing(true);
+              }}
+              className="shrink-0 text-sm font-bold text-primary-ink"
+            >
               ✏️ Edit
             </button>
           </div>

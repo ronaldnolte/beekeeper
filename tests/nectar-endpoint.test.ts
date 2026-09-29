@@ -1,6 +1,6 @@
 // The nectar endpoint end to end, offline: sign-in, satellite and weather are replaced by the
 // live-fetcher fixtures, and the clock is pinned to 2026-09-25. The response must equal the
-// live answer key (golden/nectar-live), including the satellite block.
+// live answer key (golden/nectar-live), including the satellite block (next_pass: change #15).
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -96,9 +96,15 @@ describe('GET /api/nectar-index-v2', () => {
       const body = r.body as Record<string, unknown>;
       const want = json(`nectar-live/${site}.live-2026-09-25.response.json`);
       expect(Math.abs((body.slope as number) - want.slope)).toBeLessThan(1e-9);
-      for (const k of ['nfi', 'phase', 'status', 'trend_direction', 'v2', 'full_history', 'satellite']) {
+      for (const k of ['nfi', 'phase', 'status', 'trend_direction', 'v2', 'full_history']) {
         expect(body[k], k).toEqual(want[k]);
       }
+      // Deliberate change #15: a projected pass on or before today is rolled forward past it.
+      const { next_pass: gotNext, ...gotSat } = body.satellite as { next_pass: string };
+      const { next_pass: wantNext, ...wantSat } = want.satellite;
+      expect(gotSat).toEqual(wantSat);
+      if (wantNext > '2026-09-25') expect(gotNext).toBe(wantNext);
+      else expect(gotNext > '2026-09-25').toBe(true);
       expect(body.weather_status).toEqual({ forecast_source: 'primary', archive_ok: true });
       expect(Object.keys(body._timing as object).sort()).toEqual(
         ['earth_engine_ms', 'pipeline_ms', 'satellite_observations', 'server_total_ms', 'weather_ms'],

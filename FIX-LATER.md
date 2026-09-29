@@ -3,31 +3,14 @@
 The first rebuilt release copies today's app exactly (Ron, 2026-09-25). These are known
 oddities to fix one at a time afterwards, each as its own small change.
 
-## Found during the rebuild
-
-- **Nectar "next pass" can show a past date** (Ron, 2026-09-27). The projection counts from
-  the last pass Earth Engine has catalogued (FORMULAS §3.14), and passes reach the catalogue
-  hours to days late — so "next pass" can be today or earlier. Suggested fix: roll the date
-  forward by the pass interval until it is after today (server side; response shape unchanged).
-
-## Copied on purpose (from 07-QUESTIONS-FOR-RON #7)
+## Still to fix
 
 - Hive status badge always says "Active" (no status column); "Update Status" screen unreachable.
-- Hive form shows an "Installation Date" that is never saved.
-- Forecast guide says a failed safety check scores 0; the grid still shows the points.
-- "Set New Password" hint says "Min 6 characters" (rule is 8).
-- Sign-in subtitle still says "Manage your top-bar hives with ease."
-- Ask AI says it knows your current weather (it doesn't); example bubbles don't respond to taps.
-- Nectar badge can say "Trending Up" next to "falling" (5-day vs 11-day slope).
-- Nectar weekly-values dates can show a day early west of London.
-- After about 5–6 pm in the US, a new inspection, intervention or mite test defaults to
-  tomorrow's date.
-- Varroa season chart mixes tests from every year into the same months.
-- Feedback: the message is saved even when the email fails, but the screen says it failed.
-- Saving an apiary or hive reloads the whole page.
-- Nectar error text "This apiary coordinates are missing."
-- Dashboard ignores the name saved on Profile.
-- Web-app screenshots listed in the install manifest point at the wrong folder.
+  Needs a new `hives.status` column on the live database — its own small project.
+- Hive form shows an "Installation Date" that is never saved. The hives table has no column
+  for it (only the automatic created_at). Ron (2026-09-29): save it if a field exists — it
+  does not, so this waits for a database change (could go with the status column).
+- Saving an apiary or hive reloads the whole page (works; fixing touches the navigation data).
 
 ## Already changed on purpose in the rebuild
 
@@ -47,3 +30,34 @@ oddities to fix one at a time afterwards, each as its own small change.
    (Ron, 2026-09-28).
 8. Task due dates show the day that was picked (the stored UTC day) instead of a day early west
    of London; "overdue" starts the day after the due day. Storage unchanged (Ron, 2026-09-28).
+9. "More below" hint (Ron, 2026-09-29): a still round down-arrow appears above the bottom
+   bars (and inside slide-up sheets) while more than 40 px of the page is below the screen;
+   tapping it scrolls down.
+10. Forecast grid shows the hours the sun is up (Ron, 2026-09-29): an hour is kept when, on any
+   day shown, it starts after sunrise and before sunset. The live app showed the dark sunrise
+   hour ("6am" for 6:59) and hid every hour within an hour of sunset. Scores are unchanged.
+11. Nectar on short phones (Ron, 2026-09-29: the nav covered the satellite line): the number
+   box's band now comes out of the main chart's height, and when the screen is short the
+   difference and season-to-date charts are 16 px shorter each.
+12. Voice-note "Edit" starts from the current transcript (Ron, 2026-09-29). This was a rebuild
+   bug, not a live-app behaviour: the edit box was filled before the transcript arrived.
+13. Record dates (inspections, interventions, mite tests) show and default to the LOCAL day;
+   the live app used the UTC day, so a new record after ~5–6 pm US time said tomorrow.
+14. Nectar weekly values show their calendar date without shifting a day west of London.
+15. Nectar "next pass" is rolled forward by the pass interval until it is after today
+   (server; response shape unchanged).
+16. Feedback: once the message is saved the screen says it was sent; an email-alert failure
+   is only logged (the live app said "Failed to send" for a message it had kept).
+17. Set New Password hint says "Min 8 characters" (the rule; the live app said 6).
+18. Nectar direction beside a trending phase follows the phase (no "Trending Up" + "falling").
+19. Ask AI example questions are tappable and fill the question box.
+20. Dashboard greets by the name saved on Profile ("Beekeeper" when none).
+21. Mite season chart uses only the last 12 months of tests and requeens.
+22. Forecast guide says a failed safety check turns the cell red (it keeps its points); the live
+   text claimed points were set to 0.
+23. Nectar error reads "This apiary's coordinates are missing. Please edit the apiary first."
+24. Ask AI welcome says it knows "your location, the season, and your hive types" (it never
+   had the current weather).
+25. Install screenshots exist (public/screenshots, from the sign-in page via
+   scripts/manifest-screenshots.mjs) and the manifest points at them.
+26. Sign-in subtitle: "Manage your bees with ease."

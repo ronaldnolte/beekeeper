@@ -9,14 +9,14 @@
   "orientation": "portrait",
   "screenshots": [
     {
-      "src": "/screenshots/Wide Screenshot.png",
+      "src": "/screenshots/wide.png",
       "type": "image/png",
       "sizes": "1910x909",
       "form_factor": "wide",
-      "label": "BeekTools Beekeeper dashboard"
+      "label": "BeekTools Beekeeper sign-in"
     },
     {
-      "src": "/screenshots/Narrow Screenshot.png",
+      "src": "/screenshots/narrow.png",
       "type": "image/png",
       "sizes": "454x610",
       "form_factor": "narrow",

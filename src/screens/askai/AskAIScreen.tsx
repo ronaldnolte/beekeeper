@@ -112,13 +112,19 @@ export default function AskAIScreen() {
               </div>
               <h3 className="mt-5 text-lg font-black text-text">Your AI Beekeeper</h3>
               <p className="mt-3 px-6 text-base leading-relaxed text-text-muted">
-                Ask me anything about your hives! I automatically know your location, current weather, and hive types to give you the best advice.
+                Ask me anything about your hives! I automatically know your location, the season, and your hive types to give you the best advice.
               </p>
               <div className="mt-7 flex flex-col items-center gap-2">
                 {EXAMPLES.map(q => (
-                  <span key={q} className="rounded-full bg-white px-4 py-2 text-xs font-bold text-text-muted shadow-sm">
+                  // Deliberate change #19 (Ron, 2026-09-29): tapping an example puts it in the box.
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => setInput(q.replace(/^"|"$/g, ''))}
+                    className="rounded-full bg-white px-4 py-2 text-xs font-bold text-text-muted shadow-sm active:scale-[0.97] transition-transform"
+                  >
                     {q}
-                  </span>
+                  </button>
                 ))}
               </div>
             </div>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Camera, Share2 } from 'lucide-react';
 import { useApp } from '../../app/store';
 import { HistoryFeed } from '../../components/HistoryFeed';
-import { noonLocalIso, utcDay } from '../../lib/recordDates';
+import { noonLocalIso, recordDay } from '../../lib/recordDates';
 import { supabase } from '../../lib/supabase';
 import { BROOD, DEFAULTS, QUEEN, STORES, TEMPERAMENT, deleteInspection, saveInspection, startInspection, type InspectionFields } from '../../lib/inspections';
 import { BottomBar, CardSection, PillGroup, RecordTabs, ReturnToHiveBar, SaveButton, SectionTitle, TrashButton } from './RecordParts';
@@ -15,7 +15,7 @@ function InspectionForm() {
   const rec = state.selectedRecord!;
   // Update vs create is decided by the id held here, never by the app-wide selection (SCAR S-INSP-1).
   const [id] = useState<string | null>(rec.id ?? null);
-  const [day, setDay] = useState(() => utcDay(rec.timestamp as string | undefined));
+  const [day, setDay] = useState(() => recordDay(rec.timestamp as string | undefined));
   const [f, setF] = useState<InspectionFields>(() => ({
     queen_status: (rec.queen_status as string) ?? DEFAULTS.queen_status,
     brood_pattern: (rec.brood_pattern as string) ?? null,

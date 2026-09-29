@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Minus, TrendingDown, TrendingUp, X } from 'lucide-react';
 import type { ChartModel } from '../../../shared/nectar/chart';
-import type { NectarResponse, Phase } from './data';
+import { shownDirection, type NectarResponse, type Phase } from './data';
 import { DifferenceChart, MainChart, SeasonChart } from './Charts';
 import { Legend, PhaseChip, SatelliteLine } from './Readout';
 import { PANEL, monDayOfChartDay, pct } from './style';
@@ -74,8 +74,9 @@ export function FullScreen({ apiaryName, data, model, onClose }: { apiaryName: s
   const hasSeason = model.seasonToDate != null;
   const showTab = hasSeason ? tab : 'difference';
 
-  const TrendIcon = data.trend_direction === 'rising' ? TrendingUp : data.trend_direction === 'falling' ? TrendingDown : Minus;
-  const direction = data.trend_direction.charAt(0).toUpperCase() + data.trend_direction.slice(1);
+  const dir = shownDirection(data);
+  const TrendIcon = dir === 'rising' ? TrendingUp : dir === 'falling' ? TrendingDown : Minus;
+  const direction = dir.charAt(0).toUpperCase() + dir.slice(1);
 
   // In portrait the whole panel is turned 90° so the chart is always landscape.
   const frame = portrait

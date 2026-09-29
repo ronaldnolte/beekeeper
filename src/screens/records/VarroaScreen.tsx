@@ -5,7 +5,7 @@ import { AlertTriangle, Calendar, Check, Info, Microscope } from 'lucide-react';
 import { useApp } from '../../app/store';
 import { Spinner } from '../../components/Chrome';
 import { EditPencil } from '../../components/EditPencil';
-import { noonLocalIso, utcDay } from '../../lib/recordDates';
+import { noonLocalIso, recordDay } from '../../lib/recordDates';
 import { deleteVarroa, listRequeens, listVarroa, saveVarroa, thresholdForDay, type VarroaTest } from '../../lib/records';
 import { CHART_W, LABEL_H, PLOT_H, buildVarroaChart } from '../../lib/varroaChart';
 import { miteLoad, varroaStatus, type VarroaStatus } from '../../../shared/varroa';
@@ -117,7 +117,7 @@ function TestCard({ t, onTap }: { t: VarroaTest; onTap: () => void }) {
 
 function VarroaForm({ test, onDone }: { test: VarroaTest | null; onDone: () => void }) {
   const { state } = useApp();
-  const [day, setDay] = useState(() => utcDay(test?.tested_at));
+  const [day, setDay] = useState(() => recordDay(test?.tested_at));
   const [bees, setBees] = useState(String(test?.bee_count ?? 300));
   const [mites, setMites] = useState(String(test?.mite_count ?? 0));
   const [notes, setNotes] = useState(test?.notes ?? '');

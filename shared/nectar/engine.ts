@@ -252,7 +252,8 @@ export function summarise(r: EngineResult) {
 
 // ---- §3.14 satellite timing ----
 
-export function nextPass(passDates: readonly string[]): string | null {
+/** Typical days between passes: median of the last few gaps, clamped 2–10. */
+function passStep(passDates: readonly string[]): number | null {
   if (passDates.length < 4) return null;
   const recent = passDates.slice(-8);
   const gaps: number[] = [];
@@ -262,6 +263,23 @@ export function nextPass(passDates: readonly string[]): string | null {
   }
   if (gaps.length === 0) return null;
   gaps.sort((a, b) => a - b);
-  const step = clamp(gaps[Math.floor(gaps.length / 2)], 2, 10);
-  return addDays(passDates[passDates.length - 1], step);
+  return clamp(gaps[Math.floor(gaps.length / 2)], 2, 10);
+}
+
+export function nextPass(passDates: readonly string[]): string | null {
+  const step = passStep(passDates);
+  return step == null ? null : addDays(passDates[passDates.length - 1], step);
+}
+
+/**
+ * Deliberate change #15 (Ron, 2026-09-27 fix-later list): passes reach the catalogue hours to
+ * days late, so the projection can land on today or earlier. Roll it forward by the pass
+ * interval until it is after `today` ("YYYY-MM-DD", UTC). Response shape unchanged.
+ */
+export function upcomingPass(passDates: readonly string[], today: string): string | null {
+  const step = passStep(passDates);
+  let next = nextPass(passDates);
+  if (step == null || next == null) return next;
+  while (next <= today) next = addDays(next, step);
+  return next;
 }

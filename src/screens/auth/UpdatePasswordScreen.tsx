@@ -1,5 +1,5 @@
-// Set New Password — SPEC A §9 (screenshots A07, A08). The "Min 6 characters" hint is wrong
-// (the rule is 8) and is kept on purpose for the first release (QUESTIONS #7).
+// Set New Password — SPEC A §9 (screenshots A07, A08). The hint says "Min 8 characters" (the
+// rule); the live app said 6 (deliberate change #17, Ron 2026-09-29).
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowRight, Lock, X } from 'lucide-react';
@@ -108,7 +108,7 @@ export function UpdatePasswordScreen() {
           <div className="mt-8 space-y-5">
             <div>
               <FieldLabel htmlFor="new-password">New Password</FieldLabel>
-              <IconInput id="new-password" type="password" variant="outlined" icon={Lock} placeholder="Min 6 characters" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} />
+              <IconInput id="new-password" type="password" variant="outlined" icon={Lock} placeholder="Min 8 characters" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} />
             </div>
             <div>
               <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>

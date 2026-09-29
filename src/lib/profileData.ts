@@ -54,17 +54,25 @@ export function clampInt(raw: string, min: number, max: number): number | null {
 
 // ---------- feedback ----------
 
-/** Row first, then the email (the row is kept even if the email fails). */
+/**
+ * Row first, then the email alert. Deliberate change #16 (Ron, 2026-09-29): once the row is
+ * saved the message has arrived, so an email failure is only logged — the live app told the
+ * user "Failed to send" for a message it had kept.
+ */
 export async function sendFeedback(message: string, email: string) {
   const { error } = await supabase.from('app_feedback').insert({ message, email: email.trim() || null, created_at: new Date().toISOString() });
   if (error) throw new Error(error.message);
-  const { data } = await supabase.auth.getSession();
-  const res = await fetch(`${apiBase()}/api/feedback`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, email: email.trim() || null, sessionToken: data.session?.access_token }),
-  });
-  if (!res.ok) throw new Error(`feedback ${res.status}`);
+  try {
+    const { data } = await supabase.auth.getSession();
+    const res = await fetch(`${apiBase()}/api/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, email: email.trim() || null, sessionToken: data.session?.access_token }),
+    });
+    if (!res.ok) console.warn('[feedback] email alert failed', res.status);
+  } catch (err) {
+    console.warn('[feedback] email alert failed', err);
+  }
 }
 
 // ---------- roadmap ----------

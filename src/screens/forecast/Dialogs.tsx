@@ -139,7 +139,7 @@ const FAILSAFES = [
   ['Sunset Safety Buffer:', 'Inspection must start at least 1 hour before daily sunset (allows foragers to safely return to hive)'],
 ] as const;
 
-/** The guide claims a fail-safe sets points to 0; the grid does not — kept as is (QUESTIONS #7). */
+/** Deliberate change #22 (Ron, 2026-09-29): the guide now says a failed check turns the cell red; the live text claimed points were set to 0, which the grid never did. */
 export function ScoringGuide({ onClose }: { onClose: () => void }) {
   return (
     <GlassDialog onClose={onClose} label="How Scores are Calculated">
@@ -167,7 +167,7 @@ export function ScoringGuide({ onClose }: { onClose: () => void }) {
       <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3.5 text-red-800">
         <p className="text-sm font-black">Safety Fail-Safes (Forces Red Cell Abort)</p>
         <p className="mt-1 text-xs">
-          If any of these conditions evaluate to TRUE, execution is immediately aborted (classification: <strong>Inadvisable / Red Cell</strong>) and points default to 0:
+          If any of these conditions is true, the cell turns <strong>red (Inadvisable)</strong>. It still shows the points it scored, so you can see how close it came:
         </p>
         <ul className="mt-2 list-disc pl-5 text-xs space-y-1">
           {FAILSAFES.map(([name, text]) => (
