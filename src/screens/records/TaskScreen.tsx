@@ -1,15 +1,25 @@
-// The "Task" view — SPEC A §3, SPEC B §3 (screenshot B36): the task sheet over an empty page.
-// Opened from the hive action bar (new task for this hive), the Tasks sub-tab, or a task in
-// the hive's history (edit). Closing the sheet returns to Hive Detail.
+// The hive's Tasks screen (view TASK_FORM, header "Task"). Deliberate change #6 (Ron,
+// 2026-09-28): the live app jumped straight into a blank new task; this shows the hive's task
+// list with the same "+ New Task" button, pencil and sheet as the Dashboard.
 
 import { useApp } from '../../app/store';
-import { TaskSheet } from '../../components/TaskSheet';
+import { TaskPanel } from '../../components/TaskList';
+import { RecordTabs, ReturnToHiveBar } from './RecordParts';
 import type { Task } from '../../lib/records';
 
 export default function TaskScreen() {
-  const { state, goBack } = useApp();
-  const rec = state.selectedRecord;
-  const task = rec && rec.kind === 'task' ? (rec as unknown as Task) : null;
+  const { state } = useApp();
   const hive = state.hives.find(h => h.id === state.selectedHiveId);
-  return <TaskSheet open onClose={goBack} onSaved={() => {}} task={task} defaultHiveId={state.selectedHiveId} defaultApiaryId={hive?.apiary_id ?? state.selectedApiaryId} />;
+  const rec = state.selectedRecord;
+  const openTask = rec && rec.kind === 'task' ? (rec as unknown as Task) : null;
+  if (!state.selectedHiveId) return null;
+  return (
+    <div className="max-w-2xl mx-auto px-2.5 pt-2 pb-36">
+      <RecordTabs active="TASK_FORM" />
+      <div className="px-1.5 pt-2">
+        <TaskPanel hiveId={state.selectedHiveId} apiaryId={hive?.apiary_id} heading={hive?.name ?? 'Tasks'} subheading="Tasks for this hive." listTitle="Upcoming Tasks" openTask={openTask} />
+      </div>
+      <ReturnToHiveBar />
+    </div>
+  );
 }

@@ -19,14 +19,14 @@ interface Props {
   defaultApiaryId?: string | null;
 }
 
-/** Selected = amber fill with amber text — the live app's invisible-text quirk (FIX-LATER). */
+/** Selected = amber fill with white text (deliberate change #5: the live app drew amber on amber). */
 function Choice({ on, children, onClick }: { on: boolean; children: React.ReactNode; onClick: () => void }) {
   return (
     <button
       type="button"
       aria-pressed={on}
       onClick={onClick}
-      className={`flex-1 h-12 rounded-2xl border border-white/60 font-black flex items-center justify-center gap-2 ${on ? 'bg-primary text-primary' : 'bg-white/70 text-text-muted'}`}
+      className={`flex-1 h-12 rounded-2xl border border-white/60 font-black flex items-center justify-center gap-2 ${on ? 'bg-primary text-white' : 'bg-white/70 text-text-muted'}`}
     >
       {children}
     </button>

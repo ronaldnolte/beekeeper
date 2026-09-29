@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, Calendar, Check, Info, Microscope } from 'lucide-react';
 import { useApp } from '../../app/store';
 import { Spinner } from '../../components/Chrome';
+import { EditPencil } from '../../components/EditPencil';
 import { noonLocalIso, utcDay } from '../../lib/recordDates';
 import { deleteVarroa, listRequeens, listVarroa, saveVarroa, thresholdForDay, type VarroaTest } from '../../lib/records';
 import { CHART_W, LABEL_H, PLOT_H, buildVarroaChart } from '../../lib/varroaChart';
@@ -13,8 +14,8 @@ import { RecordTabs, ReturnToHiveBar } from './RecordParts';
 
 const TONE: Record<VarroaStatus, { text: string; border: string; value: string; chip: string; panel: string }> = {
   Critical: { text: 'text-red-600', border: '#EF4444', value: '#DC2626', chip: 'bg-red-100 text-red-600', panel: 'bg-red-50 border-red-200' },
-  // Amber text on an amber fill: the live app's empty-looking chip (screenshot B33, FIX-LATER).
-  'Above Limit': { text: 'text-amber-600', border: '#F59E0B', value: '#A16207', chip: 'bg-primary text-primary', panel: 'bg-amber-50 border-amber-200' },
+  // White on amber (deliberate change #5: the live app drew amber on amber, screenshot B33).
+  'Above Limit': { text: 'text-amber-600', border: '#F59E0B', value: '#A16207', chip: 'bg-primary text-white', panel: 'bg-amber-50 border-amber-200' },
   OK: { text: 'text-green-600', border: '#22C55E', value: '#16A34A', chip: 'bg-green-100 text-green-600', panel: 'bg-green-50 border-green-200' },
 };
 
@@ -109,6 +110,7 @@ function TestCard({ t, onTap }: { t: VarroaTest; onTap: () => void }) {
         </p>
         <p className="text-xs font-bold uppercase tracking-wider text-text-muted">Mite load</p>
       </div>
+      <EditPencil />
     </button>
   );
 }

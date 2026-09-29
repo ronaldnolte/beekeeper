@@ -86,13 +86,16 @@ export interface TaskWithPlace extends Task {
   apiaryName: string | null;
 }
 
-/** Every task assigned to the user, due date ascending with empty dates last, with place names. */
-export async function loadMyTasks(userId: string): Promise<TaskWithPlace[]> {
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('*')
-    .eq('assigned_user_id', userId)
-    .order('due_date', { ascending: true, nullsFirst: false });
+/**
+ * Every task assigned to the user (dashboard) or on one hive (hive Tasks screen), due date
+ * ascending with empty dates last, with place names resolved by separate queries (SCAR S-DATA-8).
+ */
+export async function loadTasks(by: { userId: string } | { hiveId: string }): Promise<TaskWithPlace[]> {
+  const base = supabase.from('tasks').select('*');
+  const { data, error } = await ('hiveId' in by ? base.eq('hive_id', by.hiveId) : base.eq('assigned_user_id', by.userId)).order('due_date', {
+    ascending: true,
+    nullsFirst: false,
+  });
   if (error) throw new Error(error.message);
   const tasks = data ?? [];
   const hiveIds = [...new Set(tasks.map(t => t.hive_id).filter((x): x is string => !!x))];

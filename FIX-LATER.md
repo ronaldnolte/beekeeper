@@ -14,8 +14,6 @@ oddities to fix one at a time afterwards, each as its own small change.
 
 - Hive status badge always says "Active" (no status column); "Update Status" screen unreachable.
 - Hive form shows an "Installation Date" that is never saved.
-- Task sheet: selected "Pending"/"Medium" buttons have invisible text; varroa "Above Limit"
-  chip likewise (screenshots B36, B33).
 - Forecast guide says a failed safety check scores 0; the grid still shows the points.
 - "Set New Password" hint says "Min 6 characters" (rule is 8).
 - Sign-in subtitle still says "Manage your top-bar hives with ease."
@@ -40,3 +38,11 @@ oddities to fix one at a time afterwards, each as its own small change.
    chart no longer shifts the page sideways (Ron, 2026-09-27).
 4. Photos & Voice bottom bar: the buttons share the width so they fit on a phone instead of
    running off the edge (2026-09-27).
+5. Selected task-sheet buttons (Pending/Completed, Low/Medium/High) and the varroa "Above Limit"
+   chip use white text instead of amber on amber, so the label is readable (Ron, 2026-09-28).
+6. One edit cue everywhere (Ron, 2026-09-28): every editable list item shows the apiary list's
+   pencil square (history items, mite tests, tasks); configuration snapshots show a trash
+   square because tapping one deletes it. The hive's Task button and Tasks tab open that hive's
+   task list with the Dashboard's "+ New Task" button, instead of a blank new task.
+7. The Nectar chart's "today" dot pulse is larger and stronger so it is actually noticeable
+   (Ron, 2026-09-28).

@@ -1,7 +1,7 @@
 // Shared history list ("HistoryFeed") — SPEC B §12 (screenshot B25).
 
 import { useEffect, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { DeleteHint, EditPencil } from './EditPencil';
 import { supabase } from '../lib/supabase';
 import { parseBars, type StackPart, type TopBar } from '../lib/apiaryHiveData';
 import { BAR_COLOUR, PART_STYLE } from './hiveConfig';
@@ -132,7 +132,7 @@ function FeedCard({ item, onTap }: { item: FeedItem; onTap: () => void }) {
           </div>
         )}
       </div>
-      {item.kind !== 'snapshot' && <ChevronRight size={20} className="shrink-0 mt-1 text-text-muted" />}
+      {item.kind === 'snapshot' ? <DeleteHint /> : <EditPencil />}
     </button>
   );
 }

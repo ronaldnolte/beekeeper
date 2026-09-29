@@ -140,13 +140,13 @@ body {
 
 /* The chart's current-position dot: one of the few things allowed to loop (SPEC F §3). */
 @keyframes nectar-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.45; }
-  50% { transform: scale(2.2); opacity: 0; }
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(3.2); opacity: 0; }
 }
 .nectar-pulse {
   transform-box: fill-box;
   transform-origin: center;
-  animation: nectar-pulse 2s ease-in-out infinite;
+  animation: nectar-pulse 1.6s ease-out infinite;
 }
 
 /* Ask AI answers are Markdown (bold, lists). */
