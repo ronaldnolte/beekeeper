@@ -1,7 +1,15 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Capacitor } from '@capacitor/core'
 import './index.css'
 import App from './app/App.tsx'
+
+// Lets the stylesheet tell the installed app from the website — today only
+// for the amber strip behind Android's system buttons (--color-system-bar).
+// Set before the first render so the strip never flashes cream first.
+if (Capacitor.isNativePlatform()) {
+  document.documentElement.classList.add('native');
+}
 
 // Google Analytics (gtag.js) Dynamic Loader
 const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-V3F9W1WQT0';

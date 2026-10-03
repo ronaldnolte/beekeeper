@@ -232,9 +232,9 @@ export const Auth: React.FC = () => {
           )}
         </form>
       </div>
-      {/* Fills the strip behind Android's gesture bar. Takes the app background, or a navy band shows under a cream app. */}
+      {/* Fills the strip behind Android's system buttons. Amber in the installed app, page colour on the web: see --color-system-bar. */}
       <div 
-        className="fixed bottom-0 left-0 right-0 bg-[var(--color-bg)] z-[9999] pointer-events-none" 
+        className="fixed bottom-0 left-0 right-0 bg-[var(--color-system-bar)] z-[9999] pointer-events-none" 
         style={{ height: 'env(safe-area-inset-bottom, 0px)' }}
       />
     </div>
