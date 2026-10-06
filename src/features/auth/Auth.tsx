@@ -101,7 +101,7 @@ export const Auth: React.FC = () => {
       : (loading ? 'Logging in...' : 'Log In');
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[var(--color-bg)]">
+    <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[var(--color-bg)]" style={{ paddingTop: 'calc(1rem + var(--test-strip-h, 0px))' }}>
       <div className="w-full max-w-md card p-6 sm:p-8 relative overflow-hidden">
         {/* Warm glow accent */}
         <div className="absolute -top-16 -right-16 w-40 h-40 bg-[var(--color-primary)] opacity-10 rounded-full blur-3xl"></div>

@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { Capacitor } from '@capacitor/core'
 import './index.css'
 import App from './app/App.tsx'
+import { TestSiteStrip } from './shared/components/TestSiteStrip'
+import { reserveTestSiteStrip } from './shared/testSite'
 
 // Lets the stylesheet tell the installed app from the website — today only
 // for the amber strip behind Android's system buttons (--color-system-bar).
@@ -10,6 +12,10 @@ import App from './app/App.tsx'
 if (Capacitor.isNativePlatform()) {
   document.documentElement.classList.add('native');
 }
+
+// Test copies (any database other than production) show a reminder strip;
+// reserve its height before the first render so nothing jumps.
+reserveTestSiteStrip();
 
 // Google Analytics (gtag.js) Dynamic Loader
 const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-V3F9W1WQT0';
@@ -35,6 +41,7 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <TestSiteStrip />
     <App />
   </StrictMode>,
 )

@@ -171,7 +171,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
         {/* Top bar (floats over the map): close + place search */}
         <div
           className="absolute top-0 left-0 right-0 p-3 flex items-center gap-2 z-[1000]"
-          style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}
+          style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px) + var(--test-strip-h, 0px))' }}
         >
           <button
             type="button"
@@ -204,13 +204,13 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
         </div>
 
         {searchMsg && (
-          <div style={{ top: 'calc(68px + env(safe-area-inset-top, 0px))' }} className="absolute left-3 right-3 z-[1000] bg-black/60 text-white text-xs font-medium px-3 py-2 rounded-lg">
+          <div style={{ top: 'calc(68px + env(safe-area-inset-top, 0px) + var(--test-strip-h, 0px))' }} className="absolute left-3 right-3 z-[1000] bg-black/60 text-white text-xs font-medium px-3 py-2 rounded-lg">
             {searchMsg}
           </div>
         )}
 
         {results.length > 0 && (
-          <div style={{ top: 'calc(68px + env(safe-area-inset-top, 0px))' }} className="absolute left-3 right-3 z-[1001] bg-white rounded-2xl shadow-xl overflow-hidden max-h-[244px] overflow-y-auto custom-scrollbar">
+          <div style={{ top: 'calc(68px + env(safe-area-inset-top, 0px) + var(--test-strip-h, 0px))' }} className="absolute left-3 right-3 z-[1001] bg-white rounded-2xl shadow-xl overflow-hidden max-h-[244px] overflow-y-auto custom-scrollbar">
             {results.map((r, i) => (
               <button
                 key={i}

@@ -162,7 +162,7 @@ export const AppHeader: React.FC = () => {
   const palette = React.useMemo(() => paletteFor(new Date()), []);
 
   return (
-    <header className="glass-header sticky top-0 z-50 flex justify-center w-full" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <header className="glass-header sticky top-0 z-50 flex justify-center w-full" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + var(--test-strip-h, 0px))' }}>
       {/* SVG Landscape Background */}
       <LandscapeSVG palette={palette} />
 

@@ -105,7 +105,7 @@ export const UpdatePasswordView: React.FC = () => {
 
   if (verifying) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-[#FFFBF0] to-[#f4ecd8]">
+      <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-[#FFFBF0] to-[#f4ecd8]" style={{ paddingTop: 'calc(1rem + var(--test-strip-h, 0px))' }}>
         <div className="w-full max-w-md card p-6 sm:p-8 text-center relative overflow-hidden">
           <div className="absolute -top-12 -right-12 w-32 h-32 bg-[var(--color-primary)] opacity-10 rounded-full blur-2xl"></div>
           <div className="animate-pulse text-5xl mb-4 relative z-10">🔑</div>
@@ -117,7 +117,7 @@ export const UpdatePasswordView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-[100dvh] flex flex-col p-4 sm:p-6 bg-gradient-to-br from-[#FFFBF0] to-[#f4ecd8]">
+    <div className="min-h-[100dvh] flex flex-col p-4 sm:p-6 bg-gradient-to-br from-[#FFFBF0] to-[#f4ecd8]" style={{ paddingTop: 'calc(1rem + var(--test-strip-h, 0px))' }}>
       <button 
         onClick={handleCancel}
         className="self-start mb-6 w-10 h-10 bg-[var(--color-input-bg)]/80 rounded-full flex items-center justify-center shadow-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-input-bg)] transition-all backdrop-blur-sm"
