@@ -1,12 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Check, KeyRound, LogOut, Loader2 } from 'lucide-react';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
+import { ArrowLeft, Check, Download, KeyRound, LogOut, Loader2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../data/supabase';
 import { passwordResetRedirect } from '../auth/Auth';
 import { fetchProfile, saveProfile, emptyProfile, type Profile } from '../../data/profileRepository';
 import { setAnalyticsOptOut } from '../../shared/analytics';
+import { installApp, installState, subscribeInstall, type InstallState } from '../../shared/installPrompt';
 import { LogoutConfirm } from '../../shared/components/LogoutConfirm';
+
+/** What the Install row says when there's no button to offer. */
+const INSTALL_TEXT: Record<Exclude<InstallState, 'available'>, string> = {
+  installed: 'Installed on this device ✓',
+  native: "You're using the Android app.",
+  ios: 'In Safari, tap Share, then "Add to Home Screen".',
+  waiting: "Your browser isn't offering to install right now. If Beekeeper is already installed, open it from your home screen.",
+  unsupported: "This browser can't install sites. Try Chrome or Edge.",
+  test: 'Installing is turned off on the test site.',
+};
 
 declare const __BUILD_TIME__: string;
 declare const __APP_VERSION__: string;
@@ -26,6 +37,7 @@ export const SettingsView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState(false);
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const install = useSyncExternalStore(subscribeInstall, installState, () => 'unsupported' as InstallState);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,6 +177,21 @@ export const SettingsView: React.FC = () => {
             <dt className="text-[var(--color-text-muted)]">Running as</dt>
             <dd className="font-bold text-[var(--color-text)]">{Capacitor.isNativePlatform() ? 'Android app' : 'Website'}</dd>
           </dl>
+          {/* Install: always shown, so nobody has to wonder where it went. */}
+          <div className="mt-4 border-t border-[var(--color-divider)] pt-4">
+            <p className="text-sm font-black text-[var(--color-text)]">Install</p>
+            {install === 'available' ? (
+              <button
+                onClick={() => void installApp()}
+                className="mt-2 flex w-full items-center gap-3 rounded-xl border-2 border-[var(--color-card-border)] px-4 py-3 text-left font-bold text-[var(--color-text)] transition-all duration-[var(--dur-fast)] hover:border-[var(--color-text-muted)] active:scale-[0.99]"
+              >
+                <Download size={18} className="text-[var(--color-text-muted)]" />
+                Install app on this device
+              </button>
+            ) : (
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">{INSTALL_TEXT[install]}</p>
+            )}
+          </div>
         </section>
 
         {error && (

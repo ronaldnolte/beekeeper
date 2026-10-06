@@ -6,6 +6,7 @@ import App from './app/App.tsx'
 import { TestSiteStrip } from './shared/components/TestSiteStrip'
 import { reserveTestSiteStrip } from './shared/testSite'
 import { loadAnalytics } from './shared/analytics'
+import { captureInstallPrompt } from './shared/installPrompt'
 
 // Lets the stylesheet tell the installed app from the website — today only
 // for the amber strip behind Android's system buttons (--color-system-bar).
@@ -20,6 +21,9 @@ reserveTestSiteStrip();
 
 // Google Analytics (gtag.js), unless this device has opted out in Settings.
 loadAnalytics();
+
+// Replace the browser's automatic install bar with our own dismissible one.
+captureInstallPrompt();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

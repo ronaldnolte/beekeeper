@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { InstallInvite } from '../../shared/components/InstallInvite';
 import { TaskList } from '../tasks/TaskList';
 import { TaskFormModal } from '../tasks/TaskFormModal';
 import { MapPin, Box, ClipboardList, Plus } from 'lucide-react';
@@ -51,6 +52,9 @@ export const DashboardView: React.FC = () => {
           Here is an overview of your apiaries and hives today.
         </p>
       </div>
+
+      {/* Install invitation (only when the browser offers it and not snoozed) */}
+      <InstallInvite />
 
       {/* 2. Glassmorphic Statistics Grid */}
       <div className="w-full max-w-2xl px-4 grid grid-cols-3 gap-3 mb-6">
