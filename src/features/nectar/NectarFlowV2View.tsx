@@ -253,7 +253,8 @@ export const NectarFlowV2View: React.FC = () => {
     setError(null);
     try {
       const coordStart = performance.now();
-      const apiary = await fetchApiaryWithCoords(selectedApiaryId);
+      const known = useAppStore.getState().apiariesList.find((a) => a.id === selectedApiaryId);
+      const apiary = await fetchApiaryWithCoords(selectedApiaryId, known);
       const coordMs = Math.round(performance.now() - coordStart);
       // Superseded while we were resolving coordinates (apiary switch / unmount /
       // StrictMode's dev double-invoke) — bail before kicking off the slow fetch.

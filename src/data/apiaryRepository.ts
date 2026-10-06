@@ -14,13 +14,31 @@ export async function fetchApiaries(userId: string) {
   return data || [];
 }
 
-export async function fetchApiaryWithCoords(apiaryId: string) {
-  const { data, error } = await supabase
-    .from('apiaries')
-    .select('name, latitude, longitude, zip_code')
-    .eq('id', apiaryId)
-    .single();
-  if (error) throw error;
+type ApiaryCoordsRow = {
+  name: string;
+  latitude: number | null;
+  longitude: number | null;
+  zip_code: string | null;
+};
+
+/**
+ * `known` is the apiary row the app already holds (the store's apiariesList,
+ * loaded at sign-in and reloaded after every apiary save). Passing it skips a
+ * database round trip; without it the row is fetched.
+ */
+export async function fetchApiaryWithCoords(apiaryId: string, known?: ApiaryCoordsRow) {
+  let data: ApiaryCoordsRow;
+  if (known) {
+    data = { name: known.name, latitude: known.latitude, longitude: known.longitude, zip_code: known.zip_code };
+  } else {
+    const res = await supabase
+      .from('apiaries')
+      .select('name, latitude, longitude, zip_code')
+      .eq('id', apiaryId)
+      .single();
+    if (res.error) throw res.error;
+    data = res.data;
+  }
 
   const { lat, lng } = await resolveApiaryCoords(data);
   return { ...data, lat, lng };

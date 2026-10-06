@@ -51,6 +51,8 @@ interface AppState {
   apiariesList: any[];
   hivesList: any[];
   isLoadingNavigation: boolean;
+  /** True once the first apiary/hive load for this user has finished (success or failure). */
+  hasLoadedNavigation: boolean;
   selectedApiaryName: string | null;
   selectedHiveName: string | null;
   isUnifiedHiveView: boolean;
@@ -102,6 +104,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       apiariesList: [],
       hivesList: [],
       isLoadingNavigation: false,
+      hasLoadedNavigation: false,
       selectedApiaryName: null,
       selectedHiveName: null,
       isUnifiedHiveView: false,
@@ -169,11 +172,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
           set({ 
             apiariesList: apiaries, 
             hivesList: hives, 
-            isLoadingNavigation: false 
+            isLoadingNavigation: false,
+            hasLoadedNavigation: true
           });
         } catch (e) {
           console.error("Failed to load navigation context", e);
-          set({ isLoadingNavigation: false });
+          set({ isLoadingNavigation: false, hasLoadedNavigation: true });
         }
         })().finally(() => {
           if (navLoad?.promise === promise) navLoad = null;
@@ -277,6 +281,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
             selectedRecord: null,
             apiariesList: [],
             hivesList: [],
+            hasLoadedNavigation: false,
             selectedApiaryName: null,
             selectedHiveName: null,
             isUnifiedHiveView: false,

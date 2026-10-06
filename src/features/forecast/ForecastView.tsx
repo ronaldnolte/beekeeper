@@ -39,7 +39,8 @@ export const ForecastView: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const apiary = await fetchApiaryWithCoords(selectedApiaryId);
+        const known = useAppStore.getState().apiariesList.find((a) => a.id === selectedApiaryId);
+        const apiary = await fetchApiaryWithCoords(selectedApiaryId, known);
         setApiaryName(apiary.name);
 
         const lat = apiary.lat;
