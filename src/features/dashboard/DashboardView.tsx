@@ -5,7 +5,7 @@ import { TaskFormModal } from '../tasks/TaskFormModal';
 import { MapPin, Box, ClipboardList, Plus } from 'lucide-react';
 
 export const DashboardView: React.FC = () => {
-  const { apiariesList, hivesList, navigateToApiariesTab, navigateToHivesTab } = useAppStore();
+  const { apiariesList, hivesList, navigateToApiariesTab, navigateToHivesTab, displayName } = useAppStore();
   const [tasks, setTasks] = useState<any[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   
@@ -44,7 +44,8 @@ export const DashboardView: React.FC = () => {
       {/* 1. Greeting Header */}
       <div className="w-full max-w-2xl px-4 mb-6">
         <h2 className="text-2xl sm:text-3xl font-black text-[var(--color-text)] leading-tight">
-          Welcome back, <span className="text-[var(--color-primary)]">Beekeeper</span>!
+          {/* The name saved on Profile; "Beekeeper" until one is saved. */}
+          Welcome back, <span className="text-[var(--color-primary)]">{displayName || 'Beekeeper'}</span>!
         </h2>
         <p className="text-[var(--color-text-muted)] font-medium text-sm mt-1">
           Here is an overview of your apiaries and hives today.

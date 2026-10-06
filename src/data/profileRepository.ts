@@ -81,19 +81,25 @@ export async function fetchProfile(userId: string): Promise<Profile> {
 }
 
 /**
- * Just the saved analytics choice, for applying it at sign-in. Null when it
- * can't be known (no profile row yet, or the read failed), so the caller leaves
- * the device's current setting alone rather than guessing.
+ * The two profile values the app needs at sign-in: the analytics choice (to
+ * apply on this device) and the name (for the Dashboard greeting). One small
+ * read. Null when they can't be known (no profile row yet, or the read failed),
+ * so the caller leaves the device's analytics setting alone rather than guessing.
  */
-export async function fetchAnalyticsOptOut(userId: string): Promise<boolean | null> {
+export async function fetchSignInProfile(
+  userId: string
+): Promise<{ analyticsOptOut: boolean; displayName: string | null } | null> {
   if (!userId) return null;
   const { data, error } = await supabase
     .from('profiles')
-    .select('analytics_opt_out')
+    .select('analytics_opt_out, display_name')
     .eq('id', userId)
     .maybeSingle();
   if (error || !data) return null;
-  return !!data.analytics_opt_out;
+  return {
+    analyticsOptOut: !!data.analytics_opt_out,
+    displayName: data.display_name?.trim() || null,
+  };
 }
 
 /**

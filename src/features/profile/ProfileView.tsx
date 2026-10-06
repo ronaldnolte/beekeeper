@@ -24,7 +24,7 @@ const TREATMENTS: { value: NonNullable<Profile['treatmentApproach']>; label: str
 ];
 
 export const ProfileView: React.FC = () => {
-  const { user, goBack } = useAppStore();
+  const { user, goBack, setDisplayName } = useAppStore();
 
   const [profile, setProfile] = useState<Profile>(emptyProfile(user?.id ?? ''));
   const [loading, setLoading] = useState(true);
@@ -57,6 +57,7 @@ export const ProfileView: React.FC = () => {
     try {
       const { id: _id, ...edits } = profile;
       await saveProfile(user.id, edits);
+      setDisplayName(edits.displayName); // the Dashboard greeting follows at once
       setSavedAt(Date.now());
     } catch (e: any) {
       setError(e?.message ?? 'Could not save your profile. Check your connection and try again.');

@@ -3,7 +3,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../data/supabase';
 import { fetchApiaries } from '../data/apiaryRepository';
 import { fetchUserRoles } from '../data/roleRepository';
-import { fetchAnalyticsOptOut } from '../data/profileRepository';
+import { fetchSignInProfile } from '../data/profileRepository';
 import { setAnalyticsOptOut } from '../shared/analytics';
 
 // The core views of our Single Page Application
@@ -43,6 +43,9 @@ interface AppState {
   selectedRecord: SelectedRecord;
   user: User | null;
   userRoles: string[];
+  /** The name saved on the profile, for the Dashboard greeting. Null = none saved. */
+  displayName: string | null;
+  setDisplayName: (name: string | null) => void;
   isAuthLoading: boolean;
   isFeedbackModalOpen: boolean;
   isApiaryFormOpen: boolean;
@@ -96,6 +99,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
       selectedRecord: null,
       user: null,
       userRoles: [],
+      displayName: null,
+      setDisplayName: (name) => set({ displayName: name?.trim() || null }),
       isAuthLoading: true,
       isFeedbackModalOpen: false,
       isApiaryFormOpen: false,
@@ -271,12 +276,13 @@ export const useAppStore = create<AppState>()((set, get) => ({
       setUser: (user) => set((state) => {
         if (!user) {
           if (state.currentView === 'UPDATE_PASSWORD' || state.currentView === 'BETA_SIGNUP') {
-            return { user: null, userRoles: [], isAuthLoading: false };
+            return { user: null, userRoles: [], displayName: null, isAuthLoading: false };
           }
           // Clear all sensitive state on logout
           return {
             user: null,
             userRoles: [],
+            displayName: null,
             currentView: 'AUTH',
             isAuthLoading: false,
             selectedApiaryId: null,
@@ -301,10 +307,13 @@ export const useAppStore = create<AppState>()((set, get) => ({
           setTimeout(() => {
             get().loadNavigationContext(user.id);
             get().loadUserRoles(user.id);
-            // Apply the analytics choice saved on the profile (e.g. made on
-            // another device). Unknown -> leave this device's setting alone.
-            fetchAnalyticsOptOut(user.id).then((optOut) => {
-              if (optOut !== null) setAnalyticsOptOut(optOut);
+            // Profile values needed app-wide: the analytics choice (e.g. made
+            // on another device; unknown -> leave this device alone) and the
+            // name the Dashboard greets with.
+            fetchSignInProfile(user.id).then((p) => {
+              if (!p) return;
+              setAnalyticsOptOut(p.analyticsOptOut);
+              set({ displayName: p.displayName });
             });
           }, 50);
         }
