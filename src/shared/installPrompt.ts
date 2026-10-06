@@ -5,11 +5,10 @@
 // own invitation on the Dashboard with Install / Not now, plus an "Install app"
 // button under Settings → About for anyone who said not now.
 //
-// Not offered on test sites (a second Beekeeper icon wired to the test database
-// is too easy to mistake for the real one) or inside the Android app (it never
-// fires there; the Play Store app is the install).
-
-import { IS_TEST_SITE } from './testSite';
+// Test sites can be installed too: their manifest (manifest-test.webmanifest,
+// chosen at build time in vite.config.ts) names the app "TEST Beekeeper", so it
+// can't be mistaken for the real one. Never offered inside the Android app (it
+// never fires there; the Play Store app is the install).
 
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -29,7 +28,6 @@ export function captureInstallPrompt(): void {
   if (typeof window === 'undefined') return;
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault(); // no automatic browser bar
-    if (IS_TEST_SITE) return;
     offer = e as InstallPromptEvent;
     notify();
   });
@@ -42,7 +40,6 @@ export function captureInstallPrompt(): void {
 
 /**
  * What Settings → About should say about installing, for this device:
- *  test        installing is off on test sites
  *  native      running inside the Android app
  *  installed   already running as (or just became) an installed app
  *  available   the browser offers an install right now
@@ -50,10 +47,9 @@ export function captureInstallPrompt(): void {
  *  waiting     Chrome-family browser not offering yet (or already installed)
  *  unsupported a browser that can't install sites (e.g. Firefox)
  */
-export type InstallState = 'test' | 'native' | 'installed' | 'available' | 'ios' | 'waiting' | 'unsupported';
+export type InstallState = 'native' | 'installed' | 'available' | 'ios' | 'waiting' | 'unsupported';
 
 export function installState(): InstallState {
-  if (IS_TEST_SITE) return 'test';
   const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
   if (cap?.isNativePlatform?.()) return 'native';
   const standalone =

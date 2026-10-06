@@ -16,7 +16,6 @@ const INSTALL_TEXT: Record<Exclude<InstallState, 'available'>, string> = {
   ios: 'In Safari, tap Share, then "Add to Home Screen".',
   waiting: "Your browser isn't offering to install right now. If Beekeeper is already installed, open it from your home screen.",
   unsupported: "This browser can't install sites. Try Chrome or Edge.",
-  test: 'Installing is turned off on the test site.',
 };
 
 declare const __BUILD_TIME__: string;
