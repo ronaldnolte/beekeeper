@@ -151,29 +151,34 @@ export async function fetchAttachments(inspectionId: string): Promise<Attachment
   const rows = (data ?? []) as InspectionAttachment[];
   if (rows.length === 0) return [];
 
-  const sign = async (paths: (string | null)[]) => {
-    const real = paths.filter((p): p is string => !!p);
-    if (real.length === 0) return new Map<string, string>();
-    const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrls(real, SIGNED_URL_TTL);
-    const map = new Map<string, string>();
+  // One signing request for every thumbnail, full photo and audio file.
+  const paths = rows
+    .flatMap((r) => [r.thumb_path, r.storage_path, r.audio_path])
+    .filter((p): p is string => !!p);
+  const urls = new Map<string, string>();
+  if (paths.length > 0) {
+    const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrls(paths, SIGNED_URL_TTL);
     (signed ?? []).forEach((s) => {
-      if (s.path && s.signedUrl) map.set(s.path, s.signedUrl);
+      if (s.path && s.signedUrl) urls.set(s.path, s.signedUrl);
     });
-    return map;
-  };
-
-  const [thumbMap, fullMap, audioMap] = await Promise.all([
-    sign(rows.map((r) => r.thumb_path)),
-    sign(rows.map((r) => r.storage_path)),
-    sign(rows.map((r) => r.audio_path)),
-  ]);
+  }
 
   return rows.map((row) => ({
     ...row,
-    thumbUrl: row.thumb_path ? thumbMap.get(row.thumb_path) ?? null : null,
-    fullUrl: row.storage_path ? fullMap.get(row.storage_path) ?? null : null,
-    audioUrl: row.audio_path ? audioMap.get(row.audio_path) ?? null : null,
+    thumbUrl: row.thumb_path ? urls.get(row.thumb_path) ?? null : null,
+    fullUrl: row.storage_path ? urls.get(row.storage_path) ?? null : null,
+    audioUrl: row.audio_path ? urls.get(row.audio_path) ?? null : null,
   }));
+}
+
+/** How many photos and voice notes an inspection has (no rows, no signed URLs). */
+export async function countAttachments(inspectionId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('inspection_attachments')
+    .select('id', { count: 'exact', head: true })
+    .eq('inspection_id', inspectionId);
+  if (error) throw error;
+  return count ?? 0;
 }
 
 function blobToBase64(blob: Blob): Promise<string> {
