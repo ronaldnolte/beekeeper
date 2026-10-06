@@ -3,6 +3,8 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../data/supabase';
 import { fetchApiaries } from '../data/apiaryRepository';
 import { fetchUserRoles } from '../data/roleRepository';
+import { fetchAnalyticsOptOut } from '../data/profileRepository';
+import { setAnalyticsOptOut } from '../shared/analytics';
 
 // The core views of our Single Page Application
 export type AppView = 
@@ -21,7 +23,8 @@ export type AppView =
   | 'NECTAR_FLOW'        // Root Tab 6: Localized Nectar Flow Index
   | 'ASK_AI'            // Root Tab 5: AI chat assistant
   | 'ROADMAP'           // Global: Feedback & Roadmap
-  | 'PROFILE'           // Global: the beekeeper's own preferences + account actions
+  | 'PROFILE'           // Global: the beekeeper's own preferences (who they are, how they keep bees)
+  | 'SETTINGS'          // Global: privacy, account actions, app version
   | 'UPDATE_PASSWORD'   // Global: Reset password flow
   | 'BETA_SIGNUP';      // Public: Closed Beta signup waitlist
 
@@ -298,6 +301,11 @@ export const useAppStore = create<AppState>()((set, get) => ({
           setTimeout(() => {
             get().loadNavigationContext(user.id);
             get().loadUserRoles(user.id);
+            // Apply the analytics choice saved on the profile (e.g. made on
+            // another device). Unknown -> leave this device's setting alone.
+            fetchAnalyticsOptOut(user.id).then((optOut) => {
+              if (optOut !== null) setAnalyticsOptOut(optOut);
+            });
           }, 50);
         }
 
@@ -337,7 +345,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
         ) {
           prevView = 'HIVE_DETAIL';
         } else if (
-          ['FORECAST', 'NECTAR_FLOW', 'ASK_AI', 'ROADMAP', 'PROFILE', 'UPDATE_PASSWORD'].includes(state.currentView)
+          ['FORECAST', 'NECTAR_FLOW', 'ASK_AI', 'ROADMAP', 'PROFILE', 'SETTINGS', 'UPDATE_PASSWORD'].includes(state.currentView)
         ) {
           prevView = 'DASHBOARD';
         }

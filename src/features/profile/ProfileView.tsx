@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Check, KeyRound, Mail, LogOut, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
-import { supabase } from '../../data/supabase';
-import { passwordResetRedirect } from '../auth/Auth';
 import {
   fetchProfile,
   saveProfile,
@@ -11,17 +9,11 @@ import {
 } from '../../data/profileRepository';
 
 /**
- * The beekeeper's own screen. Two jobs:
+ * Who the beekeeper is and how they keep bees: name, experience, hive defaults,
+ * treatment approach — the preferences that change what the app does.
  *
- *  1. Hold the preferences that change what the app does — hive defaults,
- *     treatment approach, experience.
- *  2. Be the home for the account actions that had nowhere to live: changing a
- *     password without pretending you forgot it, opting out of analytics,
- *     sending feedback, and logging out. Log Out in particular was sitting one
- *     thumb-width from Ask AI in the nav bar.
- *
- * Built light from the start — cream and honey is the direction as of
- * 2026-08-31, so nothing here needs converting later.
+ * Privacy, password, log out and the app version live on the Settings screen;
+ * both open from the menu under the header's initial button.
  */
 
 const TREATMENTS: { value: NonNullable<Profile['treatmentApproach']>; label: string; blurb: string }[] = [
@@ -32,15 +24,13 @@ const TREATMENTS: { value: NonNullable<Profile['treatmentApproach']>; label: str
 ];
 
 export const ProfileView: React.FC = () => {
-  const { user, goBack, setFeedbackModalOpen } = useAppStore();
+  const { user, goBack } = useAppStore();
 
   const [profile, setProfile] = useState<Profile>(emptyProfile(user?.id ?? ''));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [resetSent, setResetSent] = useState(false);
-  const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,16 +63,6 @@ export const ProfileView: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  };
-
-  const handlePasswordReset = async () => {
-    if (!user?.email) return;
-    setError(null);
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(user.email, {
-      redirectTo: passwordResetRedirect(),
-    });
-    if (resetError) setError(resetError.message);
-    else setResetSent(true);
   };
 
   if (loading) {
@@ -215,65 +195,6 @@ export const ProfileView: React.FC = () => {
           </div>
         </section>
 
-        {/* Privacy ----------------------------------------------------------- */}
-        <section className="card mt-4 p-5">
-          <h2 className="text-xs font-black uppercase tracking-wider text-[var(--color-text-muted)]">Privacy</h2>
-          <button
-            onClick={() => edit('analyticsOptOut', !profile.analyticsOptOut)}
-            className="mt-3 flex w-full items-center justify-between gap-4 text-left"
-            role="switch"
-            aria-checked={profile.analyticsOptOut}
-          >
-            <span>
-              <span className="block font-black text-[var(--color-text)]">Don't count my usage</span>
-              <span className="block text-xs text-[var(--color-text-muted)]">
-                Turns off anonymous analytics. Takes effect next time the app starts.
-              </span>
-            </span>
-            <span
-              className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-[var(--dur-base)] ${
-                profile.analyticsOptOut ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-divider)]'
-              }`}
-            >
-              <span
-                className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform duration-[var(--dur-base)] ${
-                  profile.analyticsOptOut ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </span>
-          </button>
-        </section>
-
-        {/* Account ----------------------------------------------------------- */}
-        <section className="card mt-4 p-5">
-          <h2 className="text-xs font-black uppercase tracking-wider text-[var(--color-text-muted)]">Account</h2>
-
-          <button
-            onClick={handlePasswordReset}
-            disabled={resetSent}
-            className="mt-3 flex w-full items-center gap-3 rounded-xl border-2 border-[var(--color-card-border)] px-4 py-3 text-left font-bold text-[var(--color-text)] transition-all duration-[var(--dur-fast)] hover:border-[var(--color-text-muted)] active:scale-[0.99] disabled:opacity-60"
-          >
-            <KeyRound size={18} className="text-[var(--color-text-muted)]" />
-            {resetSent ? 'Check your email for the link' : 'Change password'}
-          </button>
-
-          <button
-            onClick={() => setFeedbackModalOpen(true)}
-            className="mt-2 flex w-full items-center gap-3 rounded-xl border-2 border-[var(--color-card-border)] px-4 py-3 text-left font-bold text-[var(--color-text)] transition-all duration-[var(--dur-fast)] hover:border-[var(--color-text-muted)] active:scale-[0.99]"
-          >
-            <Mail size={18} className="text-[var(--color-text-muted)]" />
-            Send feedback
-          </button>
-
-          <button
-            onClick={() => setConfirmingLogout(true)}
-            className="mt-2 flex w-full items-center gap-3 rounded-xl border-2 border-[var(--color-card-border)] px-4 py-3 text-left font-bold text-[var(--color-bad)] transition-all duration-[var(--dur-fast)] hover:border-[var(--color-bad)] active:scale-[0.99]"
-          >
-            <LogOut size={18} />
-            Log out
-          </button>
-        </section>
-
         {error && (
           <p className="mt-4 rounded-xl bg-[var(--color-bad)]/10 px-4 py-3 text-sm font-bold text-[var(--color-bad)]">
             {error}
@@ -293,45 +214,6 @@ export const ProfileView: React.FC = () => {
         </button>
       </div>
 
-      {confirmingLogout && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-5 sm:items-center animate-[fade-in_var(--dur-base)_var(--ease-soft)]"
-          onClick={() => setConfirmingLogout(false)}
-          role="presentation"
-        >
-          <div
-            className="w-full max-w-sm rounded-3xl bg-[var(--color-bg-raised)] p-6 shadow-2xl animate-[rise-in_var(--dur-base)_var(--ease-soft)]"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="profile-logout-title"
-          >
-            <h2 id="profile-logout-title" className="text-lg font-black text-[var(--color-text)]">
-              Log out of Beekeeper?
-            </h2>
-            <p className="mt-1.5 text-sm text-[var(--color-text-muted)]">
-              You'll need your email and password to get back in. Nothing you've recorded is lost.
-            </p>
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setConfirmingLogout(false)}
-                className="flex-1 rounded-2xl border-2 border-[var(--color-card-border)] py-3 font-bold text-[var(--color-text)] transition-colors duration-[var(--dur-fast)] active:scale-95"
-              >
-                Stay signed in
-              </button>
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  window.location.reload();
-                }}
-                className="flex-1 rounded-2xl bg-[var(--color-bad)] py-3 font-bold text-white transition-colors duration-[var(--dur-fast)] active:scale-95"
-              >
-                Log out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

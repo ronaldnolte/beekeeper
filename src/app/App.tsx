@@ -27,6 +27,7 @@ const NectarFlowView = lazy(() => import('../features/nectar/NectarFlowV2View').
 const AskAIView = lazy(() => import('../features/ai/AskAIView').then(m => ({ default: m.AskAIView })));
 const RoadmapView = lazy(() => import('../features/feedback/RoadmapView').then(m => ({ default: m.RoadmapView })));
 const ProfileView = lazy(() => import('../features/profile/ProfileView').then(m => ({ default: m.ProfileView })));
+const SettingsView = lazy(() => import('../features/settings/SettingsView').then(m => ({ default: m.SettingsView })));
 
 // Shared Suspense fallback for lazy-loaded views
 const ViewLoader = () => (
@@ -233,6 +234,12 @@ function App() {
         {currentView === 'PROFILE' && (
           <Suspense fallback={<ViewLoader />}>
             <ProfileView />
+          </Suspense>
+        )}
+
+        {currentView === 'SETTINGS' && (
+          <Suspense fallback={<ViewLoader />}>
+            <SettingsView />
           </Suspense>
         )}
 

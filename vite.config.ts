@@ -1,14 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { readFileSync } from 'node:fs'
 
 // Build timestamp, injected at build time for the version marker.
 const BUILD_TIME = new Date().toISOString().slice(0, 16).replace('T', ' ');
+// App version (same as the Android versionName), shown under Settings → About.
+const APP_VERSION = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version;
 
 // https://vite.dev/config/
 export default defineConfig({
   define: {
     __BUILD_TIME__: JSON.stringify(BUILD_TIME),
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
   },
   plugins: [
     react(),

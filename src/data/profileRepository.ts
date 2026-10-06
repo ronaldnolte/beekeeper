@@ -81,6 +81,22 @@ export async function fetchProfile(userId: string): Promise<Profile> {
 }
 
 /**
+ * Just the saved analytics choice, for applying it at sign-in. Null when it
+ * can't be known (no profile row yet, or the read failed), so the caller leaves
+ * the device's current setting alone rather than guessing.
+ */
+export async function fetchAnalyticsOptOut(userId: string): Promise<boolean | null> {
+  if (!userId) return null;
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('analytics_opt_out')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return !!data.analytics_opt_out;
+}
+
+/**
  * Create or update the profile. Upsert rather than insert-then-update because
  * the row's existence is an implementation detail the screen should not have to
  * track. Throws on failure so the screen can say so.
