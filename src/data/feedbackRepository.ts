@@ -75,7 +75,13 @@ export async function fetchHistoryFeed(
     const items = (res.data || []).map((i: any) => ({
       ...i,
       _model_type: res.type,
-      timestamp: i.timestamp || i.created_at || new Date().toISOString(),
+      // A completed task belongs in the history at the moment it was done,
+      // not when it was created.
+      timestamp:
+        i.timestamp ||
+        (res.type === 'task' && i.status === 'completed' && i.completed_at) ||
+        i.created_at ||
+        new Date().toISOString(),
     }));
     merged = [...merged, ...items];
   });

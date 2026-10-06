@@ -60,7 +60,15 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey, onTa
     }
   };
 
-  const visibleTasks = tasks.filter(t => showCompleted || t.status !== 'completed');
+  // Open tasks are a to-do list: soonest due first (the order they load in).
+  // Completed tasks are history: they follow the open ones, most recently
+  // completed first.
+  const doneAt = (t: Task) => new Date(t.completed_at || t.due_date || t.created_at || 0).getTime();
+  const openTasks = tasks.filter(t => t.status !== 'completed');
+  const completedTasks = tasks
+    .filter(t => t.status === 'completed')
+    .sort((a, b) => doneAt(b) - doneAt(a));
+  const visibleTasks = showCompleted ? [...openTasks, ...completedTasks] : openTasks;
   const displayedTasks = !showAll ? visibleTasks.slice(0, 3) : visibleTasks;
 
   if (loading) {
