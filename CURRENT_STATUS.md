@@ -1,78 +1,79 @@
-# Beekeeper Cleanup — Current Status (updated 2026-07-05)
+# Beekeeper — Current Status (refreshed 2026-10-06)
 
-Quick-start handoff. Full detail in `SECURITY_REVIEW.md`. Plain-language names:
-**live site** = production (beekeeper.beektools.com, `main` branch, "Beekeeper"
-database). **Preview** = test website (`develop` branch). **Beekeeper Dev v2** =
-the new test database (a copy of production made 2026-07-03).
+Quick-start handoff. Security history in `SECURITY_REVIEW.md`. Plain-language
+names: **live site** = production (beekeeper.beektools.com, `main` branch,
+"Beekeeper" database). **Preview** = test website (`develop` branch), also at
+**test.beektools.com**. **Beekeeper Dev v2** = the test database (a copy of
+production, last refreshed 2026-09-29). Test copies show a striped "TEST SITE"
+bar along the top; the live site never does.
 
-## ✅ Done and live on the real site
-- **Account-deletion hole CLOSED** (was the worst issue: anyone could wipe any
-  account — the old fix never actually worked; fixed + verified live).
-- Leaked email key rotated and dead.
-- New-signup notification email fixed.
-- Automatic cleanup when deleting an apiary (cascade deletes) — live + tested.
-- **Rate-limiting / bot-check + nectar login requirement — LIVE (2026-07-05).**
-  Beta-signup form got a hidden trap field + a 3-per-10-min-per-IP limit. Both
-  weather/nectar endpoints now require login (paid Earth Engine + weather work);
-  cache changed to browser-only so cached responses can't bypass the check.
-  A grace window (`NECTAR_AUTH_GRACE_UNTIL=2026-07-19` in Vercel Production)
-  lets old installed apps keep loading Nectar until then; after that they get a
-  plain-text "update Beekeeper" message. No new database table or vendor.
-- **All `develop` security hardening merged to `main` and live (2026-07-05).**
-  Login required on AI assistant / voice transcription / feedback, restricted
-  cross-site access, cleaner errors, stronger password floor, weather-outage
-  failover, and the now-dead leaked-key string removed from live source.
-- **What's New modal — LIVE.** One-time per-release popup; leads with photos +
-  voice notes and export-for-safe-keeping. Android-only "keep your app updated"
-  note.
-- **1.5.26 app build (versionCode 77) BUILT from `main`, ready to upload.**
-  (76/1.5.25 was already uploaded; 77 supersedes it. Same app content.)
+The day-to-day priority list lives outside this repo, in Claude's notes
+(open-items master list). This file is the summary.
+
+## ✅ Done (selected; older history in SECURITY_REVIEW.md)
+- **Account-deletion hole CLOSED** on production (2026-07-03).
+- Leaked email key rotated and dead; signup notification email fixed.
+- Cascade deletes when an apiary is deleted (database rows).
+- Rate-limiting / bot-check on beta signup; login required on Nectar, Ask AI,
+  voice transcription and feedback.
+- Supabase "leaked password protection" turned on (2026-08-31).
+- Preview switched to Beekeeper Dev v2 (2026-07-06).
+- **Android:** 85 / 1.5.34 uploaded to Closed testing 2026-09-21.
+- **On `develop`, not yet on the live site (2026-10-05/06):** startup loads
+  6 database calls instead of 18–19; no repeat loads when revisiting screens;
+  inspection photos load with fewer calls; map picker glides, zooms closer and
+  draws above everything; "TEST SITE" bar on test copies; completed tasks
+  listed newest first. Checklist: `E:\claude\beeks-compare\PORT-LIST.md`.
 
 ## Remaining, in order of importance
 
-### 1. Finish the in-flight release
-- Upload the 1.5.26 AAB (`android/app/build/outputs/bundle/release/app-release.aab`)
-  to Closed testing → Alpha → Create new release.
-- Once Google approves it and it's live to testers, email them to update within
-  2-3 days (`docs/tester-update-email.md`).
-- After ~2026-07-19, once testers have moved, remove `NECTAR_AUTH_GRACE_UNTIL`
-  from Vercel Production (it was saved Sensitive — delete + re-add to change).
+### 1. Promote `develop` to the live site
+Open a pull request `develop` → `main` when Ron approves. It also carries the
+two Android navigation-bar commits (55cd409, a67ad12), which only affect the
+installed app, so they ship with the next Android build.
 
-### 2. Turn on Supabase "leaked password protection"
-One dashboard toggle. Quick security win.
+### 2. Photo / voice-note backups
+Daily database backups exclude Storage, so photos and voice notes have NO
+backup at all. Options: a scheduled bucket copy to cheap secondary storage, or
+a soft-delete grace period. Also still to do: a restore drill, and checking
+whether point-in-time recovery is on.
 
 ### 3. Fix orphaned photo/voice files on apiary delete
-Deleting an apiary cleans up the database rows (cascade is live) but leaves the
-actual photo/voice files stranded in Storage — a data/privacy leak. Bundle with
-simplifying the now-redundant client `deleteApiaryWithCascade` code.
+Deleting an apiary removes the database rows but leaves the photo/voice files
+in Storage (a data/privacy leak).
 
-### 4. Photo / voice-note backups
-Daily backups exclude Storage, so a user could lose images/recordings with no
-recovery. Options: soft-delete grace period, or a scheduled bucket copy to a
-cheap secondary (e.g. Backblaze B2/S3).
+### 4. Save the database structure as code
+Schema and access rules only live in the database; nothing in the repo can
+review or reproduce them.
 
-### 5. Finish Preview → v2 database switch, then delete old "Beekeeper Dev"
-Change the **Preview-scoped** Vercel env vars (VITE_SUPABASE_URL + ANON_KEY)
-to v2 — never touch live-site values — redeploy Preview, verify a signed-in
-Nectar load works, then delete old dev. Split-brain largely de-risked
-(2026-07-05): functions read the DB from env vars, web is same-origin, only the
-native app hardcodes production — so this is mostly config now.
+Tooling on this machine, re-checked 2026-07-27: Docker, `pg_dump` and `psql`
+are NOT installed; the Supabase CLI is only reachable via `npx supabase`. So
+`supabase db dump` can't run. That's a missing-tools situation, not a decision
+Ron made (he doesn't use Docker).
 
-### 6. Save the database structure as code
-Schema + RLS only live in the production DB today; nothing in the repo to
-review or reproduce it. (Blocked on Docker for `db dump`; could assemble via
-the Management API.)
+Three ways forward, none picked yet:
+- Install the PostgreSQL client tools (client only, no server, no Docker),
+  then `pg_dump` against the pooler. Cleanest output, one small install.
+- Management API `POST /v1/projects/{ref}/database/query` with a personal
+  access token. Nothing to install, proven to work here 2026-07-02, but the
+  structure has to be assembled from query results.
+- Dashboard SQL Editor, Ron pastes results back. Manual fallback.
 
-### 7. Google Play compliance for a public launch
-Not blocking while closed-testing-only, but required to graduate:
-- Real in-app "delete my account" (reuse `delete_user_entirely` once an
+### 5. Google Play: production access and compliance
+- Production access needs 12 testers for 14 days (revisit Oct/Nov).
+- Real in-app "delete my account" (reuse `delete_user_entirely` only after an
   ownership check is added).
 - In-app privacy policy page; confirm the Data Safety form is accurate.
 
+### 6. Clean-up
+- Delete the old "Beekeeper Dev" Supabase project.
+- Check: is `NECTAR_AUTH_GRACE_UNTIL` (2026-07-19) still set in Vercel
+  Production? If so, remove it.
+
 ## Lower priority
-- Nectar chart interaction-lag polish (load time already fixed).
-- Usability: two amber shades, Log Out too easy to hit (wants a Settings
-  screen — already half-stubbed), outdated login copy, accessibility labels.
-- Enhancements: offline support, reminders, richer AI context, weather alerts,
-  deep links, data export, iOS build, dark mode, error tracking, mentor
-  read-only sharing revival (schema KEPT, decision parked).
+- Usability: Log Out too easy to hit, outdated login copy, accessibility labels.
+- Enhancements: reminders, richer AI context, weather alerts, deep links, iOS
+  build, error tracking, mentor read-only sharing revival (schema KEPT).
+- **Offline support: ELIMINATED (Ron, 2026-09-25).** Too much of the app needs
+  a connection. Not losing a save when the signal drops is a separate,
+  still-worthwhile robustness item.

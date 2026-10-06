@@ -34,3 +34,6 @@ android/keystore.properties
 .env.production
 
 .vercel
+
+# Supabase CLI per-machine cache (linked project, pooler address)
+supabase/.temp/
