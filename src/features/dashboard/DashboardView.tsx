@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { fetchTasks as loadTasks } from '../../data/taskRepository';
+import React, { useCallback, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { TaskList } from '../tasks/TaskList';
 import { TaskFormModal } from '../tasks/TaskFormModal';
 import { MapPin, Box, ClipboardList, Plus } from 'lucide-react';
 
 export const DashboardView: React.FC = () => {
-  const { user, apiariesList, hivesList, navigateToApiariesTab, navigateToHivesTab } = useAppStore();
+  const { apiariesList, hivesList, navigateToApiariesTab, navigateToHivesTab } = useAppStore();
   const [tasks, setTasks] = useState<any[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   
@@ -15,20 +14,12 @@ export const DashboardView: React.FC = () => {
   const [editingTask, setEditingTask] = useState<any>(null);
   const [taskRefreshKey, setTaskRefreshKey] = useState(0);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      if (!user) return;
-      try {
-        const data = await loadTasks(user.id);
-        setTasks(data);
-      } catch (e) {
-        console.error("Failed to load dashboard tasks", e);
-      } finally {
-        setLoadingTasks(false);
-      }
-    };
-    fetchTasks();
-  }, [user, taskRefreshKey]);
+  // The task list below fetches the tasks; the to-do count reads its result
+  // instead of fetching the same list a second time.
+  const handleTasksChange = useCallback((list: Array<{ status?: string | null }>) => {
+    setTasks(list);
+    setLoadingTasks(false);
+  }, []);
 
   const handleEditTask = (task: any) => {
     setEditingTask(task);
@@ -43,11 +34,6 @@ export const DashboardView: React.FC = () => {
   const handleTaskSuccess = () => {
     setIsTaskFormOpen(false);
     setTaskRefreshKey(prev => prev + 1);
-    
-    // Also trigger store reload of navigation context to sync count
-    if (user) {
-      useAppStore.getState().loadNavigationContext(user.id);
-    }
   };
 
   const pendingTasksCount = tasks.filter(t => t.status !== 'completed').length;
@@ -144,7 +130,7 @@ export const DashboardView: React.FC = () => {
           </button>
         </div>
         
-        <TaskList onEditTask={handleEditTask} refreshKey={taskRefreshKey} />
+        <TaskList onEditTask={handleEditTask} refreshKey={taskRefreshKey} onTasksChange={handleTasksChange} />
       </div>
 
       {/* Forms and Modals */}

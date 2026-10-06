@@ -78,6 +78,12 @@ interface AppState {
   navigateToHivesTab: () => void;
 }
 
+// Startup can ask for the same load several times within a few milliseconds
+// (session check + auth events). Requests that arrive while one is running
+// share it instead of firing another round of identical queries.
+let navLoad: { userId: string; promise: Promise<void> } | null = null;
+let rolesLoad: { userId: string; promise: Promise<void> } | null = null;
+
 export const useAppStore = create<AppState>()((set, get) => ({
       currentView: 'AUTH',
       selectedApiaryId: null,
@@ -139,7 +145,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
         set({ selectedHiveId: id, selectedHiveName: name || null, currentView: 'HIVE_DETAIL' });
       },
 
-      loadNavigationContext: async (userId) => {
+      loadNavigationContext: (userId) => {
+        if (navLoad?.userId === userId) return navLoad.promise;
+        const promise = (async () => {
         set({ isLoadingNavigation: true });
         try {
           const apiaries = await fetchApiaries(userId);
@@ -167,11 +175,22 @@ export const useAppStore = create<AppState>()((set, get) => ({
           console.error("Failed to load navigation context", e);
           set({ isLoadingNavigation: false });
         }
+        })().finally(() => {
+          if (navLoad?.promise === promise) navLoad = null;
+        });
+        navLoad = { userId, promise };
+        return promise;
       },
 
-      loadUserRoles: async (userId) => {
-        const roles = await fetchUserRoles(userId);
-        set({ userRoles: roles });
+      loadUserRoles: (userId) => {
+        if (rolesLoad?.userId === userId) return rolesLoad.promise;
+        const promise = fetchUserRoles(userId)
+          .then((roles) => set({ userRoles: roles }))
+          .finally(() => {
+            if (rolesLoad?.promise === promise) rolesLoad = null;
+          });
+        rolesLoad = { userId, promise };
+        return promise;
       },
 
       hasRole: (role) => get().userRoles.includes(role),
@@ -267,11 +286,15 @@ export const useAppStore = create<AppState>()((set, get) => ({
         // Land on DASHBOARD on login
         const nextView = (state.currentView === 'AUTH' || !state.currentView) ? 'DASHBOARD' : state.currentView;
         
-        // Fire loading context + roles in background
-        setTimeout(() => {
-          get().loadNavigationContext(user.id);
-          get().loadUserRoles(user.id);
-        }, 50);
+        // Fire loading context + roles in background — only when the signed-in
+        // user actually changes. Auth events repeat setUser for the same user
+        // (initial session, token refresh); App.tsx refreshes on SIGNED_IN.
+        if (state.user?.id !== user.id) {
+          setTimeout(() => {
+            get().loadNavigationContext(user.id);
+            get().loadUserRoles(user.id);
+          }, 50);
+        }
 
         return { 
           user, 

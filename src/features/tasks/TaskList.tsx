@@ -8,10 +8,13 @@ type Task = any; // We'll use any if types are not strictly defined for now
 interface TaskListProps {
   onEditTask: (task: Task) => void;
   refreshKey: number;
+  /** Called with the current tasks after each load or status toggle (the Dashboard's to-do count). */
+  onTasksChange?: (tasks: Task[]) => void;
 }
 
-export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) => {
+export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey, onTasksChange }) => {
   const { user } = useAppStore();
+  const userId = user?.id;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -20,10 +23,10 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
 
   useEffect(() => {
     const fetchTasks = async () => {
-      if (!user) return;
+      if (!userId) return;
       setLoading(true);
 
-      const tasksData = await loadTasks(user.id);
+      const tasksData = await loadTasks(userId);
       setTasks(tasksData);
 
       // Fetch location names via repository
@@ -33,7 +36,14 @@ export const TaskList: React.FC<TaskListProps> = ({ onEditTask, refreshKey }) =>
     };
 
     fetchTasks();
-  }, [user, refreshKey]);
+    // Keyed on the user id, not the user object: auth events hand out a new
+    // object for the same user, which used to refetch the whole list.
+  }, [userId, refreshKey]);
+
+  useEffect(() => {
+    if (!loading) onTasksChange?.(tasks);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks, loading]);
 
   const toggleTaskStatus = async (task: Task) => {
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';

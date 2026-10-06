@@ -44,7 +44,6 @@ function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        useAppStore.getState().loadNavigationContext(session.user.id);
         const persistedView = useAppStore.getState().currentView;
         const targetView = (persistedView === 'AUTH' || !persistedView) ? 'DASHBOARD' : persistedView;
         window.history.replaceState({ view: targetView }, '');
@@ -56,7 +55,10 @@ function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
+      // setUser loads the lists when the user changes. A SIGNED_IN for the same
+      // user (e.g. returning to the tab) refreshes them so changes made on
+      // another device show up; concurrent loads share one request.
+      if (event === 'SIGNED_IN' && session?.user) {
         useAppStore.getState().loadNavigationContext(session.user.id);
       }
       
