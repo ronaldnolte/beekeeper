@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../data/supabase';
 import { passwordResetRedirect } from '../auth/Auth';
-import { fetchProfile, saveProfile, emptyProfile, type Profile } from '../../data/profileRepository';
+import { fetchProfile, saveAnalyticsOptOut, emptyProfile, type Profile } from '../../data/profileRepository';
 import { setAnalyticsOptOut } from '../../shared/analytics';
 import { installApp, installState, subscribeInstall, type InstallState } from '../../shared/installPrompt';
 import { LogoutConfirm } from '../../shared/components/LogoutConfirm';
@@ -53,24 +53,18 @@ export const SettingsView: React.FC = () => {
 
   // The switch saves on its own (no Save button): flip it, it applies at once
   // on this device and is stored on the profile for the beekeeper's others.
+  // It saves ONLY this choice, so a failed profile load here can never blank
+  // the name, years, hive defaults or treatment saved on the Profile screen.
   const toggleAnalytics = async () => {
     if (!user?.id || savingPrivacy) return;
     const next = !profile.analyticsOptOut;
-    const previous = profile;
     setProfile({ ...profile, analyticsOptOut: next });
     setAnalyticsOptOut(next);
     setSavingPrivacy(true);
     setPrivacySaved(false);
     setError(null);
     try {
-      await saveProfile(user.id, {
-        displayName: previous.displayName,
-        experienceYears: previous.experienceYears,
-        defaultHiveType: previous.defaultHiveType,
-        defaultBarCount: previous.defaultBarCount,
-        treatmentApproach: previous.treatmentApproach,
-        analyticsOptOut: next,
-      });
+      await saveAnalyticsOptOut(user.id, next);
       setPrivacySaved(true);
     } catch (e) {
       setError((e as Error)?.message ?? 'Could not save that choice. It still applies on this device; try again to keep it on your others.');

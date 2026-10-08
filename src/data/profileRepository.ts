@@ -103,6 +103,20 @@ export async function fetchSignInProfile(
 }
 
 /**
+ * Save ONLY the analytics choice (the Settings switch). Upsert with just this
+ * column: an existing row keeps its name, years, hive defaults and treatment
+ * untouched, whatever the Settings screen happened to load; a new row gets this
+ * one value and blanks for the rest.
+ */
+export async function saveAnalyticsOptOut(userId: string, optOut: boolean): Promise<void> {
+  if (!userId) throw new Error('Cannot save a profile without a signed-in user.');
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({ id: userId, analytics_opt_out: optOut }, { onConflict: 'id' });
+  if (error) throw error;
+}
+
+/**
  * Create or update the profile. Upsert rather than insert-then-update because
  * the row's existence is an implementation detail the screen should not have to
  * track. Throws on failure so the screen can say so.
