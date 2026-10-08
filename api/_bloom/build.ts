@@ -53,6 +53,7 @@ export interface BloomPlantInfo {
   kind: 'nectar' | 'pollen' | 'both'; // the colour and the label in the app
   nectar: number; // 0-3
   pollen: number; // 0-3
+  confidence: string; // 'high' | 'medium' | 'low' — low gets the calendar's asterisk (rougher dates)
 }
 
 const MASTER_BY_ID = new Map(FORAGE_MASTER.plants.map((p) => [p.common, p]));
@@ -64,7 +65,7 @@ export function withPlantInfo(plants: StoredBloomPlant[]): (StoredBloomPlant & B
     if (!p) return [];
     const y = yieldOf(p.nectar, p.pollen); // the workshop's Both / Nectar / Pollen / Both (minor)
     const kind = y === 'Nectar' ? 'nectar' : y === 'Pollen' ? 'pollen' : 'both';
-    return [{ ...s, scientific: p.names.join('; '), kind, nectar: p.nectar, pollen: p.pollen }];
+    return [{ ...s, scientific: p.names.join('; '), kind, nectar: p.nectar, pollen: p.pollen, confidence: p.bloomData.confidence }];
   });
 }
 

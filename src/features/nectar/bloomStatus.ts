@@ -15,6 +15,7 @@ export interface BloomPlant {
   kind: BloomKind;
   nectar: number;
   pollen: number;
+  confidence?: string; // 'low' = dates from fewer or rougher records
 }
 
 export interface ApiaryBloom {

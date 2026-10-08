@@ -10,9 +10,12 @@
 // Bloom is a separate calculation and never holds up Nectar: this section loads on its own, and any failure
 // stays inside it. Outside North America it is hidden.
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Capacitor } from '@capacitor/core';
-import { Flower2, RefreshCw } from 'lucide-react';
+import { CalendarDays, Flower2, RefreshCw } from 'lucide-react';
 import { supabase } from '../../data/supabase';
+import { useAppStore } from '../../store/useAppStore';
+import { BloomCalendar } from './BloomCalendar';
 import {
   type ApiaryBloom,
   type BloomKind,
@@ -46,6 +49,8 @@ const API = Capacitor.isNativePlatform() ? 'https://beekeeper.beektools.com/api/
 export const WhatsBlooming: React.FC<{ apiaryId: string }> = ({ apiaryId }) => {
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [showNext, setShowNext] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const apiaryName = useAppStore((s) => s.selectedApiaryName);
 
   const fetchBloom = useCallback(async (signal?: AbortSignal) => {
     setLoad({ state: 'loading' });
@@ -70,6 +75,7 @@ export const WhatsBlooming: React.FC<{ apiaryId: string }> = ({ apiaryId }) => {
   useEffect(() => {
     const controller = new AbortController();
     setShowNext(false);
+    setShowCalendar(false);
     fetchBloom(controller.signal);
     return () => controller.abort();
   }, [fetchBloom]);
@@ -157,6 +163,12 @@ export const WhatsBlooming: React.FC<{ apiaryId: string }> = ({ apiaryId }) => {
             <p className="text-[10px] leading-relaxed text-[var(--color-text-muted)]">
               Plants recorded within {bloom.radius_mi} miles (GBIF). Dates are for a normal year ({bloom.normal_years} weather); this year's bloom can run early or late.
             </p>
+
+            <button onClick={() => setShowCalendar(true)} className="w-full flex items-center justify-center gap-2 rounded-xl border border-[var(--color-primary-faint)] py-2 text-xs font-bold text-[var(--color-primary-ink)] active:scale-[0.99]">
+              <CalendarDays size={14} /> See full bloom calendar
+            </button>
+            {/* Drawn at the page's top level so the card's styling cannot clip a full-screen view. */}
+            {showCalendar && createPortal(<BloomCalendar bloom={bloom} apiaryName={apiaryName ?? 'Apiary'} onClose={() => setShowCalendar(false)} />, document.body)}
           </div>
         );
       })()}
