@@ -8,6 +8,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { SelectionList } from '../../shared/components/SelectionList';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { supabase } from '../../data/supabase';
+import { WhatsBlooming } from './WhatsBlooming';
 import {
   MapPin,
   TrendingUp,
@@ -1283,6 +1284,9 @@ export const NectarFlowV2View: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* What's blooming near this apiary — its own calculation, never holds up Nectar. */}
+            {selectedApiaryId && !reviewYear && <WhatsBlooming apiaryId={selectedApiaryId} />}
 
           </div>
         )}

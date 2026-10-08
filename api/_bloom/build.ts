@@ -6,7 +6,7 @@
 // stays right all year and every year without a rebuild.
 
 import { findNearbyPlants } from './presence.js';
-import { buildBloomTable, normalHeat } from './table.js';
+import { buildBloomTable, normalHeat, yieldOf } from './table.js';
 import { FORAGE_MASTER } from './forageMaster.js';
 import type { GetJson } from './types.js';
 
@@ -45,6 +45,27 @@ export interface StoredBloom {
  */
 export function inBloomCoverage(lat: number, lon: number): boolean {
   return lat >= 14 && lat <= 83 && lon >= -179 && lon <= -52;
+}
+
+/** What the app shows for a plant, looked up from the master list at answer time (not stored). */
+export interface BloomPlantInfo {
+  scientific: string;
+  kind: 'nectar' | 'pollen' | 'both'; // the colour and the label in the app
+  nectar: number; // 0-3
+  pollen: number; // 0-3
+}
+
+const MASTER_BY_ID = new Map(FORAGE_MASTER.plants.map((p) => [p.common, p]));
+
+/** Stored plants plus their master-list details; a plant no longer in the master list is left out. */
+export function withPlantInfo(plants: StoredBloomPlant[]): (StoredBloomPlant & BloomPlantInfo)[] {
+  return plants.flatMap((s) => {
+    const p = MASTER_BY_ID.get(s.plant);
+    if (!p) return [];
+    const y = yieldOf(p.nectar, p.pollen); // the workshop's Both / Nectar / Pollen / Both (minor)
+    const kind = y === 'Nectar' ? 'nectar' : y === 'Pollen' ? 'pollen' : 'both';
+    return [{ ...s, scientific: p.names.join('; '), kind, nectar: p.nectar, pollen: p.pollen }];
+  });
 }
 
 export async function buildApiaryBloom(lat: number, lon: number, getJson: GetJson): Promise<StoredBloom> {

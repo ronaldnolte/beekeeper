@@ -1,5 +1,5 @@
 import { applyCors, getAuthedUser, createRateLimiter } from './_lib.js';
-import { buildApiaryBloom, inBloomCoverage } from './_bloom/build.js';
+import { buildApiaryBloom, inBloomCoverage, withPlantInfo } from './_bloom/build.js';
 
 // An apiary's bloom table (bloom plan step 3, E:\claude\bloom-integration\PLAN.md).
 //
@@ -39,6 +39,10 @@ async function getJson(url: string, tries = 3): Promise<any> {
 
 // Coordinates are compared with a little slack so re-saving an apiary without moving it keeps its table.
 const samePlace = (a: number, b: number) => Math.abs(a - b) < 1e-6;
+
+// The app gets each plant's name details and nectar/pollen kind from the master list here, so it never has to
+// download the whole list. The stored row keeps only IDs and dates.
+const forApp = (row: any) => ({ ...row, plants: withPlantInfo(row.plants ?? []) });
 
 export default async function handler(req: any, res: any) {
   if (applyCors(req, res)) return;
@@ -90,13 +94,13 @@ export default async function handler(req: any, res: any) {
 
   const { data: stored } = await supabase.from('apiary_bloom').select('*').eq('apiary_id', apiaryId).maybeSingle();
   if (stored && !rebuild && samePlace(stored.built_lat, lat) && samePlace(stored.built_lon, lon)) {
-    res.status(200).json({ status: 'ok', bloom: stored });
+    res.status(200).json({ status: 'ok', bloom: forApp(stored) });
     return;
   }
 
   if (buildLimiter(user.id)) {
     // Too many builds in a short time: hand back what there is rather than an error.
-    if (stored) res.status(200).json({ status: 'ok', bloom: stored, stale: true });
+    if (stored) res.status(200).json({ status: 'ok', bloom: forApp(stored), stale: true });
     else res.status(429).json({ status: 'unavailable', error: 'Too many bloom requests; try again in a few minutes.' });
     return;
   }
@@ -117,5 +121,5 @@ export default async function handler(req: any, res: any) {
     // The table is still good for this answer; it will simply be built again next time.
     console.error('apiary-bloom: save failed', saveError);
   }
-  res.status(200).json({ status: 'ok', bloom: saved ?? row, build_ms: Date.now() - t0 });
+  res.status(200).json({ status: 'ok', bloom: forApp(saved ?? row), build_ms: Date.now() - t0 });
 }
