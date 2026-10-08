@@ -92,18 +92,19 @@ const DEFAULTS: V2Params = {
   rateLag: 24,
   wFall: 0.7, dpLo: 45, dpHi: 55, fallWidth: 26,
   // HEAT GATE. The index is multiplied by a gate that opens as growing degree days
-  // accumulate over a TRAILING 30 DAYS (base 32F), fully open at 700. Ron: "No GDD,
+  // accumulate over a TRAILING 30 DAYS (base 32F), fully open at 800. Ron: "No GDD,
   // no flow."
   //
-  // Base 32F / open 700 since 2026-10-08 (was 50F / 200), Ron's choice on the test
+  // Base 32F / open 800 since 2026-10-08 (was 50F / 200), Ron's choice on the test
   // site first. A freezing-point base lets cool but above-freezing weeks count, so
   // the gate opens earlier in spring; the higher threshold keeps winter shut.
   // Re-scored on the fixtures-live seasons (2024-2026) against the 50/200 numbers:
   // summer and autumn identical at every site; earlier spring (South Valley Mar 2024
-  // 0 -> 7, Murfreesboro Mar 2025 10 -> 18, Tijeras Apr 2024 1 -> 5); winter trickle
-  // of 2 at most (Tijeras Jan 2026 0 -> 2); main spring flow held (South Valley May
-  // 2024 61, Murfreesboro Apr 2025 47 -> 48). At 1000 the spring flow starts to go
-  // (South Valley May 2024 61 -> 47), so do not raise it much further.
+  // 0 -> 6, Murfreesboro Mar 2025 10 -> 14, Tijeras Apr 2024 1 -> 4); winter trickle
+  // of 2 at most (Murfreesboro Feb 2024 0 -> 2, Tijeras Jan 2026 0 -> 1); main spring
+  // flow held (South Valley May 2024 61 -> 60, Murfreesboro Apr 2025 47 -> 46). 700
+  // was tried first (a little more spring, a little more winter). At 1000 the spring
+  // flow starts to go (South Valley May 2024 61 -> 47), so do not raise it much further.
   //
   // Recent heat, not heat since January. A calendar reset fixed January but left
   // December wide open — by December a site has a full year banked — and a warm
@@ -122,7 +123,7 @@ const DEFAULTS: V2Params = {
   //
   // gddPost applies the gate to the SMOOTHED series too. Without it the smoother
   // carries a high December across 1 January whatever the gate says.
-  gddBase: 32, gddOpen: 700, gddWindow: 30, gddPost: 1,
+  gddBase: 32, gddOpen: 800, gddWindow: 30, gddPost: 1,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
