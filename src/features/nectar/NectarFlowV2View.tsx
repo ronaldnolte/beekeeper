@@ -171,19 +171,15 @@ export const NectarFlowV2View: React.FC = () => {
   const [showDetails, setShowDetails] = useState(false);
 
   /**
-   * REVIEW MODE — Ron's, not the users'.
+   * PAST SEASONS — the season picker in the bar at the top.
    *
-   * Replays a past season as though it were the current one, so the index can be
-   * checked against a year somebody actually remembers. That is the only
-   * validation this project has that does not come from a fixture file.
-   *
-   * Hidden unless the URL carries ?review=1, so it cannot appear for a user and
-   * does not need removing before a release. The year list is bounded by
-   * Sentinel-2, not by choice: dense coverage starts around 2017, and each year
-   * needs the five before it, so nothing earlier than 2022 can be replayed.
+   * Replays a past season as though it were the current one, so a beekeeper can
+   * check the index against a year they remember. Began as Ron's hidden review
+   * mode (?review=1); a standard feature for everyone since 2026-10-09 (Ron).
+   * The year list is bounded by Sentinel-2, not by choice: dense coverage starts
+   * around 2017, and each year needs the five before it, so nothing earlier than
+   * 2022 can be replayed. Each past season is a fresh satellite request.
    */
-  const reviewEnabled = typeof window !== 'undefined'
-    && new URLSearchParams(window.location.search).get('review') === '1';
   const [reviewYear, setReviewYear] = useState<number | null>(null);
   const reviewYears = (() => {
     const thisYear = new Date().getFullYear();
@@ -211,9 +207,10 @@ export const NectarFlowV2View: React.FC = () => {
       if (!el) return;
       // reserve = content padding + readout strip + nav clearance + chart chrome,
       // plus ~130 for the difference chart and ~120 for season-to-date, both
-      // stacked under the main one. The main chart yields; the panel never
+      // stacked under the main one, and ~65 for the number-and-buttons row above it
+      // (moved off the chart 2026-10-09). The main chart yields; the panel never
       // overflows.
-      setChartHeight(Math.max(150, el.clientHeight - 505));
+      setChartHeight(Math.max(150, el.clientHeight - 570));
     };
     compute();
     window.addEventListener('resize', compute);
@@ -1073,10 +1070,11 @@ export const NectarFlowV2View: React.FC = () => {
     // fullscreen view stay dark on purpose — see the comment at the chart.
     <div className="w-full flex-1 overflow-hidden flex flex-col text-[var(--color-text)] bg-[var(--color-bg)] relative">
 
-      {/* Apiary Selector (copied verbatim from NectarFlowView) */}
-      {apiariesList.length > 1 && (
-        <div className="w-full bg-[var(--color-bg-raised)] border-b border-[var(--color-divider)] px-4 py-2.5 flex items-center gap-2 z-20">
+      {/* Apiary and season bar. Always shown since the season picker became standard (Ron, 2026-10-09);
+          with one apiary its name is plain text instead of a picker. */}
+      <div className="w-full bg-[var(--color-bg-raised)] border-b border-[var(--color-divider)] px-4 py-2.5 flex items-center gap-2 z-20">
           <MapPin size={14} className="text-[var(--color-primary)] flex-shrink-0" />
+          {apiariesList.length > 1 ? (<>
           <select
             value={selectedApiaryId || ''}
             onChange={(e) => {
@@ -1090,27 +1088,38 @@ export const NectarFlowV2View: React.FC = () => {
               <option key={a.id} value={a.id} className="bg-[var(--color-bg-raised)] text-[var(--color-text)]">{a.name}</option>
             ))}
           </select>
+          {/* Coordinates make room for the season picker on a phone. */}
           {coords && (
-            <span className="text-[10px] font-mono text-[var(--color-text-muted)] flex-shrink-0 tabular-nums" title="Resolved coordinates sent to the index API">
+            <span className="hidden sm:inline text-[10px] font-mono text-[var(--color-text-muted)] flex-shrink-0 tabular-nums" title="Resolved coordinates sent to the index API">
               {coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
             </span>
           )}
           <ChevronDown size={14} className="text-[var(--color-text-muted)] flex-shrink-0 pointer-events-none" />
-
-          {/* Review mode only — see the note on reviewEnabled. Never shown to users. */}
-          {reviewEnabled && (
-            <select
-              value={reviewYear ?? ''}
-              onChange={(e) => setReviewYear(e.target.value ? parseInt(e.target.value, 10) : null)}
-              className="ml-2 shrink-0 rounded-lg border-2 border-[var(--color-primary)] bg-[var(--color-primary-wash)] px-2 py-0.5 text-[11px] font-black text-[var(--color-primary-ink)] outline-none"
-              title="Replay a past season as though it were the current one"
-            >
-              <option value="">This season</option>
-              {reviewYears.map((y) => (
-                <option key={y} value={y}>{y} season</option>
-              ))}
-            </select>
+          </>) : (
+            <span className="flex-1 min-w-0 truncate text-sm font-semibold">{apiariesList[0]?.name}</span>
           )}
+
+          <select
+            value={reviewYear ?? ''}
+            onChange={(e) => setReviewYear(e.target.value ? parseInt(e.target.value, 10) : null)}
+            className="ml-2 shrink-0 rounded-lg border-2 border-[var(--color-primary)] bg-[var(--color-primary-wash)] px-2 py-0.5 text-[11px] font-black text-[var(--color-primary-ink)] outline-none"
+            title="Look back at a past season"
+            aria-label="Season"
+          >
+            <option value="">This season</option>
+            {reviewYears.map((y) => (
+              <option key={y} value={y}>{y} season</option>
+            ))}
+          </select>
+      </div>
+
+      {/* Looking back: say so plainly, with the way home one tap away. */}
+      {reviewYear && (
+        <div className="w-full bg-[var(--color-primary-wash)] border-b border-[var(--color-divider)] px-4 py-2 flex items-center justify-between gap-3 text-xs z-20">
+          <span className="font-bold text-[var(--color-primary-ink)]">Looking back at the {reviewYear} season</span>
+          <button onClick={() => setReviewYear(null)} className="font-black text-[var(--color-primary-ink)] underline underline-offset-2 shrink-0">
+            Back to this season
+          </button>
         </div>
       )}
 
@@ -1148,10 +1157,15 @@ export const NectarFlowV2View: React.FC = () => {
                       its own colour, so the state is legible before the words
                       are. Rate / Warmth / Fall moved behind the (i) — they are
                       diagnostics, not the headline. */}
-                  <div className="absolute top-3 left-3 z-20 bg-[#0a0a16]/85 backdrop-blur-sm border border-[#2b2b54]/60 rounded-xl px-3 py-2 shadow-lg pointer-events-none">
+                  {/* The box and the controls sit in their own row above the chart. Floating over it
+                      they hid the top of the line exactly where the peaks are (Ron, 2026-10-09; the
+                      rebuild's FIX-LATER #2). */}
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="bg-[#0a0a16]/85 border border-[#2b2b54]/60 rounded-xl px-3 py-2 shadow-lg pointer-events-none">
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-black text-white leading-none">{data.nfi}</span>
-                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">NFI</span>
+                      {/* A past season's number is its last reading, 31 December — say so. */}
+                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">NFI{reviewYear ? ' · Dec 31' : ''}</span>
                     </div>
                     <div className="mt-1 flex items-center gap-1.5">
                       <span className="text-sm font-black leading-none" style={{ color: getPhaseColor(data.phase) }}>
@@ -1166,7 +1180,7 @@ export const NectarFlowV2View: React.FC = () => {
 
                   {/* Chart controls — one trio, equal weight, so none of them
                       hides in the plot the way the lone expand icon did. */}
-                  <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+                  <div className="shrink-0 flex items-center gap-1.5">
                     <button
                       onClick={() => loadData(true)}
                       className="p-2 bg-[#1b1b36]/80 hover:bg-[#2b2b54] border border-[#2b2b54] rounded-lg text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center justify-center"
@@ -1191,6 +1205,7 @@ export const NectarFlowV2View: React.FC = () => {
                     >
                       <Maximize2 size={15} />
                     </button>
+                  </div>
                   </div>
                   {renderChartSvg(containerWidth, chartHeight)}
 
@@ -1258,13 +1273,13 @@ export const NectarFlowV2View: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <span className="text-[9px] font-mono text-slate-600" title="Build timestamp">⏱ {__BUILD_TIME__}</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-blue-500 inline-block" />{baseYearLabel}</span>
-                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-[#2ECC71] inline-block" />{currentYear} (current)</span>
+                    <span className="flex items-center gap-1.5"><span className="w-3 h-[2px] rounded bg-[#2ECC71] inline-block" />{currentYear}{reviewYear ? '' : ' (current)'}</span>
                   </div>
                   {/* The satellite's schedule. Overflights are orbital and
                       happen regardless of weather; whether one yields a usable
                       image does not, which the note says outright so nobody
                       waits on a date expecting guaranteed fresh data. */}
-                  {data.satellite?.last_image ? (
+                  {data.satellite?.last_image && !reviewYear ? (
                     <span
                       className="flex items-center gap-1.5 text-slate-500"
                       title="Passes are orbital and happen on schedule. Whether one produces usable data depends on cloud cover over your yard."

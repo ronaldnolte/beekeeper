@@ -149,6 +149,13 @@ export const SettingsView: React.FC = () => {
             <KeyRound size={18} className="text-[var(--color-text-muted)]" />
             {resetSent ? 'Check your email for the link' : 'Change password'}
           </button>
+          {/* Gmail has filed the reset email as spam and switched its link off (Ron, 2026-10-09). */}
+          {resetSent && (
+            <p className="mt-1.5 px-1 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
+              Not in your inbox after a few minutes? Check your Spam or Junk folder. If it's there, mark it
+              "Not spam" so the link works.
+            </p>
+          )}
 
           <button
             onClick={() => setConfirmingLogout(true)}
