@@ -207,9 +207,10 @@ export const NectarFlowV2View: React.FC = () => {
       if (!el) return;
       // reserve = content padding + readout strip + nav clearance + chart chrome,
       // plus ~130 for the difference chart and ~120 for season-to-date, both
-      // stacked under the main one. The main chart yields; the panel never
+      // stacked under the main one, and ~65 for the number-and-buttons row above it
+      // (moved off the chart 2026-10-09). The main chart yields; the panel never
       // overflows.
-      setChartHeight(Math.max(150, el.clientHeight - 505));
+      setChartHeight(Math.max(150, el.clientHeight - 570));
     };
     compute();
     window.addEventListener('resize', compute);
@@ -1156,10 +1157,15 @@ export const NectarFlowV2View: React.FC = () => {
                       its own colour, so the state is legible before the words
                       are. Rate / Warmth / Fall moved behind the (i) — they are
                       diagnostics, not the headline. */}
-                  <div className="absolute top-3 left-3 z-20 bg-[#0a0a16]/85 backdrop-blur-sm border border-[#2b2b54]/60 rounded-xl px-3 py-2 shadow-lg pointer-events-none">
+                  {/* The box and the controls sit in their own row above the chart. Floating over it
+                      they hid the top of the line exactly where the peaks are (Ron, 2026-10-09; the
+                      rebuild's FIX-LATER #2). */}
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="bg-[#0a0a16]/85 border border-[#2b2b54]/60 rounded-xl px-3 py-2 shadow-lg pointer-events-none">
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-black text-white leading-none">{data.nfi}</span>
-                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">NFI</span>
+                      {/* A past season's number is its last reading, 31 December — say so. */}
+                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">NFI{reviewYear ? ' · Dec 31' : ''}</span>
                     </div>
                     <div className="mt-1 flex items-center gap-1.5">
                       <span className="text-sm font-black leading-none" style={{ color: getPhaseColor(data.phase) }}>
@@ -1174,7 +1180,7 @@ export const NectarFlowV2View: React.FC = () => {
 
                   {/* Chart controls — one trio, equal weight, so none of them
                       hides in the plot the way the lone expand icon did. */}
-                  <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+                  <div className="shrink-0 flex items-center gap-1.5">
                     <button
                       onClick={() => loadData(true)}
                       className="p-2 bg-[#1b1b36]/80 hover:bg-[#2b2b54] border border-[#2b2b54] rounded-lg text-slate-300 hover:text-white transition-all active:scale-95 cursor-pointer flex items-center justify-center"
@@ -1199,6 +1205,7 @@ export const NectarFlowV2View: React.FC = () => {
                     >
                       <Maximize2 size={15} />
                     </button>
+                  </div>
                   </div>
                   {renderChartSvg(containerWidth, chartHeight)}
 
