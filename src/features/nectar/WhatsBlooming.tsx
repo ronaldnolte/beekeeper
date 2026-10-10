@@ -104,7 +104,6 @@ export const WhatsBlooming: React.FC<{ apiaryId: string }> = ({ apiaryId }) => {
   // Late fall and winter look ahead to spring; otherwise to the next season.
   const next: SeasonName = season === 'Fall' || season === 'Winter' ? 'Spring' : NEXT_SEASON[season];
 
-  const inBloom = load.state === 'ok' ? windowList(load.bloom.plants, now).filter((r) => r.status === 'in_bloom').length : 0;
 
   return (
     <>
@@ -207,7 +206,7 @@ export const WhatsBlooming: React.FC<{ apiaryId: string }> = ({ apiaryId }) => {
           tabIndex={reached ? -1 : 0}
         >
           <Flower2 size={14} />
-          {inBloom > 0 ? `${inBloom} in bloom nearby` : "What's blooming"}
+          What may be blooming
           <ChevronDown size={14} />
         </button>
       </div>,
