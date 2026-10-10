@@ -193,20 +193,25 @@ export const WhatsBlooming: React.FC<{ apiaryId: string }> = ({ apiaryId }) => {
         );
       })()}
     </div>
-    {load.state === 'ok' && (
-      // Zero-height, sticky to the bottom, and placed after the section (the end of the page) so it always
-      // rides at the bottom edge just above the menu, never over the charts, until the section arrives.
-      <div className="sticky bottom-3 z-30 h-0 flex justify-center pointer-events-none" aria-hidden={reached}>
+    {load.state === 'ok' && createPortal(
+      // Fixed just above the bottom menu, measured the way BottomNavBar places itself (1.5rem + safe area
+      // below, 4rem tall, 0.5rem above). A sticky version drifted up over the charts on Ron's phone.
+      <div
+        className="fixed inset-x-0 z-30 flex justify-center pointer-events-none"
+        style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 12px) + 4rem + 0.75rem)' }}
+        aria-hidden={reached}
+      >
         <button
           onClick={() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-          className={`-translate-y-full flex items-center gap-1.5 rounded-full bg-[var(--color-bg-raised)] border border-[var(--color-primary-faint)] shadow-[0_4px_16px_rgba(0,0,0,0.18)] px-4 py-2 text-xs font-bold text-[var(--color-primary-ink)] transition-opacity duration-300 ${reached ? 'opacity-0' : 'opacity-100 pointer-events-auto'}`}
+          className={`flex items-center gap-1.5 rounded-full bg-[var(--color-bg-raised)] border border-[var(--color-primary-faint)] shadow-[0_4px_16px_rgba(0,0,0,0.18)] px-4 py-2 text-xs font-bold text-[var(--color-primary-ink)] transition-opacity duration-300 ${reached ? 'opacity-0' : 'opacity-100 pointer-events-auto'}`}
           tabIndex={reached ? -1 : 0}
         >
           <Flower2 size={14} />
           {inBloom > 0 ? `${inBloom} in bloom nearby` : "What's blooming"}
           <ChevronDown size={14} />
         </button>
-      </div>
+      </div>,
+      document.body
     )}
     </>
   );
