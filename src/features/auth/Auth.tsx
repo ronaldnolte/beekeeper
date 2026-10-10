@@ -67,7 +67,8 @@ export const Auth: React.FC = () => {
           setError(error.message);
         }
       } else {
-        setMessage('Check your email for the password reset link.');
+        // Gmail has filed this email as spam and switched its link off (Ron, 2026-10-09).
+        setMessage('Check your email for the password reset link. Not there after a few minutes? Look in your Spam or Junk folder, and mark it "Not spam" so the link works.');
       }
     } else if (mode === 'signup') {
       if (password.length < 8) {
