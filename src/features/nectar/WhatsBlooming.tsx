@@ -9,10 +9,10 @@
 //
 // Bloom is a separate calculation and never holds up Nectar: this section loads on its own, and any failure
 // stays inside it. Outside North America it is hidden.
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Capacitor } from '@capacitor/core';
-import { CalendarDays, Flower2, RefreshCw } from 'lucide-react';
+import { CalendarDays, ChevronDown, Flower2, RefreshCw } from 'lucide-react';
 import { supabase } from '../../data/supabase';
 import { useAppStore } from '../../store/useAppStore';
 import { BloomCalendar } from './BloomCalendar';
@@ -80,6 +80,21 @@ export const WhatsBlooming: React.FC<{ apiaryId: string }> = ({ apiaryId }) => {
     return () => controller.abort();
   }, [fetchBloom]);
 
+  // The section sits below the charts, where nobody knew it was (Ron, 2026-10-09). A pill above the bottom
+  // menu points to it until the section's top comes on screen, then gets out of the way.
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [reached, setReached] = useState(false);
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || load.state !== 'ok') return;
+    const io = new IntersectionObserver(([e]) => {
+      const bottom = e.rootBounds?.bottom ?? window.innerHeight;
+      setReached(e.isIntersecting || e.boundingClientRect.top < bottom);
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [load.state]);
+
   if (load.state === 'hidden') return null;
 
   const now = new Date();
@@ -87,8 +102,26 @@ export const WhatsBlooming: React.FC<{ apiaryId: string }> = ({ apiaryId }) => {
   // Late fall and winter look ahead to spring; otherwise to the next season.
   const next: SeasonName = season === 'Fall' || season === 'Winter' ? 'Spring' : NEXT_SEASON[season];
 
+  const inBloom = load.state === 'ok' ? windowList(load.bloom.plants, now).filter((r) => r.status === 'in_bloom').length : 0;
+
   return (
-    <div className="card p-5">
+    <>
+    {load.state === 'ok' && (
+      // Zero-height and sticky to the bottom of the scrolling page: it rides just above the bottom menu
+      // until the section itself arrives.
+      <div className="sticky bottom-3 z-30 h-0 flex justify-center pointer-events-none" aria-hidden={reached}>
+        <button
+          onClick={() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className={`-translate-y-full flex items-center gap-1.5 rounded-full bg-[var(--color-bg-raised)] border border-[var(--color-primary-faint)] shadow-[0_4px_16px_rgba(0,0,0,0.18)] px-4 py-2 text-xs font-bold text-[var(--color-primary-ink)] transition-opacity duration-300 ${reached ? 'opacity-0' : 'opacity-100 pointer-events-auto'}`}
+          tabIndex={reached ? -1 : 0}
+        >
+          <Flower2 size={14} />
+          {inBloom > 0 ? `${inBloom} in bloom nearby` : "What's blooming"}
+          <ChevronDown size={14} />
+        </button>
+      </div>
+    )}
+    <div ref={cardRef} className="card p-5 scroll-mt-3">
       <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3 mb-4">
         <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider flex items-center gap-2">
           <Flower2 size={16} /> What's blooming
@@ -173,5 +206,6 @@ export const WhatsBlooming: React.FC<{ apiaryId: string }> = ({ apiaryId }) => {
         );
       })()}
     </div>
+    </>
   );
 };
