@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { fetchTasks as loadTasks } from '../../data/taskRepository';
+import React, { useCallback, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { InstallInvite } from '../../shared/components/InstallInvite';
 import { TaskList } from '../tasks/TaskList';
 import { TaskFormModal } from '../tasks/TaskFormModal';
 import { MapPin, Box, ClipboardList, Plus } from 'lucide-react';
 
 export const DashboardView: React.FC = () => {
-  const { user, apiariesList, hivesList, navigateToApiariesTab, navigateToHivesTab } = useAppStore();
+  const { apiariesList, hivesList, navigateToApiariesTab, navigateToHivesTab, displayName } = useAppStore();
   const [tasks, setTasks] = useState<any[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   
@@ -15,20 +15,12 @@ export const DashboardView: React.FC = () => {
   const [editingTask, setEditingTask] = useState<any>(null);
   const [taskRefreshKey, setTaskRefreshKey] = useState(0);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      if (!user) return;
-      try {
-        const data = await loadTasks(user.id);
-        setTasks(data);
-      } catch (e) {
-        console.error("Failed to load dashboard tasks", e);
-      } finally {
-        setLoadingTasks(false);
-      }
-    };
-    fetchTasks();
-  }, [user, taskRefreshKey]);
+  // The task list below fetches the tasks; the to-do count reads its result
+  // instead of fetching the same list a second time.
+  const handleTasksChange = useCallback((list: Array<{ status?: string | null }>) => {
+    setTasks(list);
+    setLoadingTasks(false);
+  }, []);
 
   const handleEditTask = (task: any) => {
     setEditingTask(task);
@@ -43,11 +35,6 @@ export const DashboardView: React.FC = () => {
   const handleTaskSuccess = () => {
     setIsTaskFormOpen(false);
     setTaskRefreshKey(prev => prev + 1);
-    
-    // Also trigger store reload of navigation context to sync count
-    if (user) {
-      useAppStore.getState().loadNavigationContext(user.id);
-    }
   };
 
   const pendingTasksCount = tasks.filter(t => t.status !== 'completed').length;
@@ -58,12 +45,16 @@ export const DashboardView: React.FC = () => {
       {/* 1. Greeting Header */}
       <div className="w-full max-w-2xl px-4 mb-6">
         <h2 className="text-2xl sm:text-3xl font-black text-[var(--color-text)] leading-tight">
-          Welcome back, <span className="text-[var(--color-primary)]">Beekeeper</span>!
+          {/* The name saved on Profile; "Beekeeper" until one is saved. */}
+          Welcome back, <span className="text-[var(--color-primary)]">{displayName || 'Beekeeper'}</span>!
         </h2>
         <p className="text-[var(--color-text-muted)] font-medium text-sm mt-1">
           Here is an overview of your apiaries and hives today.
         </p>
       </div>
+
+      {/* Install invitation (only when the browser offers it and not snoozed) */}
+      <InstallInvite />
 
       {/* 2. Glassmorphic Statistics Grid */}
       <div className="w-full max-w-2xl px-4 grid grid-cols-3 gap-3 mb-6">
@@ -144,7 +135,7 @@ export const DashboardView: React.FC = () => {
           </button>
         </div>
         
-        <TaskList onEditTask={handleEditTask} refreshKey={taskRefreshKey} />
+        <TaskList onEditTask={handleEditTask} refreshKey={taskRefreshKey} onTasksChange={handleTasksChange} />
       </div>
 
       {/* Forms and Modals */}

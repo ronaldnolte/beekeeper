@@ -28,6 +28,13 @@
 
   /* --- Ground and type --- */
   --color-bg: #F0EBE0;
+  /* The strip behind Android's back/home/recents buttons. The page colour on
+     the website, where it is only ever the thin band under an iPhone's home
+     indicator; amber inside the installed app (html.native, set in main.tsx),
+     where it carries the system buttons. MainActivity draws those buttons
+     dark: dark on this amber is about 7.5:1, where white was about 2.3:1.
+     Ron's choice, 2026-10-03. */
+  --color-system-bar: var(--color-bg);
   --color-bg-raised: #FFFFFF;
   --color-text: #2D2A26;
   --color-text-muted: #7A7468;
@@ -64,6 +71,11 @@
   --dur-base: 220ms;
   --dur-slow: 380ms;
   --ease-soft: cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* Inside the installed app only. See --color-system-bar above. */
+html.native {
+  --color-system-bar: var(--color-primary);
 }
 
 /* Shared motion — the whole vocabulary, four keyframes.

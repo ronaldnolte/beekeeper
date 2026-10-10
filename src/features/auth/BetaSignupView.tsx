@@ -49,13 +49,13 @@ export const BetaSignupView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[var(--color-bg)]">
+    <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-[var(--color-bg)]" style={{ paddingTop: 'calc(1rem + var(--test-strip-h, 0px))' }}>
       <div className="w-full max-w-md card p-6 sm:p-8 relative overflow-hidden">
         {/* Warm glow accent */}
         <div className="absolute -top-16 -right-16 w-40 h-40 bg-[var(--color-primary)] opacity-10 rounded-full blur-3xl"></div>
         
         {/* Go Back button to Login */}
-        <div className="absolute top-4 left-4 z-20">
+        <div className="absolute left-4 z-20" style={{ top: 'calc(1rem + var(--test-strip-h, 0px))' }}>
           <button
             onClick={() => useAppStore.getState().setCurrentView('AUTH')}
             className="flex items-center gap-1 text-xs font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors active:scale-95"
@@ -135,9 +135,9 @@ export const BetaSignupView: React.FC = () => {
           </form>
         )}
       </div>
-      {/* Fills the strip behind Android's gesture bar. Takes the app background, or a navy band shows under a cream app. */}
+      {/* Fills the strip behind Android's system buttons. Amber in the installed app, page colour on the web: see --color-system-bar. */}
       <div 
-        className="fixed bottom-0 left-0 right-0 bg-[var(--color-bg)] z-[9999] pointer-events-none" 
+        className="fixed bottom-0 left-0 right-0 bg-[var(--color-system-bar)] z-[9999] pointer-events-none" 
         style={{ height: 'env(safe-area-inset-bottom, 0px)' }}
       />
     </div>

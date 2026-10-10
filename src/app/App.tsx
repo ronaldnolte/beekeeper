@@ -27,6 +27,7 @@ const NectarFlowView = lazy(() => import('../features/nectar/NectarFlowV2View').
 const AskAIView = lazy(() => import('../features/ai/AskAIView').then(m => ({ default: m.AskAIView })));
 const RoadmapView = lazy(() => import('../features/feedback/RoadmapView').then(m => ({ default: m.RoadmapView })));
 const ProfileView = lazy(() => import('../features/profile/ProfileView').then(m => ({ default: m.ProfileView })));
+const SettingsView = lazy(() => import('../features/settings/SettingsView').then(m => ({ default: m.SettingsView })));
 
 // Shared Suspense fallback for lazy-loaded views
 const ViewLoader = () => (
@@ -44,7 +45,6 @@ function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        useAppStore.getState().loadNavigationContext(session.user.id);
         const persistedView = useAppStore.getState().currentView;
         const targetView = (persistedView === 'AUTH' || !persistedView) ? 'DASHBOARD' : persistedView;
         window.history.replaceState({ view: targetView }, '');
@@ -56,7 +56,10 @@ function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
+      // setUser loads the lists when the user changes. A SIGNED_IN for the same
+      // user (e.g. returning to the tab) refreshes them so changes made on
+      // another device show up; concurrent loads share one request.
+      if (event === 'SIGNED_IN' && session?.user) {
         useAppStore.getState().loadNavigationContext(session.user.id);
       }
       
@@ -133,9 +136,9 @@ function App() {
           <div className="w-16 h-16 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-[var(--color-text)] font-bold">Waking up the bees...</p>
         </div>
-        {/* Fills the strip behind Android's gesture bar. Takes the app background, or a navy band shows under a cream app. */}
+        {/* Fills the strip behind Android's system buttons. Amber in the installed app, page colour on the web: see --color-system-bar. */}
         <div 
-          className="fixed bottom-0 left-0 right-0 bg-[var(--color-bg)] z-[9999] pointer-events-none" 
+          className="fixed bottom-0 left-0 right-0 bg-[var(--color-system-bar)] z-[9999] pointer-events-none" 
           style={{ height: 'env(safe-area-inset-bottom, 0px)' }}
         />
       </div>
@@ -234,6 +237,12 @@ function App() {
           </Suspense>
         )}
 
+        {currentView === 'SETTINGS' && (
+          <Suspense fallback={<ViewLoader />}>
+            <SettingsView />
+          </Suspense>
+        )}
+
         {currentView === 'UPDATE_PASSWORD' && <UpdatePasswordView />}
         
         {currentView === 'BETA_SIGNUP' && <BetaSignupView />}
@@ -245,9 +254,9 @@ function App() {
       <FeedbackModal />
       <WhatsNewModal />
 
-      {/* Fills the strip behind Android's gesture bar. Takes the app background, or a navy band shows under a cream app. */}
+      {/* Fills the strip behind Android's system buttons. Amber in the installed app, page colour on the web: see --color-system-bar. */}
       <div 
-        className="fixed bottom-0 left-0 right-0 bg-[var(--color-bg)] z-[9999] pointer-events-none" 
+        className="fixed bottom-0 left-0 right-0 bg-[var(--color-system-bar)] z-[9999] pointer-events-none" 
         style={{ height: 'env(safe-area-inset-bottom, 0px)' }}
       />
     </div>

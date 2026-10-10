@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createHive, updateHive, deleteHive, fetchApiariesForDropdown } from '../../data/hiveRepository';
+import { createHive, updateHive, deleteHive } from '../../data/hiveRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, X, Box, Minus, Plus } from 'lucide-react';
 
@@ -12,8 +12,9 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
   const [barCount, setBarCount] = useState(30);
   const [installedOn, setInstalledOn] = useState(new Date().toISOString().split('T')[0]);
   
-  // Apiary Select State
-  const [apiaries, setApiaries] = useState<{ id: string, name: string }[]>([]);
+  // Apiary dropdown (so a hive can be moved): the user's apiaries are already
+  // in the store, loaded at sign-in and reloaded after every apiary save.
+  const apiaries: { id: string; name: string }[] = useAppStore((s) => s.apiariesList);
   const [selectedApiary, setSelectedApiary] = useState(selectedApiaryId || '');
 
   const [notes, setNotes] = useState('');
@@ -22,16 +23,6 @@ export const HiveFormModal: React.FC<{ onSuccess: () => void }> = ({ onSuccess }
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Fetch user's apiaries for the dropdown so they can move a hive
-    const fetchApiaries = async () => {
-      if (!user) return;
-      const data = await fetchApiariesForDropdown(user.id);
-      setApiaries(data);
-    };
-    fetchApiaries();
-  }, [user]);
 
   useEffect(() => {
     if (isHiveFormOpen) {

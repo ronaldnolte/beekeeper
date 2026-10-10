@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { fetchApiaries as loadApiaries, deleteApiaryWithCascade } from '../../data/apiaryRepository';
+import React, { useState } from 'react';
+import { deleteApiaryWithCascade } from '../../data/apiaryRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { SelectionList } from '../../shared/components/SelectionList';
 import type { SelectionItem } from '../../shared/components/SelectionCard';
@@ -7,29 +7,19 @@ import { MapPin, Plus } from 'lucide-react';
 import { ApiaryFormModal } from './ApiaryFormModal';
 
 export const ApiarySelectionView: React.FC = () => {
-  const { user, selectApiary, setApiaryFormOpen } = useAppStore();
-  const [apiaries, setApiaries] = useState<SelectionItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, selectApiary, setApiaryFormOpen, apiariesList, hasLoadedNavigation } = useAppStore();
+  const [deleting, setDeleting] = useState(false);
+  const loading = !hasLoadedNavigation || deleting;
 
-  const reloadApiariesList = async () => {
-    if (!user) return;
-    setLoading(true);
-    const data = await loadApiaries(user.id);
-
-    const formatted: SelectionItem[] = data.map((a: any) => ({
-      id: a.id,
-      title: a.name,
-      subtitle: a.zip_code ? `ZIP: ${a.zip_code}` : (a.latitude ? 'Location: Coordinates' : 'No location set'),
-      icon: <MapPin size={22} />,
-      raw: a
-    }));
-    setApiaries(formatted);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    reloadApiariesList();
-  }, [user]);
+  // The store already holds this exact list (all the user's apiaries, by name),
+  // loaded at sign-in and reloaded after every apiary save or delete.
+  const apiaries: SelectionItem[] = apiariesList.map((a: any) => ({
+    id: a.id,
+    title: a.name,
+    subtitle: a.zip_code ? `ZIP: ${a.zip_code}` : (a.latitude ? 'Location: Coordinates' : 'No location set'),
+    icon: <MapPin size={22} />,
+    raw: a
+  }));
 
   const handleDeleteApiary = async (id: string) => {
     const apiary = apiaries.find(a => a.id === id);
@@ -39,7 +29,7 @@ export const ApiarySelectionView: React.FC = () => {
       return;
     }
 
-    setLoading(true);
+    setDeleting(true);
     try {
       await deleteApiaryWithCascade(id, user.id);
       // Reload navigation cached store state
@@ -47,7 +37,7 @@ export const ApiarySelectionView: React.FC = () => {
       window.location.reload();
     } catch (err: any) {
       alert(err.message || 'Failed to delete apiary');
-      setLoading(false);
+      setDeleting(false);
     }
   };
 

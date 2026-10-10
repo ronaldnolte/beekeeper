@@ -20,7 +20,40 @@ export const UpdatePasswordView: React.FC = () => {
       if (exchangeAttempted.current) return;
       exchangeAttempted.current = true;
 
-      // 1. Check immediate session
+      const params = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+
+      // 0. A link Supabase already refused (expired or used) arrives with an
+      //    error instead of a code.
+      const linkError = params.get('error_code') || hashParams.get('error_code');
+      if (linkError) {
+        setVerifying(false);
+        setError(
+          linkError === 'otp_expired'
+            ? 'This reset link has expired or was already used. Ask for a new one with "Forgot Password?".'
+            : 'This reset link could not be used. Ask for a new one with "Forgot Password?".'
+        );
+        return;
+      }
+
+      // 1. The reset email carries a one-time code (token_hash). Checking it
+      //    directly works in any browser or email-app window. The older link
+      //    style (?code=) only works in the same browser that asked for the
+      //    reset, which fails whenever an email app opens links in its own
+      //    window.
+      const tokenHash = params.get('token_hash');
+      if (tokenHash && params.get('type') === 'recovery') {
+        const { error: otpError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+        // The code is single-use: take it out of the address bar either way.
+        window.history.replaceState(window.history.state, '', window.location.pathname);
+        setVerifying(false);
+        if (otpError) {
+          setError('This reset link has expired or was already used. Ask for a new one with "Forgot Password?".');
+        }
+        return;
+      }
+
+      // 2. Check immediate session
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session) {
@@ -28,7 +61,7 @@ export const UpdatePasswordView: React.FC = () => {
         return;
       }
 
-      // 2. Check for PKCE Code or Hash in URL (handled automatically by Supabase client)
+      // 3. Check for PKCE Code or Hash in URL (handled automatically by Supabase client)
       // Since Supabase intercepts the token hash automatically in the root App component,
       // the session should be available here. If not, wait for auto-recovery events.
 
@@ -42,12 +75,16 @@ export const UpdatePasswordView: React.FC = () => {
         }
       });
 
-      // 3. Set fallback timeout (4 seconds)
+      // 4. Set fallback timeout (4 seconds)
       timeoutId = setTimeout(async () => {
         const { data: { session: finalSession } } = await supabase.auth.getSession();
         setVerifying(false);
         if (!finalSession) {
-          setError('Unable to verify security token. The link may have expired.');
+          setError(
+            params.get('code')
+              ? 'This link has to be opened in the same browser you asked for the reset from. Ask for a new one with "Forgot Password?" and open it there.'
+              : 'Unable to verify the reset link. It may have expired. Ask for a new one with "Forgot Password?".'
+          );
         }
       }, 4000);
 
@@ -105,7 +142,7 @@ export const UpdatePasswordView: React.FC = () => {
 
   if (verifying) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-[#FFFBF0] to-[#f4ecd8]">
+      <div className="min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-[#FFFBF0] to-[#f4ecd8]" style={{ paddingTop: 'calc(1rem + var(--test-strip-h, 0px))' }}>
         <div className="w-full max-w-md card p-6 sm:p-8 text-center relative overflow-hidden">
           <div className="absolute -top-12 -right-12 w-32 h-32 bg-[var(--color-primary)] opacity-10 rounded-full blur-2xl"></div>
           <div className="animate-pulse text-5xl mb-4 relative z-10">🔑</div>
@@ -117,7 +154,7 @@ export const UpdatePasswordView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-[100dvh] flex flex-col p-4 sm:p-6 bg-gradient-to-br from-[#FFFBF0] to-[#f4ecd8]">
+    <div className="min-h-[100dvh] flex flex-col p-4 sm:p-6 bg-gradient-to-br from-[#FFFBF0] to-[#f4ecd8]" style={{ paddingTop: 'calc(1rem + var(--test-strip-h, 0px))' }}>
       <button 
         onClick={handleCancel}
         className="self-start mb-6 w-10 h-10 bg-[var(--color-input-bg)]/80 rounded-full flex items-center justify-center shadow-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-input-bg)] transition-all backdrop-blur-sm"
@@ -147,7 +184,7 @@ export const UpdatePasswordView: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 sm:py-3.5 border-2 border-[#E6DCC3] rounded-xl focus:ring-4 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] transition-all bg-[var(--color-input-bg)] text-[var(--color-text)] font-bold"
-                placeholder="Min 6 characters"
+                placeholder="Min 8 characters"
               />
             </div>
           </div>

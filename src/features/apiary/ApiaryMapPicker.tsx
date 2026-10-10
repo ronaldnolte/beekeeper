@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { X, Check, Layers, LocateFixed, MapPin, Search, Plus, Minus } from 'lucide-react';
@@ -15,6 +16,8 @@ interface Props {
 const DEFAULT_CENTER: [number, number] = [39.5, -98.35];
 const DEFAULT_ZOOM = 4;
 const PLACE_ZOOM = 15;
+// "Use my location" lands closer: at 17 the hive stand itself is visible.
+const LOCATE_ZOOM = 17;
 
 const round5 = (n: number) => Math.round(n * 1e5) / 1e5;
 
@@ -127,7 +130,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
   };
 
   const pickResult = (r: GeocodeResult) => {
-    mapRef.current?.setView([r.lat, r.lng], PLACE_ZOOM);
+    mapRef.current?.flyTo([r.lat, r.lng], PLACE_ZOOM);
     setResults([]);
     setSearchMsg(null);
     setQuery(r.label);
@@ -145,7 +148,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
     setLocateError(null);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        mapRef.current?.setView([pos.coords.latitude, pos.coords.longitude], PLACE_ZOOM);
+        mapRef.current?.flyTo([pos.coords.latitude, pos.coords.longitude], LOCATE_ZOOM);
         setLocating(false);
       },
       () => {
@@ -156,14 +159,20 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
     );
   };
 
-  return (
-    <div className="fixed inset-0 z-[110] flex flex-col bg-black animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
+  // Rendered straight into <body>: inside the apiary form (z-100) the map's own
+  // z-index only counted within the form, so other z-100 sheets such as
+  // What's New could cover it. At z-150 it sits above every sheet.
+  return createPortal(
+    <div className="fixed inset-0 z-[150] flex flex-col bg-black animate-[fade-in_var(--dur-base)_var(--ease-soft)]">
       {/* Map area */}
       <div className="relative flex-1 min-h-0">
         <div ref={containerRef} className="absolute inset-0 bg-[var(--color-bg-raised)]" />
 
         {/* Top bar (floats over the map): close + place search */}
-        <div className="absolute top-0 left-0 right-0 p-3 flex items-center gap-2 z-[1000]">
+        <div
+          className="absolute top-0 left-0 right-0 p-3 flex items-center gap-2 z-[1000]"
+          style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px) + var(--test-strip-h, 0px))' }}
+        >
           <button
             type="button"
             onClick={onClose}
@@ -195,13 +204,13 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
         </div>
 
         {searchMsg && (
-          <div className="absolute top-[68px] left-3 right-3 z-[1000] bg-black/60 text-white text-xs font-medium px-3 py-2 rounded-lg">
+          <div style={{ top: 'calc(68px + env(safe-area-inset-top, 0px) + var(--test-strip-h, 0px))' }} className="absolute left-3 right-3 z-[1000] bg-black/60 text-white text-xs font-medium px-3 py-2 rounded-lg">
             {searchMsg}
           </div>
         )}
 
         {results.length > 0 && (
-          <div className="absolute top-[68px] left-3 right-3 z-[1001] bg-white rounded-2xl shadow-xl overflow-hidden max-h-[244px] overflow-y-auto custom-scrollbar">
+          <div style={{ top: 'calc(68px + env(safe-area-inset-top, 0px) + var(--test-strip-h, 0px))' }} className="absolute left-3 right-3 z-[1001] bg-white rounded-2xl shadow-xl overflow-hidden max-h-[244px] overflow-y-auto custom-scrollbar">
             {results.map((r, i) => (
               <button
                 key={i}
@@ -281,7 +290,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
       </div>
 
       {/* Bottom sheet */}
-      <div className="bg-[var(--color-bg-raised)] px-5 pt-4 pb-6 shadow-[0_-6px_24px_rgba(0,0,0,0.16)]">
+      <div className="bg-[var(--color-bg-raised)] px-5 pt-4 shadow-[0_-6px_24px_rgba(0,0,0,0.16)]" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}>
         {locateError && (
           <div className="mb-3 text-xs font-bold text-[var(--color-primary-ink)] bg-[var(--color-primary-wash)] border border-[var(--color-primary-faint)] rounded-lg px-3 py-2">
             {locateError}
@@ -306,6 +315,7 @@ export const ApiaryMapPicker: React.FC<Props> = ({ initialLat, initialLng, onCon
           <Check size={20} /> Confirm location
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

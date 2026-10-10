@@ -83,11 +83,3 @@ export async function saveHiveSnapshot(hiveId: string, snapshotData: any) {
   if (error) throw error;
 }
 
-export async function fetchApiariesForDropdown(userId: string) {
-  const { data, error } = await supabase
-    .from('apiaries')
-    .select('id, name')
-    .eq('user_id', userId);
-  if (error) throw error;
-  return data || [];
-}

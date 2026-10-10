@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { X, MapPin, Sparkles, LineChart, Snowflake } from 'lucide-react';
+import { X, MapPin, Sparkles, Snowflake, Flower2, UserRound, KeyRound, Zap } from 'lucide-react';
 
 // Bump this string whenever there's new content worth announcing. Anyone whose
 // stored value doesn't match sees the modal once, then it's marked as read.
@@ -11,7 +11,9 @@ import { X, MapPin, Sparkles, LineChart, Snowflake } from 'lucide-react';
 // yesterday — winter reads zero and "normal" is a five-year average — and a
 // reading that changes under someone without explanation is worse than no
 // reading at all.
-export const WHATS_NEW_VERSION = '2026-09-nectar-charts';
+// 2026-10 (1.5.35): the bloom section is new, and the nectar heat gate change (base 32F) moves spring
+// numbers again, so everyone sees this once more.
+export const WHATS_NEW_VERSION = '2026-10-bloom';
 const SEEN_KEY = 'beek_whats_new_seen';
 
 // One-time "What's New" modal. Self-managing: on mount it checks localStorage
@@ -75,21 +77,36 @@ export const WhatsNewModal: React.FC = () => {
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-4 text-sm custom-scrollbar">
           <Feature
-            icon={<LineChart size={20} />}
-            title="Two new charts under Nectar Flow"
-            body="The top chart still shows this season against the years behind it. Below it now sits the difference — green where you are running ahead of normal, red where you are behind — and under that, a season-to-date total that adds those daily differences up. The first tells you about today. The second tells you how the whole year has gone, which is the question most of us are actually asking in September."
+            icon={<Flower2 size={20} />}
+            title="What may be blooming, under Nectar Flow"
+            body="A new section under the Nectar charts lists the plants recorded near your apiary that may be in bloom, starting soon or just finished, within three weeks either side of today. Blue means nectar, orange pollen, and purple both. Tap &quot;See full bloom calendar&quot; for the whole year at a glance. The dates are for a normal year, so a warm or wet season can move them; treat it as a guide to what to look for, not a promise."
           />
           <Feature
             icon={<Snowflake size={20} />}
-            title="Winter reads zero now, and 'normal' means five years"
-            body="Two changes to the index itself, so the numbers will not match what you saw last week. First: a warm January day used to show a little nectar. Greenness alone cannot tell evergreen from a flow, so it was counting sunshine the bees could not use — it now waits for real accumulated warmth before it reads anything. Second: your normal is averaged over five past seasons instead of three. Three good years in a row made an ordinary season look like a collapse."
+            title="Spring opens a little earlier on the Nectar chart"
+            body="The index now starts counting warmth from 32°F instead of 50°F, so early spring trees show up sooner and winter still reads close to zero. Summer and fall readings are unchanged, but your spring numbers will look different from last week, including in past years."
+          />
+          <Feature
+            icon={<UserRound size={20} />}
+            title="Your profile and settings"
+            body="Tap your initial at the top right. Profile holds your name (the dashboard now greets you by it) and your hive and treatment preferences. Settings has a real switch to turn off anonymous usage statistics, plus app information."
+          />
+          <Feature
+            icon={<KeyRound size={20} />}
+            title="Password reset works everywhere"
+            body="The reset link in the email now works whichever browser or app opens it, including on Android phones, where it used to fail."
+          />
+          <Feature
+            icon={<Zap size={20} />}
+            title="Faster screens"
+            body="The dashboard and lists load once and stay loaded, so moving between screens is quicker and uses less data."
           />
           <Feature
             icon={<MapPin size={20} />}
             accent
             eyebrow="If you haven't yet — takes a minute"
-            title="Pin your apiaries on the map, or Nectar Flow is guessing"
-            body="Without a pin, we read the satellite at the centre of your ZIP code — which can be miles from your hives, and in hill country lands on the wrong side of a ridge entirely. That is a different set of plants, a different water table, and a forage reading that is not yours. Open each apiary, tap Edit, and drop a pin on your actual hive stand. A few seconds per apiary, and every reading after that is about your bees instead of somebody else's."
+            title="Pin your apiaries on the map"
+            body="The bloom list needs a pin too: without one, both Nectar Flow and the plant list are guessing from the middle of your ZIP code. Open each apiary, tap Edit, and drop a pin on your hive stand."
           />
           {/* Testers on the packaged Android build. Hidden on web/PWA, which
               updates itself on every visit.

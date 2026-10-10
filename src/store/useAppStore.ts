@@ -3,6 +3,8 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../data/supabase';
 import { fetchApiaries } from '../data/apiaryRepository';
 import { fetchUserRoles } from '../data/roleRepository';
+import { fetchSignInProfile } from '../data/profileRepository';
+import { setAnalyticsOptOut } from '../shared/analytics';
 
 // The core views of our Single Page Application
 export type AppView = 
@@ -21,7 +23,8 @@ export type AppView =
   | 'NECTAR_FLOW'        // Root Tab 6: Localized Nectar Flow Index
   | 'ASK_AI'            // Root Tab 5: AI chat assistant
   | 'ROADMAP'           // Global: Feedback & Roadmap
-  | 'PROFILE'           // Global: the beekeeper's own preferences + account actions
+  | 'PROFILE'           // Global: the beekeeper's own preferences (who they are, how they keep bees)
+  | 'SETTINGS'          // Global: privacy, account actions, app version
   | 'UPDATE_PASSWORD'   // Global: Reset password flow
   | 'BETA_SIGNUP';      // Public: Closed Beta signup waitlist
 
@@ -40,6 +43,9 @@ interface AppState {
   selectedRecord: SelectedRecord;
   user: User | null;
   userRoles: string[];
+  /** The name saved on the profile, for the Dashboard greeting. Null = none saved. */
+  displayName: string | null;
+  setDisplayName: (name: string | null) => void;
   isAuthLoading: boolean;
   isFeedbackModalOpen: boolean;
   isApiaryFormOpen: boolean;
@@ -51,6 +57,8 @@ interface AppState {
   apiariesList: any[];
   hivesList: any[];
   isLoadingNavigation: boolean;
+  /** True once the first apiary/hive load for this user has finished (success or failure). */
+  hasLoadedNavigation: boolean;
   selectedApiaryName: string | null;
   selectedHiveName: string | null;
   isUnifiedHiveView: boolean;
@@ -78,6 +86,12 @@ interface AppState {
   navigateToHivesTab: () => void;
 }
 
+// Startup can ask for the same load several times within a few milliseconds
+// (session check + auth events). Requests that arrive while one is running
+// share it instead of firing another round of identical queries.
+let navLoad: { userId: string; promise: Promise<void> } | null = null;
+let rolesLoad: { userId: string; promise: Promise<void> } | null = null;
+
 export const useAppStore = create<AppState>()((set, get) => ({
       currentView: 'AUTH',
       selectedApiaryId: null,
@@ -85,6 +99,8 @@ export const useAppStore = create<AppState>()((set, get) => ({
       selectedRecord: null,
       user: null,
       userRoles: [],
+      displayName: null,
+      setDisplayName: (name) => set({ displayName: name?.trim() || null }),
       isAuthLoading: true,
       isFeedbackModalOpen: false,
       isApiaryFormOpen: false,
@@ -96,6 +112,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       apiariesList: [],
       hivesList: [],
       isLoadingNavigation: false,
+      hasLoadedNavigation: false,
       selectedApiaryName: null,
       selectedHiveName: null,
       isUnifiedHiveView: false,
@@ -139,7 +156,9 @@ export const useAppStore = create<AppState>()((set, get) => ({
         set({ selectedHiveId: id, selectedHiveName: name || null, currentView: 'HIVE_DETAIL' });
       },
 
-      loadNavigationContext: async (userId) => {
+      loadNavigationContext: (userId) => {
+        if (navLoad?.userId === userId) return navLoad.promise;
+        const promise = (async () => {
         set({ isLoadingNavigation: true });
         try {
           const apiaries = await fetchApiaries(userId);
@@ -161,17 +180,29 @@ export const useAppStore = create<AppState>()((set, get) => ({
           set({ 
             apiariesList: apiaries, 
             hivesList: hives, 
-            isLoadingNavigation: false 
+            isLoadingNavigation: false,
+            hasLoadedNavigation: true
           });
         } catch (e) {
           console.error("Failed to load navigation context", e);
-          set({ isLoadingNavigation: false });
+          set({ isLoadingNavigation: false, hasLoadedNavigation: true });
         }
+        })().finally(() => {
+          if (navLoad?.promise === promise) navLoad = null;
+        });
+        navLoad = { userId, promise };
+        return promise;
       },
 
-      loadUserRoles: async (userId) => {
-        const roles = await fetchUserRoles(userId);
-        set({ userRoles: roles });
+      loadUserRoles: (userId) => {
+        if (rolesLoad?.userId === userId) return rolesLoad.promise;
+        const promise = fetchUserRoles(userId)
+          .then((roles) => set({ userRoles: roles }))
+          .finally(() => {
+            if (rolesLoad?.promise === promise) rolesLoad = null;
+          });
+        rolesLoad = { userId, promise };
+        return promise;
       },
 
       hasRole: (role) => get().userRoles.includes(role),
@@ -245,12 +276,13 @@ export const useAppStore = create<AppState>()((set, get) => ({
       setUser: (user) => set((state) => {
         if (!user) {
           if (state.currentView === 'UPDATE_PASSWORD' || state.currentView === 'BETA_SIGNUP') {
-            return { user: null, userRoles: [], isAuthLoading: false };
+            return { user: null, userRoles: [], displayName: null, isAuthLoading: false };
           }
           // Clear all sensitive state on logout
           return {
             user: null,
             userRoles: [],
+            displayName: null,
             currentView: 'AUTH',
             isAuthLoading: false,
             selectedApiaryId: null,
@@ -258,6 +290,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
             selectedRecord: null,
             apiariesList: [],
             hivesList: [],
+            hasLoadedNavigation: false,
             selectedApiaryName: null,
             selectedHiveName: null,
             isUnifiedHiveView: false,
@@ -267,11 +300,23 @@ export const useAppStore = create<AppState>()((set, get) => ({
         // Land on DASHBOARD on login
         const nextView = (state.currentView === 'AUTH' || !state.currentView) ? 'DASHBOARD' : state.currentView;
         
-        // Fire loading context + roles in background
-        setTimeout(() => {
-          get().loadNavigationContext(user.id);
-          get().loadUserRoles(user.id);
-        }, 50);
+        // Fire loading context + roles in background — only when the signed-in
+        // user actually changes. Auth events repeat setUser for the same user
+        // (initial session, token refresh); App.tsx refreshes on SIGNED_IN.
+        if (state.user?.id !== user.id) {
+          setTimeout(() => {
+            get().loadNavigationContext(user.id);
+            get().loadUserRoles(user.id);
+            // Profile values needed app-wide: the analytics choice (e.g. made
+            // on another device; unknown -> leave this device alone) and the
+            // name the Dashboard greets with.
+            fetchSignInProfile(user.id).then((p) => {
+              if (!p) return;
+              setAnalyticsOptOut(p.analyticsOptOut);
+              set({ displayName: p.displayName });
+            });
+          }, 50);
+        }
 
         return { 
           user, 
@@ -309,7 +354,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
         ) {
           prevView = 'HIVE_DETAIL';
         } else if (
-          ['FORECAST', 'NECTAR_FLOW', 'ASK_AI', 'ROADMAP', 'PROFILE', 'UPDATE_PASSWORD'].includes(state.currentView)
+          ['FORECAST', 'NECTAR_FLOW', 'ASK_AI', 'ROADMAP', 'PROFILE', 'SETTINGS', 'UPDATE_PASSWORD'].includes(state.currentView)
         ) {
           prevView = 'DASHBOARD';
         }

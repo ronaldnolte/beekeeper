@@ -25,26 +25,64 @@ set in Vercel at all — it was running on this exact key.
 - ⬜ **Remaining:** the literal (now-harmless) string still sits in `main`'s
   source until `develop` is merged in — see item 2's code fix.
 
+**1b. ✅ DONE (2026-07-03) — the "anyone can delete any account" hole was STILL OPEN on production and is now truly closed.**
+The most serious finding of the whole review. A leftover admin function,
+`delete_user_entirely`, could be called by anyone on the internet with no
+login — wiping any user's account and all their data. A fix was written months
+ago (migration 0004) and everyone believed it was closed. It was NOT: it
+revoked access from the "anonymous" and "signed-in" groups but missed the
+underlying database default that grants **"everyone"** permission to call a
+new function — a separate switch the original fix never touched. So the hole
+was live on the real production database for ~2 weeks.
+- Found 2026-07-03 because the fresh production clone ("Beekeeper Dev v2")
+  still flagged it, which led to checking production itself — same flag.
+- Verified directly (not via the sometimes-cached dashboard) that anonymous
+  callers really could still reach it.
+- Fixed by revoking from the "everyone" (`public`) grant, not just the two
+  named groups. Re-verified straight from the database: anonymous access is
+  now `false` on all four affected functions. No evidence it was ever abused.
+- Still to do (low priority): apply the same corrected fix to the two
+  practice databases, and — when the schema gets saved into the project's
+  code — write a corrected version so this can't quietly come back.
+
 ### HIGH
 
-**2. 🟡 Code fixed on `develop` (commit `ef2be5e`), not yet merged to `main`.**
-The AI endpoints (`/api/chat`, `/api/transcribe`) and feedback endpoint ran with
-no login check — anyone on the internet could trigger paid Gemini calls or send
-mail through the app. Fixed on develop: all three now require a verified
-Supabase session before doing paid work.
-- ✅ Fix written and committed to `develop`
-- ✅ Verified via `tsc -b`, `vite build`, `npm test`, and manual module smoke-test
-- ⬜ Merge `develop` → `main` via PR (whenever ready — this is the main remaining
-  action item on this whole list)
+**2. 🟡 PARTLY fixed — verified in the actual code 2026-07-03, not just from memory.**
+Originally: the AI chat feature, the voice-note transcription feature, the
+feedback form, AND the two weather-forecast (nectar) endpoints could all be
+used by anyone on the internet with no login and no limit, running up paid
+Google usage and risking the app getting locked out when a quota is hit.
+- ✅ **Confirmed fixed:** chat, voice-note transcription, and feedback now all
+  require a real login before doing any paid work — checked directly in the
+  code, not assumed. Sits on the practice branch, not yet on the real site.
+- ❌ **NOT fixed, still exactly as first described:** the two weather-forecast
+  endpoints still accept a request from anyone, with no login and **no limit
+  on how many times it can be called** — confirmed by checking the code
+  directly, there is no rate-limiting anywhere in the project. Someone could
+  still hammer these with made-up locations and run up real cost today,
+  unchanged from the original finding.
+- ⬜ Bring the login-required fixes to the real live site (needs the practice-
+  branch-to-real-site move).
+- ⬜ Add an actual limit on how often the weather-forecast endpoints can be
+  called — genuinely not started.
 
-**3. 🟡 Same commit — CORS was wide open (`Access-Control-Allow-Origin: *`).**
-Now restricted to an allowlist (prod domain, Capacitor app origins, Vite dev)
-via shared `api/_lib.ts`. Same status as #2 — done on develop, pending merge.
+**3. 🟡 Same batch of fixes — outside websites could call every one of these features directly.**
+Now restricted to only the app's real web addresses. Same status as #2 above
+— built and tested, waiting to reach the real live site.
 
-**4. 🟡 Same commit — `/api/beta` was an open email relay.**
-Anyone could trigger a welcome email to any address and probe whether an
-address was already registered. Fixed: stricter email validation, response no
-longer reveals `alreadyExists`. Pending merge to main.
+**4. 🟡 PARTLY fixed — verified in the actual code 2026-07-03.**
+Originally: the beta-signup form would email *any* address immediately, no
+limit, and gave away whether an address was already signed up.
+- ✅ **Confirmed fixed:** stricter checking of what counts as a valid email
+  address, and it no longer reveals whether an address already signed up.
+- ❌ **NOT fixed, still exactly as first described:** there is still no limit
+  on how many times someone could submit this form, and no check that a real
+  human (not a script) is filling it in. Someone could still write a script
+  today to blast real welcome emails to thousands of made-up or stolen
+  addresses, unlimited times, with the live site exactly as it is right now.
+- ⬜ Add a limit on submissions + a simple "prove you're human" check
+  (something like Cloudflare's free, mostly-invisible check) — genuinely not
+  started, on both this and the weather-forecast endpoints above.
 
 **5. ✅ DONE (2026-07-02) — `/api/notify-signup` was open if `WEBHOOK_SECRET` was ever unset.**
 Code fix (fails closed if the secret isn't configured, escapes payload fields)
@@ -85,30 +123,42 @@ unauditable from the repo.
   (viewer policies were never added to inspections/interventions/varroa_tests)
   and the three `check_hive_access` overloads consolidated. Parked, not dropped.
 
-**7. 🟡 Apiary deletion is 11 separate client-side queries with manual verification.**
-`apiaryRepository.ts` deletes child records table-by-table, then re-queries to
-confirm the delete actually happened, because "RLS can silently block deletes."
-- **Verified (preview, 2026-07-02):** exactly 4 FKs are `NO ACTION` and need
-  `ON DELETE CASCADE` — `hives→apiaries`, and `inspections`/`interventions`/
-  `hive_snapshots → hives`. (`varroa_tests`, `weather_forecasts`,
-  `inspection_attachments` already cascade.) Written as
-  `supabase/migrations/0005_cascade_deletes.sql` — NOT yet applied anywhere.
-- **`tasks` FK gap CLOSED** — `0006_tasks_cascade.sql` adds
-  `tasks_hive_id_fkey` + `tasks_apiary_id_fkey` (verified preview: text types,
-  0 orphans). Both columns nullable so apiary-level and hive-level tasks work.
-- ✅ **0005 + 0006 applied and verified on the PREVIEW DB (2026-07-02)** — all
-  parent→child links now report `delete_rule = CASCADE`. Migration files are
-  the version-controlled record.
-- **Prod pre-flight PASSED (2026-07-02):** ran `supabase/db_integrity_audit.sql`
-  (read-only, 25 parent→child links) against production — **0 orphans on every
-  link**, including all unprotected ones. So promoting 0005+0006 to prod is
-  de-risked, and 0006's `tasks` FK add won't fail (tasks: 39 rows, all valid).
-- **Still open:** (a) apply 0005+0006 to **production** (deliberate step, not
-  yet done); (b) DB cascade does NOT delete Storage objects (inspection
-  photos/audio) — that cleanup stays in app code; (c) simplify
-  `deleteApiaryWithCascade` to lean on the cascades — but that client change
-  must NOT reach prod until prod has the migrations, or deletes would orphan
-  children there.
+**7. ✅ DONE — Apiary deletion is now safe at the database level, live on production (2026-07-03).**
+Previously, deleting an apiary meant the app had to manually delete child
+records one table at a time (11 separate steps), then double-check each one
+actually worked, because the database itself didn't enforce the cleanup.
+- The database update that fixes this (recorded as `supabase/migrations/0005_cascade_deletes.sql`
+  and `0006_tasks_cascade.sql` in the project's code, for anyone who needs the
+  exact technical record) now makes the database clean up automatically:
+  deleting an apiary removes its hives, and each hive's inspections,
+  interventions, snapshots, varroa tests, and tasks, all in one atomic step.
+- **Fully tested before going live:** applied and checked on a practice copy
+  of the database (2026-07-02), then applied and checked again on a brand-new
+  full copy of real production data (2026-07-03) — including an actual test
+  where we deleted one of Ron's own real apiaries and confirmed every single
+  related record disappeared correctly, with nothing left behind and nothing
+  extra removed.
+- **Applied to the real, live production database on 2026-07-03**, verified
+  with a full 25-point data-integrity scan showing zero problems.
+- **A related bug was found and confirmed (still needs fixing, separate from
+  the above):** deleting an apiary today correctly removes the database
+  records, but does **not** delete the actual photo/voice-note files sitting
+  in file storage — only a different, single-inspection cleanup path does
+  that. So old photos/audio from a deleted apiary are left behind, unused,
+  taking up space. Fix planned alongside simplifying the app's delete code
+  (below).
+- **Remaining step:** simplify the app's own delete code now that the
+  database handles the cleanup automatically, and fix the leftover-files bug
+  above in the same pass. Not done yet — this is app code, not a database
+  change, and needs its own testing pass before it reaches production.
+
+**NEW: Storage (photos/voice notes) has no backup at all.** Daily DB backups
+explicitly exclude Storage objects. No existing toggle covers this — it would
+be new engineering work. Options, cheapest/simplest first: (1) soft-delete
+with a grace period before actually purging from Storage — cheap, covers the
+common "oops" case; (2) a scheduled sync job copying the bucket to a cheap
+secondary location (e.g. Backblaze B2/S3) — real disaster-recovery coverage;
+(3) both together. Recommend starting with (1). Not started.
 - Reusable health check: `supabase/db_integrity_audit.sql` — run in any SQL
   editor anytime to re-verify integrity.
 
@@ -278,6 +328,16 @@ Roughly ordered by field value to a beekeeper:
 8. ⬜ **Dark mode** — CSS-variable theming makes this a few dozen lines.
 9. ⬜ **Operational visibility** — error tracking (Sentry free tier) + a CI
    check (`tsc -b && vite build && npm test`) on every PR.
+10. ⬜ **"What's New" popup on first login after an update** (Ron: existed in
+    an earlier version, lost in the rebuild — cannot check the old source, see
+    project notes). Design sketch: version history as a hand-edited
+    `src/data/releaseNotes.ts` ({version, date, highlights[]}) — only entries
+    that exist there trigger the popup, so routine version bumps stay silent
+    and only real announcements show. Track "last seen" via one new column
+    (`users.last_seen_release_version`, not localStorage, so it syncs across
+    web + Android) compared against the newest entry at login, right where
+    `loadNavigationContext`/`loadUserRoles` already fire in useAppStore. Small:
+    one migration column + one data file + one popup component.
 
 ---
 
@@ -304,13 +364,17 @@ Play-policy flag risks:
 
 ## Suggested Working Order
 
-1. ~~Rotate the leaked key~~ ✅ done.
-2. ~~Verify/fix `WEBHOOK_SECRET` + notify-signup webhook~~ ✅ done (also fixed a
-   previously-unknown wrong-domain bug in the webhook URL along the way).
-3. Merge `develop` → `main` (brings in auth-required endpoints, CORS
-   allowlist, error-message cleanup — items 2–4, 8–10 above) — whenever ready.
-4. Schema baseline + mentor-schema cleanup (item 6) — bundle together, prove
-   on preview first.
-5. Cascading deletes (item 7).
-6. Everything else rides normal feature work, or pick off whatever's most
+1. ~~Rotate the leaked email key~~ ✅ done.
+2. ~~Fix the new-signup notification (wrong secret + wrong web address)~~ ✅ done.
+3. ~~Make apiary deletion clean up automatically at the database level~~ ✅ done
+   and live on the real production database.
+4. Bring all the practice-branch security fixes (login required on the AI/
+   feedback features, the junk-mail-relay fix, cleaner error messages,
+   stronger passwords) over to the real live site — whenever ready.
+5. Simplify the app's own delete code now that the database handles cleanup,
+   and fix the leftover-photo-files bug in the same pass.
+6. Get the database's actual structure saved as code in the project (it only
+   lives in the live database today) + decide on the leftover mentor-matching
+   tables — bundle together, prove on the practice database first.
+7. Everything else rides normal feature work, or pick off whatever's most
    useful next time we sit down with this list.

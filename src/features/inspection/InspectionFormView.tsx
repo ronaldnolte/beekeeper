@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createInspection, updateInspection, discardInspection } from '../../data/inspectionRepository';
-import { fetchAttachments } from '../../data/inspectionAttachmentRepository';
+import { countAttachments } from '../../data/inspectionAttachmentRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { Save, Trash2, Hexagon, Camera } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
@@ -25,8 +25,8 @@ export const InspectionFormView: React.FC = () => {
   // Load attachment count using the local ID so it survives selectedRecord being cleared
   React.useEffect(() => {
     if (!inspectionId) { setAttachmentCount(0); return; }
-    fetchAttachments(inspectionId)
-      .then((items) => setAttachmentCount(items.length))
+    countAttachments(inspectionId)
+      .then(setAttachmentCount)
       .catch(() => setAttachmentCount(0));
   }, [inspectionId]);
 

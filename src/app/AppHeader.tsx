@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { AccountMenu } from './AccountMenu';
 
 /**
  * The Sandias, as they actually look at this time of year.
@@ -131,7 +132,7 @@ const LandscapeSVG: React.FC<{ palette: SkyPalette }> = ({ palette }) => (
 );
 
 export const AppHeader: React.FC = () => {
-  const { currentView, isUnifiedHiveView, user, navigateTo } = useAppStore();
+  const { currentView, isUnifiedHiveView, user } = useAppStore();
 
   // One letter is enough to make the control feel like *yours* rather than a
   // generic icon. Falls back to a bee when there is no email to read.
@@ -151,6 +152,7 @@ export const AppHeader: React.FC = () => {
     ASK_AI: 'Ask AI',
     STATUS_UPDATE_FORM: 'Status',
     PROFILE: 'Your Profile',
+    SETTINGS: 'Settings',
     ROADMAP: 'Roadmap',
   };
 
@@ -162,7 +164,7 @@ export const AppHeader: React.FC = () => {
   const palette = React.useMemo(() => paletteFor(new Date()), []);
 
   return (
-    <header className="glass-header sticky top-0 z-50 flex justify-center w-full" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <header className="glass-header sticky top-0 z-50 flex justify-center w-full" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + var(--test-strip-h, 0px))' }}>
       {/* SVG Landscape Background */}
       <LandscapeSVG palette={palette} />
 
@@ -184,15 +186,7 @@ export const AppHeader: React.FC = () => {
 
         {/* Right: the beekeeper. Top-right is where everyone already looks for
             their own account, and it keeps Log Out well away from the tab bar. */}
-        {user && currentView !== 'PROFILE' && (
-          <button
-            onClick={() => navigateTo('PROFILE')}
-            aria-label="Your profile"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/40 bg-white/20 font-black text-white shadow-sm backdrop-blur-sm transition-all duration-[var(--dur-fast)] hover:bg-white/30 active:scale-90"
-          >
-            {initial}
-          </button>
-        )}
+        {user && <AccountMenu initial={initial} />}
       </div>
     </header>
   );
