@@ -87,10 +87,12 @@ export const WhatsBlooming: React.FC<{ apiaryId: string }> = ({ apiaryId }) => {
   useEffect(() => {
     const el = cardRef.current;
     if (!el || load.state !== 'ok') return;
+    // "Reached" means the section's top is in the upper half of the screen: a card edge peeking out just
+    // above the bottom menu does not count, or the pill would hide before anyone saw the list.
     const io = new IntersectionObserver(([e]) => {
-      const bottom = e.rootBounds?.bottom ?? window.innerHeight;
-      setReached(e.isIntersecting || e.boundingClientRect.top < bottom);
-    });
+      const line = e.rootBounds?.bottom ?? window.innerHeight * 0.55;
+      setReached(e.isIntersecting || e.boundingClientRect.top < line);
+    }, { rootMargin: '0px 0px -45% 0px' });
     io.observe(el);
     return () => io.disconnect();
   }, [load.state]);
