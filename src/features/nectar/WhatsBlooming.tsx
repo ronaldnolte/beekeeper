@@ -1,4 +1,4 @@
-// "What's blooming" — the section under the Nectar charts (bloom plan step 4, E:\claude\bloom-integration\PLAN.md).
+// "What may be blooming" (Ron, 2026-10-09: the dates are estimates) — the section under the Nectar charts (bloom plan step 4, E:\claude\bloom-integration\PLAN.md).
 //
 // Lists the nearby plants blooming within 3 weeks either side of today (Ron, 2026-10-08; it was the whole calendar
 // season, which ran to 44 plants by mid-April), with today's status, current
@@ -110,7 +110,7 @@ export const WhatsBlooming: React.FC<{ apiaryId: string }> = ({ apiaryId }) => {
     <div ref={cardRef} className="card p-5 scroll-mt-3">
       <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-3 mb-4">
         <h3 className="text-sm uppercase font-extrabold text-[var(--color-primary)] tracking-wider flex items-center gap-2">
-          <Flower2 size={16} /> What's blooming
+          <Flower2 size={16} /> What may be blooming
         </h3>
         <span className="text-[11px] font-bold text-[var(--color-text-muted)]">3 weeks either side of today</span>
       </div>
