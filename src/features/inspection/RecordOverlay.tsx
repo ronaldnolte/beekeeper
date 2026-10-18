@@ -42,7 +42,7 @@ export const RecordOverlay: React.FC<RecordOverlayProps> = ({ title, onCancel, o
   const cleanupStream = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
-    void allowScreenSleep();
+    void allowScreenSleep('voice-recorder');
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -81,7 +81,7 @@ export const RecordOverlay: React.FC<RecordOverlayProps> = ({ title, onCancel, o
 
       recorder.start();
       // Stop the screen timeout from cutting the recording off (best effort).
-      void keepScreenAwake();
+      void keepScreenAwake('voice-recorder');
       setPhase('recording');
       setSeconds(0);
       timerRef.current = window.setInterval(() => {

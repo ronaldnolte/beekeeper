@@ -9,6 +9,11 @@
  *   the page is hidden (camera, app switch), so we re-request it when the page
  *   becomes visible again.
  *
+ * Several parts of the app can want the screen on at once (a whole Hands-free
+ * inspection, and a caption recording inside it), so each caller holds the
+ * screen under its own name; the screen may sleep only once every holder has
+ * let go.
+ *
  * Best effort: a browser may refuse (battery saver, unsupported). Callers get
  * `false` back and can show a tip; recording itself never depends on this.
  */
@@ -17,7 +22,7 @@ import { KeepAwake } from '@capacitor-community/keep-awake';
 
 type WakeLockSentinelLike = { release: () => Promise<void>; addEventListener: (t: 'release', cb: () => void) => void };
 
-let wanted = false;
+const holders = new Set<string>();
 let sentinel: WakeLockSentinelLike | null = null;
 let listening = false;
 
@@ -38,14 +43,14 @@ async function requestWebLock(): Promise<boolean> {
 }
 
 function onVisibilityChange() {
-  if (wanted && !sentinel && document.visibilityState === 'visible') {
+  if (holders.size > 0 && !sentinel && document.visibilityState === 'visible') {
     void requestWebLock();
   }
 }
 
 /** Ask the device to keep the screen on. Resolves true if it agreed. */
-export async function keepScreenAwake(): Promise<boolean> {
-  wanted = true;
+export async function keepScreenAwake(holder = 'default'): Promise<boolean> {
+  holders.add(holder);
   if (Capacitor.isNativePlatform()) {
     try {
       await KeepAwake.keepAwake();
@@ -62,9 +67,10 @@ export async function keepScreenAwake(): Promise<boolean> {
   return requestWebLock();
 }
 
-/** Let the screen sleep normally again. Safe to call more than once. */
-export async function allowScreenSleep(): Promise<void> {
-  wanted = false;
+/** This holder no longer needs the screen on. Safe to call more than once. */
+export async function allowScreenSleep(holder = 'default'): Promise<void> {
+  holders.delete(holder);
+  if (holders.size > 0) return;
   if (Capacitor.isNativePlatform()) {
     try {
       await KeepAwake.allowSleep();

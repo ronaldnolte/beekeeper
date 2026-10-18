@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createInspection, updateInspection, discardInspection } from '../../data/inspectionRepository';
 import { countAttachments } from '../../data/inspectionAttachmentRepository';
 import { useAppStore } from '../../store/useAppStore';
-import { Save, Trash2, Hexagon, Camera } from 'lucide-react';
+import { Save, Trash2, Hexagon, Camera, Mic } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
 import { SubTabBar } from '../../shared/components/SubTabBar';
 import { ExportInspectionSheet } from './ExportInspectionSheet';
@@ -50,6 +50,29 @@ export const InspectionFormView: React.FC = () => {
       selectInspection(record);
       setInspectionId(id);
       setIsFormOpen(true);
+    } catch (e: any) {
+      alert('Could not start inspection: ' + (e?.message ?? e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Hands-free: create the inspection up front (like Add Inspection), then go
+  // straight to the dictation screen. Finish there brings the user back to this
+  // form to review and save.
+  const handleAddHandsFree = async () => {
+    if (!selectedHiveId) return;
+    setLoading(true);
+    const timestamp = new Date().toISOString();
+    try {
+      const { id } = await createInspection({
+        hive_id: selectedHiveId,
+        timestamp,
+        ...INSPECTION_DEFAULTS,
+      });
+      selectInspection({ _model_type: 'inspection', id, hive_id: selectedHiveId, timestamp, ...INSPECTION_DEFAULTS });
+      setInspectionId(id);
+      navigateTo('INSPECTION_HANDS_FREE');
     } catch (e: any) {
       alert('Could not start inspection: ' + (e?.message ?? e));
     } finally {
@@ -217,6 +240,13 @@ export const InspectionFormView: React.FC = () => {
               className="w-full bg-[var(--color-primary)] text-white py-4 rounded-2xl font-black text-lg transition-colors shadow-lg shadow-[var(--color-primary)]/20 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
             >
               {loading ? <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : '+ Add Inspection'}
+            </button>
+            <button
+              onClick={handleAddHandsFree}
+              disabled={loading}
+              className="w-full mt-2.5 card py-3.5 rounded-2xl font-black text-base text-[var(--color-primary)] border-2 border-[var(--color-primary)]/40 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+            >
+              <Mic size={20} /> Hands-free Inspection
             </button>
           </div>
 

@@ -272,8 +272,12 @@ concept works. Android only for now. AI stays on Gemini.
 
 1. **Keep-screen-awake fix** — Chrome's built-in feature for the website, free
    "keep-awake" add-on for the phone app. No new phone permission.
-2. **Phone-app test switch** — a cable-installed phone build that talks to
-   test.beektools.com and the test database instead of the live site.
+   DONE (develop 224d884). Ron's phone test on test.beektools.com, 2026-10-18:
+   screen stayed on for a full 1 min 10 s recording — PASS.
+2. **Phone-app test switch — MOVED TO THE END (Ron, 2026-10-18).** Build and
+   prove everything on the website first; only once just minor changes remain,
+   add the cable-installed phone build that talks to test.beektools.com and the
+   test database, and test in the Google Play app.
 3. **Throwaway phone test page** — saves nothing; long dictation, take a photo,
    continue dictating; shows awake status, timer and part count on screen.
    Test in Chrome and in the phone app on Ron's Android phone.
@@ -331,11 +335,15 @@ Made 2026-10-18: AI stays on Gemini (Ask AI, transcription, summary); camera
 handled by taking turns (option C); develop / test site only; Android only;
 a ready check opens every talk-through inspection.
 
+**Decided 2026-10-18 (Ron): a third, separate choice** next to Standard and
+Plus — some users will want one or the other, not both. Plus and Standard stay
+as they are. The talk-through choice keeps the screen awake for the whole
+inspection: never times out while dictating (phone may sit on the hive box,
+hands-free); ~30-minute safety limit between recordings with no touch; released
+on Finish or leaving the inspection.
+
 Still open:
-1. **Where does this live?** Recommended: it *becomes* "Inspection Plus" (Plus
-   = talk-through). Standard stays untouched. Alternative: a third choice next
-   to Standard and Plus.
-2. **Form filling:** AI suggests and you confirm (recommended), or AI fills it
+1. **Form filling:** AI suggests and you confirm (recommended), or AI fills it
    in directly?
-3. **Should the AI look at the photos** in the first version, or only captions
+2. **Should the AI look at the photos** in the first version, or only captions
    and talk?

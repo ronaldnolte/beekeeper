@@ -20,8 +20,11 @@ export default async function handler(req: any, res: any) {
 
   try {
     const { attachmentId, audioBase64, mimeType, audioPath, sessionToken } = req.body;
+    // Hands-free "ready check": transcribe a short test clip and hand the text
+    // back without storing anything. Additive — existing callers never send it.
+    const checkOnly = req.body.checkOnly === true;
 
-    if (!attachmentId || !audioBase64) {
+    if ((!attachmentId && !checkOnly) || !audioBase64) {
       res.status(400).json({ error: 'Missing attachmentId or audio.' });
       return;
     }
@@ -57,6 +60,11 @@ export default async function handler(req: any, res: any) {
     ]);
 
     const transcript = (result.response.text() || '').trim();
+
+    if (checkOnly) {
+      res.status(200).json({ transcript });
+      return;
+    }
 
     // Transcript is now the record of truth — drop the audio immediately.
     // (Decision 2026-06-18: don't keep audio for review; users edit text inline,

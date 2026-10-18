@@ -13,9 +13,8 @@ import {
   type AttachmentWithUrls,
 } from '../../data/inspectionAttachmentRepository';
 import { exportSinglePhoto } from './exportPhotos';
+import { PHOTO_CAP } from './inspectionOptions';
 
-/** Soft cap on photos per inspection (raise later if users push back). */
-const PHOTO_CAP = 12;
 
 /**
  * Whether an <input capture> will actually open a camera. True on phones/tablets;

@@ -31,6 +31,9 @@ export const STORES_OPTIONS = [
   { value: 'abundant', label: 'Full' },
 ];
 
+/** Soft cap on photos per inspection (Plus and Hands-free share it). */
+export const PHOTO_CAP = 12;
+
 /** Field defaults shared by new Standard inspections and new Plus drafts. */
 export const INSPECTION_DEFAULTS = {
   queen_status: 'seen',

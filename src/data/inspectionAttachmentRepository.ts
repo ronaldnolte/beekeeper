@@ -242,6 +242,54 @@ export async function requestTranscription(
   }
 }
 
+export type TranscriptionCheck =
+  | { ok: true; transcript: string }
+  | { ok: false; reason: 'signed_out' | 'unreachable' | 'failed' };
+
+/**
+ * Hands-free ready check: send a short test clip through the same transcription
+ * service and return what it heard. Nothing is stored. Proves signal, sign-in
+ * and the service end to end before an inspection starts.
+ */
+export async function checkTranscription(audio: Blob): Promise<TranscriptionCheck> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { ok: false, reason: 'signed_out' };
+  const audioBase64 = await blobToBase64(audio);
+  const apiUrl = Capacitor.isNativePlatform()
+    ? 'https://beekeeper.beektools.com/api/transcribe'
+    : '/api/transcribe';
+  let res: Response;
+  try {
+    res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        checkOnly: true,
+        audioBase64,
+        mimeType: audio.type,
+        sessionToken: session.access_token,
+      }),
+    });
+  } catch {
+    return { ok: false, reason: 'unreachable' };
+  }
+  if (res.status === 401) return { ok: false, reason: 'signed_out' };
+  if (!res.ok) return { ok: false, reason: 'failed' };
+  const body = await res.json().catch(() => ({}));
+  return { ok: true, transcript: String(body.transcript ?? '').trim() };
+}
+
+/**
+ * Try transcription again for a voice note whose first attempt failed. The
+ * audio is kept on failure, so fetch it back from storage and resend it.
+ */
+export async function retryTranscription(att: AttachmentWithUrls): Promise<void> {
+  if (!att.audioUrl) throw new Error('The recording is no longer available.');
+  const audio = await fetch(att.audioUrl).then((r) => r.blob());
+  await updateTranscript(att.id, null, 'pending');
+  await requestTranscription(att.id, audio, att.audio_path);
+}
+
 /** Record the result of AI transcription on a voice note. */
 export async function updateTranscript(
   id: string,
