@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mic, Square, Play, Pause, Check, X, RotateCcw } from 'lucide-react';
+import { keepScreenAwake, allowScreenSleep } from '../../shared/device/keepAwake';
 
 /** Max clip length (seconds) — auto-stops to keep transcription quick + cheap. */
 const MAX_SECONDS = 90;
@@ -41,6 +42,7 @@ export const RecordOverlay: React.FC<RecordOverlayProps> = ({ title, onCancel, o
   const cleanupStream = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    void allowScreenSleep();
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -78,6 +80,8 @@ export const RecordOverlay: React.FC<RecordOverlayProps> = ({ title, onCancel, o
       };
 
       recorder.start();
+      // Stop the screen timeout from cutting the recording off (best effort).
+      void keepScreenAwake();
       setPhase('recording');
       setSeconds(0);
       timerRef.current = window.setInterval(() => {
