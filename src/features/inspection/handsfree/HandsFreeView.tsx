@@ -12,7 +12,7 @@ import {
   retryTranscription,
   type AttachmentWithUrls,
 } from '../../../data/inspectionAttachmentRepository';
-import { discardInspection } from '../../../data/inspectionRepository';
+import { discardInspection, updateInspectionNotes } from '../../../data/inspectionRepository';
 import { keepScreenAwake, allowScreenSleep } from '../../../shared/device/keepAwake';
 import { useDictation } from './useDictation';
 import { ReadyCheck, hasPassedBefore, quietCheck } from './ReadyCheck';
@@ -31,6 +31,45 @@ import { ReadyCheck, hasPassedBefore, quietCheck } from './ReadyCheck';
 
 const IDLE_RELEASE_MS = 30 * 60 * 1000;
 const AWAKE_HOLDER = 'hands-free';
+
+const FINISH_WAIT_MS = 25_000;
+
+/**
+ * The dictation as plain text for the Notes field, in spoken order:
+ * "Part 1: …", "Photo 1: <caption>", "Part 2: …". A piece still converting or
+ * failed is marked so nothing is silently dropped (its audio stays under
+ * Photos & Voice).
+ */
+function buildNotes(rows: AttachmentWithUrls[]): string {
+  const captionFor = (photoId: string) => rows.find((r) => r.kind === 'voice_note' && r.parent_id === photoId);
+  const pieceText = (r: AttachmentWithUrls) =>
+    r.transcript_status === 'done' ? (r.transcript ?? '').trim()
+    : r.transcript_status === 'pending' ? '[still converting — see Photos & Voice]'
+    : r.transcript_status === 'failed' ? '[a minute could not be converted — see Photos & Voice]'
+    : '';
+  const blocks: string[] = [];
+  let part = 0;
+  let photo = 0;
+  let group: string[] = [];
+  const flush = () => {
+    const text = group.filter(Boolean).join(' ').trim();
+    if (text) blocks.push(`Part ${++part}: ${text}`);
+    group = [];
+  };
+  for (const r of rows) {
+    if (r.kind === 'voice_note' && !r.parent_id) {
+      group.push(pieceText(r));
+    } else if (r.kind === 'photo') {
+      flush();
+      photo += 1;
+      const cap = captionFor(r.id);
+      const capText = cap ? pieceText(cap) : '';
+      blocks.push(`Photo ${photo}${capText ? `: ${capText}` : ''}`);
+    }
+  }
+  flush();
+  return blocks.join('\n\n');
+}
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
@@ -191,11 +230,34 @@ export const HandsFreeView: React.FC = () => {
   };
 
   const handleFinish = async () => {
+    if (!inspectionId) return;
     setFinishing(true);
     if (recording) dictation.stop();
     // Give the recorder a moment to hand over its last piece, then wait for saves.
     await new Promise((r) => setTimeout(r, 300));
     await queueRef.current;
+
+    // Wait (up to ~25 s) for the last pieces to finish turning into text, so
+    // the Notes the user lands on are complete.
+    let rows = await fetchAttachments(inspectionId).catch(() => items);
+    const deadline = Date.now() + FINISH_WAIT_MS;
+    while (rows.some((r) => r.transcript_status === 'pending') && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 1500));
+      rows = await fetchAttachments(inspectionId).catch(() => rows);
+    }
+
+    // Put the whole dictation into the inspection's Notes so it's visible and
+    // editable on the form straight away (the AI summary will build on this).
+    const notes = buildNotes(rows);
+    if (notes) {
+      try {
+        await updateInspectionNotes(inspectionId, notes);
+        if (selectedRecord) selectInspection({ ...selectedRecord, observations: notes });
+      } catch (e: any) {
+        setError(e?.message ?? 'Could not copy the dictation into Notes.');
+      }
+    }
+
     await allowScreenSleep(AWAKE_HOLDER);
     setFinishing(false);
     setCurrentView('INSPECTION_FORM'); // record still selected → form opens for review
@@ -370,6 +432,12 @@ export const HandsFreeView: React.FC = () => {
               </div>
             ) : (
               <div className="w-full max-w-2xl space-y-3">{log}</div>
+            )}
+            {finishing && (
+              <div className="w-full max-w-2xl rounded-2xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/40 px-4 py-3 text-sm font-bold text-[var(--color-text)] flex items-center gap-2">
+                <Loader2 size={16} className="animate-spin text-[var(--color-primary)]" />
+                Finishing up — turning the last of your dictation into text…
+              </div>
             )}
             {uploading > 0 && (
               <p className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5">

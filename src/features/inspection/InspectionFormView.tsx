@@ -299,7 +299,7 @@ export const InspectionFormView: React.FC = () => {
                 value={observations}
                 onChange={(e) => setObservations(e.target.value)}
                 placeholder="Tap here to add field notes..."
-                className="w-full h-9 sm:h-14 p-2 px-3 rounded-xl bg-[var(--color-input-bg)] border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none resize-none font-medium text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] custom-scrollbar"
+                className={`w-full ${observations.length > 80 ? 'h-56' : 'h-9 sm:h-14'} p-2 px-3 rounded-xl bg-[var(--color-input-bg)] border border-[var(--color-card-border)] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors outline-none resize-none font-medium text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] custom-scrollbar`}
               />
             </div>
           </div>
