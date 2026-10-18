@@ -411,6 +411,11 @@ export const HandsFreeView: React.FC = () => {
                 Dictation paused — what you said is saved. Tap Continue dictation to carry on.
               </div>
             )}
+            {!recording && dictation.endReason && (
+              <p className="w-full max-w-2xl px-1 text-xs text-[var(--color-text-muted)]">
+                Why dictation stopped: {dictation.endReason}
+              </p>
+            )}
             {screenReleased && (
               <div className="w-full max-w-2xl rounded-2xl bg-[var(--color-input-bg)] px-4 py-3 text-sm text-[var(--color-text-muted)]">
                 Nothing happened for 30 minutes, so the screen may turn off normally. Tap anywhere to keep it on again.

@@ -4,20 +4,25 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * Continuous dictation for a Hands-free inspection.
  *
  * The microphone stays on from start() until stop(). Every PIECE_SECONDS the
- * recorder is restarted on the same microphone stream, so each piece is a
- * complete, separately playable audio file that can be sent for transcription
- * on its own (keeps every request well under the server's size limit, and a
- * failed piece only loses a minute). The gap between pieces is a few
- * milliseconds.
+ * recorder is restarted, so each piece is a complete, separately playable
+ * audio file that can be sent for transcription on its own (keeps every
+ * request well under the server's size limit, and a failed piece only loses a
+ * minute). The gap between pieces is a few milliseconds.
  *
- * If the microphone is taken away (phone call, screen lock on some phones) the
- * last piece is saved and the state becomes 'paused' so the screen can offer
- * "tap to continue".
+ * Phones can take the microphone away or refuse a new recorder at the hand-over
+ * between pieces. When that happens we quietly reconnect the microphone and
+ * carry on; only if reconnecting fails does dictation pause ("tap to
+ * continue"). Whenever dictation ends on its own, `endReason` says why, in
+ * plain words, so testing on real phones can pin the cause down.
  */
 
 export const PIECE_SECONDS = 60;
 /** Pieces shorter than this (a tap-and-stop) are dropped — nothing worth sending. */
 const MIN_PIECE_MS = 1500;
+/** Give up reconnecting after this many tries in a row without a good piece. */
+const MAX_RECONNECTS = 3;
+/** Set while dictating, so a reload of the screen mid-dictation can be reported. */
+const ACTIVE_KEY = 'handsFreeDictationActive';
 
 export type DictationState = 'idle' | 'starting' | 'recording' | 'paused';
 
@@ -29,10 +34,32 @@ function pickMimeType(): string {
   return '';
 }
 
+function markActive(on: boolean) {
+  try {
+    if (on) sessionStorage.setItem(ACTIVE_KEY, '1');
+    else sessionStorage.removeItem(ACTIVE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function useDictation(onPiece: (audio: Blob) => void) {
   const [state, setState] = useState<DictationState>('idle');
   const [seconds, setSeconds] = useState(0); // length of the current part
   const [error, setError] = useState<string | null>(null);
+  const [endReason, setEndReason] = useState<string | null>(() => {
+    try {
+      const v = sessionStorage.getItem(ACTIVE_KEY);
+      if (v === '1') return 'The screen reloaded while you were dictating.';
+      // Left by the previous copy of this screen a moment ago → it was redrawn.
+      if (v?.startsWith('left:') && Date.now() - Number(v.slice(5)) < 5000) {
+        return 'The screen was redrawn while you were dictating.';
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
 
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -40,9 +67,12 @@ export function useDictation(onPiece: (audio: Blob) => void) {
   const clockRef = useRef<number | null>(null);
   const onPieceRef = useRef(onPiece);
   onPieceRef.current = onPiece;
-  // Set when the stop was asked for by us (stop / pause), so the recorder's
-  // onstop knows not to roll straight into a new piece.
+  // Set when dictation is being ended, so the recorder's onstop doesn't roll
+  // straight into a new piece.
   const endingRef = useRef<'none' | 'stop' | 'pause'>('none');
+  const reconnectsRef = useRef(0);
+
+  const note = (msg: string) => console.warn('[hands-free dictation]', msg);
 
   const clearTimers = () => {
     if (pieceTimerRef.current) window.clearTimeout(pieceTimerRef.current);
@@ -52,61 +82,137 @@ export function useDictation(onPiece: (audio: Blob) => void) {
   };
 
   const releaseMic = () => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    const s = streamRef.current;
     streamRef.current = null;
+    s?.getTracks().forEach((t) => {
+      t.onended = null;
+      t.stop();
+    });
   };
 
-  const startPiece = useCallback(() => {
+  // Declared up front so the pieces below can call each other.
+  const startPieceRef = useRef<() => void>(() => {});
+  const reconnectRef = useRef<(why: string) => void>(() => {});
+
+  const finish = useCallback((how: 'stop' | 'pause', reason?: string) => {
+    endingRef.current = how;
+    clearTimers();
+    const recorder = recorderRef.current;
+    recorderRef.current = null;
+    if (recorder && recorder.state !== 'inactive') {
+      try {
+        recorder.stop(); // flushes the last piece
+      } catch {
+        /* already gone */
+      }
+    }
+    releaseMic();
+    markActive(false);
+    if (reason) {
+      note(reason);
+      setEndReason(reason);
+    }
+    setState(how === 'pause' ? 'paused' : 'idle');
+  }, []);
+
+  const openMic = async (): Promise<MediaStream> => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    streamRef.current = stream;
+    stream.getAudioTracks().forEach((t) => {
+      t.onended = () => {
+        if (streamRef.current === stream && endingRef.current === 'none') {
+          reconnectRef.current('The phone took the microphone away');
+        }
+      };
+    });
+    return stream;
+  };
+
+  startPieceRef.current = () => {
     const stream = streamRef.current;
-    if (!stream) return;
-    const mimeType = pickMimeType();
-    const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    if (!stream || endingRef.current !== 'none') return;
+    let recorder: MediaRecorder;
+    try {
+      const mimeType = pickMimeType();
+      recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    } catch (e: any) {
+      reconnectRef.current(`Could not start the next minute (${e?.name ?? 'error'})`);
+      return;
+    }
     const chunks: Blob[] = [];
     const startedAt = Date.now();
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunks.push(e.data);
     };
+    recorder.onerror = (e: any) => {
+      reconnectRef.current(`The recorder reported a problem (${e?.error?.name ?? 'error'})`);
+    };
     recorder.onstop = () => {
+      if (pieceTimerRef.current) window.clearTimeout(pieceTimerRef.current);
+      pieceTimerRef.current = null;
       const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-      if (Date.now() - startedAt >= MIN_PIECE_MS && blob.size > 0) onPieceRef.current(blob);
-      if (endingRef.current === 'none' && streamRef.current) {
-        startPiece(); // rolling over to the next one-minute piece
+      if (Date.now() - startedAt >= MIN_PIECE_MS && blob.size > 0) {
+        reconnectsRef.current = 0; // a good piece — the microphone is healthy
+        onPieceRef.current(blob);
+      }
+      // Rolling over to the next one-minute piece (only if this was the timed
+      // hand-over, not an ending or a reconnect, which start their own piece).
+      if (endingRef.current === 'none' && recorderRef.current === recorder) {
+        recorderRef.current = null;
+        startPieceRef.current();
       }
     };
     recorderRef.current = recorder;
-    recorder.start();
+    try {
+      recorder.start();
+    } catch (e: any) {
+      recorderRef.current = null;
+      reconnectRef.current(`Could not start the next minute (${e?.name ?? 'error'})`);
+      return;
+    }
     pieceTimerRef.current = window.setTimeout(() => {
       if (recorder.state !== 'inactive') recorder.stop();
     }, PIECE_SECONDS * 1000);
-  }, []);
+  };
 
-  const finish = useCallback((how: 'stop' | 'pause') => {
-    endingRef.current = how;
-    clearTimers();
-    const recorder = recorderRef.current;
+  reconnectRef.current = (why: string) => {
+    if (endingRef.current !== 'none') return;
+    note(`${why} — reconnecting the microphone`);
+    // Save what this recorder has, without letting its onstop start a new piece.
+    const old = recorderRef.current;
     recorderRef.current = null;
-    if (recorder && recorder.state !== 'inactive') recorder.stop(); // flushes the last piece
+    if (pieceTimerRef.current) window.clearTimeout(pieceTimerRef.current);
+    pieceTimerRef.current = null;
+    if (old && old.state !== 'inactive') {
+      try {
+        old.stop();
+      } catch {
+        /* ignore */
+      }
+    }
     releaseMic();
-    setState(how === 'pause' ? 'paused' : 'idle');
-  }, []);
+    reconnectsRef.current += 1;
+    if (reconnectsRef.current > MAX_RECONNECTS) {
+      finish('pause', `${why}, and reconnecting didn't work.`);
+      return;
+    }
+    openMic()
+      .then(() => startPieceRef.current())
+      .catch((e: any) => finish('pause', `${why}, and the microphone couldn't be reopened (${e?.name ?? 'error'}).`));
+  };
 
   const start = useCallback(async () => {
     setError(null);
+    setEndReason(null);
     setState('starting');
+    endingRef.current = 'none';
+    reconnectsRef.current = 0;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      // Microphone taken away (call, some phones on screen lock) → keep what we
-      // have and ask the user to continue.
-      stream.getAudioTracks().forEach((t) => {
-        t.onended = () => {
-          if (streamRef.current === stream) finish('pause');
-        };
-      });
-      endingRef.current = 'none';
+      await openMic();
       setSeconds(0);
       clockRef.current = window.setInterval(() => setSeconds((s) => s + 1), 1000);
-      startPiece();
+      markActive(true);
+      startPieceRef.current();
       setState('recording');
     } catch (e: any) {
       releaseMic();
@@ -117,18 +223,25 @@ export function useDictation(onPiece: (audio: Blob) => void) {
           : 'Could not start the microphone on this device.'
       );
     }
-  }, [finish, startPiece]);
+  }, []);
 
   const stop = useCallback(() => finish('stop'), [finish]);
 
-  // Leaving the screen ends dictation cleanly.
+  // Leaving the screen ends dictation cleanly (the last piece is still saved).
   useEffect(() => () => {
     endingRef.current = 'stop';
     clearTimers();
     const r = recorderRef.current;
-    if (r && r.state !== 'inactive') r.stop();
+    const wasRecording = !!r && r.state !== 'inactive';
+    if (wasRecording) r!.stop();
     releaseMic();
+    try {
+      if (wasRecording) sessionStorage.setItem(ACTIVE_KEY, 'left:' + Date.now());
+      else sessionStorage.removeItem(ACTIVE_KEY);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
-  return { state, seconds, error, start, stop };
+  return { state, seconds, error, endReason, start, stop };
 }
