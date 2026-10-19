@@ -218,12 +218,18 @@ export const HandsFreeView: React.FC = () => {
     });
   };
 
+  // Result shown right where the failed minute is, not at the top of the screen.
+  const [retryState, setRetryState] = useState<Record<string, string>>({});
   const handleRetry = async (item: AttachmentWithUrls) => {
-    setError(null);
+    setRetryState((s) => ({ ...s, [item.id]: 'working' }));
     try {
       await retryTranscription(item);
+      setRetryState((s) => {
+        const { [item.id]: _done, ...rest } = s;
+        return rest;
+      });
     } catch (e: any) {
-      setError(e?.message ?? 'Still could not turn that into text.');
+      setRetryState((s) => ({ ...s, [item.id]: e?.message ?? 'Still could not turn that into text.' }));
     } finally {
       load();
     }
@@ -299,10 +305,17 @@ export const HandsFreeView: React.FC = () => {
         </span>
       );
     }
+    if (retryState[v.id] === 'working') {
+      return (
+        <span key={v.id} className="block my-1 text-xs font-bold text-[var(--color-primary)] inline-flex items-center gap-1">
+          <Loader2 size={12} className="animate-spin" /> Trying again — this can take up to a minute…{' '}
+        </span>
+      );
+    }
     if (v.transcript_status === 'failed') {
       return (
         <span key={v.id} className="block my-1 text-xs text-red-600">
-          A minute of dictation couldn’t be turned into text.{' '}
+          {retryState[v.id] ?? 'A minute of dictation couldn’t be turned into text.'}{' '}
           <button onClick={() => handleRetry(v)} className="font-bold underline inline-flex items-center gap-1">
             <RotateCcw size={11} /> Try again
           </button>

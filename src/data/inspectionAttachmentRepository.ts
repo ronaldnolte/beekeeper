@@ -291,8 +291,15 @@ export async function checkTranscription(audio: Blob): Promise<TranscriptionChec
  * audio is kept on failure, so fetch it back from storage and resend it.
  */
 export async function retryTranscription(att: AttachmentWithUrls): Promise<void> {
-  if (!att.audioUrl) throw new Error('The recording is no longer available.');
-  const audio = await fetch(att.audioUrl).then((r) => r.blob());
+  const gone = new Error(
+    'The recording for this one is no longer stored, so it can’t be converted again. Tap Edit to type what you remember.'
+  );
+  if (!att.audioUrl) throw gone;
+  const res = await fetch(att.audioUrl).catch(() => null);
+  if (!res) throw new Error('Could not reach storage — check your signal and try again.');
+  if (!res.ok) throw gone;
+  const audio = await res.blob();
+  if (audio.size === 0) throw gone;
   await updateTranscript(att.id, null, 'pending');
   await requestTranscription(att.id, audio, att.audio_path);
 }

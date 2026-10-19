@@ -117,15 +117,20 @@ export const InspectionAttachmentsView: React.FC = () => {
   };
 
   // Re-send a failed voice note's kept audio for transcription.
+  // Progress / result shown right under the note (not at the top of the screen,
+  // which may be scrolled out of view).
+  const [retryState, setRetryState] = useState<Record<string, string>>({});
   const handleRetry = async (v: AttachmentWithUrls) => {
-    setBusy(true);
-    setError(null);
+    setRetryState((s) => ({ ...s, [v.id]: 'working' }));
     try {
       await retryTranscription(v);
+      setRetryState((s) => {
+        const { [v.id]: _done, ...rest } = s;
+        return rest;
+      });
     } catch (e: any) {
-      setError(e?.message ?? 'Still couldn’t transcribe that — try again later.');
+      setRetryState((s) => ({ ...s, [v.id]: e?.message ?? 'Still couldn’t convert it — try again later.' }));
     } finally {
-      setBusy(false);
       load();
     }
   };
@@ -268,6 +273,15 @@ export const InspectionAttachmentsView: React.FC = () => {
               </button>
             </div>
           )
+        )}
+
+        {retryState[v.id] === 'working' && (
+          <p className="mt-1.5 text-xs font-bold text-[var(--color-primary)] flex items-center gap-1.5">
+            <Loader2 size={13} className="animate-spin" /> Trying again — this can take up to a minute…
+          </p>
+        )}
+        {retryState[v.id] && retryState[v.id] !== 'working' && (
+          <p className="mt-1.5 text-xs font-medium text-red-600">{retryState[v.id]}</p>
         )}
       </>
     );
