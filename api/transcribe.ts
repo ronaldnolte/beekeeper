@@ -58,15 +58,9 @@ export default async function handler(req: any, res: any) {
 
     const transcript = (result.response.text() || '').trim();
 
-    // Transcript is now the record of truth — drop the audio immediately.
-    // (Decision 2026-06-18: don't keep audio for review; users edit text inline,
-    // and transcription is fast. Audio is only kept when transcription FAILS.)
-    if (audioPath) {
-      const { error: rmErr } = await supabase.storage.from('inspection-images').remove([audioPath]);
-      if (rmErr) console.warn('Transcribe: could not remove audio object', rmErr.message);
-    }
-
-    // Write back (RLS: only the owner's own row updates). audio_path cleared.
+    // Write back FIRST (RLS: only the owner's own row updates), audio_path
+    // cleared. Only once the text is safely stored is the audio deleted — the
+    // other way round, a failed write lost both the text and the audio.
     const { error: updErr } = await supabase
       .from('inspection_attachments')
       .update({ transcript, transcript_status: 'done', audio_path: null })
@@ -76,6 +70,14 @@ export default async function handler(req: any, res: any) {
       console.error('Transcribe: row update failed', updErr);
       res.status(500).json({ error: 'Transcribed, but could not store the transcript.' });
       return;
+    }
+
+    // Transcript is now the record of truth — drop the audio.
+    // (Decision 2026-06-18: don't keep audio for review; users edit text inline,
+    // and transcription is fast. Audio is only kept when transcription FAILS.)
+    if (audioPath) {
+      const { error: rmErr } = await supabase.storage.from('inspection-images').remove([audioPath]);
+      if (rmErr) console.warn('Transcribe: could not remove audio object', rmErr.message);
     }
 
     res.status(200).json({ transcript });
