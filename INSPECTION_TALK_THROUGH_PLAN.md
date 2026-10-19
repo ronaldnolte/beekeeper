@@ -308,7 +308,11 @@ concept works. Android only for now. AI stays on Gemini.
 7b. **Back camera, not selfie (Ron, 2026-10-19, next build).** Both photo
    buttons already ask for the back camera (`capture="environment"`), but
    that is only a hint: Samsung's camera app opens on whichever lens was used
-   last. Workaround today: flip to the back camera once and it is remembered.
+   last. Ron confirmed 2026-10-19: flipping inside the browser's camera screen
+   doesn't stick, but switching to the back camera **in Samsung's own Camera
+   app** does — after that the Beekeeper photo buttons open the back camera.
+   Samsung has no "default camera" setting. So the in-app camera is now
+   OPTIONAL (its other benefit: dictation could keep running during photos).
    Real fix: a camera view inside the app that always opens the back camera
    (Goal 2 option B) — guaranteed back camera, and could also let dictation
    keep running while photographing.
