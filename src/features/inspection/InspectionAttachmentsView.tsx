@@ -8,6 +8,7 @@ import {
   uploadPhoto,
   uploadVoiceNote,
   requestTranscription,
+  retryTranscription,
   updateTranscript,
   deleteAttachment,
   type AttachmentWithUrls,
@@ -112,6 +113,20 @@ export const InspectionAttachmentsView: React.FC = () => {
       setError(e.message ?? 'Could not save that voice note.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  // Re-send a failed voice note's kept audio for transcription.
+  const handleRetry = async (v: AttachmentWithUrls) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await retryTranscription(v);
+    } catch (e: any) {
+      setError(e?.message ?? 'Still couldn’t transcribe that — try again later.');
+    } finally {
+      setBusy(false);
+      load();
     }
   };
 
@@ -227,9 +242,21 @@ export const InspectionAttachmentsView: React.FC = () => {
                 <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap flex-1">{v.transcript}</p>
               ) : (
                 <p className="text-xs italic text-[var(--color-text-muted)] flex-1">
-                  {v.transcript_status === 'failed'
-                    ? 'Couldn’t transcribe — play the audio, or type the text.'
-                    : 'No speech detected — tap edit to type the text.'}
+                  {v.transcript_status === 'failed' ? (
+                    <>
+                      Couldn’t transcribe — play the audio, type the text, or{' '}
+                      <button
+                        onClick={() => handleRetry(v)}
+                        disabled={busy}
+                        className="not-italic font-bold text-[var(--color-primary)] underline disabled:opacity-50"
+                      >
+                        try again
+                      </button>
+                      .
+                    </>
+                  ) : (
+                    'No speech detected — tap edit to type the text.'
+                  )}
                 </p>
               )}
               <button

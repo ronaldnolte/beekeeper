@@ -218,28 +218,35 @@ export async function requestTranscription(
     ? 'https://beekeeper.beektools.com/api/transcribe'
     : '/api/transcribe';
 
-  let res: Response;
-  try {
-    res = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        attachmentId,
-        audioBase64,
-        mimeType: audio.type,
-        audioPath,
-        sessionToken: session?.access_token,
-      }),
-    });
-  } catch (e) {
-    await updateTranscript(attachmentId, null, 'failed');
-    throw new Error('Could not reach the transcription service.');
+  const body = JSON.stringify({
+    attachmentId,
+    audioBase64,
+    mimeType: audio.type,
+    audioPath,
+    sessionToken: session?.access_token,
+  });
+
+  // Busy/overloaded/timed-out answers (and a dropped connection) are usually
+  // momentary, so try a couple more times before marking the note failed.
+  const RETRY_DELAYS_MS = [3000, 8000];
+  let lastError = 'Transcription failed.';
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt - 1]));
+    let res: Response;
+    try {
+      res = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+    } catch {
+      lastError = 'Could not reach the transcription service.';
+      continue;
+    }
+    if (res.ok) return;
+    const errBody = await res.json().catch(() => ({}));
+    lastError = errBody.error || `Transcription failed (${res.status}).`;
+    const retryable = res.status === 429 || res.status >= 500;
+    if (!retryable) break;
   }
-  if (!res.ok) {
-    await updateTranscript(attachmentId, null, 'failed');
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || 'Transcription failed.');
-  }
+  await updateTranscript(attachmentId, null, 'failed');
+  throw new Error(lastError);
 }
 
 export type TranscriptionCheck =

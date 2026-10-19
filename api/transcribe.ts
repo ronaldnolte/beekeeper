@@ -4,6 +4,10 @@ import { applyCors, getAuthedUser } from './_lib.js';
 // Transcribe an inspection voice note with Gemini, then write the text back to
 // the attachment row (user-scoped, so RLS still applies). Mirrors api/chat.ts.
 
+// A full minute of Hands-free dictation can take Gemini well over the default
+// function time limit to transcribe; allow up to a minute.
+export const config = { maxDuration: 60 };
+
 /** Strip any codecs parameter so Gemini gets a clean container mime type. */
 function normalizeMime(mime: string): string {
   const base = (mime || '').split(';')[0].trim().toLowerCase();
