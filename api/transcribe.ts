@@ -52,6 +52,9 @@ export default async function handler(req: any, res: any) {
     const prompt =
       'Transcribe this beekeeping inspection voice note verbatim into plain text. ' +
       'Return only the spoken words, with no preamble, commentary, or quotation marks. ' +
+      'The recording is made at an open beehive: ignore bees buzzing, wind, smoker noise, ' +
+      'birds, traffic and any other background sound. Never describe sounds (no "[buzzing]") ' +
+      'and never guess words that were not clearly spoken by the beekeeper. ' +
       'If nothing intelligible was said, return an empty string.';
 
     const result = await model.generateContent([

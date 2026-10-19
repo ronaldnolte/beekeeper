@@ -21,6 +21,13 @@ export const PIECE_SECONDS = 60;
 const MIN_PIECE_MS = 1500;
 /** Give up reconnecting after this many tries in a row without a good piece. */
 const MAX_RECONNECTS = 3;
+/**
+ * A minute whose loudest moment stays below this (0–1 scale, same as the ready
+ * check's sound bar) had no speech — just a quiet pause — and isn't sent.
+ * Deliberately low so quiet speech is never dropped; buzzing still gets sent
+ * and the transcription is told to ignore it.
+ */
+const SILENCE_PEAK = 0.04;
 /** Set while dictating, so a reload of the screen mid-dictation can be reported. */
 const ACTIVE_KEY = 'handsFreeDictationActive';
 
@@ -72,6 +79,53 @@ export function useDictation(onPiece: (audio: Blob) => void) {
   const endingRef = useRef<'none' | 'stop' | 'pause'>('none');
   const reconnectsRef = useRef(0);
 
+  // Loudness of the current piece, measured live so silent minutes can be skipped.
+  const levelRef = useRef<{ max: number; samples: number }>({ max: 0, samples: 0 });
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const monitorRef = useRef<number | null>(null);
+
+  const stopMonitor = () => {
+    if (monitorRef.current) window.clearInterval(monitorRef.current);
+    monitorRef.current = null;
+    sourceRef.current?.disconnect();
+    sourceRef.current = null;
+  };
+
+  const closeAudio = () => {
+    stopMonitor();
+    audioCtxRef.current?.close().catch(() => {});
+    audioCtxRef.current = null;
+  };
+
+  /** Watch the microphone's loudness. Best effort: if it can't run, nothing is skipped. */
+  const startMonitor = (stream: MediaStream) => {
+    stopMonitor();
+    try {
+      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
+      const ctx = audioCtxRef.current!;
+      ctx.resume().catch(() => {});
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      const source = ctx.createMediaStreamSource(stream);
+      source.connect(analyser);
+      sourceRef.current = source;
+      const buf = new Uint8Array(analyser.fftSize);
+      monitorRef.current = window.setInterval(() => {
+        if (ctx.state !== 'running') return;
+        analyser.getByteTimeDomainData(buf);
+        let max = 0;
+        for (const v of buf) max = Math.max(max, Math.abs(v - 128));
+        const level = levelRef.current;
+        level.max = Math.max(level.max, max / 64);
+        level.samples += 1;
+      }, 150);
+    } catch {
+      /* no loudness check on this device — every piece is sent */
+    }
+  };
+
   const note = (msg: string) => console.warn('[hands-free dictation]', msg);
 
   const clearTimers = () => {
@@ -107,6 +161,7 @@ export function useDictation(onPiece: (audio: Blob) => void) {
       }
     }
     releaseMic();
+    closeAudio();
     markActive(false);
     if (reason) {
       note(reason);
@@ -125,6 +180,7 @@ export function useDictation(onPiece: (audio: Blob) => void) {
         }
       };
     });
+    startMonitor(stream);
     return stream;
   };
 
@@ -140,6 +196,8 @@ export function useDictation(onPiece: (audio: Blob) => void) {
       return;
     }
     const chunks: Blob[] = [];
+    const level = { max: 0, samples: 0 };
+    levelRef.current = level;
     const startedAt = Date.now();
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) chunks.push(e.data);
@@ -151,7 +209,11 @@ export function useDictation(onPiece: (audio: Blob) => void) {
       if (pieceTimerRef.current) window.clearTimeout(pieceTimerRef.current);
       pieceTimerRef.current = null;
       const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-      if (Date.now() - startedAt >= MIN_PIECE_MS && blob.size > 0) {
+      // Silent only if the loudness check actually ran for most of the piece.
+      const measured = level.samples * 150 >= (Date.now() - startedAt) * 0.5;
+      const silent = measured && level.max < SILENCE_PEAK;
+      if (silent) note('Skipped a minute with no speech');
+      if (!silent && Date.now() - startedAt >= MIN_PIECE_MS && blob.size > 0) {
         reconnectsRef.current = 0; // a good piece — the microphone is healthy
         onPieceRef.current(blob);
       }
@@ -216,6 +278,7 @@ export function useDictation(onPiece: (audio: Blob) => void) {
       setState('recording');
     } catch (e: any) {
       releaseMic();
+      closeAudio();
       setState('idle');
       setError(
         e?.name === 'NotAllowedError'
@@ -235,6 +298,7 @@ export function useDictation(onPiece: (audio: Blob) => void) {
     const wasRecording = !!r && r.state !== 'inactive';
     if (wasRecording) r!.stop();
     releaseMic();
+    closeAudio();
     try {
       if (wasRecording) sessionStorage.setItem(ACTIVE_KEY, 'left:' + Date.now());
       else sessionStorage.removeItem(ACTIVE_KEY);

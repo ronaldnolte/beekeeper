@@ -345,5 +345,7 @@ on Finish or leaving the inspection.
 Still open:
 1. **Form filling:** AI suggests and you confirm (recommended), or AI fills it
    in directly?
-2. **Should the AI look at the photos** in the first version, or only captions
-   and talk?
+
+Decided 2026-10-18: the AI does **not** look at the photos in the first
+version — summary uses dictation + captions only. Future idea (Ron): let it
+check photos for the queen, brood pattern, etc.

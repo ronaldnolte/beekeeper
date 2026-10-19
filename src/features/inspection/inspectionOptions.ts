@@ -32,7 +32,7 @@ export const STORES_OPTIONS = [
 ];
 
 /** Soft cap on photos per inspection (Plus and Hands-free share it). */
-export const PHOTO_CAP = 12;
+export const PHOTO_CAP = 30;
 
 /** Field defaults shared by new Standard inspections and new Plus drafts. */
 export const INSPECTION_DEFAULTS = {
