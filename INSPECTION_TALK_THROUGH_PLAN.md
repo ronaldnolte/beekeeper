@@ -305,6 +305,13 @@ concept works. Android only for now. AI stays on Gemini.
    action items, suggested answers you confirm; honest "not recorded" instead
    of the current defaults. Summary stored on the inspection (test database
    first).
+7b. **Back camera, not selfie (Ron, 2026-10-19, next build).** Both photo
+   buttons already ask for the back camera (`capture="environment"`), but
+   that is only a hint: Samsung's camera app opens on whichever lens was used
+   last. Workaround today: flip to the back camera once and it is remembered.
+   Real fix: a camera view inside the app that always opens the back camera
+   (Goal 2 option B) — guaranteed back camera, and could also let dictation
+   keep running while photographing.
 8. **New PDF layout** — summary, action items, location notes, form answers,
    photos with captions, full transcript.
 9. **Ron tries it on real inspections** at test.beektools.com, then decides
