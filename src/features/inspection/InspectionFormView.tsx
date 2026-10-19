@@ -6,6 +6,7 @@ import { Save, Trash2, Hexagon, Camera, Mic } from 'lucide-react';
 import { HistoryFeed } from '../../shared/components/HistoryFeed';
 import { SubTabBar } from '../../shared/components/SubTabBar';
 import { ExportInspectionSheet } from './ExportInspectionSheet';
+import type { SuggestedAnswer } from '../../data/inspectionSummary';
 
 import {
   QUEEN_STATUS_OPTIONS,
@@ -13,6 +14,8 @@ import {
   TEMPERAMENT_OPTIONS,
   STORES_OPTIONS,
   INSPECTION_DEFAULTS,
+  HANDS_FREE_DEFAULTS,
+  NOT_RECORDED,
 } from './inspectionOptions';
 
 export const InspectionFormView: React.FC = () => {
@@ -68,9 +71,9 @@ export const InspectionFormView: React.FC = () => {
       const { id } = await createInspection({
         hive_id: selectedHiveId,
         timestamp,
-        ...INSPECTION_DEFAULTS,
+        ...HANDS_FREE_DEFAULTS,
       });
-      selectInspection({ _model_type: 'inspection', id, hive_id: selectedHiveId, timestamp, ...INSPECTION_DEFAULTS });
+      selectInspection({ _model_type: 'inspection', id, hive_id: selectedHiveId, timestamp, ...HANDS_FREE_DEFAULTS });
       setInspectionId(id);
       navigateTo('INSPECTION_HANDS_FREE');
     } catch (e: any) {
@@ -205,10 +208,31 @@ export const InspectionFormView: React.FC = () => {
     }
   };
 
-  const renderPills = (title: string, icon: string, options: any[], value: string, setter: (val: string) => void) => (
+  // Hands-free: answers the AI suggested from the dictation, for the beekeeper
+  // to confirm (Save & Exit) or change. Absent for every other inspection.
+  const aiSuggestions = selectedRecord?._aiSuggestions as Record<string, SuggestedAnswer> | undefined;
+
+  const renderPills = (
+    title: string,
+    icon: string,
+    options: any[],
+    value: string,
+    setter: (val: string) => void,
+    suggestion?: SuggestedAnswer
+  ) => (
     <div>
       <h3 className="text-xs font-black text-[var(--color-text-muted)] mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
         <span>{icon}</span> {title}
+        {suggestion && suggestion.value !== NOT_RECORDED && value === suggestion.value && (
+          <span className="ml-auto normal-case tracking-normal text-[10px] font-black text-white bg-[var(--color-primary)] px-2 py-0.5 rounded-full">
+            ✨ AI suggested
+          </span>
+        )}
+        {value === NOT_RECORDED && (
+          <span className="ml-auto normal-case tracking-normal text-[11px] font-bold text-[var(--color-text-muted)]">
+            {suggestion ? 'Not mentioned — tap one if you know' : 'Not recorded'}
+          </span>
+        )}
       </h3>
       <div className="flex flex-wrap gap-1.5">
         {options.map((opt) => (
@@ -225,6 +249,9 @@ export const InspectionFormView: React.FC = () => {
           </button>
         ))}
       </div>
+      {suggestion && suggestion.value !== NOT_RECORDED && value === suggestion.value && suggestion.evidence && (
+        <p className="mt-1 text-[11px] italic text-[var(--color-text-muted)]">You said: “{suggestion.evidence}”</p>
+      )}
     </div>
   );
 
@@ -338,18 +365,25 @@ export const InspectionFormView: React.FC = () => {
           />
         )}
 
+        {aiSuggestions && (
+          <div className="w-full max-w-2xl rounded-2xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/40 px-3 py-2.5 text-sm text-[var(--color-text)]">
+            <b>✨ The AI filled these in from your dictation.</b> Check each one, change any that are wrong,
+            then tap Save &amp; Exit. Anything you didn’t mention is left “not recorded”.
+          </div>
+        )}
+
         {/* Queen & Brood card */}
         <div className="w-full max-w-2xl card p-2.5 sm:p-3 space-y-2.5">
-          {renderPills('Queen Status', '👑', QUEEN_STATUS_OPTIONS, queenStatus, setQueenStatus)}
-          {renderPills('Brood Pattern', '🐝', BROOD_PATTERN_OPTIONS, broodPattern, setBroodPattern)}
-          {renderPills('Temperament', '🌡️', TEMPERAMENT_OPTIONS, temperament, setTemperament)}
+          {renderPills('Queen Status', '👑', QUEEN_STATUS_OPTIONS, queenStatus, setQueenStatus, aiSuggestions?.queen_status)}
+          {renderPills('Brood Pattern', '🐝', BROOD_PATTERN_OPTIONS, broodPattern, setBroodPattern, aiSuggestions?.brood_pattern)}
+          {renderPills('Temperament', '🌡️', TEMPERAMENT_OPTIONS, temperament, setTemperament, aiSuggestions?.temperament)}
         </div>
 
         {/* Stores card */}
         <div className="w-full max-w-2xl card p-2.5 sm:p-3 space-y-2.5">
           <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Stores</h3>
-          {renderPills('Honey', '🍯', STORES_OPTIONS, honeyStores, setHoneyStores)}
-          {renderPills('Pollen', '🌼', STORES_OPTIONS, pollenStores, setPollenStores)}
+          {renderPills('Honey', '🍯', STORES_OPTIONS, honeyStores, setHoneyStores, aiSuggestions?.honey_stores)}
+          {renderPills('Pollen', '🌼', STORES_OPTIONS, pollenStores, setPollenStores, aiSuggestions?.pollen_stores)}
         </div>
       </div>
 

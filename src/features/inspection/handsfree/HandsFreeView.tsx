@@ -15,6 +15,7 @@ import {
 import { discardInspection, updateInspectionNotes } from '../../../data/inspectionRepository';
 import { keepScreenAwake, allowScreenSleep } from '../../../shared/device/keepAwake';
 import { useDictation } from './useDictation';
+import { summarizeInspection, summaryToNotes, type InspectionSummary } from '../../../data/inspectionSummary';
 import { ReadyCheck, hasPassedBefore, quietCheck } from './ReadyCheck';
 
 /**
@@ -86,6 +87,7 @@ export const HandsFreeView: React.FC = () => {
   const [captionPromptFor, setCaptionPromptFor] = useState<string | null>(null);
   const [recordingCaptionFor, setRecordingCaptionFor] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
+  const [finishStage, setFinishStage] = useState<'converting' | 'summarising'>('converting');
   const [screenReleased, setScreenReleased] = useState(false);
 
   const nextOrderRef = useRef<number | null>(null);
@@ -252,17 +254,68 @@ export const HandsFreeView: React.FC = () => {
       rows = await fetchAttachments(inspectionId).catch(() => rows);
     }
 
-    // Put the whole dictation into the inspection's Notes so it's visible and
-    // editable on the form straight away (the AI summary will build on this).
-    const notes = buildNotes(rows);
-    if (notes) {
+    // Ask Gemini for a summary and suggested form answers. If that fails, the
+    // beekeeper still gets the full dictation in Notes.
+    const dictationText = buildNotes(rows);
+    let summary: InspectionSummary | null = null;
+    if (dictationText) {
+      setFinishStage('summarising');
+      try {
+        summary = await summarizeInspection(inspectionId);
+      } catch (e: any) {
+        console.warn('Summary failed:', e?.message);
+      }
+    }
+
+    // Notes = AI summary on top, then the full dictation (always kept).
+    const notes = [
+      summary ? summaryToNotes(summary) : dictationText ? 'Summary: (the AI summary could not be made this time — the full dictation is below)' : '',
+      dictationText ? `— Full dictation —\n${dictationText}` : '',
+    ].filter(Boolean).join('\n\n');
+
+    // Don't silently replace Notes the beekeeper has edited since the last Finish.
+    const lastAutoKey = `handsFreeNotes:${inspectionId}`;
+    let lastAuto: string | null = null;
+    try {
+      lastAuto = sessionStorage.getItem(lastAutoKey);
+    } catch {
+      /* ignore */
+    }
+    const current = (selectedRecord?.observations as string | undefined) ?? '';
+    const edited = current.trim() !== '' && current !== lastAuto;
+    const replace = !!notes && (!edited || confirm('Replace the Notes you edited with the new summary and dictation?'));
+
+    let record = selectedRecord ? { ...selectedRecord } : null;
+    if (replace) {
       try {
         await updateInspectionNotes(inspectionId, notes);
-        if (selectedRecord) selectInspection({ ...selectedRecord, observations: notes });
+        try {
+          sessionStorage.setItem(lastAutoKey, notes);
+        } catch {
+          /* ignore */
+        }
+        if (record) record.observations = notes;
       } catch (e: any) {
         setError(e?.message ?? 'Could not copy the dictation into Notes.');
       }
     }
+
+    // Suggested answers go onto the form for the beekeeper to confirm with
+    // Save & Exit (nothing is saved to the form fields until then).
+    if (record && summary) {
+      const f = summary.form;
+      record = {
+        ...record,
+        queen_status: f.queen_status.value,
+        brood_pattern: f.brood_pattern.value,
+        temperament: f.temperament.value,
+        honey_stores: f.honey_stores.value,
+        pollen_stores: f.pollen_stores.value,
+        _aiSuggestions: f,
+      };
+    }
+    if (record) selectInspection(record);
+    setFinishStage('converting');
 
     await allowScreenSleep(AWAKE_HOLDER);
     setFinishing(false);
@@ -454,7 +507,9 @@ export const HandsFreeView: React.FC = () => {
             {finishing && (
               <div className="w-full max-w-2xl rounded-2xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/40 px-4 py-3 text-sm font-bold text-[var(--color-text)] flex items-center gap-2">
                 <Loader2 size={16} className="animate-spin text-[var(--color-primary)]" />
-                Finishing up — turning the last of your dictation into text…
+                {finishStage === 'summarising'
+                  ? 'Summarising your inspection with AI — a few seconds…'
+                  : 'Finishing up — turning the last of your dictation into text…'}
               </div>
             )}
             {uploading > 0 && (
