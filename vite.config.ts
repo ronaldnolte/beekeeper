@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
     // session came from; the deployed prod function would reject dev tokens.
     proxy: {
       '/api/nectar-index-v2': {
-        target: 'http://localhost:3001',
+        target: 'https://test.beektools.com',
         changeOrigin: true,
         secure: false,
       },
@@ -48,6 +48,11 @@ export default defineConfig(({ mode }) => {
         target: 'https://beekeeper.beektools.com',
         changeOrigin: true,
         secure: false,
+        bypass(req) {
+          if (req.url && (req.url.endsWith('.ts') || req.url.endsWith('.tsx') || req.url.includes('/_'))) {
+            return req.url;
+          }
+        },
       }
     }
   },

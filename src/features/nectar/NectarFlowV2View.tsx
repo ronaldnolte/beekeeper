@@ -3,7 +3,7 @@
 // warmth weighting → EWMA smooth → phase classification. Served by /api/nectar-index-v2.
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../../../api/_season';
+import { chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../../shared/season';
 import { useAppStore } from '../../store/useAppStore';
 import { SelectionList } from '../../shared/components/SelectionList';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
