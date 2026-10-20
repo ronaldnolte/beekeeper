@@ -31,6 +31,11 @@ Whenever code is finished, tested, or prioritized:
 - **Key:** Configured in Vercel environment as `GOOGLE_GENERATIVE_AI_API_KEY`.
 - **Capabilities:** Voice note audio transcription, inspection summarization, frame/bar location parsing, to-do extraction, and form field suggestions.
 
+### Versioning Convention
+- **Build Version:** `src/version.ts` defines `AG_VERSION` in the format `AG<YYMM>.<Build#>` (e.g. `AG2610.01` for October 2026, build 01).
+- **Rule:** Increment the build number on every new push/deploy to `develop`.
+- **Display:** Rendered in `AppHeader.tsx` right before the account icon, and in `SettingsView.tsx` under About.
+
 ### Environments
 | Environment | Code Branch | Website | Database |
 |---|---|---|---|
