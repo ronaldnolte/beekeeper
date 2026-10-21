@@ -7,4 +7,4 @@
  * - Build#: 2-digit sequential build number for that month (01, 02, etc.)
  * - Updated whenever deploying/pushing a new version to develop.
  */
-export const AG_VERSION = 'AG2610.01';
+export const AG_VERSION = 'AG2610.02';

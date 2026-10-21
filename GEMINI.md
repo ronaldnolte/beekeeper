@@ -58,6 +58,7 @@ Whenever code is finished, tested, or prioritized:
 - **Camera Workaround:** Documented workaround for Samsung phones (toggle to back camera once in Samsung's native Camera app).
 
 ### Recent Fixes
+- **Nectar late-season correction (AG2610.02, 2026-10-21):** Wet autumn made the index read 87 on Oct 21 (rate pinned at 100%, greenness 28%). In `api/_nectar-v2-engine.ts`, a "lateness" value (0 until falling day length drops below 11.7h, 1 at 10.6h) now (a) requires greenness level behind the rate core (`rateVigorExp` 0.5) and (b) tapers the whole index down to 10% (`taperFloor`). Spring and September chamisa are unchanged (ground-truth 11/11 pass, tests in `api/__tests__/late-season.test.ts`). **Not yet verified on live October 2026 data** (test fixtures end Aug 20) — Ron to check on test.beektools.com. Untried ideas from `docs/nectar-index-conversation.md`: raise warmth ceiling, lagged moisture in fall term, frost gate.
 - **Nectar Flow Local Dev Fix:** Moved seasonal calculation helpers to `src/shared/season.ts` so the local dev server serves them as client code without proxy interference. Updated dev proxy for `/api/nectar-index-v2` to forward to `test.beektools.com`. Added `ViewErrorBoundary` in `App.tsx` to prevent failed screen loads from crashing the entire app shell.
 
 ### Next Steps (In Priority Order)
