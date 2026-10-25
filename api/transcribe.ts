@@ -14,6 +14,15 @@ function normalizeMime(mime: string): string {
   return base || 'audio/webm';
 }
 
+/** Instructions sent with every recording (exported for scripts/estimate-handsfree-cost.ts). */
+export const TRANSCRIBE_PROMPT =
+  'Transcribe this beekeeping inspection voice note verbatim into plain text. ' +
+  'Return only the spoken words, with no preamble, commentary, or quotation marks. ' +
+  'The recording is made at an open beehive: ignore bees buzzing, wind, smoker noise, ' +
+  'birds, traffic and any other background sound. Never describe sounds (no "[buzzing]") ' +
+  'and never guess words that were not clearly spoken by the beekeeper. ' +
+  'If nothing intelligible was said, return an empty string.';
+
 export default async function handler(req: any, res: any) {
   if (applyCors(req, res)) return;
 
@@ -53,13 +62,7 @@ export default async function handler(req: any, res: any) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-    const prompt =
-      'Transcribe this beekeeping inspection voice note verbatim into plain text. ' +
-      'Return only the spoken words, with no preamble, commentary, or quotation marks. ' +
-      'The recording is made at an open beehive: ignore bees buzzing, wind, smoker noise, ' +
-      'birds, traffic and any other background sound. Never describe sounds (no "[buzzing]") ' +
-      'and never guess words that were not clearly spoken by the beekeeper. ' +
-      'If nothing intelligible was said, return an empty string.';
+    const prompt = TRANSCRIBE_PROMPT;
 
     const result = await model.generateContent([
       { inlineData: { mimeType: normalizeMime(mimeType), data: audioBase64 } },
