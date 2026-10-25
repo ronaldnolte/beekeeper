@@ -14,6 +14,41 @@ function normalizeMime(mime: string): string {
   return base || 'audio/webm';
 }
 
+/** Core instructions for every recording (exported for the scripts in scripts/). */
+export const TRANSCRIBE_BASE_PROMPT =
+  'Transcribe this beekeeping inspection voice note verbatim into plain text. ' +
+  'Return only the spoken words, with no preamble, commentary, or quotation marks. ' +
+  'The recording is made at an open beehive: ignore bees buzzing, wind, smoker noise, ' +
+  'birds, traffic and any other background sound. Never describe sounds (no "[buzzing]") ' +
+  'and never guess words that were not clearly spoken by the beekeeper. ' +
+  'If nothing intelligible was said, return an empty string.';
+
+/** Spelling help for beekeeping terms (fixed "varroa mites", "burr comb", "pupae" in tests). */
+export const TRANSCRIBE_WORD_LIST =
+  ' Beekeeping words you may hear: varroa, varroa mites, pupae, larvae, brood, capped brood, ' +
+  'drone brood, supersedure, swarm cells, queen cells, queen cups, queenright, queenless, ' +
+  'propolis, burr comb, brace comb, cross comb, chalkbrood, nectar, dearth, foundation, ' +
+  'frame, super, honey super, deep, medium, queen excluder, inner cover, follower board, ' +
+  'top bar, bar, sugar roll, alcohol wash, small hive beetle, wax moth, nuc.';
+
+/** What the app actually sends. */
+export const TRANSCRIBE_PROMPT = TRANSCRIBE_BASE_PROMPT + TRANSCRIBE_WORD_LIST;
+
+/**
+ * Gemini 3.5 Flash-Lite with the word list above: the most accurate and cheapest of five
+ * setups tested 2026-10-25 (scripts/compare-transcription-models.ts — no word errors with a
+ * simulated bee buzz; ~2.0 cents per 20 minutes against ~4.9 for 2.5 Flash). 2.5 Flash-Lite
+ * is no longer offered to new accounts.
+ */
+export const TRANSCRIBE_MODEL = 'gemini-3.5-flash-lite';
+
+/**
+ * No "thinking" for transcription: writing down speech needs no reasoning. Gemini 3 models
+ * take thinkingLevel ("minimal" = none) and reject the older thinkingBudget: 0. Not in this
+ * older library's types, but passed through to Google as-is.
+ */
+export const TRANSCRIBE_GENERATION_CONFIG = { thinkingConfig: { thinkingLevel: 'minimal' } } as any;
+
 export default async function handler(req: any, res: any) {
   if (applyCors(req, res)) return;
 
@@ -51,15 +86,12 @@ export default async function handler(req: any, res: any) {
 
     // Transcribe
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({
+      model: TRANSCRIBE_MODEL,
+      generationConfig: TRANSCRIBE_GENERATION_CONFIG,
+    });
 
-    const prompt =
-      'Transcribe this beekeeping inspection voice note verbatim into plain text. ' +
-      'Return only the spoken words, with no preamble, commentary, or quotation marks. ' +
-      'The recording is made at an open beehive: ignore bees buzzing, wind, smoker noise, ' +
-      'birds, traffic and any other background sound. Never describe sounds (no "[buzzing]") ' +
-      'and never guess words that were not clearly spoken by the beekeeper. ' +
-      'If nothing intelligible was said, return an empty string.';
+    const prompt = TRANSCRIBE_PROMPT;
 
     const result = await model.generateContent([
       { inlineData: { mimeType: normalizeMime(mimeType), data: audioBase64 } },
