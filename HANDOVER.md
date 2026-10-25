@@ -13,7 +13,10 @@ are in AGENTS.md. Older design documents in this folder: `INSPECTION_TALK_THROUG
   storage. Server functions in `api/` run on Vercel.
 - Code: github.com/ronaldnolte/beekeeper. `develop` → test.beektools.com; `main` →
   beekeeper.beektools.com. Vercel deploys automatically on push.
-- AI: Google **Gemini 2.5 Flash** through `@google/generative-ai` (an older Google package;
+- AI: Google Gemini through `@google/generative-ai`. Transcription uses **Gemini 3.5 Flash-Lite**
+  with a beekeeping word list and no "thinking" (since 1.5.37 — about 2.7¢ per 20-minute Hands-free
+  inspection; see `scripts/estimate-handsfree-cost.ts`); Ask AI and the summary use
+  **Gemini 2.5 Flash** (an older Google package;
   moving to `@google/genai` is a sensible clean-up). Key name `GOOGLE_GENERATIVE_AI_API_KEY`.
   Only one key is in use (paid tier), the same key set in Vercel for both sites.
   The two unused keys were deleted 2026-10-18.
