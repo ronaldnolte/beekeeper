@@ -14,7 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { TRANSCRIBE_PROMPT } from '../api/transcribe.ts';
+import { TRANSCRIBE_PROMPT, TRANSCRIBE_GENERATION_CONFIG } from '../api/transcribe.ts';
 import { buildPrompt, describeLayout, RESPONSE_SCHEMA } from '../api/summarize-inspection.ts';
 
 // Gemini 2.5 Flash, paid tier, US dollars per million tokens
@@ -70,11 +70,11 @@ const line = (label: string, u: Usage) =>
   `${label.padEnd(34)} audio ${String(Math.round(u.audioIn)).padStart(5)}  text ${String(Math.round(u.textIn)).padStart(5)}  ` +
   `answer ${String(Math.round(u.out)).padStart(5)}  thinking ${String(Math.round(u.thinking)).padStart(5)}  = ${fmt(dollars(u))}`;
 
-async function transcribe(wav: Buffer, thinkingOff = false) {
+/** Transcribe exactly as the app does; withThinking = the old setting, for comparison. */
+async function transcribe(wav: Buffer, withThinking = false) {
   const model = genAI.getGenerativeModel({
     model: MODEL,
-    // thinkingConfig isn't in this older library's types, but is passed through to Google.
-    ...(thinkingOff ? { generationConfig: { thinkingConfig: { thinkingBudget: 0 } } as any } : {}),
+    ...(withThinking ? {} : { generationConfig: TRANSCRIBE_GENERATION_CONFIG }),
   });
   const res = await model.generateContent([
     { inlineData: { mimeType: 'audio/wav', data: wav.toString('base64') } },
@@ -96,8 +96,13 @@ async function main() {
 
   const readyCheck = await transcribe(check);
   const piece = await transcribe(minute);
-  const pieceNoThinking = await transcribe(minute, true);
+  const pieceThinking = await transcribe(minute, true);
   console.log('Gemini heard:\n  ' + piece.text + '\n');
+  const words = (t: string) => t.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+  const a = words(piece.text);
+  const b = words(pieceThinking.text);
+  const differing = a.filter((w, i) => w !== b[i]).length + Math.abs(a.length - b.length);
+  console.log(`Same minute with the old setting (thinking on): ${differing === 0 ? 'identical words' : `${differing} word(s) differ`}\n`);
 
   // Summary of a full inspection: the minute's text repeated with different bar numbers.
   const dictation = Array.from({ length: INSPECTION_MINUTES }, (_, i) =>
@@ -123,20 +128,20 @@ async function main() {
     return { audioIn: u.audioIn * k, textIn: u.textIn * k, out: u.out * k, thinking: u.thinking * k };
   };
   const m = perMinute(piece.usage);
-  const mOff = perMinute(pieceNoThinking.usage);
+  const mOn = perMinute(pieceThinking.usage);
   const times = (u: Usage, n: number): Usage =>
     ({ audioIn: u.audioIn * n, textIn: u.textIn * n, out: u.out * n, thinking: u.thinking * n });
 
   console.log('Measured (Google\'s own token counts):');
   console.log(line('Ready check (4 s clip)', readyCheck.usage));
   console.log(line(`One minute of dictation`, m));
-  console.log(line(`  same, with thinking switched off`, mOff));
+  console.log(line(`  old setting (thinking on)`, mOn));
   console.log(line(`Summary of ${INSPECTION_MINUTES} minutes`, summary));
 
   const total = dollars(readyCheck.usage) + dollars(times(m, INSPECTION_MINUTES)) + dollars(summary);
-  const totalOff = dollars(readyCheck.usage) + dollars(times(mOff, INSPECTION_MINUTES)) + dollars(summary);
-  console.log(`\nOne ${INSPECTION_MINUTES}-minute Hands-free inspection: ${fmt(total)}  (thinking off for dictation: ${fmt(totalOff)})`);
-  console.log(`100 inspections: $${(total * 100).toFixed(2)}  (thinking off: $${(totalOff * 100).toFixed(2)})`);
+  const totalOn = dollars(readyCheck.usage) + dollars(times(mOn, INSPECTION_MINUTES)) + dollars(summary);
+  console.log(`\nOne ${INSPECTION_MINUTES}-minute Hands-free inspection: ${fmt(total)}  (old setting: ${fmt(totalOn)})`);
+  console.log(`100 inspections: $${(total * 100).toFixed(2)}  (old setting: $${(totalOn * 100).toFixed(2)})`);
 }
 
 main().catch((e) => {

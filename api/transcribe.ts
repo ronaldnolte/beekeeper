@@ -23,6 +23,15 @@ export const TRANSCRIBE_PROMPT =
   'and never guess words that were not clearly spoken by the beekeeper. ' +
   'If nothing intelligible was said, return an empty string.';
 
+/**
+ * No "thinking" for transcription: writing down speech needs no reasoning, and the
+ * hidden thinking was about a quarter of the cost (measured 2026-10-25 with
+ * scripts/estimate-handsfree-cost.ts — same transcript, 0 thinking tokens instead of
+ * ~400 a minute). thinkingConfig isn't in this older library's types but is passed
+ * through to Google as-is.
+ */
+export const TRANSCRIBE_GENERATION_CONFIG = { thinkingConfig: { thinkingBudget: 0 } } as any;
+
 export default async function handler(req: any, res: any) {
   if (applyCors(req, res)) return;
 
@@ -60,7 +69,10 @@ export default async function handler(req: any, res: any) {
 
     // Transcribe
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      generationConfig: TRANSCRIBE_GENERATION_CONFIG,
+    });
 
     const prompt = TRANSCRIBE_PROMPT;
 
