@@ -12,7 +12,7 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { TRANSCRIBE_PROMPT, TRANSCRIBE_GENERATION_CONFIG } from '../api/transcribe.ts';
+import { TRANSCRIBE_BASE_PROMPT, TRANSCRIBE_WORD_LIST, TRANSCRIBE_GENERATION_CONFIG } from '../api/transcribe.ts';
 
 // US dollars per million tokens, paid tier (ai.google.dev/gemini-api/docs/pricing, 2026-10-25).
 // (2.5 Flash-Lite is "no longer available to new users", so the newer Lite models are tried.)
@@ -25,14 +25,6 @@ const CANDIDATES: { label: string; model: string; price: Price; glossary?: boole
   { label: '3.5 Flash-Lite', model: 'gemini-3.5-flash-lite', price: { audioIn: 0.3, textIn: 0.3, out: 2.5 } },
   { label: '3.5 Flash-Lite + word list', model: 'gemini-3.5-flash-lite', price: { audioIn: 0.3, textIn: 0.3, out: 2.5 }, glossary: true },
 ];
-
-/** A spelling list of beekeeping words, appended to the instructions when testing it. */
-const GLOSSARY =
-  ' Beekeeping words you may hear: varroa, varroa mites, pupae, larvae, brood, capped brood, ' +
-  'drone brood, supersedure, swarm cells, queen cells, queen cups, queenright, queenless, ' +
-  'propolis, burr comb, brace comb, cross comb, chalkbrood, nectar, dearth, foundation, ' +
-  'frame, super, honey super, deep, medium, queen excluder, inner cover, follower board, ' +
-  'top bar, bar, sugar roll, alcohol wash, small hive beetle, wax moth, nuc.';
 const INSPECTION_MINUTES = 20;
 
 const CLIPS: { name: string; text: string; buzz?: boolean }[] = [
@@ -131,7 +123,7 @@ async function main() {
   const audio = CLIPS.map((c, i) => {
     const f = join(dir, `clip${i}.wav`);
     makeSpeech(c.text, f);
-    let buf = readFileSync(f);
+    let buf: Buffer = readFileSync(f);
     if (c.buzz) { buf = addBuzz(buf); writeFileSync(f, buf); }
     return buf;
   });
@@ -142,7 +134,7 @@ async function main() {
   for (const cand of CANDIDATES) {
     const price = cand.price;
     const modelName = cand.label;
-    const prompt = TRANSCRIBE_PROMPT + (cand.glossary ? GLOSSARY : '');
+    const prompt = TRANSCRIBE_BASE_PROMPT + (cand.glossary ? TRANSCRIBE_WORD_LIST : '');
     // Thinking off as in the app; if a newer model rejects that setting, use its default.
     const run = async (clip: Buffer) => {
       const parts = [{ inlineData: { mimeType: 'audio/wav', data: clip.toString('base64') } }, prompt];

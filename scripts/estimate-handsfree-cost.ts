@@ -1,11 +1,12 @@
 // What does one Hands-free inspection cost in Gemini fees?
 //
-// Runs the same Gemini calls the app makes, with the same instructions, and reads
-// Google's own usage counts back from each answer:
+// Runs the same Gemini calls the app makes, with the same instructions and models, and
+// reads Google's own usage counts back from each answer:
 //   1. a 4-second ready-check clip,
 //   2. one full minute of dictation (made with Windows' built-in voice),
 //   3. the end-of-inspection summary for a 20-minute dictation.
-// Then scales to a whole inspection. Costs a fraction of a cent to run.
+// Then scales to a whole inspection, and compares with the setup the live site used before
+// (2.5 Flash, thinking on, no word list). Costs well under a cent to run.
 //
 // Run:  npx tsx scripts/estimate-handsfree-cost.ts
 // Needs GOOGLE_GENERATIVE_AI_API_KEY in .env, and Windows (for the voice).
@@ -14,14 +15,21 @@ import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { TRANSCRIBE_PROMPT, TRANSCRIBE_GENERATION_CONFIG } from '../api/transcribe.ts';
+import {
+  TRANSCRIBE_PROMPT, TRANSCRIBE_BASE_PROMPT, TRANSCRIBE_MODEL, TRANSCRIBE_GENERATION_CONFIG,
+} from '../api/transcribe.ts';
 import { buildPrompt, describeLayout, RESPONSE_SCHEMA } from '../api/summarize-inspection.ts';
 
-// Gemini 2.5 Flash, paid tier, US dollars per million tokens
-// (ai.google.dev/gemini-api/docs/pricing, checked 2026-10-25).
-const PRICE = { audioIn: 1.0, textIn: 0.3, out: 2.5 };
+// US dollars per million tokens, paid tier (ai.google.dev/gemini-api/docs/pricing, 2026-10-25).
+type Price = { audioIn: number; textIn: number; out: number };
+const PRICES: Record<string, Price> = {
+  'gemini-2.5-flash': { audioIn: 1.0, textIn: 0.3, out: 2.5 },
+  'gemini-3.5-flash-lite': { audioIn: 0.3, textIn: 0.3, out: 2.5 },
+  'gemini-3.1-flash-lite': { audioIn: 0.5, textIn: 0.25, out: 1.5 },
+};
+const SUMMARY_MODEL = 'gemini-2.5-flash'; // as in api/summarize-inspection.ts
+const OLD_MODEL = 'gemini-2.5-flash';
 const INSPECTION_MINUTES = 20; // a typical inspection's dictation
-const MODEL = 'gemini-2.5-flash';
 
 const env = readFileSync('.env', 'utf8');
 const key = (env.match(/^GOOGLE_GENERATIVE_AI_API_KEY=(.*)$/m)?.[1] ?? '').trim().replace(/^"|"$/g, '');
@@ -62,23 +70,22 @@ function usageOf(res: any): Usage {
   return { audioIn, textIn, out: m.candidatesTokenCount ?? 0, thinking: m.thoughtsTokenCount ?? 0 };
 }
 
-const dollars = (u: Usage) =>
-  (u.audioIn * PRICE.audioIn + u.textIn * PRICE.textIn + (u.out + u.thinking) * PRICE.out) / 1e6;
+const dollars = (u: Usage, p: Price) =>
+  (u.audioIn * p.audioIn + u.textIn * p.textIn + (u.out + u.thinking) * p.out) / 1e6;
 
 const fmt = (d: number) => (d < 0.01 ? `${(d * 100).toFixed(3)}¢` : `$${d.toFixed(4)}`);
-const line = (label: string, u: Usage) =>
-  `${label.padEnd(34)} audio ${String(Math.round(u.audioIn)).padStart(5)}  text ${String(Math.round(u.textIn)).padStart(5)}  ` +
-  `answer ${String(Math.round(u.out)).padStart(5)}  thinking ${String(Math.round(u.thinking)).padStart(5)}  = ${fmt(dollars(u))}`;
+const line = (label: string, u: Usage, p: Price) =>
+  `${label.padEnd(36)} audio ${String(Math.round(u.audioIn)).padStart(5)}  text ${String(Math.round(u.textIn)).padStart(5)}  ` +
+  `answer ${String(Math.round(u.out)).padStart(5)}  thinking ${String(Math.round(u.thinking)).padStart(5)}  = ${fmt(dollars(u, p))}`;
 
-/** Transcribe exactly as the app does; withThinking = the old setting, for comparison. */
-async function transcribe(wav: Buffer, withThinking = false) {
-  const model = genAI.getGenerativeModel({
-    model: MODEL,
-    ...(withThinking ? {} : { generationConfig: TRANSCRIBE_GENERATION_CONFIG }),
-  });
+/** Transcribe as the app does now, or (old = true) as the live site did before. */
+async function transcribe(wav: Buffer, old = false) {
+  const model = genAI.getGenerativeModel(old
+    ? { model: OLD_MODEL }
+    : { model: TRANSCRIBE_MODEL, generationConfig: TRANSCRIBE_GENERATION_CONFIG });
   const res = await model.generateContent([
     { inlineData: { mimeType: 'audio/wav', data: wav.toString('base64') } },
-    TRANSCRIBE_PROMPT,
+    old ? TRANSCRIBE_BASE_PROMPT : TRANSCRIBE_PROMPT,
   ]);
   return { text: res.response.text().trim(), usage: usageOf(res) };
 }
@@ -96,24 +103,16 @@ async function main() {
 
   const readyCheck = await transcribe(check);
   const piece = await transcribe(minute);
-  const pieceThinking = await transcribe(minute, true);
-  console.log('Gemini heard:\n  ' + piece.text + '\n');
-  const words = (t: string) => t.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
-  const a = words(piece.text);
-  const b = words(pieceThinking.text);
-  const differing = a.filter((w, i) => w !== b[i]).length + Math.abs(a.length - b.length);
-  console.log(`Same minute with the old setting (thinking on): ${differing === 0 ? 'identical words' : `${differing} word(s) differ`}\n`);
+  const pieceOld = await transcribe(minute, true);
+  console.log(`Gemini (${TRANSCRIBE_MODEL}) heard:\n  ${piece.text}\n`);
 
   // Summary of a full inspection: the minute's text repeated with different bar numbers.
   const dictation = Array.from({ length: INSPECTION_MINUTES }, (_, i) =>
-    piece.text.replace(/\b(\d+|thirty|twenty \w+|nineteen|eighteen|seventeen|sixteen|fifteen|fourteen|thirteen)\b/gi,
-      (m) => (/^\d+$/.test(m) ? String(Number(m) + i) : m))
-  ).join('\n');
-  const summaryModel = genAI.getGenerativeModel({
-    model: MODEL,
+    piece.text.replace(/\b\d+\b/g, (m) => String(Number(m) + i))).join('\n');
+  const summaryRes = await genAI.getGenerativeModel({
+    model: SUMMARY_MODEL,
     generationConfig: { responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA, temperature: 0.2 },
-  });
-  const summaryRes = await summaryModel.generateContent(buildPrompt({
+  }).generateContent(buildPrompt({
     hiveName: 'Test hive',
     layout: describeLayout({ type: 'top_bar', bar_count: 30 }),
     place: 'Hemisphere: northern. ',
@@ -122,26 +121,28 @@ async function main() {
   }));
   const summary = usageOf(summaryRes);
 
-  // Scale one minute to the whole dictation.
   const perMinute = (u: Usage): Usage => {
     const k = 60 / minuteSecs;
     return { audioIn: u.audioIn * k, textIn: u.textIn * k, out: u.out * k, thinking: u.thinking * k };
   };
-  const m = perMinute(piece.usage);
-  const mOn = perMinute(pieceThinking.usage);
   const times = (u: Usage, n: number): Usage =>
     ({ audioIn: u.audioIn * n, textIn: u.textIn * n, out: u.out * n, thinking: u.thinking * n });
+  const now = PRICES[TRANSCRIBE_MODEL];
+  const old = PRICES[OLD_MODEL];
+  const sum = PRICES[SUMMARY_MODEL];
+  const m = perMinute(piece.usage);
+  const mOld = perMinute(pieceOld.usage);
 
-  console.log('Measured (Google\'s own token counts):');
-  console.log(line('Ready check (4 s clip)', readyCheck.usage));
-  console.log(line(`One minute of dictation`, m));
-  console.log(line(`  old setting (thinking on)`, mOn));
-  console.log(line(`Summary of ${INSPECTION_MINUTES} minutes`, summary));
+  console.log("Measured (Google's own token counts):");
+  console.log(line('Ready check (4 s clip)', readyCheck.usage, now));
+  console.log(line('One minute of dictation', m, now));
+  console.log(line('  before (2.5 Flash, thinking on)', mOld, old));
+  console.log(line(`Summary of ${INSPECTION_MINUTES} minutes`, summary, sum));
 
-  const total = dollars(readyCheck.usage) + dollars(times(m, INSPECTION_MINUTES)) + dollars(summary);
-  const totalOn = dollars(readyCheck.usage) + dollars(times(mOn, INSPECTION_MINUTES)) + dollars(summary);
-  console.log(`\nOne ${INSPECTION_MINUTES}-minute Hands-free inspection: ${fmt(total)}  (old setting: ${fmt(totalOn)})`);
-  console.log(`100 inspections: $${(total * 100).toFixed(2)}  (old setting: $${(totalOn * 100).toFixed(2)})`);
+  const total = dollars(readyCheck.usage, now) + dollars(times(m, INSPECTION_MINUTES), now) + dollars(summary, sum);
+  const totalOld = dollars(readyCheck.usage, old) + dollars(times(mOld, INSPECTION_MINUTES), old) + dollars(summary, sum);
+  console.log(`\nOne ${INSPECTION_MINUTES}-minute Hands-free inspection: ${fmt(total)}  (before: ${fmt(totalOld)})`);
+  console.log(`100 inspections: $${(total * 100).toFixed(2)}  (before: $${(totalOld * 100).toFixed(2)})`);
 }
 
 main().catch((e) => {
