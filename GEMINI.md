@@ -32,7 +32,6 @@ Whenever code is finished, tested, or prioritized:
 - **Capabilities:** Voice note audio transcription, inspection summarization, frame/bar location parsing, to-do extraction, and form field suggestions.
 
 ### Versioning Convention
-- **Build Version:** `src/version.ts` defines `AG_VERSION` in the format `AG<YYMM>.<Build#>` (e.g. `AG2610.01` for October 2026, build 01).
 - **Rule:** Increment the build number on every new push/deploy to `develop`.
 - **Display:** Rendered in `AppHeader.tsx` right before the account icon, and in `SettingsView.tsx` under About.
 
@@ -58,7 +57,7 @@ Whenever code is finished, tested, or prioritized:
 - **Camera Workaround:** Documented workaround for Samsung phones (toggle to back camera once in Samsung's native Camera app).
 
 ### Recent Fixes
-- **Nectar Chart Manual Refresh Persistence (AG2610.03, 2026-10-21):** When hitting the recycle button, `NectarFlowV2View` now stores the updated query key in `localStorage` (`nectar_fresh_<apiaryId>`), prefixed with `AG_VERSION` and today's date. Navigating away and back now serves the fresh recalculated chart from browser cache instead of falling back to the stale pre-refresh cache.
+- **Nectar Chart Manual Refresh Persistence (AG2610.03, 2026-10-21):** When hitting the recycle button, `NectarFlowV2View` now stores the updated query key in `localStorage` (`nectar_fresh_<apiaryId>`), prefixed with the app version (`__APP_VERSION__`, formerly an AG_VERSION badge, removed 2026-10-24) and today's date. Navigating away and back now serves the fresh recalculated chart from browser cache instead of falling back to the stale pre-refresh cache.
 - **Nectar late-season correction (AG2610.02, 2026-10-21):** Wet autumn made the index read 87 on Oct 21 (rate pinned at 100%, greenness 28%). In `api/_nectar-v2-engine.ts`, a "lateness" value (0 until falling day length drops below 11.7h, 1 at 10.6h) now (a) requires greenness level behind the rate core (`rateVigorExp` 0.5) and (b) tapers the whole index down to 10% (`taperFloor`). Spring and September chamisa are unchanged (ground-truth 11/11 pass, tests in `api/__tests__/late-season.test.ts`). **Not yet verified on live October 2026 data** (test fixtures end Aug 20) — Ron to check on test.beektools.com. Untried ideas from `docs/nectar-index-conversation.md`: raise warmth ceiling, lagged moisture in fall term, frost gate.
 - **Nectar Flow Local Dev Fix:** Moved seasonal calculation helpers to `src/shared/season.ts` so the local dev server serves them as client code without proxy interference. Updated dev proxy for `/api/nectar-index-v2` to forward to `test.beektools.com`. Added `ViewErrorBoundary` in `App.tsx` to prevent failed screen loads from crashing the entire app shell.
 

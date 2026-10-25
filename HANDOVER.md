@@ -15,9 +15,8 @@ are in AGENTS.md. Older design documents in this folder: `INSPECTION_TALK_THROUG
   beekeeper.beektools.com. Vercel deploys automatically on push.
 - AI: Google **Gemini 2.5 Flash** through `@google/generative-ai` (an older Google package;
   moving to `@google/genai` is a sensible clean-up). Key name `GOOGLE_GENERATIVE_AI_API_KEY`.
-  Only one key is in use: AI Studio project "Beektools AI Implementation", key
-  **"Gemini API Key 2" (ends Ae2A)**, paid tier ("Tier 1 · Postpay", billing "AI for Beektools").
-  The same key is set in Vercel for both sites. The two unused keys were deleted 2026-10-18.
+  Only one key is in use (paid tier), the same key set in Vercel for both sites.
+  The two unused keys were deleted 2026-10-18.
 
 ## Gotchas that cost time before
 - **Server functions that write to the database must be called on the same site the page came

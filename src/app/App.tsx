@@ -71,7 +71,7 @@ class ViewErrorBoundary extends Component<ViewErrorBoundaryProps, ViewErrorBound
               this.setState({ hasError: false, error: null });
               window.location.reload();
             }}
-            className="btn btn-secondary text-sm px-4 py-2"
+            className="bg-[var(--color-primary)] text-white text-sm font-bold px-5 py-2.5 rounded-2xl active:scale-95"
           >
             Reload
           </button>

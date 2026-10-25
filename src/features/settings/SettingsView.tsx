@@ -8,7 +8,6 @@ import { fetchProfile, saveAnalyticsOptOut, emptyProfile, type Profile } from '.
 import { setAnalyticsOptOut } from '../../shared/analytics';
 import { installApp, installState, subscribeInstall, type InstallState } from '../../shared/installPrompt';
 import { LogoutConfirm } from '../../shared/components/LogoutConfirm';
-import { AG_VERSION } from '../../version';
 
 /** What the Install row says when there's no button to offer. */
 const INSTALL_TEXT: Record<Exclude<InstallState, 'available'>, string> = {
@@ -172,7 +171,7 @@ export const SettingsView: React.FC = () => {
           <h2 className="text-xs font-black uppercase tracking-wider text-[var(--color-text-muted)]">About</h2>
           <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
             <dt className="text-[var(--color-text-muted)]">Version</dt>
-            <dd className="font-bold text-[var(--color-text)] tabular-nums">{__APP_VERSION__} <span className="text-xs text-[var(--color-text-muted)] font-mono font-normal">({AG_VERSION})</span></dd>
+            <dd className="font-bold text-[var(--color-text)] tabular-nums">{__APP_VERSION__}</dd>
             <dt className="text-[var(--color-text-muted)]">Built</dt>
             <dd className="font-bold text-[var(--color-text)] tabular-nums">{__BUILD_TIME__} UTC</dd>
             <dt className="text-[var(--color-text-muted)]">Running as</dt>

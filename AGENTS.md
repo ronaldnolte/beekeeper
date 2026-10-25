@@ -58,8 +58,3 @@ Do not invent other names ("staging", "dev site", "practice").
 - If a documented procedure exists (e.g. the phone-app build), follow it — don't re-derive it.
 - When Ron says "step by step", answer only what he asked; don't run ahead.
 - Be honest: if something isn't tested or didn't work, say so plainly.
-
-## Accounts
-- ron.nolte@gmail.com — Ron's main app account (not an admin).
-- ron.nolte+admin@gmail.com — the only admin account.
-- beektools.reviewer@gmail.com — Google Play reviewer test account.

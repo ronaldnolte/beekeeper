@@ -5,11 +5,13 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../../shared/season';
 import { useAppStore } from '../../store/useAppStore';
-import { AG_VERSION } from '../../version';
 import { SelectionList } from '../../shared/components/SelectionList';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { supabase } from '../../data/supabase';
 import { WhatsBlooming } from './WhatsBlooming';
+
+/** App version, injected at build time (vite.config.ts `define`). */
+declare const __APP_VERSION__: string;
 import {
   MapPin,
   TrendingUp,
@@ -279,11 +281,11 @@ export const NectarFlowV2View: React.FC = () => {
         });
         // Review mode: replay a past season as though it were the current one.
         if (reviewYear) params.set('year', String(reviewYear));
-        // Cache control: normal loads use a daily key prefixed with AG_VERSION so repeat
+        // Cache control: normal loads use a daily key prefixed with the app version so repeat
         // visits within a day stay fast from browser cache. The refresh button generates a fresh
         // timestamp token and remembers it in localStorage for today so navigating away and returning
         // keeps the freshly recalculated chart instead of reverting to the pre-refresh cache.
-        const todayStr = `${AG_VERSION}_${new Date().toISOString().slice(0, 10)}`;
+        const todayStr = `${__APP_VERSION__}_${new Date().toISOString().slice(0, 10)}`;
         const cacheKey = reviewYear
           ? `nectar_fresh_${selectedApiaryId}_${reviewYear}`
           : `nectar_fresh_${selectedApiaryId}`;

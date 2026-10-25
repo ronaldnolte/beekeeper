@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { AccountMenu } from './AccountMenu';
-import { AG_VERSION } from '../version';
 
 /**
  * The Sandias, as they actually look at this time of year.
@@ -185,16 +184,9 @@ export const AppHeader: React.FC = () => {
           <h1 className="text-lg font-black text-white drop-shadow-sm">{title}</h1>
         </div>
 
-        {/* Right: AG Version + the beekeeper account */}
-        <div className="flex items-center gap-2">
-          <span
-            className="text-[10px] sm:text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-black/25 text-white/90 border border-white/20 select-none tracking-wide backdrop-blur-xs"
-            title={`Build: ${AG_VERSION}`}
-          >
-            {AG_VERSION}
-          </span>
-          {user && <AccountMenu initial={initial} />}
-        </div>
+        {/* Right: the beekeeper. Top-right is where everyone already looks for
+            their own account, and it keeps Log Out well away from the tab bar. */}
+        {user && <AccountMenu initial={initial} />}
       </div>
     </header>
   );
