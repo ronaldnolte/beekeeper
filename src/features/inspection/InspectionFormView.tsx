@@ -274,6 +274,9 @@ export const InspectionFormView: React.FC = () => {
               className="w-full mt-2.5 card py-3.5 rounded-2xl font-black text-base text-[var(--color-primary)] border-2 border-[var(--color-primary)]/40 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
             >
               <Mic size={20} /> Hands-free Inspection
+              <span className="ml-1 text-[10px] font-black uppercase tracking-wide text-white bg-[var(--color-primary)] px-2 py-0.5 rounded-full">
+                Beta
+              </span>
             </button>
           </div>
 
