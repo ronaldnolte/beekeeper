@@ -78,6 +78,16 @@ interface V2Params {
   // the smoother carries a high December across the year boundary, which is what left
   // a visible January peak even with the gate on.
   gddPost: number;
+  // Greenness-level support for the rate core: rateNorm is multiplied by vigor^rateVigorExp.
+  // A rain-driven green-up from a low base saturates the rate at 100% while the landscape
+  // is not actually very green; this makes the rate count only as much as the level behind
+  // it. 0 disables it.
+  rateVigorExp: number;
+  // Late-season taper. Only while days are SHORTENING (so spring is untouched, and so is
+  // the southern hemisphere's spring), the whole index is faded as day length falls from
+  // taperStartHrs to taperEndHrs, down to taperFloor. Rain and warmth cannot make bees
+  // find nectar that plants stop making as days shorten. Set taperStartHrs to 0 to disable.
+  taperStartHrs: number; taperEndHrs: number; taperFloor: number;
 }
 
 const DEFAULTS: V2Params = {
@@ -124,6 +134,11 @@ const DEFAULTS: V2Params = {
   // gddPost applies the gate to the SMOOTHED series too. Without it the smoother
   // carries a high December across 1 January whatever the gate says.
   gddBase: 32, gddOpen: 800, gddWindow: 30, gddPost: 1,
+  // Added 2026-10-21 after an unusually wet autumn in New Mexico read as the best flow of
+  // the year on 21 October (index 87, rate pinned at 100%, greenness only 28%). Green is
+  // not nectar. See docs/nectar-index-conversation.md.
+  rateVigorExp: 0.5,
+  taperStartHrs: 11.7, taperEndHrs: 10.6, taperFloor: 0.1,
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -132,6 +147,14 @@ const DAY_MS = 86_400_000;
 function dayOfYear(dateStr: string): number {
   const dt = new Date(dateStr + 'T00:00');
   return Math.floor((dt.getTime() - new Date(dt.getFullYear(), 0, 0).getTime()) / DAY_MS);
+}
+
+/** Hours of daylight at a latitude on a day of year (standard solar geometry). */
+function dayLengthHrs(lat: number, doy: number): number {
+  const decl = (23.45 * Math.sin((2 * Math.PI * (284 + doy)) / 365) * Math.PI) / 180;
+  const phi = (lat * Math.PI) / 180;
+  const cosH = clamp(-Math.tan(phi) * Math.tan(decl), -1, 1);
+  return (2 * Math.acos(cosH) * 180) / Math.PI / 15;
 }
 
 // Photoperiod-proxy center for fall flows: shifts earlier with latitude (~Sep 23 at 35°N).
@@ -319,7 +342,24 @@ export function runV2Pipeline(
   const rate    = gS.map((v, i) => i >= P.rateLag ? v - gS[i - P.rateLag] : 0);
   const posRate = rate.map(r => Math.max(0, r));
   const ratePeak = Math.max(0.02, pct(posRate, 0.95));
-  const rateNorm = posRate.map(r => clamp(r / ratePeak, 0, 1));
+  // LATENESS: 0 until day length, while FALLING, drops below taperStartHrs, then ramps to 1
+  // at taperEndHrs. Needs a shortening-days test (day length a few days either side), so
+  // spring - in either hemisphere - never counts as late. Drives the two late-season
+  // corrections below: the rate core's level requirement and the whole-index taper.
+  const lateness = dates.map(d => {
+    if (!P.taperStartHrs) return 0;
+    const doy = dayOfYear(d);
+    const dl = dayLengthHrs(lat, doy);
+    const shortening = dayLengthHrs(lat, doy + 3) < dayLengthHrs(lat, doy - 3);
+    if (!shortening) return 0;
+    return clamp((P.taperStartHrs - dl) / (P.taperStartHrs - P.taperEndHrs), 0, 1);
+  });
+
+  // Scaled by greenness level (vigor^(exp*lateness)): late in the year, greening velocity
+  // only counts as a flow when there is real greenery behind it. In spring a fast rise from
+  // a low base IS the flow, so there the exponent is 0 and nothing changes. See rateVigorExp.
+  const rateNorm = posRate.map((r, i) =>
+    clamp(r / ratePeak, 0, 1) * Math.pow(vigor[i], P.rateVigorExp * lateness[i]));
 
   // Fall-bloom term: universal photoperiod-proxy × dewpoint moisture gap-fill
   // Fires only where NDVI-rate is flat (1 − |rateMag|) — adds fall flows greenness can't see
@@ -377,7 +417,10 @@ export function runV2Pipeline(
     });
   })();
 
-  const seasonGate = warmth.map((w, i) => w * gddGate[i]);
+  // Late-season taper: fade the whole index as lateness rises, down to taperFloor.
+  const photoTaper = lateness.map(l => 1 - l * (1 - P.taperFloor));
+
+  const seasonGate = warmth.map((w, i) => w * gddGate[i] * photoTaper[i]);
 
   // Moisture applied as a gentle multiplier (floor 0.7 caps the penalty at -30% in
   // bone-dry conditions). NDWI leads NDVI, so this nudges the index earlier/later

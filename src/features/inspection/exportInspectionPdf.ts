@@ -33,7 +33,7 @@ export interface PdfContext {
 }
 
 const labelOf = (options: { value: string; label: string }[], value?: string) =>
-  options.find((o) => o.value === value)?.label ?? (value ? value : '—');
+  options.find((o) => o.value === value)?.label ?? (value && value !== 'unknown' ? value : 'Not recorded');
 
 function formatDate(iso: string): string {
   const d = new Date(iso);

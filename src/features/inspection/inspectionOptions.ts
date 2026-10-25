@@ -31,6 +31,25 @@ export const STORES_OPTIONS = [
   { value: 'abundant', label: 'Full' },
 ];
 
+/** Stored when an answer wasn't given (Hands-free, nothing said). Shown as "Not recorded". */
+export const NOT_RECORDED = 'unknown';
+
+/**
+ * Hands-free starts with every answer "not recorded" — the AI fills in only
+ * what the beekeeper actually said, so nothing is claimed by default.
+ */
+export const HANDS_FREE_DEFAULTS = {
+  queen_status: NOT_RECORDED,
+  brood_pattern: NOT_RECORDED,
+  temperament: NOT_RECORDED,
+  honey_stores: NOT_RECORDED,
+  pollen_stores: NOT_RECORDED,
+  observations: '',
+};
+
+/** Soft cap on photos per inspection (Plus and Hands-free share it). */
+export const PHOTO_CAP = 30;
+
 /** Field defaults shared by new Standard inspections and new Plus drafts. */
 export const INSPECTION_DEFAULTS = {
   queen_status: 'seen',

@@ -1,4 +1,4 @@
-import { useEffect, Suspense, lazy } from 'react';
+import { useEffect, Suspense, lazy, Component, type ErrorInfo, type ReactNode } from 'react';
 import { supabase } from '../data/supabase';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
@@ -10,6 +10,7 @@ import { HiveSelectionView } from '../features/hive/HiveSelectionView';
 import { HiveDetailView } from '../features/hive/HiveDetailView';
 import { InspectionFormView } from '../features/inspection/InspectionFormView';
 import { InspectionAttachmentsView } from '../features/inspection/InspectionAttachmentsView';
+import { HandsFreeView } from '../features/inspection/handsfree/HandsFreeView';
 import { InterventionFormView } from '../features/inspection/InterventionFormView';
 import { VarroaFormView } from '../features/varroa/VarroaFormView';
 import { StatusUpdateView } from '../features/inspection/StatusUpdateView';
@@ -36,6 +37,50 @@ const ViewLoader = () => (
     <p className="font-bold text-[var(--color-text)]">Loading...</p>
   </div>
 );
+
+interface ViewErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ViewErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ViewErrorBoundary extends Component<ViewErrorBoundaryProps, ViewErrorBoundaryState> {
+  state: ViewErrorBoundaryState = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error): ViewErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('View failed to load or crashed:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[var(--color-bg)]">
+          <p className="text-lg font-bold text-[var(--color-bad)] mb-2">Something went wrong loading this screen</p>
+          <p className="text-xs text-[var(--color-text-muted)] mb-4 max-w-sm">
+            {this.state.error?.message || 'Failed to load screen'}
+          </p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false, error: null });
+              window.location.reload();
+            }}
+            className="bg-[var(--color-primary)] text-white text-sm font-bold px-5 py-2.5 rounded-2xl active:scale-95"
+          >
+            Reload
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function App() {
   const { currentView, setUser, user, isAuthLoading, selectedHiveId, selectedApiaryId, selectedRecord } = useAppStore();
@@ -174,6 +219,7 @@ function App() {
         key={currentView}
         className="flex-1 flex flex-col overflow-hidden relative animate-[fade-in_var(--dur-slow)_var(--ease-soft)]"
       >
+        <ViewErrorBoundary>
         {currentView === 'AUTH' && <Auth />}
         
         {currentView === 'DASHBOARD' && <DashboardView />}
@@ -187,6 +233,8 @@ function App() {
         {currentView === 'INSPECTION_FORM' && <InspectionFormView />}
 
 {currentView === 'INSPECTION_PLUS' && <InspectionAttachmentsView />}
+
+        {currentView === 'INSPECTION_HANDS_FREE' && <HandsFreeView />}
 
         {currentView === 'INTERVENTION_FORM' && <InterventionFormView />}
 
@@ -246,6 +294,7 @@ function App() {
         {currentView === 'UPDATE_PASSWORD' && <UpdatePasswordView />}
         
         {currentView === 'BETA_SIGNUP' && <BetaSignupView />}
+        </ViewErrorBoundary>
       </main>
 
       <BottomNavBar />

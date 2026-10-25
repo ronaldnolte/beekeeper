@@ -4,6 +4,10 @@ import { applyCors, getAuthedUser } from './_lib.js';
 // Transcribe an inspection voice note with Gemini, then write the text back to
 // the attachment row (user-scoped, so RLS still applies). Mirrors api/chat.ts.
 
+// A full minute of Hands-free dictation can take Gemini well over the default
+// function time limit to transcribe; allow up to a minute.
+export const config = { maxDuration: 60 };
+
 /** Strip any codecs parameter so Gemini gets a clean container mime type. */
 function normalizeMime(mime: string): string {
   const base = (mime || '').split(';')[0].trim().toLowerCase();
@@ -20,8 +24,11 @@ export default async function handler(req: any, res: any) {
 
   try {
     const { attachmentId, audioBase64, mimeType, audioPath, sessionToken } = req.body;
+    // Hands-free "ready check": transcribe a short test clip and hand the text
+    // back without storing anything. Additive — existing callers never send it.
+    const checkOnly = req.body.checkOnly === true;
 
-    if (!attachmentId || !audioBase64) {
+    if ((!attachmentId && !checkOnly) || !audioBase64) {
       res.status(400).json({ error: 'Missing attachmentId or audio.' });
       return;
     }
@@ -49,6 +56,9 @@ export default async function handler(req: any, res: any) {
     const prompt =
       'Transcribe this beekeeping inspection voice note verbatim into plain text. ' +
       'Return only the spoken words, with no preamble, commentary, or quotation marks. ' +
+      'The recording is made at an open beehive: ignore bees buzzing, wind, smoker noise, ' +
+      'birds, traffic and any other background sound. Never describe sounds (no "[buzzing]") ' +
+      'and never guess words that were not clearly spoken by the beekeeper. ' +
       'If nothing intelligible was said, return an empty string.';
 
     const result = await model.generateContent([
@@ -58,15 +68,14 @@ export default async function handler(req: any, res: any) {
 
     const transcript = (result.response.text() || '').trim();
 
-    // Transcript is now the record of truth — drop the audio immediately.
-    // (Decision 2026-06-18: don't keep audio for review; users edit text inline,
-    // and transcription is fast. Audio is only kept when transcription FAILS.)
-    if (audioPath) {
-      const { error: rmErr } = await supabase.storage.from('inspection-images').remove([audioPath]);
-      if (rmErr) console.warn('Transcribe: could not remove audio object', rmErr.message);
+    if (checkOnly) {
+      res.status(200).json({ transcript });
+      return;
     }
 
-    // Write back (RLS: only the owner's own row updates). audio_path cleared.
+    // Write back FIRST (RLS: only the owner's own row updates), audio_path
+    // cleared. Only once the text is safely stored is the audio deleted — the
+    // other way round, a failed write lost both the text and the audio.
     const { error: updErr } = await supabase
       .from('inspection_attachments')
       .update({ transcript, transcript_status: 'done', audio_path: null })
@@ -76,6 +85,14 @@ export default async function handler(req: any, res: any) {
       console.error('Transcribe: row update failed', updErr);
       res.status(500).json({ error: 'Transcribed, but could not store the transcript.' });
       return;
+    }
+
+    // Transcript is now the record of truth — drop the audio.
+    // (Decision 2026-06-18: don't keep audio for review; users edit text inline,
+    // and transcription is fast. Audio is only kept when transcription FAILS.)
+    if (audioPath) {
+      const { error: rmErr } = await supabase.storage.from('inspection-images').remove([audioPath]);
+      if (rmErr) console.warn('Transcribe: could not remove audio object', rmErr.message);
     }
 
     res.status(200).json({ transcript });

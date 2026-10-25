@@ -8,14 +8,14 @@ import {
   uploadPhoto,
   uploadVoiceNote,
   requestTranscription,
+  retryTranscription,
   updateTranscript,
   deleteAttachment,
   type AttachmentWithUrls,
 } from '../../data/inspectionAttachmentRepository';
 import { exportSinglePhoto } from './exportPhotos';
+import { PHOTO_CAP } from './inspectionOptions';
 
-/** Soft cap on photos per inspection (raise later if users push back). */
-const PHOTO_CAP = 12;
 
 /**
  * Whether an <input capture> will actually open a camera. True on phones/tablets;
@@ -113,6 +113,25 @@ export const InspectionAttachmentsView: React.FC = () => {
       setError(e.message ?? 'Could not save that voice note.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  // Re-send a failed voice note's kept audio for transcription.
+  // Progress / result shown right under the note (not at the top of the screen,
+  // which may be scrolled out of view).
+  const [retryState, setRetryState] = useState<Record<string, string>>({});
+  const handleRetry = async (v: AttachmentWithUrls) => {
+    setRetryState((s) => ({ ...s, [v.id]: 'working' }));
+    try {
+      await retryTranscription(v);
+      setRetryState((s) => {
+        const { [v.id]: _done, ...rest } = s;
+        return rest;
+      });
+    } catch (e: any) {
+      setRetryState((s) => ({ ...s, [v.id]: e?.message ?? 'Still couldn’t convert it — try again later.' }));
+    } finally {
+      load();
     }
   };
 
@@ -228,9 +247,21 @@ export const InspectionAttachmentsView: React.FC = () => {
                 <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap flex-1">{v.transcript}</p>
               ) : (
                 <p className="text-xs italic text-[var(--color-text-muted)] flex-1">
-                  {v.transcript_status === 'failed'
-                    ? 'Couldn’t transcribe — play the audio, or type the text.'
-                    : 'No speech detected — tap edit to type the text.'}
+                  {v.transcript_status === 'failed' ? (
+                    <>
+                      Couldn’t transcribe — play the audio, type the text, or{' '}
+                      <button
+                        onClick={() => handleRetry(v)}
+                        disabled={busy}
+                        className="not-italic font-bold text-[var(--color-primary)] underline disabled:opacity-50"
+                      >
+                        try again
+                      </button>
+                      .
+                    </>
+                  ) : (
+                    'No speech detected — tap edit to type the text.'
+                  )}
                 </p>
               )}
               <button
@@ -242,6 +273,15 @@ export const InspectionAttachmentsView: React.FC = () => {
               </button>
             </div>
           )
+        )}
+
+        {retryState[v.id] === 'working' && (
+          <p className="mt-1.5 text-xs font-bold text-[var(--color-primary)] flex items-center gap-1.5">
+            <Loader2 size={13} className="animate-spin" /> Trying again — this can take up to a minute…
+          </p>
+        )}
+        {retryState[v.id] && retryState[v.id] !== 'working' && (
+          <p className="mt-1.5 text-xs font-medium text-red-600">{retryState[v.id]}</p>
         )}
       </>
     );

@@ -37,6 +37,15 @@ export async function updateInspection(id: string, payload: {
   if (error) throw error;
 }
 
+/** Set only the Notes (observations) of an inspection — used by Hands-free Finish. */
+export async function updateInspectionNotes(id: string, observations: string) {
+  const { error } = await supabase
+    .from('inspections')
+    .update({ observations })
+    .eq('id', id);
+  if (error) throw error;
+}
+
 export async function deleteInspection(id: string) {
   const { error } = await supabase
     .from('inspections')

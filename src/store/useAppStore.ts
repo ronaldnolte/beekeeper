@@ -15,6 +15,7 @@ export type AppView =
   | 'HIVE_DETAIL'       // Detail View: Viewing hive history & charts
   | 'INSPECTION_FORM'      // Form: Inspection overlay
   | 'INSPECTION_PLUS'      // Inspection: photos & voice attachments
+  | 'INSPECTION_HANDS_FREE' // Inspection: dictate with the phone on the hive box
   | 'INTERVENTION_FORM' // Form: Intervention overlay
   | 'VARROA_FORM'       // Form: Varroa testing overlay
   | 'TASK_FORM'         // Form: Task overlay
@@ -342,7 +343,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
         } else if (state.currentView === 'HIVE_DETAIL') {
           prevView = 'SELECT_HIVE';
           hiveName = null;
-        } else if (state.currentView === 'INSPECTION_PLUS') {
+        } else if (state.currentView === 'INSPECTION_PLUS' || state.currentView === 'INSPECTION_HANDS_FREE') {
           // Return to the inspection form with the record still selected so the form stays open
           return {
             currentView: 'INSPECTION_FORM',

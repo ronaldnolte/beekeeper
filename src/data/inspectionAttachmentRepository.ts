@@ -218,28 +218,90 @@ export async function requestTranscription(
     ? 'https://beekeeper.beektools.com/api/transcribe'
     : '/api/transcribe';
 
+  const body = JSON.stringify({
+    attachmentId,
+    audioBase64,
+    mimeType: audio.type,
+    audioPath,
+    sessionToken: session?.access_token,
+  });
+
+  // Busy/overloaded/timed-out answers (and a dropped connection) are usually
+  // momentary, so try a couple more times before marking the note failed.
+  const RETRY_DELAYS_MS = [3000, 8000];
+  let lastError = 'Transcription failed.';
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt - 1]));
+    let res: Response;
+    try {
+      res = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+    } catch {
+      lastError = 'Could not reach the transcription service.';
+      continue;
+    }
+    if (res.ok) return;
+    const errBody = await res.json().catch(() => ({}));
+    lastError = errBody.error || `Transcription failed (${res.status}).`;
+    const retryable = res.status === 429 || res.status >= 500;
+    if (!retryable) break;
+  }
+  await updateTranscript(attachmentId, null, 'failed');
+  throw new Error(lastError);
+}
+
+export type TranscriptionCheck =
+  | { ok: true; transcript: string }
+  | { ok: false; reason: 'signed_out' | 'unreachable' | 'failed' };
+
+/**
+ * Hands-free ready check: send a short test clip through the same transcription
+ * service and return what it heard. Nothing is stored. Proves signal, sign-in
+ * and the service end to end before an inspection starts.
+ */
+export async function checkTranscription(audio: Blob): Promise<TranscriptionCheck> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { ok: false, reason: 'signed_out' };
+  const audioBase64 = await blobToBase64(audio);
+  const apiUrl = Capacitor.isNativePlatform()
+    ? 'https://beekeeper.beektools.com/api/transcribe'
+    : '/api/transcribe';
   let res: Response;
   try {
     res = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        attachmentId,
+        checkOnly: true,
         audioBase64,
         mimeType: audio.type,
-        audioPath,
-        sessionToken: session?.access_token,
+        sessionToken: session.access_token,
       }),
     });
-  } catch (e) {
-    await updateTranscript(attachmentId, null, 'failed');
-    throw new Error('Could not reach the transcription service.');
+  } catch {
+    return { ok: false, reason: 'unreachable' };
   }
-  if (!res.ok) {
-    await updateTranscript(attachmentId, null, 'failed');
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || 'Transcription failed.');
-  }
+  if (res.status === 401) return { ok: false, reason: 'signed_out' };
+  if (!res.ok) return { ok: false, reason: 'failed' };
+  const body = await res.json().catch(() => ({}));
+  return { ok: true, transcript: String(body.transcript ?? '').trim() };
+}
+
+/**
+ * Try transcription again for a voice note whose first attempt failed. The
+ * audio is kept on failure, so fetch it back from storage and resend it.
+ */
+export async function retryTranscription(att: AttachmentWithUrls): Promise<void> {
+  const gone = new Error(
+    'The recording for this one is no longer stored, so it can’t be converted again. Tap Edit to type what you remember.'
+  );
+  if (!att.audioUrl) throw gone;
+  const res = await fetch(att.audioUrl).catch(() => null);
+  if (!res) throw new Error('Could not reach storage — check your signal and try again.');
+  if (!res.ok) throw gone;
+  const audio = await res.blob();
+  if (audio.size === 0) throw gone;
+  await updateTranscript(att.id, null, 'pending');
+  await requestTranscription(att.id, audio, att.audio_path);
 }
 
 /** Record the result of AI transcription on a voice note. */

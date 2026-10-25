@@ -3,12 +3,15 @@
 // warmth weighting → EWMA smooth → phase classification. Served by /api/nectar-index-v2.
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../../../api/_season';
+import { chartDayOfYear, MONTH_STARTS, MONTH_LABELS } from '../../shared/season';
 import { useAppStore } from '../../store/useAppStore';
 import { SelectionList } from '../../shared/components/SelectionList';
 import { fetchApiaryWithCoords } from '../../data/apiaryRepository';
 import { supabase } from '../../data/supabase';
 import { WhatsBlooming } from './WhatsBlooming';
+
+/** App version, injected at build time (vite.config.ts `define`). */
+declare const __APP_VERSION__: string;
 import {
   MapPin,
   TrendingUp,
@@ -278,14 +281,33 @@ export const NectarFlowV2View: React.FC = () => {
         });
         // Review mode: replay a past season as though it were the current one.
         if (reviewYear) params.set('year', String(reviewYear));
-        // Cache control: the refresh button forces a fresh fetch that bypasses the
-        // Vercel CDN + browser cache (unique URL); normal loads use a per-day key so
-        // repeat visits within a day stay fast but data still refreshes daily.
+        // Cache control: normal loads use a daily key prefixed with the app version so repeat
+        // visits within a day stay fast from browser cache. The refresh button generates a fresh
+        // timestamp token and remembers it in localStorage for today so navigating away and returning
+        // keeps the freshly recalculated chart instead of reverting to the pre-refresh cache.
+        const todayStr = `${__APP_VERSION__}_${new Date().toISOString().slice(0, 10)}`;
+        const cacheKey = reviewYear
+          ? `nectar_fresh_${selectedApiaryId}_${reviewYear}`
+          : `nectar_fresh_${selectedApiaryId}`;
+        let activeKey = todayStr;
         if (forceFresh) {
-          params.set('nocache', Date.now().toString());
+          activeKey = `${todayStr}_${Date.now()}`;
+          try {
+            localStorage.setItem(cacheKey, activeKey);
+          } catch {
+            // ignore localStorage quota/disabled errors
+          }
         } else {
-          params.set('_d', new Date().toISOString().slice(0, 10));
+          try {
+            const saved = localStorage.getItem(cacheKey);
+            if (saved && saved.startsWith(todayStr)) {
+              activeKey = saved;
+            }
+          } catch {
+            // ignore localStorage errors
+          }
         }
+        params.set('_d', activeKey);
         // Absolute host only in the packaged Capacitor app (it loads from a
         // localhost scheme, so a relative /api path would not reach the server).
         // Web — prod, preview, and dev via the Vite proxy — stays same-origin.

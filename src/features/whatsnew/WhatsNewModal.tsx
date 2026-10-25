@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { X, MapPin, Sparkles, Snowflake, Flower2, UserRound, KeyRound, Zap } from 'lucide-react';
+import { X, Sparkles, Mic, CloudRain, Camera } from 'lucide-react';
 
 // Bump this string whenever there's new content worth announcing. Anyone whose
 // stored value doesn't match sees the modal once, then it's marked as read.
@@ -13,7 +13,9 @@ import { X, MapPin, Sparkles, Snowflake, Flower2, UserRound, KeyRound, Zap } fro
 // reading at all.
 // 2026-10 (1.5.35): the bloom section is new, and the nectar heat gate change (base 32F) moves spring
 // numbers again, so everyone sees this once more.
-export const WHATS_NEW_VERSION = '2026-10-bloom';
+// 2026-10 (1.5.36): Hands-free inspection (beta), the autumn correction to the nectar index
+// (numbers change again, so it needs explaining), and 30 photos per inspection.
+export const WHATS_NEW_VERSION = '2026-10-handsfree';
 const SEEN_KEY = 'beek_whats_new_seen';
 
 // One-time "What's New" modal. Self-managing: on mount it checks localStorage
@@ -77,36 +79,21 @@ export const WhatsNewModal: React.FC = () => {
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-4 text-sm custom-scrollbar">
           <Feature
-            icon={<Flower2 size={20} />}
-            title="What may be blooming, under Nectar Flow"
-            body="A new section under the Nectar charts lists the plants recorded near your apiary that may be in bloom, starting soon or just finished, within three weeks either side of today. Blue means nectar, orange pollen, and purple both. Tap &quot;See full bloom calendar&quot; for the whole year at a glance. The dates are for a normal year, so a warm or wet season can move them; treat it as a guide to what to look for, not a promise."
-          />
-          <Feature
-            icon={<Snowflake size={20} />}
-            title="Spring opens a little earlier on the Nectar chart"
-            body="The index now starts counting warmth from 32°F instead of 50°F, so early spring trees show up sooner and winter still reads close to zero. Summer and fall readings are unchanged, but your spring numbers will look different from last week, including in past years."
-          />
-          <Feature
-            icon={<UserRound size={20} />}
-            title="Your profile and settings"
-            body="Tap your initial at the top right. Profile holds your name (the dashboard now greets you by it) and your hive and treatment preferences. Settings has a real switch to turn off anonymous usage statistics, plus app information."
-          />
-          <Feature
-            icon={<KeyRound size={20} />}
-            title="Password reset works everywhere"
-            body="The reset link in the email now works whichever browser or app opens it, including on Android phones, where it used to fail."
-          />
-          <Feature
-            icon={<Zap size={20} />}
-            title="Faster screens"
-            body="The dashboard and lists load once and stay loaded, so moving between screens is quicker and uses less data."
-          />
-          <Feature
-            icon={<MapPin size={20} />}
+            icon={<Mic size={20} />}
             accent
-            eyebrow="If you haven't yet — takes a minute"
-            title="Pin your apiaries on the map"
-            body="The bloom list needs a pin too: without one, both Nectar Flow and the plant list are guessing from the middle of your ZIP code. Open each apiary, tap Edit, and drop a pin on your hive stand."
+            eyebrow="New · Beta — try it on your next inspection"
+            title="Hands-free inspections"
+            body="Set your phone on the hive and just talk. Open a hive, go to Inspections and tap Hands-free Inspection. A quick check makes sure your microphone works, then everything you say is written down as you go: bar numbers, boxes and frames, what you see. Take photos along the way. When you tap Finish, the AI writes a short summary with notes for each bar or frame and a to-do list, and suggests the queen, brood and stores answers for you to check before saving. It's new, so tell us what works and what doesn't."
+          />
+          <Feature
+            icon={<CloudRain size={20} />}
+            title="Autumn rain no longer looks like a nectar flow"
+            body="A wet autumn can turn the landscape green again, and the Nectar index used to read that as a strong flow. Now, as the days get shorter, it counts greening only as far as there's real greenery behind it and fades toward winter. Spring and early-fall flows are unchanged, but your late-autumn numbers will be lower than before, including in past years."
+          />
+          <Feature
+            icon={<Camera size={20} />}
+            title="More photos, sturdier voice notes"
+            body="Each inspection can now hold 30 photos instead of 12. Voice notes keep the screen on while you record, retry by themselves if the connection drops, and can be retried later if they still fail, so a recording isn't lost."
           />
           {/* Testers on the packaged Android build. Hidden on web/PWA, which
               updates itself on every visit.
