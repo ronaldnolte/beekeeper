@@ -279,6 +279,9 @@ export const NectarFlowV2View: React.FC = () => {
         const params = new URLSearchParams({
           lat: lat.toFixed(4), lng: lng.toFixed(4),
         });
+        // Lets the server reuse this apiary's saved readings and fetch only the
+        // last few weeks (api/_nectar-readings.ts).
+        if (selectedApiaryId) params.set('apiary', String(selectedApiaryId));
         // Review mode: replay a past season as though it were the current one.
         if (reviewYear) params.set('year', String(reviewYear));
         // Cache control: normal loads use a daily key prefixed with the app version so repeat
