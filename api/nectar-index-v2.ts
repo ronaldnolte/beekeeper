@@ -2,6 +2,7 @@ import { applyCors, getAuthedUser, getBearerToken, createRateLimiter, getClientI
 import { fetchMultiBands } from './_bands-fetcher.js';
 import { runV2Pipeline, Phase, WeatherDay } from './_nectar-v2-engine.js';
 import { fetchFirstOk } from './_lib.js';
+import { loadReadings, saveReadings, planFetch, mergeReadings } from './_nectar-readings.js';
 
 // Anonymous nectar calls are only possible during the auth grace window (see
 // _lib). Rate-limit them to blunt scripted abuse of the paid Earth Engine /
@@ -150,7 +151,7 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw, year: yearRaw } = req.query;
+  const { lat: latRaw, lng: lngRaw, alpha: alphaRaw, rateLag: rateLagRaw, dwell: dwellRaw, year: yearRaw, apiary: apiaryRaw } = req.query;
   if (!latRaw || !lngRaw) {
     res.status(400).json({ error: 'lat and lng are required' });
     return;
@@ -217,12 +218,49 @@ export default async function handler(req: any, res: any) {
       return [r, Date.now() - s];
     };
 
+    // SAVED READINGS (supabase/migrations/0014, api/_nectar-readings.ts). For a
+    // signed-in user on this season with an apiary named, everything older than
+    // three weeks comes from the saved copy and only the recent stretch is
+    // fetched. Past seasons and anonymous calls fetch in full, as before.
+    const apiaryId = typeof apiaryRaw === 'string' && apiaryRaw.length > 0 && apiaryRaw.length <= 100
+      ? apiaryRaw : null;
+    const useSaved = !!auth && !!apiaryId && !reviewYear;
+    const savedStart = Date.now();
+    const saved = useSaved ? await loadReadings(auth!.supabase, apiaryId!) : null;
+    const savedReadMs = Date.now() - savedStart;
+    const plan = useSaved ? planFetch(saved, lat, lng, startDate) : null;
+    const fetchFrom = plan?.fetchFrom ?? startDate;
+
     const [[fetched, earthEngineMs], [weather, weatherMs]] = await Promise.all([
-      timed(() => fetchMultiBands(lat, lng, startDate, endDate)),
-      timed(() => fetchWeatherV2(lat, lng, startDate, endDate)),
+      timed(() => fetchMultiBands(lat, lng, fetchFrom, endDate)),
+      timed(() => fetchWeatherV2(lat, lng, fetchFrom, endDate)),
     ]);
-    const bands = fetched.records;
-    const passDates = fetched.passDates;
+
+    let bands = fetched.records;
+    let passDates = fetched.passDates;
+    let weatherDays = weather.days;
+    let savedWrite: 'saved' | 'failed' | 'skipped' = 'skipped';
+    let savedWriteMs = 0;
+    if (useSaved && plan) {
+      const merged = plan.mode === 'recent' && saved
+        ? mergeReadings(saved, { scenes: bands, passDates, weather: weatherDays }, fetchFrom, startDate)
+        : { scenes: bands, passDates, weather: weatherDays };
+      bands = merged.scenes;
+      passDates = merged.passDates;
+      weatherDays = merged.weather;
+      // A full fetch whose weather archive failed would save a hole; skip it and
+      // let the next load try again.
+      if (plan.mode === 'recent' || weather.archive_ok) {
+        const ws = Date.now();
+        const ok = await saveReadings(auth!.supabase, auth!.user.id, apiaryId!, {
+          builtLat: lat, builtLon: lng,
+          coveredFrom: startDate, fetchedThrough: endDate,
+          scenes: bands, passDates, weather: weatherDays,
+        });
+        savedWriteMs = Date.now() - ws;
+        savedWrite = ok ? 'saved' : 'failed';
+      }
+    }
 
     if (bands.length === 0) {
       throw new Error('Earth Engine returned no vegetation data for this location.');
@@ -265,7 +303,7 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    const result = runV2Pipeline(bands, weather.days, lat, paramOverrides, reviewYear ? endDate : undefined);
+    const result = runV2Pipeline(bands, weatherDays, lat, paramOverrides, reviewYear ? endDate : undefined);
     const pipelineMs = Date.now() - pipeStart;
     const serverTotalMs = Date.now() - t0;
 
@@ -308,6 +346,13 @@ export default async function handler(req: any, res: any) {
         pipeline_ms: pipelineMs,
         server_total_ms: serverTotalMs,
         satellite_observations: bands.length,
+        // How the readings were gathered: 'recent' (saved copy + last three
+        // weeks), 'full' (with why), or 'off' (past season / anonymous / no apiary).
+        readings: plan ? (plan.mode === 'full' ? `full:${plan.reason}` : 'recent') : 'off',
+        fetched_from: fetchFrom,
+        saved_read_ms: savedReadMs,
+        saved_write_ms: savedWriteMs,
+        saved_write: savedWrite,
       },
       // Which weather host served the recent window: 'primary' (Forecast API),
       // 'auxiliary' (Historical Forecast failover), or 'none' (both down —
